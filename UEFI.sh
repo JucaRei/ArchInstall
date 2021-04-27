@@ -36,7 +36,7 @@ systemctl enable firewalld
 systemctl enable acpid
 
 useradd -m junior
-echo junior:password | chpasswd
+echo junior:200291 | chpasswd
 usermod -aG libvirt junior
 
 echo "junior ALL=(ALL) ALL" >> /etc/sudoers.d/junior
