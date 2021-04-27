@@ -1,15 +1,15 @@
- #!/bin/bash
+#!/bin/bash
 
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 sed -i '177s/.//' /etc/locale.gen
 locale-gen
-echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-echo "KEYMAP=br-abnt2" >> /etc/vconsole.conf
-echo "arch" >> /etc/hostname
-echo "127.0.0.1 localhost" >> /etc/hosts
-echo "::1       localhost" >> /etc/hosts
-echo "127.0.1.1 arch.localdomain arch" >> /etc/hosts
+echo "LANG=en_US.UTF-8" >>/etc/locale.conf
+echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
+echo "arch" >>/etc/hostname
+echo "127.0.0.1 localhost" >>/etc/hosts
+echo "::1       localhost" >>/etc/hosts
+echo "127.0.1.1 arch.localdomain arch" >>/etc/hosts
 echo root:200291 | chpasswd
 
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
@@ -39,11 +39,6 @@ useradd -m junior
 echo junior:200291 | chpasswd
 usermod -aG libvirt junior
 
-echo "junior ALL=(ALL) ALL" >> /etc/sudoers.d/junior
-
+echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
-
-
-
-
