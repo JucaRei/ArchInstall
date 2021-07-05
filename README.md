@@ -1,4 +1,4 @@
-# Arch Basic Install Commands-Script
+# 1. Arch Basic Install Commands-Script
 
 Remember that the first part of the Arch Linux install is manual, that is you will have to partition, format and mount the disk yourself. Install the base packages and make sure to include git so that you can clone the repository in chroot.
 
@@ -9,28 +9,69 @@ A small summary:
 ```
 
 1. If needed, load your keymap
-  -loadkeys br-abnt2
-2. Refresh the servers with pacman -Syy
-  -sudo pacman -Syyy
-3. Partition the disk
-  -cfdisk /dev/sda  (write)
-4. Format the partitions
-  mkfs.ext4 /dev/sda(number)    (can be any filesystem you like not only ext4)
-5. Mount the partitions
-  -mount /dev/sda(number) /mnt
-  
-  -(mount efi windows)  mkdir /mnt/boot
-  -mount /dev/sda(efi windows number) /mnt/boot
+  - loadkeys br-abnt2
+2. Refresh the servers with pacman -Syy and fix sync time
+  - sudo pacman -Syyy
+  - timedatectl set-ntp true
+3. Select best servers for your location
+  - reflector -c Brazil -a 6 --sort rate --save /etc/pacman.d/mirrorlist
 
-  -(windows partition acessible on linux)  /mnt/windows10
-  -mount /dev/sda(number)  /mnt/windows10
-6. Install the base packages into /mnt (pacstrap /mnt base linux linux-firmware git vim (intel-ucode or amd-ucode))
-7. Generate the FSTAB file with: 
-  -genfstab -U /mnt >> /mnt/etc/FSTAB
-8. Chroot in with arch-chroot /mnt
-9.  Download the git repository with git clone
-10. cd arch-basic
-11. Create swap file:
+4. Partition your disk:
+  - cfdisk /dev/sda  (write)
+  - gdisk /dev/sda  (write)
+    - (boot, swap, linuxfile System)
+5. Now, Format the partitions:
+     - mkfs.btrfs /dev/sda(number) (filesystem)    (can be any filesystem you like not only ext4)
+     - mkfs.fat -F32 /dev/sda(bootNumber)
+     - mkswap /dev/sda(swapNumber)
+
+6. Activate the swap: 
+  - swapon /dev/sda(swapNumber) 
+
+7. Mount the partitions
+  - mount /dev/sda(number) /mnt
+  - (mount efi windows)  mkdir /mnt/boot
+  - mount /dev/sda(efi windows number) /mnt/boot
+  - (windows partition acessible on linux)  /mnt/windows10
+  - mount /dev/sda(number)  /mnt/windows10
+
+8. Mount Btrfs subvolumes
+  - Root subvolume:
+    - btrfs su cr /mnt/@
+  - Home subvolume:
+    - btrfs su cr /mnt/@home
+  - Snapshots subvolume:
+    - btrfs su cr /mnt/@snapshots
+  - Var_log subvolume:
+    - btrfs su cr /mnt/@var_log
+  
+9. Umount to fix their own respective directories:
+  - umount /mnt
+
+10. Mount the subvolumes:
+  - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@ /dev/sda(filesytemNumber) /mnt
+  - mkdir -p /mnt/{boot,home,.snapshots,var_log}
+  - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@home /dev/sda(filesytemNumber) /mnt/home
+  - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@snapshots /dev/sda(filesytemNumber) /mnt/.snapshots
+  - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var_log
+    - Dont forget to mount boot:
+      - mount /dev/sda(bootNumber) /mnt/boot
+
+11. Check if everything is ok:
+  - lsblk
+
+### Now install the base packages for the System
+
+12. Install the base packages into /mnt (pacstrap /mnt base linux-zen linux-zen-headers linux-firmware git vim (intel-ucode or amd-ucode) reflector mtools dosfstools btrfs-progs
+    
+#### Generate the FSTAB file with: 
+  - genfstab -U /mnt >> /mnt/etc/fstab
+
+#### Enter in the installation directory
+  - arch-chroot /mnt
+1.  Download the git repository with git clone
+2.  cd arch-basic
+3.  Create swap file:
   -fallocate -l 1GB  /swapfile
   -chmod 600 /swapfile
   -mkswap  /swapfile
