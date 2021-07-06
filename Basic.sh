@@ -60,10 +60,9 @@ sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c "echo \"Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'\" >> /etc/pacman.d/hooks/nvidia.hook"
+ 
 
-# visual-studio-code-git zsh pacman-contrib snapper snapper-gui-git snap-pac-grub rsync 
-
-sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vlc papirus-icon-theme materia-kde 
+sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vlc papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib snapper snapper-gui-git snap-pac-grub rsync
 
 
 
