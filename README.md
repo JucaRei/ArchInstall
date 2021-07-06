@@ -50,8 +50,10 @@ A small summary:
 
 10. Mount the subvolumes:
 ```compress
-  choose lzo or zstd for compression
+  choose lzo or zstd for compression  (compress-force=ztsd:5  | compress-force=lzo:4)
 ```
+
+
 
   - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@ /dev/sda(filesytemNumber) /mnt
   - mkdir -p /mnt/{boot,home,.snapshots,var_log}

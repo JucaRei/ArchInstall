@@ -19,49 +19,47 @@ makepkg -si --noconfirm
 # pikaur -S --noconfirm auto-cpufreq
 # sudo systemctl enable --now auto-cpufreq
 
-# sudo mkdir /etc/pacman.d/hooks
-# sudo touch /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "[Trigger]" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Operation = Upgrade" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Operation = Install" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Operation = Remove" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Type = Path" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Target = boot/*" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "[Action]" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Depends = rsync" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Description = Backing up /boot..." >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "When = PreTransaction" >> /etc/pacman.d/hooks/50-bootbackup.hook
-# sudo echo "Exec = /usr/bin/rsync -a --delete /boot /.bootbackup" >> /etc/pacman.d/hooks/50-bootbackup.hook
+sudo mkdir /etc/pacman.d/hooks
+sudo touch /etc/pacman.d/hooks/50-bootbackup.hook
+sudo bash -c  'echo "[Trigger]" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Operation = Upgrade" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Operation = Install" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Operation = Remove" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Type = Path" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Target = boot/*" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "[Action]" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Depends = rsync" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Description = Backing up /boot..." >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "When = PreTransaction" >> /etc/pacman.d/hooks/50-bootbackup.hook'
+sudo bash -c  'echo "Exec = /usr/bin/rsync -a --delete /boot /.bootbackup" >> /etc/pacman.d/hooks/50-bootbackup.hook'
 
-# sudo touch /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "[Trigger]" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Operation = Upgrade" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Operation = Install" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Operation = Remove" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Type = Package" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Target = *" >> /etc/pacman.d/hooks/clean_cache.hook
+sudo touch /etc/pacman.d/hooks/clean_cache.hook
+sudo bash -c 'echo "[Trigger]" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Operation = Upgrade" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Operation = Install" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Operation = Remove" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Type = Package" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Target = *" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "[Action]" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Description = Cleaning pacman cache..." >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "When = PostTransaction" >> /etc/pacman.d/hooks/clean_cache.hook'
+sudo bash -c 'echo "Exec = /usr/bin/paccache -rk 1" >> /etc/pacman.d/hooks/clean_cache.hook'
 
-# sudo echo "[Action]" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Description = Cleaning pacman cache..." >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "When = PostTransaction" >> /etc/pacman.d/hooks/clean_cache.hook
-# sudo echo "Exec = /usr/bin/paccache -rk 1" >> /etc/pacman.d/hooks/clean_cache.hook
-
-# sudo touch /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "[Trigger]" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Operation=Install" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Operation=Upgrade" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Operation=Remove" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Type=Package" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Target=nvidia-dkms" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Target=linux-zen" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "# Change the linux part above and in the Exec line if a different kernel is used" >> /etc/pacman.d/hooks/nvidia.hook
-
-# sudo echo "[Action]" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Description=Update Nvidia module in initcpio" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "When=PostTransaction" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook
-# sudo echo "Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'" >> /etc/pacman.d/hooks/nvidia.hook
+sudo touch /etc/pacman.d/hooks/nvidia.hook
+sudo bash -c 'echo "[Trigger]" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Operation=Install" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Operation=Upgrade" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Operation=Remove" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Type=Package" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Target=nvidia-dkms" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Target=linux-zen" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "# Change the linux part above and in the Exec line if a different kernel is used" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "[Action]" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Description=Update Nvidia module in initcpio" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c "echo \"Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'\" >> /etc/pacman.d/hooks/nvidia.hook"
 
 # visual-studio-code-git zsh pacman-contrib snapper snapper-gui-git snap-pac-grub rsync 
 
