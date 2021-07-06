@@ -49,6 +49,10 @@ A small summary:
   - umount /mnt
 
 10. Mount the subvolumes:
+```compress
+  choose lzo or zstd for compression
+```
+
   - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@ /dev/sda(filesytemNumber) /mnt
   - mkdir -p /mnt/{boot,home,.snapshots,var_log}
   - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@home /dev/sda(filesytemNumber) /mnt/home
@@ -56,6 +60,7 @@ A small summary:
   - mount -o  noatime,compress=lzo,space_cache=v2,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var_log
     - Dont forget to mount boot:
       - mount /dev/sda(bootNumber) /mnt/boot
+
 
 11. Check if everything is ok:
   - lsblk
