@@ -63,7 +63,7 @@ sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo \"Exec=sh -c "/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
  
 
-sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vlc papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib snapper snapper-gui-git snap-pac-grub rsync ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono
+sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vlc papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib snapper snapper-gui-git snap-pac-grub rsync ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono
 
 
 
