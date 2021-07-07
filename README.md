@@ -61,11 +61,11 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
   choose lzo or zstd for compression  (compress-force=ztsd:5  | compress-force=lzo:4)
 ```
 
-- `mount -o noatime,compress=lzo,space_cache=v2,subvol=@ /dev/sda(filesytemNumber) /mnt`
+- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@ /dev/sda(filesytemNumber) /mnt`
 - `mkdir -p /mnt/{boot,home,.snapshots,var_log}`
-- `mount -o noatime,compress=lzo,space_cache=v2,subvol=@home /dev/sda(filesytemNumber) /mnt/home`
-- `mount -o noatime,compress=lzo,space_cache=v2,subvol=@snapshots /dev/sda(filesytemNumber) /mnt/.snapshots`
-- `mount -o noatime,compress=lzo,space\_cache=v2,subvol=@var\_log /dev/sda(filesytemNumber) /mnt/var_log`
+- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@home /dev/sda(filesytemNumber) /mnt/home`
+- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@snapshots /dev/sda(filesytemNumber) /mnt/.snapshots`
+- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var_log`
     - Dont forget to mount boot:
         - mount /dev/sd**X** *(boot)* /mnt/boot
 
@@ -89,12 +89,19 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
 1.  Download the git repository with git clone
 2.  cd arch-basic
-3.  Create swap file:
-    -	fallocate -l 1GB /swapfile
-    -	chmod 600 /swapfile
-    -	mkswap /swapfile
-    -	swapon /swapfile
+### Anothers way to create swap file:
+    - fallocate -l 3GB /swapfile
+    - chmod 600 /swapfile
+    - mkswap /swapfile
+    - swapon /swapfile
+
+ - Using
 
 -echo "swapfile none swap defaults 0 0" >> /etc/fstab
-12\. chmod +x install-uefi.sh
-13\. run with ./install-uefi.sh
+
+## Other Configurations after install
+
+ - `Add to mkinitcpio.conf`
+   - MODULES = `(btrfs i915 nvidia)`
+   - ON HOOKS remove **fsck** and add **btrfs**
+   - ON BINARIES put `"/usr/bin/btrfs"`
