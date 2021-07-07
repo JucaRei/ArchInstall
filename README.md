@@ -62,10 +62,10 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 ```
 
 - `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@ /dev/sda(filesytemNumber) /mnt`
-- `mkdir -p /mnt/{boot,home,.snapshots,var_log}`
+- `mkdir -p /mnt/{boot,home,.snapshots,var/log}`
 - `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@home /dev/sda(filesytemNumber) /mnt/home`
 - `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@snapshots /dev/sda(filesytemNumber) /mnt/.snapshots`
-- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var_log`
+- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var/log`
     - Dont forget to mount boot:
         - mount /dev/sd**X** *(boot)* /mnt/boot
 
@@ -95,7 +95,12 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
     - mkswap /swapfile
     - swapon /swapfile
 
- - Using
+ - Using ZRAM
+   - `pacman -S zramd`
+   - edit **/etc/default/zramd**, uncomment **MAX_SIZE**, put your desired value
+   - `MAX_SIZE=3072` (3GB)
+   - enable the service: `sudo sytemctl enable --now zramd.service`
+   - check if it's enabled: `lsblk`
 
 -echo "swapfile none swap defaults 0 0" >> /etc/fstab
 
@@ -103,5 +108,10 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
  - `Add to mkinitcpio.conf`
    - MODULES = `(btrfs i915 nvidia)`
-   - ON HOOKS remove **fsck** and add **btrfs**
+   - ON HOOKS remove **fsck** and add `btrfs` `grub-btrfs-overlayfs`
    - ON BINARIES put `"/usr/bin/btrfs"`
+
+ - `Optimus Manager`
+   - edit the config file `sudo nano /etc/optimus-manager/optimus-manager.conf`
+   - On **[nvidia]** change the `dynamic_power_management` to **fine**
+   - On **[optimus]** change the `startup_mode` to **hybrid**
