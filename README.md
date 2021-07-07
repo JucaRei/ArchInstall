@@ -43,17 +43,17 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 8.  Mount Btrfs subvolumes
 
 - Root subvolume:
-    - btrfs su cr /mnt/@
+    - `btrfs su cr /mnt/@`
 - Home subvolume:
-    - btrfs su cr /mnt/@home
+    - `btrfs su cr /mnt/@home`
 - Snapshots subvolume:
-    - btrfs su cr /mnt/@snapshots
+    - `btrfs su cr /mnt/@snapshots`
 - Var_log subvolume:
-    - btrfs su cr /mnt/@var_log
+    - `btrfs su cr /mnt/@var_log`
 
 9.  Umount to fix their own respective directories:
 
-	- umount /mnt
+	- `umount /mnt`
 
 10. Mount the subvolumes:
 
@@ -71,11 +71,13 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
 11. Check if everything is ok:
 
-- lsblk
+- `lsblk -f`
 
 ### Now install the base packages for the System
 
-12. Install the base packages into /mnt (`pacstrap /mnt base linux-zen linux-zen-headers linux-firmware git vim (intel-ucode or amd-ucode) reflector mtools dosfstools btrfs-progs`
+12. Install the base packages into /mnt 
+	- (intel-ucode or amd-ucode)
+- `pacstrap /mnt base linux-zen linux-zen-headers linux-firmware git vim intel-ucode reflector mtools dosfstools btrfs-progs`
 
 #### Generate the FSTAB file with:
 
