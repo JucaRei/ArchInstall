@@ -61,7 +61,7 @@ sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
 # sudo bash -c "echo \"Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'\" >> /etc/pacman.d/hooks/nvidia.hook"
-sudo bash -c 'echo \"Exec=sh -c "/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
 
 sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook vlc papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt
 
