@@ -19,6 +19,8 @@ pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialo
 
 # pacman -S --noconfirm xf86-video-amdgpu
 pacman -S xf86-video-intel
+
+# nvidia if you are using common linux kernel
 pacman -S nvidia-dkms nvidia-utils nvidia-settings
 
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB

@@ -64,13 +64,13 @@ sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/nvidia.hook'
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
 
-sudo pikaur -S xorg sddm plasma konsole wget curl dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stace papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git appimagelauncher discover-snap discover-snap kvantum-qt5 grub-customizer
+sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stace papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git appimagelauncher discover-snap discover-snap kvantum-qt5 grub-customizer
 
 # if you want to install snapper to create snapshots for backup
 # sudo pikaur -S snapper snapper-gui-git snap-pac-grub rsync
 
 # if you want to install timeshift to create snapshots for backup
-sudo pikaur -S timeshift-bin timeshift-autosnap
+# sudo pikaur -S timeshift-bin timeshift-autosnap
 
 # sudo systemctl enable --now snapper-timeline.timer
 # sudo systemctl enable --now snapper-cleanup.timer
