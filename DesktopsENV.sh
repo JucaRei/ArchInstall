@@ -48,29 +48,29 @@ sudo bash -c 'echo "Exec = /usr/bin/paccache -rk 1" >> /etc/pacman.d/hooks/clean
 
 # sudo touch /etc/pacman.d/hooks/nvidia.hook
 sudo touch /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook
-sudo bash -c 'echo "[Trigger]" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Operation=Install" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Operation=Upgrade" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Operation=Remove" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Type=Package" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Target=nvidia-dkms" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Target=linux-zen" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "# Change the linux part above and in the Exec line if a different kernel is used" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "[Action]" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Description=Update nvidia dkms modules in Linux initcpio" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/nvidia.hook'
-# sudo bash -c "echo \"Exec=/bin/sh -c 'while read -r trg; do case $trg in linux) exit 0; esac; done; /usr/bin/mkinitcpio -P'\" >> /etc/pacman.d/hooks/nvidia.hook"
-sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/nvidia.hook'
+sudo bash -c 'echo "[Trigger]" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Operation=Install" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Operation=Upgrade" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Operation=Remove" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Type=Package" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Target=nvidia-dkms" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Target=linux-zen" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "# Change the linux part above and in the Exec line if a different kernel is used" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "[Action]" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Description=Update nvidia dkms modules in Linux initcpio" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+sudo bash -c  'echo \"Exec=/bin/sh -c "while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/90-mkinitcpio-dkms-linux'
+sudo bash -c 'echo Exec=/bin/sh -c "\"while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
+# sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/nvidia.hook'
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
-sudo bash -c "Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen'"
 
 # KDE
 # sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stace papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git appimagelauncher discover-snap discover-snap kvantum-qt5 grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
 
 # Cinnamon
-sudo pacman -S --noconfirm xorg lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings arc-gtk-theme arc-icon-theme vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
+sudo pikaur -S xorg lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings arc-gtk-theme arc-icon-theme vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
 
 # if you want to install snapper to create snapshots for backup
 # sudo pikaur -S snapper snapper-gui-git snap-pac-grub rsync
