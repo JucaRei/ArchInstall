@@ -66,7 +66,11 @@ sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pac
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
 sudo bash -c "Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen'"
 
-sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stace papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git appimagelauncher discover-snap discover-snap kvantum-qt5 grub-customizer
+# KDE
+# sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin ark kate kwrite kcalc spectacle krunner partitionmanager firefox vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stace papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git appimagelauncher discover-snap discover-snap kvantum-qt5 grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
+
+# Cinnamon
+sudo pacman -S --noconfirm xorg lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings arc-gtk-theme arc-icon-theme vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
 
 # if you want to install snapper to create snapshots for backup
 # sudo pikaur -S snapper snapper-gui-git snap-pac-grub rsync
@@ -77,7 +81,12 @@ sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin ark kate kwrite 
 # sudo systemctl enable --now snapper-timeline.timer
 # sudo systemctl enable --now snapper-cleanup.timer
 
-sudo systemctl enable sddm
+# Enable KDE
+# sudo systemctl enable sddm
+
+#Enable Cinnamon
+sudo systemctl enable lightdm
+
 /bin/echo -e "\e[1;32mREBOOTING IN 5..4..3..2..1..\e[0m"
 sleep 5
 reboot
