@@ -67,7 +67,7 @@ sudo bash -c 'echo Exec=/bin/sh -c "\"while read -r trg; do case $trg in linux-z
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
 
 # KDE
-sudo pikaur -S xorg sddm plasma konsole wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook bluez-alsa-git pavucontrol vlc stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+sudo pikaur -S xorg sddm plasma konsole kdialog wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook pavucontrol vlc stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
