@@ -8,7 +8,7 @@ sudo firewall-cmd --add-port=1025-65535/udp --permanent
 sudo firewall-cmd --reload
 
 reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
-sudo pacman -Syy
+sudo pacman -Syyy
 
 git clone https://aur.archlinux.org/pikaur.git
 cd pikaur/
@@ -24,7 +24,9 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # LXDE
-sudo pikaur -S xorg-server1.19-git xorg-xinit lxde leafpad gtkmm3 archlinux-wallpaper openbox ttf-dejavu ttf-liberation vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
+sudo pikaur -S xorg-server1.19-git xorg-xinit lxde tilix leafpad gtkmm3 archlinux-wallpaper ttf-dejavu ttf-liberation vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
+
+# sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
 #Enable LXDE
 sudo systemctl enable lxdm

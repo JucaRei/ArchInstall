@@ -21,7 +21,7 @@ pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialo
 pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet wireless_tools wpa_supplicant dialog os-prober mtools dosfstools base-devel linux-lts54-headers
 
 # pacman -S --noconfirm xf86-video-amdgpu
-pacman -S xf86-video-intel xf86-video-nouveau
+pacman -S xf86-video-intel
 
 # nvidia if you are using common linux kernel
 pacman -S nvidia-dkms nvidia-utils nvidia-settings
@@ -29,6 +29,7 @@ pacman -S nvidia-dkms nvidia-utils nvidia-settings
 # old pc lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
 pacman -S nvidia-340xx-lts nvidia-340xx-utils nvidia-340xx-settings
+# pacman -S xf86-video-intel xf86-video-nouveau
 
 # Old pc only works with xorg-server1.19-git and max kernel 5.4
 # sudo pacman -S nvidia-304xx
