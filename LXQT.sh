@@ -24,7 +24,7 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # Lxqt
-sudo pikaur -S xorg xorg-xinit lxqt sddm lxqt-connman-applet lxqt-panel libstatgrab libsysstat xscreensaver-arch-logo ttf-dejavu tilix archlinux-wallpaper ttf-dejavu ttf-liberation vlc firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light appimagelauncher breeze-hacked-cursor-theme suru-plus-dark-git
+sudo pikaur -S xorg lxqt libpulse libstatgrab libsysstat lm_sensors network-manager-applet oxygen-icons pavucontrol-qt filezilla leafpad sddm ttf-dejavu tilix ttf-dejavu ttf-liberation vlc firefox-developer-edition ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
 
 # nvidia 304xx
 # xorg-server1.19-git

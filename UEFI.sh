@@ -17,10 +17,10 @@ echo root:200291 | chpasswd
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack
-pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialog wpa_supplicant linux-zen-headers base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion cups hplip openssh rsync acpi acpi_call tlp virt-manager qemu qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq vde2 ebtables openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialog wpa_supplicant linux-zen-headers pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion cups hplip openssh rsync acpi acpi_call tlp virt-manager qemu qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq vde2 ebtables openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g
 
 # OLDMAC INSTALL BASE
-# pacman -S efibootmgr avahi networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel reflector openssh bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g sof-firmware firewalld cups tlp acpi acpi_call
+# pacman -S efibootmgr networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld cups tlp rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils
 
 # pacman -S --noconfirm xf86-video-amdgpu
 pacman -S xf86-video-intel
@@ -43,11 +43,12 @@ pacman -S nvidia-dkms nvidia-utils nvidia-settings
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
-
 systemctl enable NetworkManager
 systemctl enable bluetooth
 systemctl enable cups.service
+# OLDPC don`t need it
 systemctl enable sshd
+# OLDPC don`t need it
 systemctl enable avahi-daemon
 systemctl enable tlp # You can comment this command out if you didn't install tlp, see above
 systemctl enable reflector.timer

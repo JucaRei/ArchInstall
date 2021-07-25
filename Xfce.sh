@@ -24,12 +24,12 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # LXDE
-sudo pikaur -S xorg lxde lxdm tilix leafpad gtkmm3 ttf-dejavu ttf-liberation vlc xed xreader metacity gnome-shell firefox-developer-edition ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
+sudo pikaur -S xorg lightdm xfce4 xfce4-goodies menulibre libcanberra firefox-developer-edition ttf-droid ttf-dejavu ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
 
 # sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
 #Enable LXDE
-sudo systemctl enable lxdm
+sudo systemctl enable lightdm
 
 /bin/echo -e "\e[1;32mREBOOTING IN 5..4..3..2..1..\e[0m"
 sleep 5
