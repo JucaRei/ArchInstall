@@ -55,6 +55,13 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
 	- `umount /mnt`
 
+```Remember
+    On oldpc use the EFI from default OS (mac) to boot, which is on /dev/sda1 
+```
+```ex
+    mount /dev/sda1 /mnt/boot
+```
+
 10. Mount the subvolumes:
 
 ```compress
@@ -79,6 +86,10 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 	- (intel-ucode or amd-ucode)
 - `pacstrap /mnt base linux-zen linux-zen-headers linux-firmware git vim intel-ucode reflector mtools dosfstools btrfs-progs`
 
+### **OLDPC**
+
+- ` pacstrap /mnt base linux linux-headers linux-firmware intel-ucode git vim nano`
+
 #### Generate the FSTAB file with:
 
 - `genfstab -U /mnt >> /mnt/etc/fstab`
@@ -86,6 +97,28 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 #### Enter in the installation directory
 
 - `arch-chroot /mnt`
+
+```OldPC
+    OldMac
+
+    bootctl --path=/boot install
+```
+
+- `cd /boot/`
+- `cd /loader`
+- `vim loader.conf`
+- change the last string to `arch-*`
+- `cd /entries/`
+- **make file arch.conf**
+- `vim arch.conf`
+- paste commands with your image:
+
+```entries
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /initramfs-linux.img
+options root=/dev/sda3 rw
+```
 
 1.  Download the git repository with git clone
 2.  cd arch-basic
@@ -95,7 +128,7 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
     - mkswap /swapfile
     - swapon /swapfile
 
- - Using ZRAM
+ - Using **ZRAM** (Best)
    - `pacman -S zramd`
    - edit **/etc/default/zramd**, uncomment **MAX_SIZE**, put your desired value
    - `MAX_SIZE=3072` (3GB)

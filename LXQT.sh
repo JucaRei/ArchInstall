@@ -23,13 +23,16 @@ makepkg -si --noconfirm
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
 
-# LXDE
-sudo pikaur -S xorg-server1.19-git xorg-xinit lxde tilix leafpad gtkmm3 archlinux-wallpaper ttf-dejavu ttf-liberation vlc xed xreader metacity gnome-shell firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono optimus-manager optimus-manager-qt qimgv-light appimagelauncher grub-customizer breeze-hacked-cursor-theme suru-plus-dark-git
+# Lxqt
+sudo pikaur -S xorg xorg-xinit lxqt sddm lxqt-connman-applet lxqt-panel libstatgrab libsysstat xscreensaver-arch-logo ttf-dejavu tilix archlinux-wallpaper ttf-dejavu ttf-liberation vlc firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook visual-studio-code-bin pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light appimagelauncher breeze-hacked-cursor-theme suru-plus-dark-git
+
+# nvidia 304xx
+# xorg-server1.19-git
 
 # sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
 #Enable LXDE
-sudo systemctl enable lxdm
+sudo systemctl enable sddm
 
 /bin/echo -e "\e[1;32mREBOOTING IN 5..4..3..2..1..\e[0m"
 sleep 5
