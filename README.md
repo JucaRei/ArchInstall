@@ -148,3 +148,28 @@ options root=/dev/sda3 rw
    - edit the config file `sudo nano /etc/optimus-manager/optimus-manager.conf`
    - On **[nvidia]** change the `dynamic_power_management` to **fine**
    - On **[optimus]** change the `startup_mode` to **hybrid**
+
+## Other Repos
+
+### Chaotic-AUR
+
+**Install the primary key, with it install our keyring, and finishing installing our mirrorlist.**
+
+`pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com`\
+`pacman-key --lsign-key 3056513887B78AEB`\
+`pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'`
+
+Append (add to the **end** of the file) `/etc/pacman.conf`
+
+`[chaotic-aur]`\
+`Include = /etc/pacman.d/chaotic-mirrorlist`
+
+### Liquorix
+
+**Key-ID:** `9AE4078033F8024D`
+
+`pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D` \
+`pacman-key --lsign-key 9AE4078033F8024D`
+
+`[liquorix]`\
+`Server = https://liquorix.net/archlinux/$repo/$arch`
