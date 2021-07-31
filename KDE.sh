@@ -61,13 +61,13 @@ sudo bash -c 'echo "Description=Update nvidia dkms modules in Linux initcpio" >>
 sudo bash -c 'echo "Depends=mkinitcpio" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
 sudo bash -c 'echo "When=PostTransaction" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
 sudo bash -c 'echo "NeedsTargets" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
-sudo bash -c  'echo \"Exec=/bin/sh -c "while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/90-mkinitcpio-dkms-linux'
+sudo bash -c 'echo \"Exec=/bin/sh -c "while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/90-mkinitcpio-dkms-linux'
 sudo bash -c 'echo Exec=/bin/sh -c "\"while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook'
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen"\" >> /etc/pacman.d/hooks/nvidia.hook'
 # sudo bash -c 'echo Exec=sh -c "\"/usr/bin/mkinitcpio -p linux-zen && /usr/bin/mkinitcpio -p linux"\" >> /etc/pacman.d/hooks/nvidia.hook'
 
 # KDE
-sudo pikaur -S xorg sddm plasma konsole kdialog wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook pavucontrol vlc stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+sudo pikaur -S xorg sddm plasma konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook pavucontrol vlc stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
