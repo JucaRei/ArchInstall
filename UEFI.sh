@@ -16,8 +16,8 @@ echo root:200291 | chpasswd
 
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
-# not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack
-pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion exfat-utils cups hplip openssh rsync acpi acpi_call tlp virt-manager qemu qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq vde2 ebtables openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g
+# not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack 
+pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils cups hplip openssh rsync acpi acpi_call tlp virt-manager qemu qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq vde2 ebtables openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g
 
 # OLDMAC INSTALL BASE
 # pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld cups tlp rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils
@@ -28,8 +28,10 @@ pacman -S xf86-video-intel
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
 
-# nvidia if you are using common linux kernel
-pacman -S nvidia-dkms nvidia-utils nvidia-settings
+# nvidia if you are using zen linux kernel
+# pacman -S nvidia-dkms nvidia-utils nvidia-settings
+
+pacman -S nvidia nvidia-utils nvidia-settings
 
 # OLDMAC (late 2008) lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
