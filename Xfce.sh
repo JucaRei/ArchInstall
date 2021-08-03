@@ -24,7 +24,7 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # LXDE
-sudo pikaur -S xorg lightdm lightdm-slick-greeter xfce4 xfce4-goodies menulibre libcanberra firefox-developer-edition ttf-droid ttf-dejavu ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
+sudo pikaur -S xorg lightdm lightdm-slick-greeter lightdm-gtk-greeter-settings xfce4 xfce4-goodies menulibre libcanberra firefox-developer-edition ttf-droid ttf-dejavu ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
 
 # sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
