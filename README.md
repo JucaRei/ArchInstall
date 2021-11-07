@@ -83,9 +83,15 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 ### Now install the base packages for the System
 
 12. Install the base packages into /mnt 
+### **Arch**
+
 	- (intel-ucode or amd-ucode)
 - `pacstrap /mnt base linux-zen linux-zen-headers linux-firmware git vim intel-ucode reflector mtools dosfstools btrfs-progs`
 
+### **Artix**
+
+	- (intel-ucode or amd-ucode)
+- `basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git vim intel-ucode reflector mtools dosfstools btrfs-progs`
 ### **OLDPC**
 
 - ` pacstrap /mnt base linux linux-headers linux-firmware intel-ucode git vim nano`
@@ -94,9 +100,18 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
 - `genfstab -U /mnt >> /mnt/etc/fstab`
 
+**Artix**
+
+- `fstabgen -U /mnt >> /mnt/etc/fstab` 
+
 #### Enter in the installation directory
 
 - `arch-chroot /mnt`
+
+**Artix**
+
+- `artix-chroot /mnt`
+
 
 ```OldPC
     OldMac
