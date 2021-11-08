@@ -25,7 +25,7 @@ paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
 paru -S nvidia-lts nvidia-utils nvidia-settings
 
 # KDE
-paru -S xorg sddm sddm-runit plasma konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition microsoft-edge-stable-bin pavucontrol celluloid stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+paru -S xorg sddm sddm-runit plasma konsole kdialog plasma5-applets-eventcalendar wget curl dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition microsoft-edge-stable-bin pavucontrol celluloid stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
