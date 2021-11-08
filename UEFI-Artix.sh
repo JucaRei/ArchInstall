@@ -14,7 +14,7 @@ echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 archnitro.localdomain archnitro" >>/etc/hosts
 echo root:200291 | chpasswd
 
-pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet dialog artix-archlinux-support wpa_supplicant wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call tlp tlp-runit virt-manager qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet ntp ntp-runit dialog artix-archlinux-support wpa_supplicant wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call tlp tlp-runit virt-manager qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
 
 # ADD Repos
 
@@ -49,9 +49,12 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 ln -s /etc/runit/sv/NetworkManager /run/runit/service
 ln -s /etc/runit/sv/sshd /run/runit/service
+ln -s /etc/runit/sv/acpid /run/runit/service
+ln -s /etc/runit/sv/ntpd /run/runit/service
 ln -s /etc/runit/sv/bluetoothd /run/runit/service
 ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
-ln -s /etc/runit/sv/avahi /run/runit/service
+ln -s /etc/runit/sv/avahi-daemon /run/runit/service
+ln -s /etc/runit/sv/alsa /run/runit/service
 ln -s /etc/runit/sv/cups /run/runit/service
 ln -s /etc/runit/sv/tlp /run/runit/service
 
