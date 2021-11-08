@@ -55,7 +55,7 @@ ln -s /etc/runit/sv/bluetoothd /run/runit/service
 ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
 ln -s /etc/runit/sv/avahi-daemon /run/runit/service
 ln -s /etc/runit/sv/alsa /run/runit/service
-ln -s /etc/runit/sv/cups /run/runit/service
+ln -s /etc/runit/sv/cupsd /run/runit/service
 ln -s /etc/runit/sv/tlp /run/runit/service
 
 useradd -m junior
