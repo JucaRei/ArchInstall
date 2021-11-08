@@ -39,7 +39,7 @@ echo "Server = http://omniverse.artixlinux.org/$arch" >>/etc/pacman.conf
 
 pacman-key --populate archlinux
 
-pacman -S xf86-video-intel
+# pacman -S xf86-video-intel xorg --ignore xorg-server-xdmx
 
 # pacman -S reflector
 # pacman -S nvidia-lts nvidia-utils nvidia-settings
