@@ -188,3 +188,32 @@ Append (add to the **end** of the file) `/etc/pacman.conf`
 
 `[liquorix]`\
 `Server = https://liquorix.net/archlinux/$repo/$arch`
+
+================================
+
+# Void-Linux
+
+Format your HD, just like Arch
+
+```mount
+mount /dev/sdaX /mnt
+mkdir -p /mnt/{boot/efi,.snapshots,home,var/log}
+mount /dev/sdaX /mnt/boot/efi
+```
+
+Select the **mirror** and use the **appropriate URL** on a **Shell Variable**
+
+```URL
+# REPO=https://alpha.de.repo.voidlinux.org/current
+```
+ And the architecture
+
+ ```arch
+ ARCH=x86_64 or ARCH=x86_64-musl
+ ```
+
+Install the base system
+
+```base
+# XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system
+```
