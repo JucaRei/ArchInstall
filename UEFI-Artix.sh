@@ -50,7 +50,7 @@ pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network
 # pacman -S reflector
 # pacman -S nvidia-lts nvidia-utils nvidia-settings
 
-grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 ln -s /etc/runit/sv/NetworkManager /run/runit/service
@@ -63,6 +63,7 @@ ln -s /etc/runit/sv/avahi-daemon /run/runit/service
 ln -s /etc/runit/sv/alsa /run/runit/service
 ln -s /etc/runit/sv/cupsd /run/runit/service
 ln -s /etc/runit/sv/tlp /run/runit/service
+ln -s /etc/runit/sv/libvirtd/ /run/runit/service
 
 useradd -m junior
 echo junior:200291 | chpasswd
