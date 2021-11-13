@@ -91,7 +91,7 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 ### **Artix**
 
 	- (intel-ucode or amd-ucode)
-- `basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git vim intel-ucode reflector mtools dosfstools btrfs-progs`
+- `basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git vim intel-ucode mtools dosfstools btrfs-progs`
 ### **OLDPC**
 
 - ` pacstrap /mnt base linux linux-headers linux-firmware intel-ucode git vim nano`
