@@ -11,6 +11,18 @@ aur_helper=true
 install_ly=true
 gen_xprofile=false
 
+ln -s /etc/runit/sv/NetworkManager /run/runit/service
+ln -s /etc/runit/sv/sshd /run/runit/service
+ln -s /etc/runit/sv/acpid /run/runit/service
+ln -s /etc/runit/sv/ntpd /run/runit/service
+ln -s /etc/runit/sv/bluetoothd /run/runit/service
+ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
+ln -s /etc/runit/sv/avahi-daemon /run/runit/service
+ln -s /etc/runit/sv/alsa /run/runit/service
+ln -s /etc/runit/sv/cupsd /run/runit/service
+ln -s /etc/runit/sv/tlp /run/runit/service
+ln -s /etc/runit/sv/libvirtd/ /run/runit/service
+
 sudo timedatectl set-ntp true
 sudo hwclock --systohc
 
@@ -29,17 +41,20 @@ if [[ $aur_helper = true ]]; then
   cd
 fi
 
-paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
-paru -S nvidia-lts nvidia-utils nvidia-settings
+#paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
+#paru -S nvidia-lts nvidia-utils nvidia-settings
+#paru -S xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama
 
-paru -S bspwm arandr xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama pcmanfm-gtk3 sxhkd polybar rxvt-unicode alacritty dmenu nitrogen feh unclutter xclio libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit light-slick-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
+paru -S bspwm arandr xorg pcmanfm-gtk3 sxhkd polybar xfce4-terminal alacritty dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit light-slick-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
+
+xdg-user-dirs-update
 
 mkdir -p $HOME/.config/{bspwm,sxhkd,dunst,rofi}
 mkdir -p $HOME/Documents/workspace/{Configs,Github}
 
 install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
 install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
-cp /usr/share/dunst/dunstrc $HOME/.config/dunst
+cp /etc/dunst/dunstrc $HOME/.config/dunst
 
 #cp /usr/share/doc/bspwm/examples/bspwmrc .config/bswpm
 #cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd
@@ -86,8 +101,8 @@ touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd $HOME/ArchInstall/BSPWM
 
-cp mdp/mdp.conf ~/.config/mdp/
-cp ncmpcpp/config ~/.ncmpcpp/
+cp $HOME/ArchInstall/BSPWM/mdp/mdp.conf ~/.config/mdp/
+cp $HOME/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp/
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
@@ -110,7 +125,7 @@ echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
 #echo "picom -f &" >> ~/.xinitrc
 #echo "exec bspwm" >> ~/.xinitrc
 
-#sudo ln -s /etc/runit/sv/lightdm /run/runit/service
+sudo ln -s /etc/runit/sv/lightdm /run/runit/service
 
 printf "\e[1;32mCHANGE NECESSARY FILES BEFORE REBOOT\e[0m"
 printf "\e[1;32mLIGHTDM CONFIG (SEAT: GREETER-SESSION TO lightdm-slick greeter)\e[0m"
