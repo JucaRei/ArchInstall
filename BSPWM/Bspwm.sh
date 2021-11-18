@@ -32,19 +32,21 @@ fi
 paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
 paru -S nvidia-lts nvidia-utils nvidia-settings
 
-paru -S bspwm arandr xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama pcmanfm-gtk3 sxhkd polybar rxvt-unicode alacritty dmenu nitrogen feh unclutter xclio libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit light-slick-greeter light-locker mpd ncmpcpp mpc neofetch htop geany
+paru -S bspwm arandr xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama pcmanfm-gtk3 sxhkd polybar rxvt-unicode alacritty dmenu nitrogen feh unclutter xclio libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit light-slick-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
 
 mkdir -p $HOME/.config/{bspwm,sxhkd,dunst,rofi}
 mkdir -p $HOME/Documents/workspace/{Configs,Github}
 
 install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
 install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
+cp /usr/share/dunst/dunstrc $HOME/.config/dunst
 
-mkdir .config/bswpm
-mkdir .config/sxhkd
+#cp /usr/share/doc/bspwm/examples/bspwmrc .config/bswpm
+#cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd
 
-cp /usr/share/doc/bspwm/examples/bspwmrc .config/bswpm
-cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd
+echo "setxkbmap br &" >>$HOME/.config/bspwm/bspwmrc
+echo "/usr/bin/numlockx on &" >>$HOME/.config/bspwm/bspwmrc
+echo "picom &" >>$HOME/.config/bspwm/bspwmrc
 
 cd $HOME/Documents/workspace/Configs
 git clone https://github.com/JucaRei/fonts
@@ -68,6 +70,7 @@ cd
 #POLYBAR
 cd $HOME/Documents/workspace/Configs/polybar-themes
 chmod +x setup.sh
+./setup.sh
 cd
 
 # sxhkdrc Config your terminal
@@ -93,7 +96,10 @@ cp ncmpcpp/config ~/.ncmpcpp/
 feh --no-fehbg --bg-scale '$HOME/Pictures/wallpaper.jpg'
 
 #bspwmrc
+cd $HOME/Documents/workspace/Configs/dotfiles
+cp Xresources ~/.Xresources
 echo "xrdb ${HOME}/.Xresources" >>~/.config/bspwm/bspwmrc
+
 echo "$HOME/.config/polybar/launch.sh --forest &" >>~/.config/bspwm/bspwmrc
 echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
 
@@ -107,3 +113,5 @@ echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
 #sudo ln -s /etc/runit/sv/lightdm /run/runit/service
 
 printf "\e[1;32mCHANGE NECESSARY FILES BEFORE REBOOT\e[0m"
+printf "\e[1;32mLIGHTDM CONFIG (SEAT: GREETER-SESSION TO lightdm-slick greeter)\e[0m"
+printf "\e[1;32mLIGHTDM CONFIG (USER-SESSION: bspwm)\e[0m"
