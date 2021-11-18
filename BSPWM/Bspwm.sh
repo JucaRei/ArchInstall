@@ -11,17 +11,17 @@ aur_helper=true
 install_ly=true
 gen_xprofile=false
 
-ln -s /etc/runit/sv/NetworkManager /run/runit/service
-ln -s /etc/runit/sv/sshd /run/runit/service
-ln -s /etc/runit/sv/acpid /run/runit/service
-ln -s /etc/runit/sv/ntpd /run/runit/service
-ln -s /etc/runit/sv/bluetoothd /run/runit/service
-ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
-ln -s /etc/runit/sv/avahi-daemon /run/runit/service
-ln -s /etc/runit/sv/alsa /run/runit/service
-ln -s /etc/runit/sv/cupsd /run/runit/service
-ln -s /etc/runit/sv/tlp /run/runit/service
-ln -s /etc/runit/sv/libvirtd/ /run/runit/service
+sudo ln -s /etc/runit/sv/NetworkManager /run/runit/service
+sudo ln -s /etc/runit/sv/sshd /run/runit/service
+sudo ln -s /etc/runit/sv/acpid /run/runit/service
+sudo ln -s /etc/runit/sv/ntpd /run/runit/service
+sudo ln -s /etc/runit/sv/bluetoothd /run/runit/service
+sudo ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
+sudo ln -s /etc/runit/sv/avahi-daemon /run/runit/service
+sudo ln -s /etc/runit/sv/alsa /run/runit/service
+sudo ln -s /etc/runit/sv/cupsd /run/runit/service
+sudo ln -s /etc/runit/sv/tlp /run/runit/service
+sudo ln -s /etc/runit/sv/libvirtd/ /run/runit/service
 
 sudo timedatectl set-ntp true
 sudo hwclock --systohc
