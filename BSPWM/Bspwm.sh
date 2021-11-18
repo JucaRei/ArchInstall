@@ -115,3 +115,4 @@ echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
 printf "\e[1;32mCHANGE NECESSARY FILES BEFORE REBOOT\e[0m"
 printf "\e[1;32mLIGHTDM CONFIG (SEAT: GREETER-SESSION TO lightdm-slick greeter)\e[0m"
 printf "\e[1;32mLIGHTDM CONFIG (USER-SESSION: bspwm)\e[0m"
+printf "\e[1;32mRunit Services\e[0m"
