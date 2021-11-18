@@ -108,6 +108,7 @@ cp $HOME/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp/
 # mv dotfiles/polybar $HOME/.config
 # mv dotfiles/Xresources $HOME/.Xresources
 
+cp $HOME/Documents/workspace/Configs/dotfiles/wallpaper.jpg $HOME/Pictures/
 feh --no-fehbg --bg-scale '$HOME/Pictures/wallpaper.jpg'
 
 #bspwmrc
