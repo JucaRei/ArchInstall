@@ -33,13 +33,13 @@ sudo firewall-cmd --reload
 reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
 sudo pacman -Syy
 
-if [[ $aur_helper = true ]]; then
-  cd /tmp
-  git clone https://aur.archlinux.org/paru.git
-  cd paru/
-  makepkg -si --noconfirm
-  cd
-fi
+# if [[ $aur_helper = true ]]; then
+#   cd /tmp
+#   git clone https://aur.archlinux.org/paru.git
+#   cd paru/
+#   makepkg -si --noconfirm
+#   cd
+# fi
 
 #paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
 #paru -S nvidia-lts nvidia-utils nvidia-settings
