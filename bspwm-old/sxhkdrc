@@ -15,7 +15,7 @@ super + p
 	polybar-msg cmd show
 # terminal emulator
 super + Return
-	urxvt
+	xfce4-terminal
 
 # program launcher
 super + @space

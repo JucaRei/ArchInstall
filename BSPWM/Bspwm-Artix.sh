@@ -45,23 +45,26 @@ fi
 #paru -S nvidia-lts nvidia-utils nvidia-settings
 #paru -S xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama
 
-paru -S bspwm arandr xorg pcmanfm-gtk3 sxhkd polybar xfce4-terminal alacritty dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit light-slick-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
+paru -S bspwm arandr xorg spacefm sxhkd polybar xfce4-terminal light-locker alacritty playerctl awesome-terminal-fonts ttf-font-awesome dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance ligthdm lightdm-runit lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
 
 xdg-user-dirs-update
 
 mkdir -p $HOME/.config/{bspwm,sxhkd,dunst,rofi}
 mkdir -p $HOME/Documents/workspace/{Configs,Github}
 
-install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
-install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
+#install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
+#install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
+cp $HOME/ArchInstall/bspwm-old/bspwmrc $HOME/.config/bspwm/
+cp $HOME/ArchInstall/bspwm-old/sxhkdrc $HOME/.config/sxhkd/
+
 cp /etc/dunst/dunstrc $HOME/.config/dunst
 
 #cp /usr/share/doc/bspwm/examples/bspwmrc .config/bswpm
 #cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd
 
-echo "setxkbmap br &" >>$HOME/.config/bspwm/bspwmrc
+#echo "setxkbmap br &" >>$HOME/.config/bspwm/bspwmrc
 echo "/usr/bin/numlockx on &" >>$HOME/.config/bspwm/bspwmrc
-echo "picom &" >>$HOME/.config/bspwm/bspwmrc
+#echo "picom &" >>$HOME/.config/bspwm/bspwmrc
 
 cd $HOME/Documents/workspace/Configs
 git clone https://github.com/JucaRei/fonts
@@ -83,10 +86,10 @@ chmod +x setup.sh
 cd
 
 #POLYBAR
-cd $HOME/Documents/workspace/Configs/polybar-themes
-chmod +x setup.sh
-./setup.sh
-cd
+#cd $HOME/Documents/workspace/Configs/polybar-themes
+#chmod +x setup.sh
+#./setup.sh
+#cd
 
 # sxhkdrc Config your terminal
 # picom conf remove vsync
@@ -99,10 +102,10 @@ cd $HOME/ArchInstall/BSPWM
 mkdir -p ~/.config/mpd && cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
-cd $HOME/ArchInstall/BSPWM
+cd
 
-cp $HOME/ArchInstall/BSPWM/mdp/mdp.conf ~/.config/mdp/
-cp $HOME/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp/
+cp $HOME/ArchInstall/BSPWM/mpd/mpd.conf $HOME/.config/mpd/
+cp $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.ncmpcpp/
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
@@ -116,7 +119,7 @@ cd $HOME/Documents/workspace/Configs/dotfiles
 cp Xresources ~/.Xresources
 echo "xrdb ${HOME}/.Xresources" >>~/.config/bspwm/bspwmrc
 
-echo "$HOME/.config/polybar/launch.sh --forest &" >>~/.config/bspwm/bspwmrc
+#echo "$HOME/.config/polybar/launch.sh --forest &" >>~/.config/bspwm/bspwmrc
 echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
 
 #echo "setxkbmap br &" >> ~/.xinitrc
