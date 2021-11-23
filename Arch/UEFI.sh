@@ -42,7 +42,7 @@ pacman -S nvidia nvidia-utils nvidia-settings
 # sudo pacman -S nvidia-304xx
 
 # OLDPC don`t need it
-grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 systemctl enable NetworkManager
