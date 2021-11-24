@@ -105,7 +105,7 @@ touch database mpd.conf mpd.fifo mpd.log mpdstate
 cd
 
 cp $HOME/ArchInstall/BSPWM/mpd/mpd.conf $HOME/.config/mpd/
-cp $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.ncmpcpp/
+cp $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.config/ncmpcpp/
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
