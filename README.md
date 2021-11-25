@@ -68,11 +68,11 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
   choose lzo or zstd for compression  (compress-force=ztsd:5  | compress-force=lzo:4)
 ```
 
-- `mount -o noatime,compress-force=zstd:8,space_cache=v2,discard=async,subvol=@ /dev/sdaX /mnt`
+- `mount -o noatime,compress-force=zstd:16,space_cache=v2,commit=60,discard=async,subvol=@ /dev/sdaX /mnt`
 - `mkdir -p /mnt/{boot,home,.snapshots,var/log}`
-- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@home /dev/sda(filesytemNumber) /mnt/home`
-- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@snapshots /dev/sda(filesytemNumber) /mnt/.snapshots`
-- `mount -o noatime,compress=lzo,space_cache=v2,discard=async,subvol=@var_log /dev/sda(filesytemNumber) /mnt/var/log`
+- `mount -o noatime,compress-force=zstd:16,space_cache=v2,commit=60,discard=async,subvol=@home /dev/sdaX /mnt/home`
+- `mount -o noatime,compress-force=zstd:16,space_cache=v2,commit=60,discard=async,subvol=@snapshots /dev/sdaX /mnt/.snapshots`
+- `mount -o noatime,compress-force=zstd:16,space_cache=v2,commit=60,discard=async,subvol=@var_log /dev/sdaX /mnt/var/log`
     - Dont forget to mount boot:
         - mount /dev/sd**X** *(boot)* /mnt/boot
 
