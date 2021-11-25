@@ -10,6 +10,11 @@ wpa_passphrase <SSID> <password> >> /etc/wpa_supplicant/wpa_supplicant-<interfac
 wpa_supplicant -B -i <interface> -c /etc/wpa_supplicant/wpa_supplicant-<interface>.conf
 ```
 
+### Update the repo
+```update
+  xbps-install -Su xbps
+```
+
 make 3 partitions for boot, root and home.
 
 ```format
@@ -17,6 +22,49 @@ mkfs.fat -F32 /dev/sdX
 mkfs.btrfs /dev/sdX
 mkfs.btrfs /dev/sdX
 ```
+REPO=https://alpha.de.repo.voidlinux.org/current
+ARCH=x86_64
+
+XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind polkit dbus chrony neofetch
+
+mount --rbind /sys /mnt/sys && mount --make-rslave /mnt/sys
+
+mount --rbind /dev /mnt/dev && mount --make-rslave /mnt/dev
+
+mount --rbind /proc /mnt/proc && mount --make-rslave /mnt/proc
+
+cp /etc/resolv.conf /mnt/etc
+
+chroot /mnt /bin/bash
+
+ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+
+(locales)
+vim /etc/default/libc-locales 
+xbps-reconfigure -f glibc-locales
+
+echo "juca" > /etc/hostname
+
+vim /etc/hosts
+
+passwd for root 
+
+useradd juca -m -c "Juca" -s /bin/bash
+passwd juca
+usermod -aG wheel,audio,video,optical,storage juca
+
+visudo(uncomment %wheel ALL=(ALL) ALL )
+
+cat /proc/mounts >> /etc/fstab
+remove proc mounts (efi  must be 2 at the end)
+
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VOID
+
+update-grub
+
+xbps-reconfigure -fa
+
+=========================================================
 
 ### Mounting partitions
 

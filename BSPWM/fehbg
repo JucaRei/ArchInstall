@@ -1,0 +1,4 @@
+#!/bin/sh
+# move as .fehbg
+
+feh --no-fehbg --bg-scale '$HOME/Pictures/wallpaper.jpg'
