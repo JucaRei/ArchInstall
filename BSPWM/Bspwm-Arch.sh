@@ -37,7 +37,7 @@ sudo rm -rf /tmp/paru
 #paru -S nvidia-lts nvidia-utils nvidia-settings
 #paru -S xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama
 
-paru -S bspwm arandr xorg thunar sxhkd ranger polybar xfce4-terminal light-locker alacritty playerctl awesome-terminal-fonts ttf-font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings ttc-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
+paru -S bspwm arandr xorg thunar sxhkd glow ranger polybar xfce4-terminal light-locker alacritty playerctl awesome-terminal-fonts ttf-font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings ttc-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
 
 xdg-user-dirs-update
 

@@ -60,7 +60,7 @@ ARCH=x86_64
 ### Install base system
 
 ```base
-XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind polkit dbus chrony neofetch
+XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind polkit dbus chrony neofetch glow
 ```
 
 ### Bind before chroot
