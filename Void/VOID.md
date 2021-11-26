@@ -6,7 +6,9 @@ loadkeys br-abnt2
 
 ```cp
 cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<interface>.conf
+
 wpa_passphrase <SSID> <password> >> /etc/wpa_supplicant/wpa_supplicant-<interface>.conf
+
 wpa_supplicant -B -i <interface> -c /etc/wpa_supplicant/wpa_supplicant-<interface>.conf
 ```
 
@@ -15,56 +17,13 @@ wpa_supplicant -B -i <interface> -c /etc/wpa_supplicant/wpa_supplicant-<interfac
   xbps-install -Su xbps
 ```
 
-make 3 partitions for boot, root and home.
+### Make 3 partitions for boot, root and home.
 
 ```format
 mkfs.fat -F32 /dev/sdX
 mkfs.btrfs /dev/sdX
 mkfs.btrfs /dev/sdX
 ```
-REPO=https://alpha.de.repo.voidlinux.org/current
-ARCH=x86_64
-
-XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind polkit dbus chrony neofetch
-
-mount --rbind /sys /mnt/sys && mount --make-rslave /mnt/sys
-
-mount --rbind /dev /mnt/dev && mount --make-rslave /mnt/dev
-
-mount --rbind /proc /mnt/proc && mount --make-rslave /mnt/proc
-
-cp /etc/resolv.conf /mnt/etc
-
-chroot /mnt /bin/bash
-
-ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
-
-(locales)
-vim /etc/default/libc-locales 
-xbps-reconfigure -f glibc-locales
-
-echo "juca" > /etc/hostname
-
-vim /etc/hosts
-
-passwd for root 
-
-useradd juca -m -c "Juca" -s /bin/bash
-passwd juca
-usermod -aG wheel,audio,video,optical,storage juca
-
-visudo(uncomment %wheel ALL=(ALL) ALL )
-
-cat /proc/mounts >> /etc/fstab
-remove proc mounts (efi  must be 2 at the end)
-
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VOID
-
-update-grub
-
-xbps-reconfigure -fa
-
-=========================================================
 
 ### Mounting partitions
 
@@ -78,36 +37,127 @@ btrfs subvolume create /mnt/@var_log
 ```
 - umount /mnt
 
-- mount -o noatime,compress-force=zstd:8,space_cache=v2,commit=60,discard=async,subvol=@ /dev/sdaX /mnt
-- mkdir -p /mnt/{boot,home,.snapshots,var/log}
-- mount -o noatime,compress-force=zstd:8,space_cache=v2,commit=60,discard=async,subvol=@home /dev/sdaX /mnt/home
-- mount -o noatime,compress-force=zstd:8,space_cache=v2,commit=60,discard=async,subvol=@snapshots /dev/sdaX /mnt/.snapshots
-- mount -o noatime,compress-force=zstd:8,space_cache=v2,commit=60,discard=async,subvol=@var_log /dev/sdaX /mnt/var/log
-- mount /dev/sdX /mnt/boot/efibt
-### Create variables for Install your system type:
+```mount
+  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt
 
-- export XBPS_ARCH=x86_64
-  <br> **OR**
-- export XBPS_ARCH=x86_64-musl
-- export REPO=https://alpha.de.repo.voidlinux.org/current
+  - mkdir -p /mnt/{boot/efi,home,.snapshots,var/log}
 
-### Install base
+  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/home
 
-xbps-install -Suy -r /mnt -R "REPO" base-system btrfs-progs grub nano vim
+  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/.snapshots
 
+  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/var/log
+
+  - mount /dev/sdX /mnt/boot/efi
+```
+
+### Add REPO
+
+```config
+REPO=https://alpha.de.repo.voidlinux.org/current
+ARCH=x86_64
+```
+### Install base system
+
+```base
+XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind polkit dbus chrony neofetch
+```
+
+### Bind before chroot
+
+```bind
+- mount --rbind /sys /mnt/sys && mount --make-rslave /mnt/sys
+
+- mount --rbind /dev /mnt/dev && mount --make-rslave /mnt/dev
+
+- mount --rbind /proc /mnt/proc && mount --make-rslave /mnt/proc
+```
+
+### Copy network config to mnt
+
+```net
+cp /etc/resolv.conf /mnt/etc
+```
 ### Chroot
-- mount -t proc proc /mnt/proc/
-- mount -t sysfs sys /mnt/sys/
-- mount -o bind /dev /mnt/dev
-- mount -t devpts pts /mnt/dev/pts
-- cp -L /etc/resolv.conf /mnt/etc/
-- cp -L /etc/wpa_supplicant/- wpa_supplicant-<interface>.conf /mnt/etc/wpa_supplicant/
-- chroot /mnt /bin/bash
 
-### Post Chroot
+ - chroot /mnt /bin/bash
 
+###  Set your zone
 
 - ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
-- hwclock --systohc
-- vim /etc/default/libc-locales
-- xbps-reconfigure -f glibc-locales
+
+### add locales (US, pt-BR)
+
+- vim /etc/default/libc-locales 
+
+ - xbps-reconfigure -f glibc-locales
+
+### Add hostname and edit hosts
+- **echo "desiredname" > /etc/hostname**
+
+### Configuring hosts file 
+**Place below content in the file /etc/hosts**
+
+```hosts
+127.0.0.1 localhost
+::1 localhost
+127.0.1.1 desiredname.localdomain desiredname
+```
+### Change Root password
+```pass
+  passwd
+```
+### Add user
+```user
+useradd juca -m -c "Full User Name" -s /bin/bash
+passwd juca
+usermod -aG wheel,audio,video,optical,storage juca
+
+  - visudo
+  (uncomment %wheel ALL=(ALL) ALL)
+```
+### Generate fstab and fix
+```fstab
+cat /proc/mounts >> /etc/fstab
+  - remove proc mounts (efi  must be 2 at the end)
+```
+### Install Bootloader
+
+
+```grub
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=VOID
+
+update-grub
+```
+### Installing network-related packages 
+```internet
+xbps-install -Sy NetworkManager
+```
+
+### Check if everything is ok
+```check
+xbps-reconfigure -fa
+
+hwclock --systohc
+```
+
+  REBOOT
+=========================================================
+
+### Post Installation
+
+#### Enabling RTC service 
+```conf
+ln -s /etc/sv/chronyd /var/service/
+```
+#### Enabling network-related services 
+```conf
+ln -s /etc/sv/{dhcpcd,NetworkManager} /var/service/
+```
+#### Enabling services for seat 
+```conf
+ln -srf /etc/sv/{dbus,polkitd,elogind} /var/service
+```
+
+Install your Desktop Enviroment or Window Manager
+================================================================
