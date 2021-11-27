@@ -61,7 +61,7 @@ ARCH=x86_64
 ### Install base system
 
 ```base
-XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi void-repo-nonfree elogind polkit dbus chrony neofetch glow bluez bluz-alsa xdg-user-dirs xdg-utils
+XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi void-repo-nonfree elogind polkit dbus chrony neofetch duf bat glow bluez bluz-alsa xdg-user-dirs xdg-utils
 ```
 
 ### Bind before chroot
@@ -112,7 +112,7 @@ cp /etc/resolv.conf /mnt/etc
 ```user
 useradd juca -m -c "Full User Name" -s /bin/bash
 passwd juca
-usermod -aG wheel,audio,video,optical,bluetooth,storage juca
+usermod -aG wheel,audio,video,optical,kvm,lp,storage juca
 
   - visudo
   (uncomment %wheel ALL=(ALL) ALL)
@@ -141,6 +141,64 @@ xbps-reconfigure -fa
 
 hwclock --systohc
 ```
+
+GRUB CONFIGS
+================================================================
+
+### 1. Silent GRUB                                                                                     
+                                                                                                         
+  To hide all the grub output which is displayed during boot.  Copy these parameters to                  
+  GRUB_CMDLINE_LINUX_DEFAULT, then update the grub                                                       
+                                                                                                       
+    loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default==0                                 
+                                                                                                         
+  The above will esentially hide kernel logs and put them in tty2. But still, there are some messages    
+  that can be hidden like "Welcome to GRUB!" which can be removed by this                                
+  https://github.com/ccontavalli/grub-shusher. Also, you can hide booting messages by going to           
+                                                                                                       
+    sudo nano /boot/grub/grub.cfg                                                         
+                                                                                                         
+  And here you can remove all the echo messages. Remember this resets everytime grub is updated This     
+  provides a clean-looking boot, which I prefer.                                                         
+                                                                                                         
+  ### 2. Turn off Mitigations                                                                            
+                                                                                                         
+  You can turn off CPU mitigations for the highest performance, but least security. If you run a lot of  
+  unknown code, then you should skip this. To learn how this affects your pc, go here                    
+  https://linuxreviews.org/HOWTO_make_Linux_run_blazing_fast_(again)_on_Intel_CPUs. To know what kind of 
+  vulnerability might arise, you can go here https://meltdownattack.com/ To enable this, add this to     
+  GRUB_CMDLINE_LINUX_DEFAULT, then update the grub                                                       
+                                                                                                       
+    mitigations=off                                                                                      
+                                                                                                         
+  ### 3. Disable Watchdog                                                                                
+                                                                                                         
+  Watchdog is used to monitor if a system is running. It is supposed to automatically reboot hanged      
+  systems due to unrecoverable software errors.  Personal computer users don’t need a watchdog, as they  
+  can reset the system manually. You can learn more about this from here https://linuxhint.com/linux-kernel-watchdog-explained/ To enable this, add this to GRUB_CMDLINE_LINUX_DEFAULT, then update the grub
+                                                                                                       
+    nowatchdog                                                                                           
+                                                                                                         
+  ### 4. Kernel Parameters                                                                               
+                                                                                                         
+  These are some kernel parameters that boost my computer, most of them optimizations are from Clear     
+  Linux. These basically disables some checks on boot time, making it faster.                            
+                                                                                                       
+    intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable                               
+                                                                                                         
+  This is what my GRUB looks like after adding the parameters                                            
+                                                                                                       
+    #                                                                                                    
+    # Configuration file for GRUB.                                                                       
+    #                                                                                                    
+    GRUB_DEFAULT=0                                                                                       
+    GRUB_TIMEOUT=0                                                                                       
+    GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable                                                                                 
+    GRUB_DISABLE_OS_PROBER=true                                                                          
+    GRUB_DISABLE_RECOVERY=true                                                                           
+    GRUB_DISABLE_SUBMENU=true           
+
+    sudo update-grub
 
   REBOOT
 =========================================================
@@ -196,5 +254,67 @@ sudo sv status virtlogd
 sudo sv status virtlockd
 ``` 
 
+#### Other Services
+```sv
+sudo ln -s /etc/sv/NetworkManager /var/service
+sudo ln -s /etc/sv/acpid /var/service
+sudo ln -s /etc/sv/ntpd /var/service
+sudo ln -s /etc/sv/iptables /var/service
+sudo ln -s /etc/sv/iptables6 /var/service
+sudo ln -s /etc/sv/bluetoothd /var/service
+sudo ln -s /etc/sv/bluez-alsa /var/service
+```
 Install your Desktop Enviroment or Window Manager
 ================================================================
+
+# BSPWM
+
+### Packages
+
+```pkg
+sudo xbps-install -S bspwm xorg autorandr arandr Thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman sxhkd glow ranger polybar xfce4-terminal light-locker alacritty playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter-2.0.8_1 lightdm-gtk-greeter-settings font-iosevka light-locker mpd ncmpcpp mpc neofetch htop geany base-devel
+```
+
+### Instalar Void packages
+
+```pkg
+git clone https://github.com/void-linux/void-packages.git
+cd void-packages
+./xbps-src binary-bootstrap
+echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+
+```
+
+### Picom com blur
+- After installed void-packages
+- Download the template repo and copy into **"srcpkgs"**:
+```pkg
+git clone https://github.com/ibhagwan/picom-ibhagwan-template
+mv picom-ibhagwan-template ./srcpkgs/picom-ibhagwan
+```
+- Build & install the package:
+```build
+./xbps-src pkg picom-ibhagwan
+sudo xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
+```
+
+  Or if you have xtools
+
+```xtools
+xi -f picom-ibhagwan
+```
+
+### Tranformar aplicativos debian em xbps
+
+        https://github.com/toluschr/xdeb
+
+- Faça o download da ultima versão do xdeb
+- instale os pacotes: **binutils tar curl xbps xz**
+- Coloque os dois arquivos (**.deb e xdeb** ) na mesma pasta e de permissão para xdeb (**chmod +x**)
+- Rode **./xdeb -Sde pacoteAserInstalado.deb** 
+- Depois de finalizado, sera criado o aplicativo xbps na pasta **binpkgs**
+- instale o app:
+```install
+  sudo xbps-install -R . pacoteAserInstalado
+```
+- Pacote foi instalado
