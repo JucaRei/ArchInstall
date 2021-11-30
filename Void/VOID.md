@@ -61,7 +61,7 @@ ARCH=x86_64
 ### Install base system
 
 ```base
-XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi void-repo-nonfree elogind polkit dbus chrony neofetch duf bat glow bluez bluz-alsa xdg-user-dirs xdg-utils
+XBPS_ARCH=$ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi grub-btrfs grub-btrfs-runit void-repo-nonfree elogind vsv vpm polkit dbus chrony neofetch duf lua bat glow bluez bluz-alsa xdg-user-dirs xdg-utils
 ```
 
 ### Bind before chroot
@@ -200,6 +200,13 @@ GRUB CONFIGS
 
     sudo update-grub
 
+
+## Power Options without password
+- Login as root
+```x
+# echo "username ALL=(ALL) NOPASSWD: /usr/bin/halt, /usr/bin/poweroff, /usr/bin/reboot, /usr/bin/shutdown, /usr/bin/zzz, /usr/bin/ZZZ" >> /etc/sudoers.d/username
+```
+
   REBOOT
 =========================================================
 
@@ -272,7 +279,7 @@ Install your Desktop Enviroment or Window Manager
 ### Packages
 
 ```pkg
-sudo xbps-install -S bspwm xorg autorandr arandr Thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman sxhkd glow ranger polybar xfce4-terminal light-locker alacritty playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter-2.0.8_1 lightdm-gtk-greeter-settings font-iosevka light-locker mpd ncmpcpp mpc neofetch htop geany base-devel
+sudo xbps-install -S bspwm xorg autorandr arandr Thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman sxhkd glow ranger polybar xfce4-terminal light-locker alacritty playerctl font-firacode flatpak fzf geoip dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm gvfs-smb lightdm-gtk3-greeter-2.0.8_1 lightdm-gtk-greeter-settings xfce4-settings font-iosevka light-locker mpd ncmpcpp mpc neofetch htop geany base-devel
 ```
 
 ### Instalar Void packages
