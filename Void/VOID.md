@@ -39,17 +39,26 @@ btrfs subvolume create /mnt/@var_log
 - umount /mnt
 
 ```mount
-  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt
+  -set -e
+  -BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
+
+  - mount -o BTRFS_OPTS,subvol=@ /dev/sdaX /mnt
 
   - mkdir -p /mnt/{boot/efi,home,.snapshots,var/log}
 
-  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/home
+  - mount -o BTRFS_OPTS,subvol=@home /dev/sdaX /mnt/home
 
-  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/.snapshots
+  - mount -o BTRFS_OPTS,subvol=@snapshots /dev/sdaX /mnt/.snapshots
 
-  - mount -o noatime,ssd,compress-force=zstd:20,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt/var/log
+  - mount -o nBTRFS_OPTS,subvol=@var_log /dev/sdaX /mnt/var/log
 
-  - mount /dev/sdX /mnt/boot/efi
+  - mount -t vfat -o defaults,noatime,nodiratime /dev/sdX /mnt/boot/efi
+```
+
+### Root Tarball
+- Download the Tarball for your system
+```tar
+tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
 ```
 
 ### Add REPO
@@ -58,6 +67,7 @@ btrfs subvolume create /mnt/@var_log
 REPO=https://alpha.de.repo.voidlinux.org/current
 ARCH=x86_64
 ```
+
 ### Install base system
 
 ```base
