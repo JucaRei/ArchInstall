@@ -110,9 +110,18 @@ cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 EOF
 
+
 # Hostname
 cat << EOF > /mnt/etc/hostname
-junior
+nitrovoid
+EOF
+
+# Hosts
+
+cat << EOF > /mnt/etc/hosts
+127.0.0.1 localhost
+::1 localhost
+127.0.1.1 nitrovoid.localdomain nitrovoid
 EOF
 
 # fstab
@@ -192,13 +201,20 @@ EOF
 
 chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/SãoPaulo /etc/localtime
+
+#Locales
+chroot /mnt sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/default/libc-locales
+chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\)/\1/' /etc/default/libc-locales
+chroot /mnt xbps-reconfigure -f glibc-locales
+
+# Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
 chroot /mnt xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim dbus grub-x86_64-efi tlp intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas
 #chroot /mnt xbps-remove -oORvy sudo
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
-
+chroot /mnt update-grub
 
 # GRUB Configuration
 
