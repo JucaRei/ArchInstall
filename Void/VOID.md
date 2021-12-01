@@ -144,6 +144,12 @@ hwclock --systohc
 
 GRUB CONFIGS
 ================================================================
+### Fix failed to create P2P Device interface
+  On GRUB_CMDLINE_LINUX_DEFAULT add net.ifnames=0
+  
+  ```fix
+  GRUB_CMDLINE_LINUX_DEFAULT="net.ifnames=0"
+  ```
 
 ### 1. Silent GRUB                                                                                     
                                                                                                          
@@ -193,7 +199,7 @@ GRUB CONFIGS
     #                                                                                                    
     GRUB_DEFAULT=0                                                                                       
     GRUB_TIMEOUT=0                                                                                       
-    GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable                                                                                 
+    GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable                                                                                 
     GRUB_DISABLE_OS_PROBER=true                                                                          
     GRUB_DISABLE_RECOVERY=true                                                                           
     GRUB_DISABLE_SUBMENU=true           
