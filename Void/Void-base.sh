@@ -66,7 +66,7 @@ compress="zstd"
 EOF
 
 # Arrumar placa intel
-mkdir -pv /mnt//etc/X11/xorg.conf.d
+mkdir -pv /mnt/etc/X11/xorg.conf.d
 cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
 Section "Device"
 	Identifier "Intel Graphics"
@@ -78,7 +78,7 @@ EOF
 # nvidia-xconfig --busid=PCI:3:0:0 --sli=AA
 
 # Arrumar placa nvidia
-mkdir -pv /mnt//etc/X11/xorg.conf.d
+mkdir -pv /mnt/etc/X11/xorg.conf.d
 cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
 Section "Device"
         Identifier "Nvidia Card"
@@ -141,17 +141,17 @@ tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
 EOF
 
 # Set user permition
-cat << EOF > /mnt/etc/doas.conf
-permit persist :wheel
-permit nopass junior cmd reboot
-permit nopass junior cmd poweroff
-permit nopass junior cmd shutdown
-permit nopass junior cmd halt
-permit nopass junior cmd zzz
-permit nopass junior cmd ZZZ
-EOF
-chroot /mnt chown -c root:root /etc/doas.conf
-chroot /mnt chmod -c 0400 /etc/doas.conf
+# cat << EOF > /mnt/etc/doas.conf
+# permit persist :wheel
+# permit nopass junior cmd reboot
+# permit nopass junior cmd poweroff
+# permit nopass junior cmd shutdown
+# permit nopass junior cmd halt
+# permit nopass junior cmd zzz
+# permit nopass junior cmd ZZZ
+# EOF
+# chroot /mnt chown -c root:root /etc/doas.conf
+# chroot /mnt chmod -c 0400 /etc/doas.conf
 
 #Conf rc
 
@@ -194,7 +194,7 @@ chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/SãoPaulo /etc/localtime
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim chrony dbus grub-x86_64-efi tlp intel-ucode zsh curl alsa-utils opendoas ARCH xbps-install -S -r /mnt -R "$REPO" base-system vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit dbus chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+chroot /mnt xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim dbus grub-x86_64-efi tlp intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas
 #chroot /mnt xbps-remove -oORvy sudo
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
@@ -229,6 +229,8 @@ EOF
 
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
+
+# Define user and root password
 chroot /mnt echo root:200291 | chpasswd
 chroot /mnt junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt echo junior:200291 | chpasswd
