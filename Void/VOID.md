@@ -42,7 +42,7 @@ btrfs subvolume create /mnt/@var_log
   -set -e
   -BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
 
-  - mount -o BTRFS_OPTS,subvol=@ /dev/sdaX /mnt
+  - mount -o $BTRFS_OPTS,subvol=@ /dev/sdaX /mnt
 
   - mkdir -p /mnt/{boot/efi,home,.snapshots,var/log}
 
