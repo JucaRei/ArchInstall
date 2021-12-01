@@ -61,6 +61,10 @@ btrfs subvolume create /mnt/@var_log
 tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
 ```
 
+```mount
+for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+```
+
 ### Add REPO
 
 ```config
