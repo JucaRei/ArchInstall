@@ -255,7 +255,7 @@ chroot /mnt chsh -s /usr/bin/zsh root
 
 # Define user and root password
 chroot /mnt echo root:200291 | chpasswd
-chroot /mnt junior -m -c "Reinaldo P JR" -s /bin/bash
+chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt echo junior:200291 | chpasswd
 chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage,cdrom,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
