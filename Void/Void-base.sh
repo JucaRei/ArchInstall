@@ -42,6 +42,8 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sdX /mnt/boot/efi
 # Descompacta e copia para /mnt o tarball
 tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
 
+for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+
 # copia o arquivo de resolv para o /mnt
 cp -v /etc/resolv.conf /mnt/etc/
 
