@@ -203,8 +203,8 @@ chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/SãoPaulo /etc/localtime
 
 #Locales
-chroot /mnt sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\)/\1/' /etc/default/libc-locales
+chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
+chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
 chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
