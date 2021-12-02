@@ -49,8 +49,8 @@ cp -v /etc/resolv.conf /mnt/etc/
 mkdir -pv /mnt/etc/modprobe.d
 cat << EOF > /mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
-install iTCO_wdt /bin/true
-install iTCO_vendor_support /bin/true
+#install iTCO_wdt /bin/true
+#install iTCO_vendor_support /bin/true
 
 # Disable nouveau
 blacklist nouveau
