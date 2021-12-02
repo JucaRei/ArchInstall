@@ -10,7 +10,7 @@ set -e
 
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sdX /mnt
+mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
 #Cria os subvolumes
 
@@ -26,18 +26,18 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sdX /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS,subvol=@home /dev/sdX /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sdX /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sdX /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sdX /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/sdX /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
+mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
 tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
