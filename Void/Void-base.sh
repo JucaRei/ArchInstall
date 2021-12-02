@@ -206,7 +206,7 @@ EOF
 
 ##    chroot
 
-chroot /mnt export PS1="(chroot) ${PS1}"
+# chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/SãoPaulo /etc/localtime
 
 #Locales
@@ -257,7 +257,7 @@ chroot /mnt chsh -s /usr/bin/zsh root
 chroot /mnt echo root:200291 | chpasswd
 chroot /mnt junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt echo junior:200291 | chpasswd
-chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage junior
+chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage,cdrom,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 
