@@ -133,6 +133,7 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 HOME_UUID=$(blkid -s UUID -o value /dev/sda7)
 echo $UEFI_UUID
 echo $ROOT_UUID
+echo $HOME_UUID
 
 cat << EOF > /mnt/etc/fstab
 #
@@ -147,7 +148,7 @@ UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps 0 2
 
 #HOME_FS
-UUID=$ROOT_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
+UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
 
 # EFI
 UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
