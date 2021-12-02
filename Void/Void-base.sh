@@ -128,10 +128,12 @@ EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sdX)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sdX2)
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+HOME_UUID=$(blkid -s UUID -o value /dev/sda7)
 echo $UEFI_UUID
 echo $ROOT_UUID
+
 cat << EOF > /mnt/etc/fstab
 #
 # See fstab(5).
@@ -140,10 +142,12 @@ cat << EOF > /mnt/etc/fstab
 
 # ROOTFS
 UUID=$ROOT_UUID /               btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@               0 1
-UUID=$ROOT_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
 UUID=$ROOT_UUID /.snapshots     btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@snapshots      0 2
 UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_log        0 2
 UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps 0 2
+
+#HOME_FS
+UUID=$ROOT_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
 
 # EFI
 UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
