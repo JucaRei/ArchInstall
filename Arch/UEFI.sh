@@ -5,7 +5,7 @@ hwclock --systohc
 sed -i '177s/.//' /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" >>/etc/locale.conf
-echo "KEYMAP=br-abnt" >>/etc/vconsole.conf
+echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
 echo "archnitro" >>/etc/hostname
@@ -17,12 +17,20 @@ echo root:200291 | chpasswd
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack 
-pacman -S grub grub-btrfs efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils cups hplip openssh rsync acpi acpi_call tlp virt-manager qemu qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq vde2 ebtables openbsd-netcat iptables-nft ipset firewalld flatpak sof-firmware nss-mdns acpid os-prober ntfs-3g
+pacman -Sy grub grub-btrfs archlinux-keyring efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils openssh rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+
+# Virt-manager
+pacman -S virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
+
+# apci & tlp
+pacman -S acpi acpi_call acpid tlp
+
+#Printer
+pacman -S cups hplip
 
 # OLDMAC INSTALL BASE
 # pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld cups tlp rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils
 
-# pacman -S --noconfirm xf86-video-amdgpu
 pacman -S xf86-video-intel
 
 #Open-Source Drivers (Oldpc)
@@ -52,7 +60,8 @@ systemctl enable cups.service
 systemctl enable sshd
 # OLDPC don`t need it
 systemctl enable avahi-daemon
-systemctl enable tlp # You can comment this command out if you didn't install tlp, see above
+# You can comment this command out if you didn't install tlp, see above
+systemctl enable tlp
 systemctl enable reflector.timer
 systemctl enable fstrim.timer
 # OLDPC don`t need it
