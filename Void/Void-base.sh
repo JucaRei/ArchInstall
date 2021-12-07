@@ -188,7 +188,8 @@ HARDWARECLOCK="UTC"
 #TIMEZONE="Europe/Bucharest"
 
 # Keymap to load, see loadkeys(8).
-KEYMAP="br-abnt2"
+#KEYMAP="br-abnt2"
+KEYMAP="br"
 
 # Console font to load, see setfont(8).
 #FONT="lat9w-16"
