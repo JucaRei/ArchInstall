@@ -217,8 +217,8 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt xbps-install -y base-system zstd linux-lts linux-lts-headers neovim dbus grub-x86_64-efi tlp intel-ucode zsh nvidia alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
-chroot /mnt xbps-remove base-voidstrap
+chroot /mnt XBPS_ARCH="x86_64" xbps-install -y base-system zstd linux-lts linux-lts-headers neovim dbus grub-x86_64-efi tlp intel-ucode zsh nvidia alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+#chroot /mnt xbps-remove base-voidstrap
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas
 #chroot /mnt xbps-remove -oORvy sudo
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
