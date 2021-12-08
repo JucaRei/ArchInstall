@@ -7,7 +7,7 @@
 xbps-install -Su xbps xz
 
 set -e
-
+XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
@@ -218,7 +218,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt XBPS_ARCH="x86_64" xbps-install -y base-system zstd linux-lts linux-lts-headers neovim base-devel xorg lm-sensors dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd linux-lts linux-lts-headers neovim base-devel xorg lm-sensors dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
 chroot /mnt xbps-remove base-voidstrap
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
