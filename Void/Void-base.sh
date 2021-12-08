@@ -218,7 +218,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd linux-lts linux-lts-headers neovim base-devel xorg lm-sensors dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
 chroot /mnt xbps-remove base-voidstrap
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
