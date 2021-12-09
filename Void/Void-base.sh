@@ -80,16 +80,28 @@ EOF
 # nvidia-xconfig --busid=PCI:3:0:0 --sli=AA
 
 # Arrumar placa nvidia
+#mkdir -pv /mnt/etc/X11/xorg.conf.d
+#cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+#Section "Device"
+#        Identifier "Nvidia Card"
+#        Driver "nvidia"
+#        VendorName "NVIDIA Corporation"
+#        BoardName "GeForce GTX 1050"
+#EndSection
+#EOF
+
+# Arrumar placa nvidia
 mkdir -pv /mnt/etc/X11/xorg.conf.d
-cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
-Section "Device"
-        Identifier "Nvidia Card"
-        Driver "nvidia"
-        VendorName "NVIDIA Corporation"
-        BoardName "GeForce GTX 1050"
+cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+Section "OutputClass"
+    Identifier "nvidia"
+    MatchDriver "nvidia-drm"
+    Driver "nvidia"
+    Option "AllowEmptyInitialConfiguration"
+    ModulePath "/usr/lib/nvidia/xorg"
+    ModulePath "/usr/lib/xorg/modules"
 EndSection
 EOF
-
 # Repositorios mais rapidos
 cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
@@ -236,7 +248,8 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="VOID"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off"
+#GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off nowatchdog nvidia-drm.modeset=1"
 # Uncomment to use basic console
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
