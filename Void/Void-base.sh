@@ -386,10 +386,22 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind dbus-elogind dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk
 chroot /mnt xbps-remove base-voidstrap
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
+
+# Install Xorg base & others
+chroot /mnt xbps-install -Sy xorg-minimal xorg-input-drivers xf86-input-libinput xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog NetworkManager
+
+# Install Video drivers
+chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel
+
+#File Management 
+
+chroot /mnt xbps-install gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw
+
+#Install Grub
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
 chroot /mnt update-grub
 
@@ -425,9 +437,9 @@ EOF
 chroot /mnt chsh -s /usr/bin/zsh root
 
 # Define user and root password
-chroot /mnt echo root:200291 | chpasswd
+chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
-chroot /mnt echo junior:200291 | chpasswd
+chroot /mnt sh -c 'echo "junior:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage,cdrom,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
