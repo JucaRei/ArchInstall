@@ -6,6 +6,10 @@
 
 xbps-install -Su xbps xz
 
+mkfs.vfat -F32 /dev/sda5
+mkfs.btrfs /dev/sda6 -f
+mkfs.btrfs /dev/sda7 -f
+
 set -e
 XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
@@ -62,46 +66,198 @@ EOF
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" i915 btrfs nvidia"
-omit_dracutmodules+=" lvm luks"
+add_drivers+=" i915 btrfs nvidia "
+omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
 
 # Arrumar placa intel
-mkdir -pv /mnt/etc/X11/xorg.conf.d
-cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
-Section "Device"
-	Identifier "Intel Graphics"
-	Driver "modesetting"
-EndSection
-EOF
+#mkdir -pv /mnt/etc/X11/xorg.conf.d
+#cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
+#Section "Device"
+#	Identifier "Intel Graphics"
+#	Driver "modesetting"
+#EndSection
+#EOF
 
 #Alternatively, you can use the nvidia-xconfig utility to insert these changes into xorg.conf with a single command:
 # nvidia-xconfig --busid=PCI:3:0:0 --sli=AA
 
 # Arrumar placa nvidia
-#mkdir -pv /mnt/etc/X11/xorg.conf.d
-#cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
-#Section "Device"
+# mkdir -pv /mnt/etc/X11/xorg.conf.d
+# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+# Section "Device"
+#     Identifier     "Intel iGPU"
+#     Driver         "intel"
+#     BusID          "PCI:0:2:0"
+# EndSection
+
+# Section "Device"
+#     Identifier "Nvidia Card"
+#     Driver "nvidia"
+#     VendorName "NVIDIA Corporation"
+#     BoardName "GeForce GTX 1050"
+# 	# Option         "Coolbits" "24"
+# 	BusID          "PCI:2:0:0"
+# EndSection
+# EOF
+
+# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+# Section "Device"
 #        Identifier "Nvidia Card"
 #        Driver "nvidia"
 #        VendorName "NVIDIA Corporation"
 #        BoardName "GeForce GTX 1050"
-#EndSection
-#EOF
+# EndSection
+# EOF
 
 # Arrumar placa nvidia
 mkdir -pv /mnt/etc/X11/xorg.conf.d
-cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia.conf
+Section "Device"
+    Identifier     "Device0"
+    Driver         "nvidia"
+    VendorName     "NVIDIA Corporation"
+    BusID          "PCI:1:0:0"
+EndSection
+EOF
+
+# no usr/share
+mkdir -pv /mnt/usr/share/X11/xorg.conf.d
+cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 Section "OutputClass"
     Identifier "nvidia"
     MatchDriver "nvidia-drm"
     Driver "nvidia"
     Option "AllowEmptyInitialConfiguration"
+    # Option "PrimaryGPU" "yes"
     ModulePath "/usr/lib/nvidia/xorg"
     ModulePath "/usr/lib/xorg/modules"
 EndSection
 EOF
+
+#Xorg Conf
+# cat << EOF > /mnt/etc/X11/xorg.conf
+# Section "ServerLayout"
+# 	Identifier     "X.org Configured"
+# 	Screen      0  "Screen0" 0 0
+# 	Screen      1  "Screen1" RightOf "Screen0"
+# 	InputDevice    "Mouse0" "CorePointer"
+# 	InputDevice    "Keyboard0" "CoreKeyboard"
+# EndSection
+
+# Section "Files"
+# 	ModulePath   "/usr/lib/xorg/modules"
+# 	FontPath     "/usr/share/fonts/misc"
+# 	FontPath     "/usr/share/fonts/TTF"
+# 	FontPath     "/usr/share/fonts/OTF"
+# 	FontPath     "/usr/share/fonts/Type1"
+# 	FontPath     "/usr/share/fonts/100dpi"
+# 	FontPath     "/usr/share/fonts/75dpi"
+# EndSection
+
+# Section "Module"
+# 	Load  "glx"
+# EndSection
+
+# Section "InputDevice"
+# 	Identifier  "Keyboard0"
+# 	Driver      "kbd"
+# EndSection
+
+# Section "InputDevice"
+# 	Identifier  "Mouse0"
+# 	Driver      "mouse"
+# 	Option	    "Protocol" "auto"
+# 	Option	    "Device" "/dev/input/mice"
+# 	Option	    "ZAxisMapping" "4 5 6 7"
+# EndSection
+
+# Section "Monitor"
+# 	Identifier   "Monitor0"
+# 	VendorName   "Monitor Vendor"
+# 	ModelName    "Monitor Model"
+# EndSection
+
+# Section "Monitor"
+# 	Identifier   "Monitor1"
+# 	VendorName   "Monitor Vendor"
+# 	ModelName    "Monitor Model"
+# EndSection
+
+# Section "Device"
+# 	Identifier  "Card0"
+# 	Driver      "intel"
+# 	BusID       "PCI:0:2:0"
+# EndSection
+
+# Section "Device"
+# 	Identifier  "Card1"
+# 	Driver      "nvidia"
+# 	BusID       "PCI:1:0:0"
+# EndSection
+
+# Section "Screen"
+# 	Identifier "Screen0"
+# 	Device     "Card0"
+# 	Monitor    "Monitor0"
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     1
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     4
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     8
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     15
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     16
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     24
+# 	EndSubSection
+# EndSection
+
+# Section "Screen"
+# 	Identifier "Screen1"
+# 	Device     "Card1"
+# 	Monitor    "Monitor1"
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     1
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     4
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     8
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     15
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     16
+# 	EndSubSection
+# 	SubSection "Display"
+# 		Viewport   0 0
+# 		Depth     24
+# 	EndSubSection
+# EndSection
+# EOF
+
 # Repositorios mais rapidos
 cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
@@ -230,7 +386,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
+chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh nvidia nvidia-libs-32bit alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa xdg-user-dirs xdg-utils
 chroot /mnt xbps-remove base-voidstrap
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -287,5 +443,7 @@ chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/sshd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/{dbus,polkitd,elogind} /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 
