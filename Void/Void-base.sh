@@ -2,9 +2,11 @@
 
 #Formate e crie Pelo menos 3 partições para o: sistema, boot e home . Swap pode ser feito depois, com zram ou zramen
 # Baixe o tarball e entre na pasta do arquivo como ex: cd Downloads
-# wget or curl https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
+#curl or wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
-xbps-install -Su xbps xz
+wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
+
+xbps-install -Su xbps xz --yes
 
 mkfs.vfat -F32 /dev/sda5
 mkfs.btrfs /dev/sda6 -f
@@ -384,22 +386,23 @@ chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
 chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
-chroot /mnt xbps-install -Suy xbps
+chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel xorg dbus grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind dbus-elogind dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk
-chroot /mnt xbps-remove base-voidstrap
+chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel dbus grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-input-drivers xf86-input-libinput xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog NetworkManager
+chroot /mnt xbps-install -Sy xorg-minimal xrdb xsetroot xbacklight xprop xorg-input-drivers xf86-input-libinput libinput-gestures xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog NetworkManager --yes
 
 # Install Video drivers
-chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel
+chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel --yes
+#chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
 #File Management 
 
-chroot /mnt xbps-install gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw
+chroot /mnt xbps-install gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 #Install Grub
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
@@ -443,6 +446,19 @@ chroot /mnt sh -c 'echo "junior:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage,cdrom,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
+
+# Refazer as config nvidia
+cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+Section "OutputClass"
+    Identifier "nvidia"
+    MatchDriver "nvidia-drm"
+    Driver "nvidia"
+    Option "AllowEmptyInitialConfiguration"
+    # Option "PrimaryGPU" "yes"
+    ModulePath "/usr/lib/nvidia/xorg"
+    ModulePath "/usr/lib/xorg/modules"
+EndSection
+EOF
 
 # Gerar initcpio
 chroot /mnt xbps-reconfigure -fa
