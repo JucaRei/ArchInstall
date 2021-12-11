@@ -4,6 +4,14 @@
 # Baixe o tarball e entre na pasta do arquivo como ex: cd Downloads
 #curl or wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
+# Instalando pela wifi
+
+# cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
+# wpa_passphrase <ssid> <passphrase> >> /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
+# sv restart dhcpcd
+# ip link set up <interface>
+
+
 wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
 xbps-install -Su xbps xz --yes
@@ -349,7 +357,7 @@ cat << EOF > /mnt/etc/rc.conf
 # NOTE: it's preferred to declare the hostname in /etc/hostname instead:
 #       - echo myhost > /etc/hostname
 #
-#HOSTNAME="GL552V"
+#HOSTNAME="nitrovoid"
 
 # Set RTC to UTC or localtime.
 HARDWARECLOCK="UTC"
@@ -388,21 +396,41 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd linux-lts linux-lts-headers neovim base-devel dbus grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi elogind dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
-#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
+#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xrdb xsetroot xbacklight xprop xorg-input-drivers xf86-input-libinput libinput-gestures xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog NetworkManager --yes
+chroot /mnt xbps-install -Sy xorg-minimal xrdb xsetroot xbacklight xprop xorg-input-drivers xf86-input-libinput libinput-gestures xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
+
+# NetworkManager e iNet Wireless Daemon
+chroot /mnt xbps-install -S NetworkManager iwd --yes
+
+# Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
+mkdir -pv /mnt/etc/NetworkManager/conf.d/
+cat <<EOF >> /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+[device]
+wifi.backend=iwd
+wifi.iwd.autoconnect=yes
+EOF
 
 # Install Video drivers
 chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel --yes
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
-#File Management 
+# Install the OpenGL driver for both Intel and AMD
+# chroot /mnt xbps-install mesa-dri
+# Install the Khronos Vulkan Loader for both Intel and nvidia
+# chroot /mnt xbps-install vulkan-loader
 
-chroot /mnt xbps-install gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw --yes
+#File Management 
+chroot /mnt xbps-install -S gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw --yes
+
+# PACKAGES FOR SYSTEM LOGGING
+chroot /mnt xbps-install -S socklog-void
+
+
 
 #Install Grub
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
@@ -410,7 +438,7 @@ chroot /mnt update-grub
 
 # GRUB Configuration
 
-cat << EOF > /mnt/etc/default/grub
+cat << EOF > /mnt/etc/default/grub111
 #
 # Configuration file for GRUB.
 #
@@ -443,9 +471,10 @@ chroot /mnt chsh -s /usr/bin/zsh root
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "junior:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG wheel,audio,video,optical,kvm,lp,storage,cdrom,input junior
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
+chroot /mnt usermod -a -G socklog junior
 
 # Refazer as config nvidia
 cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
@@ -475,3 +504,9 @@ chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 
+# Enable socklog, a syslog implementation from the author of runit.
+chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
+
+# Enable the iNet Wireless Daemon for Wi-Fi support
+chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
