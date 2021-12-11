@@ -32,7 +32,8 @@ echo "MAIN PACKAGES"
 
 sleep 5
 
-sudo pacman -S --noconfirm xorg light-locker lightdm bspwm sxhkd firefox-developer-edition rxvt-unicode picom nitrogen lxappearance dmenu nautilus arandr simplescreenrecorder alsa-utils pulseaudio alsa-utils pulseaudio-alsa pavucontrol arc-gtk-theme arc-icon-theme vlc dina-font tamsyn-font bdf-unifont ttf-bitstream-vera ttf-croscore ttf-dejavu ttf-droid gnu-free-fonts ttf-ibm-plex ttf-liberation ttf-linux-libertine noto-fonts ttf-roboto ttf-anonymous-pro ttf-cascadia-code ttf-fira-code ttf-hack ttf-jetbrains-mono ttf-monofur adobe-source-code-pro-fonts cantarell-fonts inter-font ttf-opensans noto-fonts-emoji ttf-font-awesome awesome-terminal-fonts archlinux-wallpaper rofi playerctl scrot dunst pacman-contrib
+sudo pacman -S --noconfirm xorg light-locker lightdm bspwm sxhkd firefox-developer-edition rxvt-unicode picom nitrogen lxappearance dmenu pcmanfm arandr simplescreenrecorder alsa-utils pulseaudio alsa-utils pulseaudio-alsa pavucontrol arc-gtk-theme arc-icon-theme celluloid dina-font tamsyn-font bdf-unifont ttf-bitstream-vera ttf-croscore ttf-dejavu ttf-droid gnu-free-fonts ttf-ibm-plex ttf-liberation ttf-linux-libertine noto-fonts ttf-roboto ttf-anonymous-pro ttf-cascadia-code ttf-fira-code ttf-hack ttf-jetbrains-mono ttf-monofur adobe-source-code-pro-fonts cantarell-fonts inter-font ttf-opensans noto-fonts-emoji ttf-font-awesome awesome-terminal-fonts archlinux-wallpaper rofi playerctl scrot dunst pacman-contrib
+# xfe krusader
 
 #sudo flatpak install -y spotify
 #sudo flatpak install -y kdenlive

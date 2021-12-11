@@ -76,7 +76,7 @@ EOF
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" i915 btrfs nvidia "
+add_drivers+=" i915 btrfs nvidia nvidia_drm nvidia_uvm nvidia_modeset "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
@@ -288,6 +288,8 @@ EOF
 # Ignorar alguns pacotes
 cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
+ignorepkg=linux
+ignorepkg=linux-headers
 EOF
 
 
@@ -396,7 +398,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-minimal zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi tlp intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
