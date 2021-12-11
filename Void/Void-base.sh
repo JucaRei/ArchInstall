@@ -420,15 +420,15 @@ chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel --yes
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
 # Install the OpenGL driver for both Intel and AMD
-# chroot /mnt xbps-install mesa-dri
+chroot /mnt xbps-install mesa-dri --yes
 # Install the Khronos Vulkan Loader for both Intel and nvidia
-# chroot /mnt xbps-install vulkan-loader
+chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management 
 chroot /mnt xbps-install -S gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
-chroot /mnt xbps-install -S socklog-void
+chroot /mnt xbps-install -S socklog-void --yes
 
 
 
