@@ -546,3 +546,26 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # SPACESHIP_CHAR_SYMBOL="❯"
 # SPACESHIP_CHAR_SUFFIX=" "
 # EOF
+
+#Fix mount external HD
+sudo chroot /mnt mkdir -pv /mnt/etc/udev/rules.d
+cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
+# UDISKS_FILESYSTEM_SHARED
+# ==1: mount filesystem to a shared directory (/media/VolumeName)
+# ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
+# See udisks(8)
+ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
+EOF
+
+# Not asking for password
+cat << EOF > /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+// Allow udisks2 to mount devices without authentication
+// for users in the "wheel" group.
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+         action.id == "org.freedesktop.udisks2.filesystem-mount") &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
