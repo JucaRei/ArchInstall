@@ -421,6 +421,9 @@ EOF
 chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel --yes
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
+# "Mons is a Shell script to quickly manage 2-monitors display using xrandr."
+chroot /mnt xbps-install -S mons --yes
+
 # chroot /mnt alias ker="uname-r"
 # chroot /mnt sudo dracut --force --hostonly --kver $ker
 
