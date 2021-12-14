@@ -122,15 +122,15 @@ EOF
 # EOF
 
 # Arrumar placa nvidia
-mkdir -pv /mnt/etc/X11/xorg.conf.d
-cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia.conf
-Section "Device"
-    Identifier     "Device0"
-    Driver         "nvidia"
-    VendorName     "NVIDIA Corporation"
-    BusID          "PCI:1:0:0"
-EndSection
-EOF
+#mkdir -pv /mnt/etc/X11/xorg.conf.d
+#cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia.conf
+#Section "Device"
+#    Identifier     "Device0"
+#    Driver         "nvidia"
+#    VendorName     "NVIDIA Corporation"
+#    BusID          "PCI:1:0:0"
+#EndSection
+#EOF
 
 # no usr/share
 mkdir -pv /mnt/usr/share/X11/xorg.conf.d
@@ -299,6 +299,7 @@ EOF
 # Ignorar alguns pacotes
 cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
+ignorepkg=xf86-video-nouveau
 ignorepkg=linux
 ignorepkg=linux-headers
 EOF
@@ -409,13 +410,13 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi fzf lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xrdb xsetroot xbacklight xprop xorg-input-drivers xf86-input-libinput libinput-gestures xf86-input-evdev fuse-exfat fatresize xauth setxkbmap xrandr arandr libXinerama font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xbacklight xprop  xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
