@@ -135,6 +135,17 @@ EOF
 # no usr/share
 mkdir -pv /mnt/usr/share/X11/xorg.conf.d
 cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+Section "ServerLayout"
+  Identifier "layout"
+  Option "AllowNVIDIAGPUScreens"
+EndSection
+
+Section "OutputClass"
+    Identifier "intel"
+    MatchDriver "i915"
+    Driver "modesetting"
+EndSection
+
 Section "OutputClass"
     Identifier "nvidia"
     MatchDriver "nvidia-drm"
@@ -398,9 +409,9 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi tlp fzf lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi fzf lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
-#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
+#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
@@ -417,8 +428,12 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
-# Install Video drivers
-chroot /mnt xbps-install -Sy nvidia nvidia-libs-32bit xf86-video-intel --yes
+# Install Nvidia video drivers
+chroot /mnt xbps-install -S nvidia nvidia-libs-32bit --yes
+
+# Intel Video Drivers
+# chroot /mnt xbps-install -S xf86-video-intel
+
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
 # "Mons is a Shell script to quickly manage 2-monitors display using xrandr."
@@ -428,12 +443,12 @@ chroot /mnt xbps-install -S mons --yes
 # chroot /mnt sudo dracut --force --hostonly --kver $ker
 
 # Install the OpenGL driver for both Intel and AMD
-chroot /mnt xbps-install mesa-dri --yes
+# chroot /mnt xbps-install mesa-dri --yes
 # Install the Khronos Vulkan Loader for both Intel and nvidia
-chroot /mnt xbps-install vulkan-loader --yes
+# chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management 
-chroot /mnt xbps-install -S gvfs gvfs-smb udiskie tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
@@ -453,10 +468,10 @@ cat << EOF > /mnt/etc/default/grub
 GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
-GRUB_TIMEOUT=5
+GRUB_TIMEOUT=7
 GRUB_DISTRIBUTOR="VOID"
-#GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off nowatchdog nvidia-drm.modeset=1"
+#GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off i915.modeset=1"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off nowatchdog nvidia-drm.modeset=1 intel_iommu=igfx_off"
 # Uncomment to use basic console
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
@@ -485,17 +500,17 @@ chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/su
 chroot /mnt usermod -a -G socklog junior
 
 # Refazer as config nvidia
-cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
-Section "OutputClass"
-    Identifier "nvidia"
-    MatchDriver "nvidia-drm"
-    Driver "nvidia"
-    Option "AllowEmptyInitialConfiguration"
-    # Option "PrimaryGPU" "yes"
-    ModulePath "/usr/lib/nvidia/xorg"
-    ModulePath "/usr/lib/xorg/modules"
-EndSection
-EOF
+#cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+#Section "OutputClass"
+#    Identifier "nvidia"
+#    MatchDriver "nvidia-drm"
+#    Driver "nvidia"
+#    Option "AllowEmptyInitialConfiguration"
+#    # Option "PrimaryGPU" "yes"
+#    ModulePath "/usr/lib/nvidia/xorg"
+#    ModulePath "/usr/lib/xorg/modules"
+#EndSection
+#EOF
 
 # Gerar initcpio
 chroot /mnt xbps-reconfigure -fa
@@ -505,12 +520,13 @@ chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
+# chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/sshd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
@@ -520,6 +536,10 @@ chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 
 # Config zsh
+
+# alias dissh="export DISPLAY=:0.0"
+# alias bquit="bspc quit"
+
 
 #chroot /mnt sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 # spaceship theme
