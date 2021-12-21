@@ -41,7 +41,7 @@ umount -v /mnt
 # Mount partitions (Nitro)
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
 # mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log}
-# mount -o $BTRFS_OPTS /dev/sda7 /mnt/home
+# mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
 # mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 # mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
@@ -49,7 +49,7 @@ umount -v /mnt
 # Mount partitions (Oldmac) | W/Systemd-Boot 
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda3 /mnt
 mkdir -pv /mnt/{home,.snapshots,boot,var/log}
-mount -o $BTRFS_OPTS /dev/sda4 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda4 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda3 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda3 /mnt/var/log
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
@@ -57,13 +57,13 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 ############    ARCH     ############
 
 ### Nitro
-# pacstrap /mnt base linux-lts linux-lts-headers linux-firmware git nano vim intel-ucode reflector mtools dosfstools btrfs-progs pacman-contrib
+# pacstrap /mnt base linux-lts linux-lts-headers linux-firmware git nano neovim intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib
 
 # Generate fstab
 # genfstab -U /mnt >> /mnt/etc/fstab
 
 ### Old Mac
-pacstrap /mnt base linux-lts linux-lts-headers linux-firmware intel-ucode git neovim nano pacman-contrib duf
+pacstrap /mnt base linux-lts linux-lts-headers linux-firmware intel-ucode git neovim nano reflector pacman-contrib duf
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
