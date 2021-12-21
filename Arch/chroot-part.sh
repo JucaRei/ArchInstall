@@ -63,7 +63,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 # genfstab -U /mnt >> /mnt/etc/fstab
 
 ### Old Mac
-pacstrap /mnt base linux linux-headers linux-firmware intel-ucode git vim nano
+pacstrap /mnt base linux-lts linux-lts-headers linux-firmware intel-ucode git neovim nano pacman-contrib duf
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
