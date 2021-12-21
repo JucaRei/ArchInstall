@@ -5,7 +5,7 @@
 xrandr --setprovideroutputsource 1 0 &
 
 XCOM0=`xrandr -q | grep 'HDMI-1-0 connected'`
-XCOM1=`xrandr --output eDP1--primary --auto --output HDMI-1-0 --auto --left-of eDP1`
+XCOM1=`xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1`
 XCOM2=`xrandr --output eDP1 --primary --auto`
 # if the external monitor is connected, then we tell XRANDR to set up an extended desktop
 if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then echo $XCOM1
