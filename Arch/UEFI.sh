@@ -17,19 +17,21 @@ echo root:200291 | chpasswd
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack 
-pacman -Sy grub grub-btrfs archlinux-keyring efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils openssh rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+#pacman -Sy grub grub-btrfs archlinux-keyring efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils openssh rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
 
 # Virt-manager
-pacman -S virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
+#pacman -S virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
 
 # apci & tlp
-pacman -S acpi acpi_call acpid tlp
+# pacman -S acpi acpi_call acpid tlp
 
 #Printer
-pacman -S cups hplip
+#pacman -S cups hplip
 
 # OLDMAC INSTALL BASE
-# pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld cups tlp rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils
+pacman -S archlinux-keyring
+pacman -Syyy
+pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
 
 pacman -S xf86-video-intel
 
@@ -39,39 +41,39 @@ pacman -S xf86-video-intel
 # nvidia if you are using zen linux kernel
 # pacman -S nvidia-dkms nvidia-utils nvidia-settings
 
-pacman -S nvidia nvidia-utils nvidia-settings
+# pacman -S nvidia nvidia-utils nvidia-settings
 
 # OLDMAC (late 2008) lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
-# pacman -S nvidia-340xx-lts
+pacman -S nvidia-340xx-lts-dkms
 # pacman -S xf86-video-intel xf86-video-nouveau
 
 # Old pc only works with xorg-server1.19-git and max kernel 5.4
 # sudo pacman -S nvidia-304xx
 
 # OLDPC don`t need it
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
-grub-mkconfig -o /boot/grub/grub.cfg
+#grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
+#grub-mkconfig -o /boot/grub/grub.cfg
 
 systemctl enable NetworkManager
 systemctl enable bluetooth
-systemctl enable cups.service
+#systemctl enable cups.service
 # OLDPC don`t need it
 systemctl enable sshd
 # OLDPC don`t need it
 systemctl enable avahi-daemon
 # You can comment this command out if you didn't install tlp, see above
-systemctl enable tlp
+#systemctl enable tlp
 systemctl enable reflector.timer
 systemctl enable fstrim.timer
 # OLDPC don`t need it
-systemctl enable libvirtd
+#systemctl enable libvirtd
 systemctl enable firewalld
 systemctl enable acpid
 
 useradd -m junior
 echo junior:200291 | chpasswd
-usermod -aG libvirt junior
+# usermod -aG libvirt junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
