@@ -132,10 +132,12 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
 
 ```entries
 title   Arch Linux
-linux   /vmlinuz-linux
-initrd  /initramfs-linux.img
+linux   /vmlinuz-linux-lts
+initrd  /intel-ucode.img
+initrd  /initramfs-linux-lts.img
 options root=/dev/sda3 rw
 ```
+- b43.allhwsupport=1 mitigations=off nowatchdog nvidia-drm.modeset=1 i915.modeset=1
 
 1.  Download the git repository with git clone
 2.  cd arch-basic
