@@ -135,8 +135,9 @@ title   Arch Linux
 linux   /vmlinuz-linux-lts
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-lts.img
-options root=/dev/sda3 rw
+options root=/dev/sda3 rootflags=subvol=@ rw
 ```
+ - Ext4 dont need rootflags
 - b43.allhwsupport=1 mitigations=off nowatchdog nvidia-drm.modeset=1 i915.modeset=1
 
 1.  Download the git repository with git clone
