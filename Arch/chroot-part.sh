@@ -11,7 +11,7 @@ mkfs.btrfs /dev/sda3 -f
 mkfs.btrfs /dev/sda4 -f
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
 
 # Nitro
 #mount -o $BTRFS_OPTS /dev/sda6 /mnt
