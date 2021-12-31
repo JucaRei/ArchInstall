@@ -68,11 +68,11 @@ Remember that the first part of the Arch Linux install is manual, that is you wi
   choose lzo or zstd for compression  (compress-force=ztsd:5  | compress-force=lzo:4)
 ```
 
-- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@ /dev/sdaX /mnt`
+- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async,subvol=@ /dev/sdaX /mnt`
 - `mkdir -p /mnt/{boot/{efi,grub},Windows,home,.snapshots,var/log}`
-- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home /dev/sdaX /mnt/home`
-- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@snapshots /dev/sdaX /mnt/.snapshots`
-- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_log /dev/sdaX /mnt/var/log`
+- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async,subvol=@home /dev/sdaX /mnt/home`
+- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async,subvol=@snapshots /dev/sdaX /mnt/.snapshots`
+- `mount -o noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async,subvol=@var_log /dev/sdaX /mnt/var/log`
     - Dont forget to mount boot and Windows:
         - mount /dev/sd**X** *(boot)* /mnt/
         - mount /dev/sd**X** *(Windows)* /mnt/Windows
