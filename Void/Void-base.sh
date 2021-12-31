@@ -22,7 +22,7 @@ mkfs.btrfs /dev/sda7 -f
 
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
