@@ -7,8 +7,9 @@
 # mkfs.btrfs /dev/sda7 -f
 
 # OldMac
+mkfs.vfat -F32 /dev/sda1 
+mkfs.btrfs /dev/sda2 -f
 mkfs.btrfs /dev/sda3 -f
-mkfs.btrfs /dev/sda4 -f
 
 set -e
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
@@ -17,7 +18,7 @@ BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodef
 #mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
 # OldMac
-mount -o $BTRFS_OPTS /dev/sda3 /mnt
+mount -o $BTRFS_OPTS /dev/sda2 /mnt
 
 #Create Subvolumes
 
@@ -34,7 +35,7 @@ umount -v /mnt
 # umount -v /mnt
 
 # OldMac mount home
-mount -o $BTRFS_OPTS /dev/sda4 /mnt
+mount -o $BTRFS_OPTS /dev/sda3 /mnt
 btrfs su cr /mnt/@home
 umount -v /mnt
 
@@ -47,11 +48,11 @@ umount -v /mnt
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Mount partitions (Oldmac) | W/Systemd-Boot 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda3 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
 mkdir -pv /mnt/{home,.snapshots,boot,var/log}
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda4 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda3 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda3 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda3 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 
 ############    ARCH     ############
@@ -63,7 +64,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 # genfstab -U /mnt >> /mnt/etc/fstab
 
 ### Old Mac
-pacstrap /mnt base linux-lts linux-lts-headers linux-firmware intel-ucode git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
+pacstrap /mnt base linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
