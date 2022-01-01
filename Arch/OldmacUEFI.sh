@@ -56,4 +56,9 @@ pacman -Rs linux
 
 mkinitcpio -P linux-lts
 
+# choose which you want
+cd ArchInstall/Arch/Arch_pkgs
+pacman -U pikaur-1.9-1-any.pkg.tar.zst
+pikaur -S bat btop
+
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
