@@ -1,8 +1,23 @@
+### Other Ways to launch with dbus session
+
 #exec dbus-launch --exit-with-session bspwm &
 #exec dbus-run-session bspwm &
-if [ -x /usr/bin/dbus-launch -a -z "${DBUS_SESSION_BUS_ADRESS}" ]; then
-	eval `dbus-launch --sh-syntax --exit-with-session`
-fi
+
+### 2
+
+#if [ -x /usr/bin/dbus-launch -a -z "${DBUS_SESSION_BUS_ADRESS}" ]; then
+#	eval `dbus-launch --sh-syntax --exit-with-session`
+#fi
+
+### 3
+#exec dbus-launch --autolaunch=$(cat /var/lib/dbus/machine-id) bspwm
+
 
 setxkbmap br &
+#Udevil
 devmon &
+
+### Best One
+
+exec dbus-run-session bspwm
+
