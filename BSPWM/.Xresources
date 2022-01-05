@@ -1,0 +1,44 @@
+!! terminal.sexy
+
+! Restore Ctrl+Shift+(c|v)
+URxvt.keysym.Shift-Control-V: eval:paste_clipboard
+URxvt.keysym.Shift-Control-C: eval:selection_to_clipboard
+URxvt.iso4755: false
+URxvt.iso4755_52: false
+
+! special
+*.foreground:   #5bd8df
+*.background:   #180d17
+*.cursorColor:  #5bd8df
+
+! black
+*.color0:       #e0ad5e
+*.color8:       #a0bbf6
+
+! red
+*.color1:       #453cea
+*.color9:       #c6b04c
+
+! green
+*.color2:       #81bc54
+*.color10:      #f324e4
+
+! yellow
+*.color3:       #c828ff
+*.color11:      #edabaa
+
+! blue
+*.color4:       #dd41cb
+*.color12:      #87a9eb
+
+! magenta
+*.color5:       #b27aac
+*.color13:      #4fa3a3
+
+! cyan
+*.color6:       #bcef4c
+*.color14:      #39a5a5
+
+! white
+*.color7:       #2cdfa7
+*.color15:      #e47f5b
