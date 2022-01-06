@@ -1,10 +1,51 @@
-!! terminal.sexy
+! general settings
+URxvt.saveLines:        50000
+URxvt.termName:         xterm-256color
+URxvt.urgentOnBell:     false
+URxvt.visualBell:       false
+URxvt.iso14755:         false
+URxvt.iso14755_52:      false
+URxvt.meta8:            false
+URxvt.metaSendsEscape:  true
+!URxvt.iconFile:  		/usr/share/icons/Sardi-Mono/scalable/apps/terminal.svg
+URxvt.urlLauncher:      firefox
+URxvt.underlineURLs:    true
+URxvt.urlButton:        1
 
-! Restore Ctrl+Shift+(c|v)
+
+!Copy/Paste
 URxvt.keysym.Shift-Control-V: eval:paste_clipboard
 URxvt.keysym.Shift-Control-C: eval:selection_to_clipboard
-URxvt.iso4755: false
-URxvt.iso4755_52: false
+
+! appearance
+URxvt.geometry: 		100x30
+URxvt.depth:             32
+!URxvt.transparent:      true
+URxvt.shading:           50
+URxvt.underlineColor:    #4682B4
+URxvt.highlightColor:    #666666
+URxvt.throughColor:      #4682B4
+URxvt.scrollBar:         false
+URxvt.scrollTtyOutput:   false
+URxvt.scrollWithBuffer:  true
+URxvt.scrollTtyKeypress: true
+URxvt.internalBorder:    0
+URxvt.externalBorder:    0
+URxvt.colorIT:      	 #4682B4
+URxvt.colorBD:      	 #F9F9F9
+URxvt.colorUL:      	 #87afd7
+
+URxvt.perl-ext-common:  default,clipboard,url-select,resize-fonts
+
+! macros for resize-font - sudo pacman -S urxvt-resize-font-git
+URxvt.resize-font.step:   1
+URxvt.keysym.C-minus:     resize-font:smaller
+URxvt.keysym.C-plus:      resize-font:bigger
+URxvt.keysym.C-equal:     resize-font:reset
+URxvt.keysym.C-question:  resize-font:show
+URxvt.keysym.C-Down:      resize-font:smaller
+URxvt.keysym.C-Up:        resize-font:bigger
+
 
 ! special
 *.foreground:   #5bd8df
@@ -17,10 +58,10 @@ URxvt.iso4755_52: false
 
 ! red
 *.color1:       #453cea
-*.color9:       #c6b04c
+*.color9:       #e4c68c
 
 ! green
-*.color2:       #81bc54
+*.color2:       #3eaff0
 *.color10:      #f324e4
 
 ! yellow
@@ -36,9 +77,15 @@ URxvt.iso4755_52: false
 *.color13:      #4fa3a3
 
 ! cyan
-*.color6:       #bcef4c
+*.color6:       #e63312
 *.color14:      #39a5a5
 
 ! white
 *.color7:       #2cdfa7
 *.color15:      #e47f5b
+
+
+
+
+!Fonts
+URxvt.font: xft:Fira Code Retina:pixelsize=16
