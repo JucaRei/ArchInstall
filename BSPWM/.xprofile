@@ -15,7 +15,7 @@
 
 setxkbmap br &
 #Udevil
-devmon &
+#devmon &
 
 ### Best One
 
