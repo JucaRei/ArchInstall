@@ -46,10 +46,12 @@ URxvt.colorBD:      	 #F9F9F9
 URxvt.colorUL:      	 #87afd7
 
 !Scroll UP/DOWN script, create a file at $HOME/.urxvt/ext/vtwheel
+!Scroll Increase/Decrease font size script, create a file at $HOME/.urxvt/ext/resize-font
 
-URxvt.perl-ext-common:  default,clipboard,url-select,resize-fonts,confirm-paste,vtwheel
+URxvt.perl-ext-common:  default,clipboard,tabbed,matcher,url-select,resize-fonts,confirm-paste,vtwheel,resize-font,-tabbed
 
-! macros for resize-font - sudo pacman -S urxvt-resize-font-git
+! macros for resize-font - sudo pacman -S urxvt-resize-font-git | VoidLinux use script at urxvt folder
+
 URxvt.resize-font.step:   1
 URxvt.keysym.C-minus:     resize-font:smaller
 URxvt.keysym.C-plus:      resize-font:bigger
