@@ -37,10 +37,10 @@ sudo pacman -Syy
 #paru -S nvidia-lts nvidia-utils nvidia-settings
 #paru -S xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama
 
-pikaur -S bspwm pcmanfm sxhkd glow ranger polybar rxvt-unicode rxvt-unicode-terminfo urxvt-perls urxvt-resize-font-git urxvt-clipboard urxvt-tabbedex light-locker playerctl awesome-terminal-fonts ttf-font-awesome nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings ttc-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp neofetch htop geany --noconfirm
+pikaur -S bspwm pcmanfm sxhkd glow ranger polybar rxvt-unicode rxvt-unicode-terminfo urxvt-perls urxvt-resize-font-git urxvt-clipboard urxvt-tabbedex light-locker playerctl awesome-terminal-fonts ttf-font-awesome nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings ttc-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp neofetch htop geany
 
 # xorg packages
-pikaur -S arandr xorg-xprop xorg-font-util xorg-xkbevd xorg-fonts-75dpi xorg-fonts-100dpi xorg-fonts-encodings xorg-xev xorg-xkill xorg-xcmsdb xorg-xset xorg-xbacklight xorg-mkfontscale xorg-xkbevd xorg-xkbutils xorg-xkbcomp xorg-setxkbmap xdotools libinput libxft mesa-demos libxrandr libxinerama xorg-xrdb xorg-server xorg-xrandr --noconfirm
+pikaur -S arandr xorg-xprop xorg-font-util xorg-xkbevd xorg-fonts-75dpi xorg-fonts-100dpi xorg-fonts-encodings xorg-xev xorg-xkill xorg-xcmsdb xorg-xset xorg-xbacklight xorg-mkfontscale xorg-xkbevd xorg-xkbutils xorg-xkbcomp xorg-setxkbmap xdotools libinput libxft mesa-demos libxrandr libxinerama xorg-xrdb xorg-server xorg-xrandr
 
 # video for Xorg
 pikaur -S xf86-video-vesa --noconfirm
@@ -102,8 +102,8 @@ touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd
 
-cp $HOME/ArchInstall/BSPWM/mpd/mpd.conf $HOME/.config/mpd/
-cp $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.config/ncmpcpp/
+cp -f $HOME/ArchInstall/BSPWM/mpd/mpd.conf $HOME/.config/mpd/.
+cp -f $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.config/ncmpcpp/.
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
