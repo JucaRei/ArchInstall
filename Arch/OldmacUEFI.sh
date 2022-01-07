@@ -20,7 +20,7 @@ pacman -Syyy
 pacman -S efibootmgr exfat-utils intel-ucode networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
 
 # apci & tlp
-pacman -S acpi acpi_call-lts acpid acpilight light
+pacman -S acpi acpi_call-lts acpid acpilight light --noconfirm
 
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
@@ -52,17 +52,18 @@ echo juca:200291 | chpasswd
 
 echo "juca ALL=(ALL) ALL" >>/etc/sudoers.d/juca
 
-pacman -Rs linux acpi_call
+pacman -Rs linux acpi_call --noconfirm
 
-pacman -S acpi_call-lts
+pacman -S acpi_call-lts --noconfirm
 
-mkinitcpio -P linux-lts
+mkinitcpio -P linux-lts 
 
 # choose which you want
 cd ArchInstall/Arch/Arch_pkgs
 pacman -U pikaur-1.9-1-any.pkg.tar.zst
-pikaur -Syu
-pikaur -S bat btop --noconfirm
+mkdir -p /var/cache/pikaur
+pikaur -Syu --noconfirm
+pikaur -S bat dust btop --noconfirm
 
 # Systemd-Boot
 bootctl --path=/boot install
