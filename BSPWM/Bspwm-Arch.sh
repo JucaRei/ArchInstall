@@ -97,7 +97,7 @@ cd
 
 cd $HOME/ArchInstall/BSPWM
 
-mkdir -p ~/.config/mpd && cd ~/.config/mpd
+mkdir -p ~/.config/{mpd,ncmpcpp} && cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd
