@@ -63,7 +63,8 @@ cd ArchInstall/Arch/Arch_pkgs
 pacman -U pikaur-1.9-1-any.pkg.tar.zst
 mkdir -p /var/cache/pikaur
 pikaur -Syu --noconfirm
-pikaur -S bat dust btop --noconfirm
+pikaur -S bat dust yt-dlp btop --noconfirm
+pikaur -S nvidia-340xx-lts-dkms xf86-video-intel
 
 # Systemd-Boot
 bootctl --path=/boot install
