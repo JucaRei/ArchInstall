@@ -16,15 +16,15 @@ wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-2021
 
 xbps-install -Su xbps xz --yes
 
-mkfs.vfat -F32 /dev/sda1
-mkfs.btrfs /dev/sda2 -f
-mkfs.btrfs /dev/sda3 -f
+mkfs.vfat -F32 /dev/vda1
+mkfs.btrfs /dev/vda2 -f
+mkfs.btrfs /dev/vda3 -f
 
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:14,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sda2 /mnt
+mount -o $BTRFS_OPTS /dev/vda2 /mnt
 
 #Cria os subvolumes
 
@@ -40,18 +40,18 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
 mkdir -pv /mnt/boot
 mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS /dev/sda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda2 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
+mount -o $BTRFS_OPTS /dev/vda3 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda2 /mnt/var/cache/xbps
+mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot
 
 # Descompacta e copia para /mnt o tarball
 tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
@@ -66,7 +66,7 @@ cp -v /etc/resolv.conf /mnt/etc/
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" nouveau i915 btrfs "
+add_drivers+=" btrfs "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
@@ -91,6 +91,7 @@ EOF
 # Ignorar alguns pacotes
 cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
+ignorepkg=xf86-video-nouveau
 ignorepkg=linux
 ignorepkg=linux-headers
 EOF
@@ -111,9 +112,9 @@ EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
-HOME_UUID=$(blkid -s UUID -o value /dev/sda3)
+UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
+ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
+HOME_UUID=$(blkid -s UUID -o value /dev/vda3)
 echo $UEFI_UUID
 echo $ROOT_UUID
 echo $HOME_UUID
@@ -171,7 +172,7 @@ HARDWARECLOCK="UTC"
 #TIMEZONE="Europe/Bucharest"
 
 # Keymap to load, see loadkeys(8).
-#KEYMAP="br-abnt2"
+KEYMAP="br-abnt2"
 
 # Console font to load, see setfont(8).
 #FONT="lat9w-16"
@@ -220,10 +221,12 @@ wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S xf86-video-nouveau mesa-nouveau-dri --yes
+#chroot /mnt xbps-install -S xf86-video-nouveau mesa-nouveau-dri --yes
 
 # Intel Video Drivers
-chroot /mnt xbps-install -S xf86-video-intel --yes
+#chroot /mnt xbps-install -S xf86-video-intel --yes
+
+chroot /mnt xbps-install -S xf86-video-vesa --yes
 
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
@@ -239,11 +242,39 @@ chroot /mnt xbps-install -S socklog-void --yes
 
 #Install Gummiboot
 mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
-chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivarfs
-chroot /mnt gummiboot install
+chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+chroot /mnt gummiboot --path=/boot install
 
-chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@ rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 
+
+# GRUB Configuration
+
+# cat << EOF > /mnt/etc/default/grub
+#
+# Configuration file for GRUB.
+#
+# GRUB_DEFAULT=0
+# GRUB_HIDDEN_TIMEOUT=0
+# GRUB_HIDDEN_TIMEOUT_QUIET=false
+# GRUB_TIMEOUT=7
+# GRUB_DISTRIBUTOR="VOID"
+# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off i915.modeset=1"
+# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off nowatchdog nvidia-drm.modeset=1 intel_iommu=igfx_off"
+# Uncomment to use basic console
+# GRUB_TERMINAL_INPUT="console"
+# Uncomment to disable graphical terminal
+# GRUB_TERMINAL_OUTPUT=console
+# GRUB_BACKGROUND=/home/bastilla.jpg
+# GRUB_GFXMODE=1920x1080x32,1366x768x32,auto
+# GRUB_DISABLE_LINUX_UUID=true
+# GRUB_DISABLE_RECOVERY=true
+# Uncomment and set to the desired menu colors.  Used by normal and wallpaper
+# modes only.  Entries specified as foreground/background.
+# GRUB_COLOR_NORMAL="red/black"
+# GRUB_COLOR_HIGHLIGHT="yellow/black"
+# GRUB_DISABLE_OS_PROBER=false
+# EOF
 
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
@@ -256,6 +287,19 @@ chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xb
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog juca
+
+# Refazer as config nvidia
+#cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+#Section "OutputClass"
+#    Identifier "nvidia"
+#    MatchDriver "nvidia-drm"
+#    Driver "nvidia"
+#    Option "AllowEmptyInitialConfiguration"
+#    # Option "PrimaryGPU" "yes"
+#    ModulePath "/usr/lib/nvidia/xorg"
+#    ModulePath "/usr/lib/xorg/modules"
+#EndSection
+#EOF
 
 # Gerar initcpio
 chroot /mnt xbps-reconfigure -fa
