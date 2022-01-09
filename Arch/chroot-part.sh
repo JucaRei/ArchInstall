@@ -55,6 +55,9 @@ mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 
+
+
+
 ############    ARCH     ############
 
 ### Nitro
@@ -71,8 +74,12 @@ genfstab -U /mnt >> /mnt/etc/fstab
 
 ############    Artix    ############
 
-### Nitro
-# basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git vim intel-ucode mtools dosfstools btrfs-progs
+### Artix
+# basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind elogind-runit linux-firmware git vim mtools dosfstools btrfs-progs --ignore linux
 
 # Generate fstab
 # fstabgen -U /mnt >> /mnt/etc/fstab
+
+# Artix
+# for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+# mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
