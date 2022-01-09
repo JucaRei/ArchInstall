@@ -59,7 +59,7 @@ cd
 
 paru -S efibootmgr intel-ucode networkmanager networkmanager-runit network-manager-applet chrony chrony-runit dialog wpa_supplicant duf bat dust fzf ripgrep rsm wireless_tools wpa_supplicant-runit avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils nfs-utils-runit inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call tlp tlp-runit virt-manager libvirt-runit qemu qemu-guest-agent qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 openbsd-netcat iptables iptables-nft iptables-runit  ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit ntfs-3g 
 
-pari -S xf86-video-intel xf86-video-nouveau --noconfirm 
+# paru -S xf86-video-intel xf86-video-nouveau --noconfirm 
 #xorg --ignore xorg-server-xdmx
 
 # pacman -S reflector
