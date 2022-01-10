@@ -17,10 +17,10 @@ echo root:200291 | chpasswd
 # OLDMAC INSTALL BASE
 pacman -S archlinux-keyring
 pacman -Syyy
-pacman -S efibootmgr exfat-utils intel-ucode networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
+pacman -S efibootmgr exfat-utils intel-ucode networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
 
 # apci & tlp
-pacman -S acpi acpi_call-lts acpid acpilight light --noconfirm
+pacman -S acpi acpi_call-lts acpid acpilight --noconfirm
 
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
