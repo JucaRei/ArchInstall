@@ -114,6 +114,11 @@ cat << EOF >> /etc/pacman.conf
 #Server = https://liquorix.net/archlinux/$repo$arch
 EOF
 
+cat << EOF >> /etc/fstab
+
+tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
+EOF
+
 paru -Syy
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
