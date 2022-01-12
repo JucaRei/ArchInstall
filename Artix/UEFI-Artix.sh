@@ -60,11 +60,11 @@ pacman -U paru-1.9.2-1-x86_64.pkg.tar.zst
 
 cd
 
-pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet ntp ntp-runit dialog wpa_supplicant duf bat exa ripgrep fzf rsm wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call-dkms tlp tlp-runit virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet htop neofetch chrony chrony-runit dialog wpa_supplicant duf bat exa ripgrep fzf rsm wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call-dkms tlp tlp-runit virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
 
 # pacman -S reflector
 # pacman -S nvidia-lts nvidia-utils nvidia-settings
-# pacman -S glow ncdu2
+# pacman -S glow ncdu2 btop
 
 ### Works on xanmod
 # paru -S nvidia-tweaks nvidia-prime xf86-video-intel
