@@ -75,7 +75,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 ############    Artix    ############
 
 ### Artix
-# basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind elogind-runit linux-firmware git neovim mtools dosfstools btrfs-progs --ignore linux
+# basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools btrfs-progs --ignore linux
 
 # Generate fstab
 # fstabgen -U /mnt >> /mnt/etc/fstab
