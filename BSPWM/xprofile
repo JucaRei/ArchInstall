@@ -13,9 +13,9 @@
 #exec dbus-launch --autolaunch=$(cat /var/lib/dbus/machine-id) bspwm
 
 
-setxkbmap br &
-#Udevil
-#devmon &
+# setxkbmap br &
+# Udevil
+# devmon &
 
 ### Best One
 
