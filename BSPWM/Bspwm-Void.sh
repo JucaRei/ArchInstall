@@ -2,9 +2,12 @@
 
 #xdg-user-dirs-update
 
-sudo vpm i bspwm xorg-minimal autorandr arandr pcmanfm sxhkd glow sviv ImageMagick ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany
+sudo vpm i bspwm xorg-minimal autorandr arandr udevil gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
 
-mkdir -p ~/Documents/workspace/{Github,Others,Customizations,Configs,Tests,Composes}
+# Old mac
+sudo vpm i kbdlight mbpfan
+
+mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
 mkdir -p ~/.local/share/fonts
 mkdir -p ~/.urxvt/ext
 mkdir -p ~/.config/{bspwm,rofi,sxhkd,dunst,polybar}
@@ -12,7 +15,31 @@ mkdir -p ~/.config/{mpd,ncmpcpp}
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
+cd ~/Documents/workspace/Builds
+mkdir -p Xdeb AppImagesFolder Void-Packages
+cd Xdeb 
+wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
+chmod +x xdeb
+
+# cat << EOF >> ~/.bashrc
+# ### Xdeb Configs ###
+
+# export PATH="/home/juca/Documents/workspace/Builds/Xdeb:$PATH"
+# export XDEB_OPT_DEPS=true
+# export XDEB_OPT_SYNC=true
+# export XDEB_OPT_WARN_CONFLICT=true
+# export XDEB_OPT_FIX_CONFLICT=true
+# EOF
+
+cd ~/Documents/workspace/Builds/Void-Packages
+git clone --depth 1 https://github.com/void-linux/void-packages BinaryBuilder
+
 cd
+
+# Install ASDF
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
+echo ". $HOME/.asdf/asdf.sh" >> ~/.bashrc
+echo ". $HOME/.asdf/completions/asdf.bash" >> ~/.bashrc
 
 cd ~/Documents/workspace/Customizations
 git clone https://github.com/JucaRei/rofi
@@ -21,7 +48,7 @@ git clone https://github.com/JucaRei/dotfiles
 git clone https://github.com/JucaRei/fonts
 
 cd ~/Documents/workspace/Configs
-git clone https://github.com/JucaRei/ArchInstall
+git clone --depth 1 https://github.com/JucaRei/ArchInstall
 
 # Font Preview
 mkdir ~/scripts
