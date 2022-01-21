@@ -11,7 +11,8 @@ mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Test
 mkdir -p ~/.local/share/fonts
 mkdir -p ~/.urxvt/ext
 mkdir -p ~/.config/{bspwm,rofi,sxhkd,dunst,polybar}
-mkdir -p ~/.config/{mpd,ncmpcpp} 
+mkdir -p ~/.config/mpd
+mkdir -p ~/.ncmpcpp 
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
@@ -21,15 +22,15 @@ cd Xdeb
 wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
 chmod +x xdeb
 
-# cat << EOF >> ~/.bashrc
-# ### Xdeb Configs ###
+cat << EOF >> ~/.bashrc
+### Xdeb Configs ###
 
-# export PATH="/home/juca/Documents/workspace/Builds/Xdeb:$PATH"
-# export XDEB_OPT_DEPS=true
-# export XDEB_OPT_SYNC=true
-# export XDEB_OPT_WARN_CONFLICT=true
-# export XDEB_OPT_FIX_CONFLICT=true
-# EOF
+export PATH="/home/juca/Documents/workspace/Builds/Xdeb:$PATH"
+export XDEB_OPT_DEPS=true
+export XDEB_OPT_SYNC=true
+export XDEB_OPT_WARN_CONFLICT=true
+export XDEB_OPT_FIX_CONFLICT=true
+EOF
 
 cd ~/Documents/workspace/Builds/Void-Packages
 git clone --depth 1 https://github.com/void-linux/void-packages BinaryBuilder
@@ -73,7 +74,7 @@ fc-cache -fv
 cd
 
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/mpd/mpd.conf ~/.config/mpd
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/ncmpcpp/config ~/.config/ncmpcpp
+cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp
 
 # Xresources | Fehgb | Xprofile etc
 cd
@@ -102,3 +103,5 @@ picom -f &
 xsetroot -cursor_name left_ptr &
 ~/scripts/dualbsp.sh
 EOF
+
+sudo ln -s /etc/sv/mpd /var/service

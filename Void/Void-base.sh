@@ -410,7 +410,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi ripgrep exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi ripgrep exa fzf dust xtools lm_sensors inxi lshw intel-ucode zsh minised ncdu necho alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -433,7 +433,7 @@ EOF
 chroot /mnt xbps-install -S nvidia nvidia-libs-32bit --yes
 
 # Intel Video Drivers
-# chroot /mnt xbps-install -S xf86-video-intel
+# chroot /mnt xbps-install -S xf86-video-intel --yes
 
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
@@ -569,7 +569,7 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # EOF
 
 #Fix mount external HD
-sudo chroot /mnt mkdir -pv /mnt/etc/udev/rules.d
+mkdir -pv /mnt/etc/udev/rules.d
 cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
@@ -579,6 +579,7 @@ ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
 
 # Not asking for password
+mkdir -pv /mnt/etc/polkit-1/rules.d
 cat << EOF > /mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
