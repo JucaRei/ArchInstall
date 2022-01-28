@@ -2,10 +2,12 @@
 
 #xdg-user-dirs-update
 
-sudo vpm i bspwm xorg-minimal autorandr arandr udevil gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
+sudo vpm i bspwm xorg-minimal autorandr arandr udevil glu startshio libvdpau gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
 
+# marktext xinput xsetmode xinput_calibrator xf86-input-evdev
 # Old mac
-sudo vpm i kbdlight mbpfan
+sudo vpm i kbdlight mbpfan 
+sudo vpm i sassc gtk-engine-murrine
 
 mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
 mkdir -p ~/.local/share/fonts
@@ -46,7 +48,7 @@ cd ~/Documents/workspace/Customizations
 git clone https://github.com/JucaRei/rofi
 git clone https://github.com/JucaRei/polybar-themes
 git clone https://github.com/JucaRei/dotfiles
-git clone https://github.com/JucaRei/fonts
+# git clone https://github.com/JucaRei/fonts
 
 cd ~/Documents/workspace/Configs
 git clone --depth 1 https://github.com/JucaRei/ArchInstall
@@ -67,7 +69,8 @@ chmod +x setup.sh
 ./setup.sh
 
 # Install Fonts
-cd ~/Documents/workspace/Customizations/fonts/fonts && cp *.ttf *.otf ~/.local/share/fonts
+# cd ~/Documents/workspace/Configs/ArchInstall/fonts && cp *.ttf *.otf ~/.local/share/fonts
+cd ~/Documents/workspace/Configs/ArchInstall/fonts && cp -r ** ~/.local/share/fonts
 fc-cache -fv
 
 # mpd e ncmpcpp
@@ -83,7 +86,8 @@ cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/Xresources ~/.Xresources
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/fehbg ~/.fehgb
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/xprofile ~/.xprofile
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/vtwhell ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/vtwhell ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/config-reload ~/.urxvt/ext
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/dualbsp.sh ~/scripts
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/DualMonPolybar.sh ~/scripts
 sudo cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/display-lightdm.sh /etc/lightdm
@@ -103,5 +107,7 @@ picom -f &
 xsetroot -cursor_name left_ptr &
 ~/scripts/dualbsp.sh
 EOF
+
+echo 'eval "$(starship init bash)"' >> ~/.bashrc
 
 sudo ln -s /etc/sv/mpd /var/service

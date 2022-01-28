@@ -30,7 +30,7 @@ URxvt.keysym.Shift-Down: command:\033]721;1\007
 ! appearance
 URxvt.geometry: 		100x30
 URxvt.depth:             32
-!URxvt.transparent:      true
+URxvt.transparent:      true
 URxvt.shading:           50
 URxvt.underlineColor:    #4682B4
 URxvt.highlightColor:    #666666
@@ -180,3 +180,24 @@ tabbed.selfgcolor:   #ed705c
 tabbed.normfgcolor:  #9294a8
 tabbed.normbgcolor:  #2B2F34
 
+
+
+          ! Some Tips 
+
+! to start a urxvt daemon process use this command:  
+! urxvtd -q -o -f  
+
+! To spawn a client process use:  
+! urxvtc instead of urxvt  
+
+! Make sure that there is normal urxvt instances by analyzing the output of:  
+! pidof urxvt (there shouldn't be any pids)
+
+! To see a list of available signals:  
+! kill -l  
+
+! To send signal 1 to the urxvt daemon process:
+! kill -1 $(pidof urxvtd)
+
+! To load .Xresources:  
+! xrdb -load ~/.Xresources

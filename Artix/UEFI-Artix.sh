@@ -97,6 +97,18 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 mkinitcpio -P linux-lts
 
+# Enable pacman Color
+sed -i '/Color/s/^#//' /etc/pacman.conf
+
+# Enable multilib repo
+sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+
+# Setting package signing option to require signature
+sed -i '/\[core\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[multilib\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[community\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+
 # Add Chaotic repo
 pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
 pacman-key --lsign-key FBA220DFC880C036
@@ -124,5 +136,12 @@ tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
 EOF
 
 pacman -Syy
+
+# running makepkg as nobody user
+# mkdir /home/build
+# chgrp nobody /home/build
+# chmod g+ws /home/build
+# setfacl -m u::rwx,g::rwx /home/build
+# setfacl -d --set u::rwx,g::rwx,o::- /home/build
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
