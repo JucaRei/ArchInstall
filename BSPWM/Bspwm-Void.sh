@@ -2,7 +2,7 @@
 
 #xdg-user-dirs-update
 
-sudo vpm i bspwm xorg-minimal autorandr arandr udevil glu startship light libvdpau gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
+sudo vpm i bspwm xorg-minimal autorandr arandr udevil glu startship light libvdpau starship gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
 # Old mac
@@ -14,6 +14,7 @@ mkdir -p ~/.local/share/fonts
 mkdir -p ~/.urxvt/ext
 mkdir -p ~/.config/{bspwm,rofi,sxhkd,dunst,polybar}
 mkdir -p ~/.config/mpd
+mkdir -p ~/.local/bin
 mkdir -p ~/.ncmpcpp 
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
@@ -22,17 +23,18 @@ cd ~/Documents/workspace/Builds
 mkdir -p Xdeb AppImagesFolder Void-Packages
 cd Xdeb 
 wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
+mv xdeb ~/.local/bin && cd ~/.local/bin
 chmod +x xdeb
 
-cat << EOF >> ~/.bashrc
-### Xdeb Configs ###
+# cat << EOF >> ~/.bashrc
+# ### Xdeb Configs ###
 
-export PATH="/home/juca/Documents/workspace/Builds/Xdeb:$PATH"
-export XDEB_OPT_DEPS=true
-export XDEB_OPT_SYNC=true
-export XDEB_OPT_WARN_CONFLICT=true
-export XDEB_OPT_FIX_CONFLICT=true
-EOF
+# export PATH="/home/juca/Documents/workspace/Builds/Xdeb:$PATH"
+# export XDEB_OPT_DEPS=true
+# export XDEB_OPT_SYNC=true
+# export XDEB_OPT_WARN_CONFLICT=true
+# export XDEB_OPT_FIX_CONFLICT=true
+# EOF
 
 cd ~/Documents/workspace/Builds/Void-Packages
 git clone --depth 1 https://github.com/void-linux/void-packages BinaryBuilder
@@ -41,8 +43,8 @@ cd
 
 # Install ASDF
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
-echo ". $HOME/.asdf/asdf.sh" >> ~/.bashrc
-echo ". $HOME/.asdf/completions/asdf.bash" >> ~/.bashrc
+# echo ". $HOME/.asdf/asdf.sh" >> ~/.bashrc
+# echo ". $HOME/.asdf/completions/asdf.bash" >> ~/.bashrc
 
 cd ~/Documents/workspace/Customizations
 git clone https://github.com/JucaRei/rofi
@@ -54,12 +56,14 @@ cd ~/Documents/workspace/Configs
 git clone --depth 1 https://github.com/JucaRei/ArchInstall
 
 # Font Preview
-mkdir ~/scripts
-cd ~/scripts
+# mkdir ~/scripts
+# cd ~/scripts
+cd ~/Documents/workspace/Others
 https://github.com/JucaRei/fontpreview
 cd fontpreview
 sudo make install 
-echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
+# echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
+mv fontpreview ~/.local/bin
 source ~/.bashrc
 
 cd
@@ -81,15 +85,16 @@ cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp
 
 # Xresources | Fehgb | Xprofile etc
 cd
-cp -f ~/Documents/workspace/Customizations/dotfiles/wallpaper.jpg ~/Pictures
+cp -f ~/Documents/workspace/Customizations/dotfilfontses/wallpaper.jpg ~/Pictures
 cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/Xresources ~/.Xresources
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/fehbg ~/.fehgb
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/xprofile ~/.xprofile
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/vtwhell ~/.urxvt/ext
 cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/config-reload ~/.urxvt/ext
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/dualbsp.sh ~/scripts
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/DualMonPolybar.sh ~/scripts
+mkdir ~/.bin
+cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/dualbsp.sh ~/.bin
+cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/DualMonPolybar.sh ~/.bin
 sudo cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/display-lightdm.sh /etc/lightdm
 cp -f /etc/dunst/dunstrc ~/.config/dunst/
 install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
@@ -105,9 +110,23 @@ xrdb ~/.Xresources &
 setxkbmap br &
 picom -f &
 xsetroot -cursor_name left_ptr &
-~/scripts/dualbsp.sh
+~/.bin/dualbsp.sh
 EOF
 
-echo 'eval "$(starship init bash)"' >> ~/.bashrc
+# echo 'eval "$(starship init bash)"' >> ~/.bashrc
 
 sudo ln -s /etc/sv/mpd /var/service
+
+# sudo wget -O /etc/bash.command-not-found https://gitlab.com/dwt1/bash-insulter/-/raw/master/src/bash.command-not-found
+
+
+### DT Shell Color script
+# git clone https://gitlab.com/dwt1/shell-color-scripts.git
+# cd shell-color-scripts
+# rm -rf /opt/shell-color-scripts || return 1
+# sudo mkdir -p /opt/shell-color-scripts/colorscripts || return 1
+# sudo cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
+# sudo cp colorscript.sh /usr/bin/colorscript
+
+# optional for zsh completion
+# sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions

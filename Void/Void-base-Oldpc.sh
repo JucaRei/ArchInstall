@@ -140,16 +140,32 @@ tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
 EOF
 
 # Set user permition
-# cat << EOF > /mnt/etc/doas.conf
-# permit persist :wheel
-# permit nopass juca cmd reboot
-# permit nopass juca cmd poweroff
-# permit nopass juca cmd shutdown
-# permit nopass juca cmd halt
-# permit nopass juca cmd zzz
-# permit nopass juca cmd ZZZ
-# EOF
-# chroot /mnt chown -c root:root /etc/doas.conf
+cat << EOF > /mnt/etc/doas.conf
+# allow user but require password
+permit keepenv :juca
+
+# allow user and dont require a password to execute commands as root
+permit nopass keepenv :juca
+
+# mount drives
+permit nopass :juca cmd mount
+permit nopass :juca cmd umount
+
+# musicpd service start and stop
+#permit nopass :$USER cmd service args musicpd onestart
+#permit nopass :$USER cmd service args musicpd onestop
+
+# pkg update
+#permit nopass :$USER cmd vpm args update
+
+# run personal scripts as root without prompting for a password,
+# requires entering the full path when running with doas
+#permit nopass :$USER cmd /home/username/bin/somescript
+
+# root as root
+#permit nopass keepenv root as root
+EOF
+chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
 
 #Conf rc
@@ -200,7 +216,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
