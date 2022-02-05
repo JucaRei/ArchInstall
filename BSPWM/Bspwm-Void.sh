@@ -2,7 +2,7 @@
 
 #xdg-user-dirs-update
 
-sudo vpm i bspwm xorg-minimal autorandr arandr udevil glu startship light libvdpau starship gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
+sudo vpm i bspwm xorg-minimal autorandr arandr udevil glu starship light libvdpau starship gping pcmanfm sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter font-iosevka light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
 # Old mac
