@@ -1,1 +1,0 @@
-/home/junior/Documents/workspace/Github/eww/target/release/libeww_shared_util.rlib: /home/junior/Documents/workspace/Github/eww/crates/eww_shared_util/src/lib.rs /home/junior/Documents/workspace/Github/eww/crates/eww_shared_util/src/span.rs /home/junior/Documents/workspace/Github/eww/crates/eww_shared_util/src/wrappers.rs

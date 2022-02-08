@@ -37,6 +37,11 @@ btrfs su cr /mnt/@var_cache_xbps
 # Remove a partição
 umount -v /mnt
 
+# mount home subvolume
+mount -o $BTRFS_OPTS /dev/sda3 /mnt
+btrfs su cr /mnt/@home
+umount -v /mnt
+
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
@@ -47,7 +52,7 @@ mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS /dev/sda3 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda3 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda2 /mnt/var/cache/xbps
@@ -131,7 +136,7 @@ UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps 0 2
 
 #HOME_FS
-UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
+UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home           0 2
 
 # EFI
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
@@ -216,7 +221,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
