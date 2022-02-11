@@ -257,6 +257,9 @@ chroot /mnt xbps-install -S gvfs gvfs-smb udisks2 tumbler ffmpegthumbnailer libg
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
 
+# NFS
+chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
+
 
 
 # Set zsh as default
@@ -307,6 +310,12 @@ chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
+
+# NFS
+chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/statd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/netmount /etc/runit/runsvdir/default/
+
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
