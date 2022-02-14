@@ -68,6 +68,8 @@ cd fontpreview
 sudo make install 
 # echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
 mv fontpreview ~/.local/bin
+cd ..
+rm -rf fontpreview/
 source ~/.bashrc
 
 cd
@@ -84,22 +86,23 @@ fc-cache -fv
 # mpd e ncmpcpp
 cd
 
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/mpd/mpd.conf ~/.config/mpd
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/ncmpcpp/config ~/.ncmpcpp
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/mpd/mpd.conf ~/.config/mpd
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/ncmpcpp/config ~/.ncmpcpp
 
 # Xresources | Fehgb | Xprofile etc
 cd
-cp -f ~/Documents/workspace/Customizations/dotfilfontses/wallpaper.jpg ~/Pictures
+mkdir -pv ~/Pictures/Wallpapers
+cp -f ~/Documents/workspace/Customizations/dotfiles/wallpaper.jpg ~/Pictures/Wallpapers
 cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/Xresources ~/.Xresources
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/fehbg ~/.fehgb
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/xprofile ~/.xprofile
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/vtwhell ~/.urxvt/ext
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/rxvt/config-reload ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/Xresources ~/.Xresources
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/fehbg ~/.fehgb
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/xprofile ~/.xprofile
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/rxvt/vtwhell ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/rxvt/config-reload ~/.urxvt/ext
 mkdir ~/.bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/dualbsp.sh ~/.bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/DualMonPolybar.sh ~/.bin
-sudo cp -f ~/Documents/workspace/Configs/ArchInstall/BSPWM/display-lightdm.sh /etc/lightdm
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/dualbsp.sh ~/.bin
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/DualMonPolybar.sh ~/.bin
+sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/display-lightdm.sh /etc/lightdm
 cp -f /etc/dunst/dunstrc ~/.config/dunst/
 install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
 install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
@@ -120,6 +123,14 @@ EOF
 # echo 'eval "$(starship init bash)"' >> ~/.bashrc
 
 sudo ln -s /etc/sv/mpd /var/service
+
+cd ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/
+cp -f bashrc.txt ~/.bashrc
+cp -f zshrc.txt ~/.zshrc
+
+cd
+
+echo "Installation finished! Please, reboot."
 
 # sudo wget -O /etc/bash.command-not-found https://gitlab.com/dwt1/bash-insulter/-/raw/master/src/bash.command-not-found
 
