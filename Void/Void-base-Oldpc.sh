@@ -314,7 +314,7 @@ Section "InputClass"
         MatchIsKeyboard "yes"
         Option          "XkbOptions"    "terminate:crtl_alt_bksp"
 EndSection
-EOFcd 
+EOF
 
 
 #Runit por default
@@ -374,6 +374,20 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # SPACESHIP_CHAR_SYMBOL="❯"
 # SPACESHIP_CHAR_SUFFIX=" "
 # EOF
+
+# MakeSwap
+chroot /mnt touch /swapfile
+chroot /mnt chmod 600 /swapfile
+chroot /mnt chattr +C /swapfile
+chroot /mnt lsattr /swapfile
+chroot /mnt dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
+chroot /mnt mkswap /swapfile
+chroot /mnt swapon /swapfile
+
+# Add to fstab
+echo " " >> /mnt/etc/fstab
+echo "# Swap" >> /mnt/etc/fstab
+echo "/swapfile      none     swap      defaults  0 0" >> /mnt/etc/fstab
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
