@@ -71,7 +71,7 @@ cp -v /etc/resolv.conf /mnt/etc/
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" nouveau i915 btrfs "
+add_drivers+=" nouveau i915 btrfs crc32c-intel "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
@@ -186,13 +186,13 @@ cat << EOF > /mnt/etc/rc.conf
 #HOSTNAME="nitrovoid"
 
 # Set RTC to UTC or localtime.
-HARDWARECLOCK="UTC"
+HARDWARECLOCK="localtime"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
 #TIMEZONE="Europe/Bucharest"
 
 # Keymap to load, see loadkeys(8).
-#KEYMAP="br-abnt2"
+KEYMAP="us-acentos"
 
 # Console font to load, see setfont(8).
 #FONT="lat9w-16"
@@ -281,10 +281,16 @@ chroot /mnt xbps-reconfigure -fa
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
 cat << EOF > /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 section "InputClass"
-        Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # MatchIsTouchpad "on"
+        # Driver "libinput"
+        # Option "Tapping" "on"
+
+        Identifier      "touchpad"
+        Driver          "libinput"
         MatchIsTouchpad "on"
-        Driver "libinput"
-        Option "Tapping" "on"
+        Option          "Tapping"       "on"
 EndSection
 EOF
 
@@ -293,10 +299,23 @@ Section "InputClass"
         Identifier "system-keyboard"
         MatchIsKeyboard "on"
         Option "XkbLayout" "us"
-        Option "XkbModel" "pc105"
+        # Option "XkbModel" "pc105"
         Option "XkbVariant" "mac"
 EndSection
 EOF
+
+cat << EOF > /mnt/etc/X11/xorg.conf.d/99-killx.conf
+Section "ServerFlags"
+        Option  "DontZap"       "false"
+EndSection
+
+Section "InputClass"
+        Identifier      "Keyboard Defaults"
+        MatchIsKeyboard "yes"
+        Option          "XkbOptions"    "terminate:crtl_alt_bksp"
+EndSection
+EOFcd 
+
 
 #Runit por default
 chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/

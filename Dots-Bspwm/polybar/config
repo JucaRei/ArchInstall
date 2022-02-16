@@ -356,6 +356,20 @@ format-prefix-foreground = #61afef
 label-foreground =   #D8DEE9
 format-padding = 1
 
+[module/backlight]
+type = custom/script
+interval = 0.2
+exec = ~/.config/polybar/scripts/backlight.sh
+
+scroll-up = exec light -A 5
+scroll-down = exec light -U 5
+
+format-prefix = " "
+
+label = %output%
+label-foreground = ${colors.fg}
+format-padding = 1
+
 [module/cpu]
 type = internal/cpu
 interval = 2.5
