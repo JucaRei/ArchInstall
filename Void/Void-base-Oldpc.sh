@@ -221,7 +221,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -296,11 +296,12 @@ EOF
 
 cat << EOF > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 Section "InputClass"
-        Identifier "system-keyboard"
-        MatchIsKeyboard "on"
-        Option "XkbLayout" "us"
-        # Option "XkbModel" "pc105"
-        Option "XkbVariant" "mac"
+        Identifier              "system-keyboard"
+        MatchIsKeyboard         "on"
+        Option "XkbLayout"      "us"
+        # Option "XkbModel"     "pc105"
+        Option "XkbVariant"     "mac"
+        Option "Backspace"      "guess"
 EndSection
 EOF
 
@@ -319,6 +320,7 @@ EOF
 
 #Runit por default
 chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/acpid /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
@@ -420,6 +422,6 @@ mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 chroot /mnt gummiboot install
 
-chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 vt.global_cursor_default==0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 # chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 

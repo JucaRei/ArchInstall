@@ -91,6 +91,9 @@ complete -cf doas
 # root privileges
 alias doas="doas --"
 
+#skim
+alias sk="sk --ansi -c 'grep -rI --color=always --line-number "{}" .'"
+
 #give the list of all installed desktops - xsessions desktops
 alias xd="ls /usr/share/xsessions"
 
