@@ -6,11 +6,16 @@ mkdir -pv ~/.cache/xdgr
 
 doas chmod 0700 ~/.cache/xdgr
 
-sudo vpm i bspwm xorg-minimal autorandr arandr jq curl viewnior udevil glu starship light libvdpau starship gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap
+sudo vpm i bspwm autorandr arandr jq curl viewnior udevil glu starship light libvdpau starship gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap --yes
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
 # Old mac
-sudo vpm i kbdlight mbpfan 
+sudo vpm i kbdlight mbpfan
+git clone https://github.com/linux-on-mac/mbpfan.git
+cd mbpfan/
+make 
+sudo make install
+sudo make   
 sudo vpm i sassc gtk-engine-murrine
 
 mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
@@ -63,7 +68,7 @@ git clone --depth 1 https://github.com/JucaRei/ArchInstall
 # mkdir ~/scripts
 # cd ~/scripts
 cd ~/Documents/workspace/Others
-https://github.com/JucaRei/fontpreview
+git clone https://github.com/JucaRei/fontpreview
 cd fontpreview
 sudo make install 
 # echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
@@ -114,7 +119,6 @@ cat << EOF >> ~/.config/bspwm/bspwmrc
 ~/.fehbg &
 xrdb ~/.Xresources &
 ~/.config/polybar/launch.sh &
-setxkbmap br &
 picom -f &
 xsetroot -cursor_name left_ptr &
 ~/.bin/dualbsp.sh
@@ -130,18 +134,22 @@ cp -f zshrc.txt ~/.zshrc
 
 cd
 
-echo "Installation finished! Please, reboot."
+# Bash Insulter
+sudo wget -O /etc/bash.command-not-found https://gitlab.com/dwt1/bash-insulter/-/raw/master/src/bash.command-not-found
 
-# sudo wget -O /etc/bash.command-not-found https://gitlab.com/dwt1/bash-insulter/-/raw/master/src/bash.command-not-found
-
+# ASDF
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
 ### DT Shell Color script
-# git clone https://gitlab.com/dwt1/shell-color-scripts.git
-# cd shell-color-scripts
-# rm -rf /opt/shell-color-scripts || return 1
-# sudo mkdir -p /opt/shell-color-scripts/colorscripts || return 1
-# sudo cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
-# sudo cp colorscript.sh /usr/bin/colorscript
+cd $HOME/Documents/Workspace/Others
+git clone https://gitlab.com/dwt1/shell-color-scripts.git
+cd shell-color-scripts
+rm -rf /opt/shell-color-scripts || return 1
+sudo mkdir -p /opt/shell-color-scripts/colorscripts || return 1
+sudo cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
+sudo cp colorscript.sh /usr/bin/colorscript
 
 # optional for zsh completion
-# sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
+sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
+
+echo "Installation finished! Please, reboot."

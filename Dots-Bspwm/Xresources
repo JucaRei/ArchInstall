@@ -61,42 +61,6 @@ URxvt.keysym.C-Down:      resize-font:smaller
 URxvt.keysym.C-Up:        resize-font:bigger
 
 
-# ! special
-# *.foreground:   #5bd8df
-# *.background:   #180d17
-# *.cursorColor:  #5bd8df
-
-# ! black
-# *.color0:       #e0ad5e
-# *.color8:       #a0bbf6
-
-# ! red
-# *.color1:       #453cea
-# *.color9:       #e4c68c
-
-# ! green
-# *.color2:       #3eaff0
-# *.color10:      #f324e4
-
-# ! yellow
-# *.color3:       #c828ff
-# *.color11:      #edabaa
-
-# ! blue
-# *.color4:       #dd41cb
-# *.color12:      #87a9eb
-
-# ! magenta
-# *.color5:       #b27aac
-# *.color13:      #4fa3a3
-
-# ! cyan
-# *.color6:       #e63312
-# *.color14:      #39a5a5
-
-# ! white
-# *.color7:       #2cdfa7
-# *.color15:      #e47f5b
 
 !Fonts
 URxvt.font: xft:Fira Code Retina:pixelsize=16

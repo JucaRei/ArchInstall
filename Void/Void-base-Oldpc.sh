@@ -76,6 +76,10 @@ omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
 
+cat << EOF > /mnt/etc/dracut.conf.d/10-touchpad.conf
+add_drivers+=" bcm5974 "
+EOF
+
 # Repositorios mais rapidos
 cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
@@ -183,7 +187,7 @@ cat << EOF > /mnt/etc/rc.conf
 # NOTE: it's preferred to declare the hostname in /etc/hostname instead:
 #       - echo myhost > /etc/hostname
 #
-#HOSTNAME="nitrovoid"
+#HOSTNAME="oldmac"
 
 # Set RTC to UTC or localtime.
 HARDWARECLOCK="localtime"
@@ -221,13 +225,13 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xbacklight xprop  xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
@@ -241,10 +245,10 @@ wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S xf86-video-nouveau mesa-nouveau-dri --yes
+# chroot /mnt xbps-install -S xf86-video-intel --yes
 
 # Intel Video Drivers
-chroot /mnt xbps-install -S xf86-video-intel --yes
+chroot /mnt xbps-install -S xf86-video-nouveau mesa-dri --yes
 
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
@@ -294,6 +298,13 @@ section "InputClass"
 EndSection
 EOF
 
+cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nouveau.conf
+Section "Device"
+    Identifier "Nvidia card"
+    Driver "nouveau"
+EndSection
+EOF
+
 cat << EOF > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 Section "InputClass"
         Identifier              "system-keyboard"
@@ -329,7 +340,7 @@ chroot /mnt ln -sv /etc/sv/sshd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 
 # NFS
@@ -424,4 +435,6 @@ chroot /mnt gummiboot install
 
 chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 # chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+
+
 
