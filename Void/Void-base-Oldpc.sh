@@ -225,7 +225,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu starship linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -256,7 +256,7 @@ chroot /mnt xbps-install -S xf86-video-nouveau mesa-dri --yes
 chroot /mnt xbps-install -S mons --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
@@ -342,6 +342,7 @@ chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 # chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
@@ -362,31 +363,6 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # alias bquit="bspc quit"
 
 
-#chroot /mnt sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-# spaceship theme
-# git clone https://github.com/denysdovhan/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt"
-# ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-# ZSH_THEME="spaceship"
-
-# cat <<\EOF >> /home/juca/.zshrc
-# SPACESHIP_PROMPT_ORDER=(
-#   user          # Username section
-#   dir           # Current directory section
-#   host          # Hostname section
-#   git           # Git section (git_branch + git_status)
-#   hg            # Mercurial section (hg_branch  + hg_status)
-#   exec_time     # Execution time
-#   line_sep      # Line break
-#   vi_mode       # Vi-mode indicator
-#   jobs          # Background jobs indicator
-#   exit_code     # Exit code section
-#   char          # Prompt character
-# )
-# SPACESHIP_USER_SHOW=always
-# SPACESHIP_PROMPT_ADD_NEWLINE=false
-# SPACESHIP_CHAR_SYMBOL="❯"
-# SPACESHIP_CHAR_SUFFIX=" "
-# EOF
 
 # MakeSwap
 chroot /mnt touch /swapfile
@@ -437,4 +413,20 @@ chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet lo
 # chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 
 
+# cd ~/Downloads
+# wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
+# ex ncdu-2.1-linux-x86_64.tar.gz
+# mkdir ~/.local/bin
+# mv ncdu ~/.local/bin
+# source ~/.bashrc
 
+
+# git clone https://gitlab.com/dwt1/shell-color-scripts.git
+# cd shell-color-scripts
+# rm -rf /opt/shell-color-scripts || return 1
+# sudo mkdir -p /opt/shell-color-scripts/colorscripts || return 1
+# sudo cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
+# sudo cp colorscript.sh /usr/bin/colorscript
+#
+# optional for zsh completion
+# sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions

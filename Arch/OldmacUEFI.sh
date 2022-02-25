@@ -64,6 +64,7 @@ pacman -U pikaur-1.9-1-any.pkg.tar.zst
 mkdir -p /var/cache/pikaur
 pikaur -Syu --noconfirm
 pikaur -S bat dust yt-dlp btop zramd --noconfirm
+systemctl enable zramd
 #pikaur -S nvidia-340xx-lts-dkms xf86-video-intel
 #pikaur -S xf86-video-nouveau xf86-video-intel
 
