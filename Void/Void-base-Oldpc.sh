@@ -16,9 +16,9 @@ wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-2021
 
 xbps-install -Su xbps xz --yes
 
-mkfs.vfat -F32 /dev/sda1
-mkfs.btrfs /dev/sda2 -f
-mkfs.btrfs /dev/sda3 -f
+mkfs.vfat -F32 /dev/sda1 -n "EFI"
+mkfs.btrfs /dev/sda2 -f -L "VoidLinux"
+mkfs.btrfs /dev/sda3 -f -L "Voidhome"
 
 set -e
 XBPS_ARCH="x86_64"
@@ -225,13 +225,13 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight arp-scan xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho ncdu starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight arp-scan xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi btop dialog --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
@@ -328,6 +328,63 @@ Section "InputClass"
 EndSection
 EOF
 
+mkdir -pv /mnt/etc/elogind
+cat << EOF > /mnt/etc/elogind/logind.conf
+#  This file is part of elogind.
+#
+#  elogind is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See logind.conf(5) for details.
+
+[Login]
+#KillUserProcesses=no
+#KillOnlyUsers=
+#KillExcludeUsers=root
+#InhibitDelayMaxSec=5
+HandlePowerKey=ignore
+HandleSuspendKey=ignore
+HandleHibernateKey=ignore
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+#PowerKeyIgnoreInhibited=no
+#SuspendKeyIgnoreInhibited=no
+#HibernateKeyIgnoreInhibited=no
+#LidSwitchIgnoreInhibited=yes
+#HoldoffTimeoutSec=30s
+#IdleAction=ignore
+#IdleActionSec=30min
+#RuntimeDirectorySize=10%
+#RuntimeDirectoryInodes=400k
+#RemoveIPC=yes
+#InhibitorsMax=8192
+#SessionsMax=8192
+
+[Sleep]
+#AllowSuspend=yes
+#AllowHibernation=yes
+#AllowSuspendThenHibernate=yes
+#AllowHybridSleep=yes
+#AllowPowerOffInterrupts=no
+#BroadcastPowerOffInterrupts=yes
+#AllowSuspendInterrupts=no
+#BroadcastSuspendInterrupts=yes
+HandleNvidiaSleep=ignore
+#SuspendState=mem standby freeze
+#SuspendMode=
+#HibernateState=disk
+#HibernateMode=platform shutdown
+#HybridSleepState=disk
+#HybridSleepMode=suspend platform shutdown
+#HibernateDelaySec=10800
+EOF
 
 #Runit por default
 chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
@@ -340,7 +397,7 @@ chroot /mnt ln -sv /etc/sv/dropbear /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
-# chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 
@@ -403,13 +460,17 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
+# install ncdu2
+wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
+tar -xf ncdu-2.1-linux-x86_64.tar.gz
+mv ncdu /mnt/usr/local/bin
 
 #Install Gummiboot
 mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 chroot /mnt gummiboot install
 
-chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 acpi_backlight=vendor udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 # chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 
 

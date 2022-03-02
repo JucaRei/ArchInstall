@@ -2,6 +2,7 @@
 
 
 
+
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 sed -i '177s/.//' /etc/locale.gen
@@ -36,7 +37,7 @@ EOF
 
 pacman -Syyy
 
-pacman -S archlinux-keyring
+pacman -S archlinux-keyring devtools
 pacman -Syyy
 
 # cat << EOF >> /etc/pacman.conf
@@ -60,8 +61,9 @@ pacman -U paru-1.9.2-1-x86_64.pkg.tar.zst
 
 cd
 
-pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet htop neofetch chrony chrony-runit dialog wpa_supplicant duf bat exa ripgrep fzf rsm wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip openssh openssh-runit rsync rsync-runit acpi acpid acpi_call-dkms tlp tlp-runit virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet thermald thermald-runit htop neofetch chrony chrony-runit dialog wpa_supplicant duf bat exa ripgrep fzf rsm wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip dropbear dropbear-runit dropbear-scp rsync rsync-runit acpi acpid acpi_call-dkms tlp virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
 
+# paru -S auto-cpufreq
 # pacman -S reflector
 # pacman -S nvidia-lts nvidia-utils nvidia-settings
 # pacman -S glow ncdu2 btop
@@ -71,8 +73,24 @@ pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network
 
 #pacman -S zramen-runit
 
+# Build for Aur
+mkdir /home/build
+chgrp nobody /home/build
+chmod g+ws /home/build
+setfacl -m u::rwx,g::rwx /home/build
+setfacl -d --set u::rwx,g::rwx,o::- /home/build
+
+# install some Aur 
+cd /home/build
+git clone --depth=1 https://aur.archlinux.org/auto-cpufreq.git
+cd auto-cpufreq/
+sudo -u nobody makepkg -si
+
+
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/bluetoothd /etc/runit/runsvdir/default/
