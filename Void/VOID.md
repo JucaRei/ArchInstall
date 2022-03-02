@@ -2,7 +2,16 @@
 
 loadkeys br-abnt2
 
-### Connecting with Wifi
+### Fix certificate error on Live DVD
+
+#### Type these commands 
+
+```fix
+SSL_NO_VERIFY_PEER=true xbps-install -Sy vsv vpm chrony
+ln -s /etc/sv/chronyd /var/service
+vpm sync
+vpm update
+```
 
 
 ### Connecting to the internet

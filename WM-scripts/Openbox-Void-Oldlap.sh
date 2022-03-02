@@ -145,8 +145,8 @@ sudo sed -i 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-gr
 sudo ln -s /etc/sv/mpd /var/service
 
 cd ~/Documents/workspace/Configs/ArchInstall/Dots-WM/
-cp -f bashrc.txt ~/.bashrc
-cp -f zshrc.txt ~/.zshrc
+cp -f bashrc ~/.bashrc
+cp -f zshrc ~/.zshrc
 
 cd
 

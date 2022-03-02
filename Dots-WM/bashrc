@@ -264,6 +264,8 @@ alias merge='xrdb -merge ~/.Xresources'
 # Arp get all devices on lan
 alias localdevices="sudo arp-scan --interface=eth0 --localnet"
 
+alias comused="history | awk '{print $2}' | sort | uniq -c | sort -nr | head -5"
+
 #####       Nano        #####
 
 

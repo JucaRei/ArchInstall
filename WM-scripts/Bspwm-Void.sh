@@ -129,8 +129,8 @@ EOF
 sudo ln -s /etc/sv/mpd /var/service
 
 cd ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/
-cp -f bashrc.txt ~/.bashrc
-cp -f zshrc.txt ~/.zshrc
+cp -f bashrc ~/.bashrc
+cp -f zshrc ~/.zshrc
 
 cd
 
