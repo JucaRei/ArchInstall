@@ -45,15 +45,15 @@ pacman -S xf86-video-intel
 
 # OLDMAC (late 2008) lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
-pacman -S nvidia-340xx-lts-dkms
+# pacman -S nvidia-340xx-lts-dkms
 # pacman -S xf86-video-intel xf86-video-nouveau
 
 # Old pc only works with xorg-server1.19-git and max kernel 5.4
 # sudo pacman -S nvidia-304xx
 
 # OLDPC don`t need it
-#grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
-#grub-mkconfig -o /boot/grub/grub.cfg
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch
+grub-mkconfig -o /boot/grub/grub.cfg
 
 systemctl enable NetworkManager
 systemctl enable bluetooth

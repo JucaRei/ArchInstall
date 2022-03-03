@@ -7,7 +7,9 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i openbox-3 libopenbox-3 obconf obmenu-generator jq arandr polybar gping papirus-folders papirus-icon-theme pcmanfm ImageMagick ranger feh xclip unclutter rofi scrot flameshot  fontmanager --yes
+doas vpm i openbox-3 libopenbox-3 lxappearance-obconf obmenu-generator jq lxrandr polybar gping papirus-folders papirus-icon-theme pcmanfm ImageMagick ranger feh xclip unclutter rofi scrot flameshot  fontmanager --yes
+
+# lxqt-notificationd lxappearance-obconf
 
 # More Packages
 doas vpm i zathura mpv mpd ncmpcpp neofetch glu viewnior udevil htop geany xarchiver zip zenmap --yes

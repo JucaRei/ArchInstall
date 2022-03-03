@@ -1,20 +1,17 @@
 #!/bin/bash
 
-
-
-
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
-sed -i '177s/.//' /etc/locale.gen
+sed -i '178s/.//' /etc/locale.gen
 locale-gen
-# echo "LANG=en_US.UTF-8" >>/etc/locale.conf
+echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
-echo "archnitro" >>/etc/hostname
+echo "artixnitro" >>/etc/hostname
 echo "127.0.0.1 localhost" >>/etc/hosts
 echo "::1       localhost" >>/etc/hosts
-echo "127.0.1.1 archnitro.localdomain archnitro" >>/etc/hosts
+echo "127.0.1.1 artixnitro.localdomain artixnitro" >>/etc/hosts
 echo root:200291 | chpasswd
 
 pacman -S artix-archlinux-support
@@ -37,7 +34,7 @@ EOF
 
 pacman -Syyy
 
-pacman -S archlinux-keyring devtools
+pacman -S archlinux-keyring
 pacman -Syyy
 
 # cat << EOF >> /etc/pacman.conf
@@ -56,12 +53,7 @@ pacman-key --populate archlinux
 
 pacman -Syy
 
-cd ArchInstall/Arch/Arch_pkgs
-pacman -U paru-1.9.2-1-x86_64.pkg.tar.zst
 
-cd
-
-pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet thermald thermald-runit htop neofetch chrony chrony-runit dialog wpa_supplicant duf bat exa ripgrep fzf rsm wpa_supplicant-runit pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip dropbear dropbear-runit dropbear-scp rsync rsync-runit acpi acpid acpi_call-dkms tlp virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
 
 # paru -S auto-cpufreq
 # pacman -S reflector
@@ -73,47 +65,36 @@ pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network
 
 #pacman -S zramen-runit
 
-# Build for Aur
-mkdir /home/build
-chgrp nobody /home/build
-chmod g+ws /home/build
-setfacl -m u::rwx,g::rwx /home/build
-setfacl -d --set u::rwx,g::rwx,o::- /home/build
+# function install_paru() {
+#     # use build directory to intall pary as "nobody" user
+#     # change the directory's group to "nobody" and make it sticky
+#     # so that all files within get the same properties
+#     mkdir -pv /home/build
+#     cd /home/build
+#     chgrp nobody /home/build
+#     chmod g+ws /home/build
+#     setfacl -m u::rwx,g::rwx /home/build
+#     setfacl -d --set u::rwx,g::rwx,o::- /home/build
 
-# install some Aur 
-cd /home/build
-git clone --depth=1 https://aur.archlinux.org/auto-cpufreq.git
-cd auto-cpufreq/
-sudo -u nobody makepkg -si
+#     # clone the repo
+#     git clone --depth=1 https://aur.archlinux.org/paru-bin.git paru
+#     chmod 777 paru
+#     cd paru
+
+#     # make the package as "nobody"
+#     sudo -u nobody makepkg
+
+#     # install the package as root
+#     pacman --noconfirm -U paru-bin*.zst
+
+#     # clean up
+#     cd
+#     rm -rf /home/build
+# }
+
+# install_paru
 
 
-ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
-# ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/bluetoothd /etc/runit/runsvdir/default/
-#ln -s /etc/runit/sv/wpa_supplicant /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/avahi-daemon /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/alsa /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/cupsd /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/tlp /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/libvirtd/ /etc/runit/runsvdir/default/
-
-useradd -m junior
-echo junior:200291 | chpasswd
-usermod -aG libvirt junior
-
-echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
-
-# pacman -Rs linux acpi_call --noconfirm
-# pacman -S acpi_call-lts --noconfirm
-
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
-grub-mkconfig -o /boot/grub/grub.cfg
-
-mkinitcpio -P linux-lts
 
 # Enable pacman Color
 sed -i '/Color/s/^#//' /etc/pacman.conf
@@ -155,6 +136,43 @@ EOF
 
 pacman -Syy
 
+cd ArchInstall/Arch/Arch_pkgs
+pacman -U paru-1.9.2-1-x86_64.pkg.tar.zst
+
+cd /
+
+pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet openssh-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog  duf bat exa ripgrep fzf rsm pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip  rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
+
+
+ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/bluetoothd /etc/runit/runsvdir/default/
+#ln -s /etc/runit/sv/wpa_supplicant /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/avahi-daemon /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/alsa /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/cupsd /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/tlp /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/libvirtd/ /etc/runit/runsvdir/default/
+
+
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix
+grub-mkconfig -o /boot/grub/grub.cfg
+
+mkinitcpio -p linux-lts
+
+useradd -m junior
+echo junior:200291 | chpasswd
+usermod -aG libvirt junior
+
+echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
+
+# pacman -Rs linux acpi_call --noconfirm
+# pacman -S acpi_call-lts --noconfirm
+
 # running makepkg as nobody user
 # mkdir /home/build
 # chgrp nobody /home/build
@@ -162,4 +180,13 @@ pacman -Syy
 # setfacl -m u::rwx,g::rwx /home/build
 # setfacl -d --set u::rwx,g::rwx,o::- /home/build
 
+sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=true/g' /etc/default/grub
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet udev.log_level=0 i915.fastboot=1 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# i915.fastboot=1
+
+
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
+
