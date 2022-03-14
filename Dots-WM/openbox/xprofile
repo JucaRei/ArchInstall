@@ -1,0 +1,15 @@
+### Other Ways to launch with dbus session
+
+# setxkbmap br &
+# Udevil
+# devmon &
+
+
+# Add font path
+xset +fp /home/juca/.local/share/fonts/ &
+xset fp rehash &
+
+#XDG DATA DIR
+export XDG_DATA_DIRS="$HOME/.local/share/applications"
+
+~/.config/openbox/autostart

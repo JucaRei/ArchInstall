@@ -1,8 +1,7 @@
-polybar &
 xrdb ~/.Xresources &
 ~/.local/bin/fehauto.sh &
-~/.config/polybar/launch.sh &
 picom -f &
 xsetroot -cursor_name left_ptr &
 ~/.bin/dualbsp.sh &
-feh --no-fehbg --bg-scale '/home/juca/Pictures/Wallpapers/wallpaper.jpg'
+feh --no-fehbg --bg-scale '/home/juca/Pictures/Wallpapers/wallpaper.jpg' &
+xec dbus-launch --autolaunch=$(cat /var/lib/dbus/machine-id) openbox

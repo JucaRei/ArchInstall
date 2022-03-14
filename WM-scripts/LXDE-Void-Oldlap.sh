@@ -6,7 +6,7 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i  openbox firefox-esr lxappearance-obconf obmenu-generator flatpak network-manager-applet jq lxrandr polybar menumaker gping papirus-folders papirus-icon-theme pcmanfm ImageMagick ranger feh xclip unclutter rofi scrot flameshot  fontmanager --yes
+doas vpm i lxde xcompmgr firefox-esr flatpak network-manager-applet picom jq menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
 
 # lxqt-notificationd lxappearance-obconf
 
@@ -24,7 +24,7 @@ mkdir -p ~/.local/share/applications
 mkdir -p ~/Documents/workspace/{Github,Builds/Void-Packages,Others,Customizations,Configs,Tests,Composes}
 mkdir -p ~/.local/share/fonts
 mkdir -p ~/.urxvt/ext
-mkdir -p ~/.config/{openbox,rofi,sxhkd,dunst,polybar}
+mkdir -p ~/.config/rofi
 mkdir -p ~/.config/mpd
 mkdir -p ~/.local/bin
 mkdir -p ~/.bin
@@ -68,11 +68,11 @@ cd ~/Documents/workspace/Builds/Void-Packages/BinaryBuilder
 echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
 
 # Install Picom Ibhagwan
-git clone --depth=1 https://github.com/ibhagwan/picom-ibhagwan-template
-mv picom-ibhagwan-template ./srcpkgs/picom-ibhagwan
-./xbps-src pkg picom-ibhagwan
-doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
-cd
+# git clone --depth=1 https://github.com/ibhagwan/picom-ibhagwan-template
+# mv picom-ibhagwan-template ./srcpkgs/picom-ibhagwan
+# ./xbps-src pkg picom-ibhagwan
+# doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
+# cd
 
 # Install ASDF
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
@@ -81,8 +81,8 @@ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
 cd ~/Documents/workspace/Customizations
 git clone https://github.com/JucaRei/rofi
-git clone https://github.com/JucaRei/polybar-themes
-git clone https://github.com/JucaRei/dotfiles
+# git clone https://github.com/JucaRei/polybar-themes
+# git clone https://github.com/JucaRei/dotfiles
 # git clone https://github.com/JucaRei/fonts
 
 cd ~/Documents/workspace/Configs
@@ -124,21 +124,20 @@ git clone --depth=1 https://github.com/addy-dclxvi/openbox-theme-collections ~/.
 # Xresources | Fehgb | Xprofile etc
 cd
 mkdir -pv ~/Pictures/Wallpapers
-cp -r /etc/xdg/openbox/{rc.xml,menu.xml,autostart,environment} ~/.config/openbox
+cp -r ~/Documents/workspace/Github/{rc.xml,menu.xml,autostart,environment} ~/.config/openbox
 cp -f ~/Documents/workspace/Customizations/dotfiles/wallpaper.jpg ~/Pictures/Wallpapers
 cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Xresources ~/.Xresources
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/fehbg ~/.fehbg
-chmod +x ~/.fehbg
+# cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/fehbg ~/.fehbg
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/fehauto.sh ~/.local/bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/openbox/ ~/.config/
+chmod +x ~/.local/bin/fehauto.sh
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/openbox/{lxde-rc.xml,autostart} ~/.config/openbox/
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/xprofile ~/.xprofile
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/rxvt/vtwhell ~/.urxvt/ext
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/rxvt/config-reload ~/.urxvt/ext
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/dualbsp.sh ~/.bin
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/DualMonPolybar.sh ~/.bin
 sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/display-lightdm.sh /etc/lightdm
-cp -f /etc/dunst/dunstrc ~/.config/dunst/
 
 sudo sed -i 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-greeter/g' /etc/lightdm/lightdm.conf
 

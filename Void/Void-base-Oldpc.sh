@@ -16,15 +16,15 @@ wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-2021
 
 xbps-install -Su xbps xz --yes
 
-mkfs.vfat -F32 /dev/sda1 -n "EFI"
-mkfs.btrfs /dev/sda2 -f -L "VoidLinux"
-mkfs.btrfs /dev/sda3 -f -L "Voidhome"
+#mkfs.vfat -F32 /dev/sda1 -n "EFI"
+mkfs.btrfs /dev/sda4 -f -L "VoidLinux"
+mkfs.btrfs /dev/sda5 -f -L "Voidhome"
 
 set -e
 XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sda2 /mnt
+mount -o $BTRFS_OPTS /dev/sda4 /mnt
 
 #Cria os subvolumes
 
@@ -38,24 +38,23 @@ btrfs su cr /mnt/@var_cache_xbps
 umount -v /mnt
 
 # mount home subvolume
-mount -o $BTRFS_OPTS /dev/sda3 /mnt
+mount -o $BTRFS_OPTS /dev/sda5 /mnt
 btrfs su cr /mnt/@home
 umount -v /mnt
 
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 mkdir -pv /mnt/boot
-mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda2 /mnt/var/cache/xbps
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda4 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda4 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda4 /mnt/var/cache/xbps
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 
 # Descompacta e copia para /mnt o tarball
@@ -121,8 +120,8 @@ EOF
 # fstab
 
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
-HOME_UUID=$(blkid -s UUID -o value /dev/sda3)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda4)
+HOME_UUID=$(blkid -s UUID -o value /dev/sda5)
 echo $UEFI_UUID
 echo $ROOT_UUID
 echo $HOME_UUID
@@ -470,8 +469,8 @@ mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 chroot /mnt gummiboot install
 
-chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 acpi_backlight=vendor udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
-# chroot /mnt bash -c 'echo "options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 acpi_backlight=vendor udev.log_level=0 vt.global_cursor_default=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+# chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet splash loglevel=3 acpi_osi=Darwin acpi_mask_gpe=0x06 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
 
 
 # cd ~/Downloads
