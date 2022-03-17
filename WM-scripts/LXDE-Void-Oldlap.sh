@@ -6,7 +6,10 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i lxde xcompmgr firefox-esr flatpak network-manager-applet picom jq menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
+doas vpm i lxde xcompmgr firefox-esr flatpak network-manager-applet blueman pavucontrol picom jq xkill menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
+
+# Some themes
+doas vpm i Adapta yaru numix-themes --yes
 
 # lxqt-notificationd lxappearance-obconf
 
@@ -15,7 +18,7 @@ doas vpm i lightdm lightdm-gtk3-greeter --yes
 # More Packages
 doas vpm i zathura mpv mpd ncmpcpp neofetch glu viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
 
-### terminals ###
+### terminals ###      
 doas vpm i xterm rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig --yes
 doas vpm i kitty kitty-terminfo --yes
 
@@ -123,10 +126,9 @@ git clone --depth=1 https://github.com/addy-dclxvi/openbox-theme-collections ~/.
 
 # Xresources | Fehgb | Xprofile etc
 cd
-mkdir -pv ~/Pictures/Wallpapers
-cp -r ~/Documents/workspace/Github/{rc.xml,menu.xml,autostart,environment} ~/.config/openbox
-cp -f ~/Documents/workspace/Customizations/dotfiles/wallpaper.jpg ~/Pictures/Wallpapers
-cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
+mkdir -pv ~/Pictures/{Screenshots,Wallpapers}
+cp -r ~/Documents/workspace/Configs/ArchInstall/Dots-WM/openbox/{rc.xml,menu.xml,autostart,environment} ~/.config/openbox
+cp -f ~/Documents/workspace/Configs/ArchInstall/wallpapers/** ~/Pictures/Wallpapers
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Xresources ~/.Xresources
 # cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/fehbg ~/.fehbg
 cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/fehauto.sh ~/.local/bin
@@ -171,6 +173,6 @@ sudo cp colorscript.sh /usr/bin/colorscript
 sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
 
 # generate menu
-mmaker -vf OpenBox3
+# mmaker -vf OpenBox3
 
 echo "Installation finished! Please, reboot."
