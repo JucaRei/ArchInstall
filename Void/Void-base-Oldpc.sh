@@ -243,6 +243,12 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
+cat << EOF >> /mnt/etc/rc.local
+modprobe -r usbmouse
+modprobe -r bcm5974
+modprobe bcm5974
+EOF
+
 # Install Nvidia video drivers
 # chroot /mnt xbps-install -S xf86-video-intel --yes
 
