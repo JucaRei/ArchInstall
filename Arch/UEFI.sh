@@ -81,4 +81,9 @@ echo junior:200291 | chpasswd
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
+sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
+
+mkinitcpio -P linux-lts
+
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
