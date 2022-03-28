@@ -17,7 +17,7 @@ echo root:200291 | chpasswd
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack 
-#pacman -Sy grub grub-btrfs archlinux-keyring efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils openssh rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+#pacman -Sy grub grub-btrfs archlinux-keyring efibootmgr networkmanager network-manager-applet dialog wpa_supplicant pacman-contrib base-devel avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
 
 # Virt-manager
 #pacman -S virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
@@ -63,7 +63,8 @@ systemctl enable NetworkManager
 systemctl enable bluetooth
 #systemctl enable cups.service
 # OLDPC don`t need it
-systemctl enable sshd
+#systemctl enable sshd
+systemctl enable dropbear
 # OLDPC don`t need it
 systemctl enable avahi-daemon
 # You can comment this command out if you didn't install tlp, see above
