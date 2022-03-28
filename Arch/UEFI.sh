@@ -41,7 +41,7 @@ pacman -S xf86-video-intel mesa vulkan-intel
 # nvidia if you are using zen linux kernel
 # pacman -S nvidia-dkms nvidia-utils nvidia-settings
 
-# pacman -S nvidia nvidia-utils nvidia-settings
+# pacman -S nvidia-tweaks nvidia-settings
 
 # OLDMAC (late 2008) lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
