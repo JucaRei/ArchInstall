@@ -33,7 +33,7 @@ pacman -S archlinux-keyring
 pacman -Syyy
 pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
 
-pacman -S xf86-video-intel
+pacman -S xf86-video-intel mesa vulkan-intel
 
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
@@ -81,9 +81,9 @@ echo junior:200291 | chpasswd
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
-sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
-sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
+#sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+#sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 
-mkinitcpio -P linux-lts
+#mkinitcpio -P linux-lts
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
