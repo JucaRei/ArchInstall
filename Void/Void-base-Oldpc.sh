@@ -261,7 +261,7 @@ chroot /mnt xbps-install -S xf86-video-nouveau mesa-dri --yes
 chroot /mnt xbps-install -S mons --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
@@ -411,6 +411,11 @@ chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/statd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/netmount /etc/runit/runsvdir/default/
 
+#Samba
+chroot /mnt ln -srvf /etc/sv/smbd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
+
+
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
@@ -425,6 +430,56 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # alias bquit="bspc quit"
 
 
+
+cat <<EOF > /mnt/etc/samba/smb.conf
+[global]
+   workgroup = WORKGROUP
+   dns proxy = no
+   log file = /var/log/samba/%m.log
+   max log size = 1000
+   client min protocol = NT1
+   server role = standalone server
+   passdb backend = tdbsam
+   obey pam restrictions = yes
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = *New*UNIX*password* %n\n *ReType*new*UNIX*password* %n\n *passwd:*all*authentication*tokens*updated*successfully*
+   pam password change = yes
+   map to guest = Bad Password
+   usershare allow guests = yes
+   name resolve order = lmhosts bcast host wins
+   security = user
+   guest account = nobody
+   usershare path = /var/lib/samba/usershare
+   usershare max shares = 100
+   usershare owner only = yes
+   force create mode = 0070
+   force directory mode = 0070
+
+[homes]
+   comment = Home Directories
+   browseable = no
+   read only = yes
+   create mask = 0700
+   directory mask = 0700
+   valid users = %S
+
+[printers]
+   comment = All Printers
+   browseable = no
+   path = /var/spool/samba
+   printable = yes
+   guest ok = no
+   read only = yes
+   create mask = 0700
+
+[print$]
+   comment = Printer Drivers
+   path = /var/lib/samba/printers
+   browseable = yes
+   read only = yes
+   guest ok = no
+EOF
 
 # MakeSwap
 chroot /mnt touch /swapfile

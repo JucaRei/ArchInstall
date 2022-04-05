@@ -6,7 +6,7 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i lxde xcompmgr firefox-esr flatpak network-manager-applet blueman pavucontrol picom jq xkill menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
+doas vpm i lxqt xcompmgr kvantum udiskie compton-conf firefox-esr flatpak network-manager-applet blueman pavucontrol picom jq xkill menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
 
 # Some themes
 doas vpm i Adapta yaru numix-themes --yes

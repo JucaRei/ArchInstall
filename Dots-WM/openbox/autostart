@@ -4,3 +4,24 @@ picom -f &
 xsetroot -cursor_name left_ptr &
 ~/.bin/dualbsp.sh &
 feh --no-fehbg --bg-scale '/home/juca/Pictures/Wallpapers/wallpaper.jpg' &
+
+
+##### LXQT #####
+
+mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
+export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
+
+pcmanfm-qt --daemon &
+xsetroot -cursor_name left_ptr &
+udiskie -A --tray &
+
+# Mount drives, usbs etc...
+if which dbus-run-session >/dev/null && test -z "$DBUS_SESSION_BUS_ADRESS";
+then
+    eval "$(dbus-launch --sh-syntax --exit-with-session)"
+fi
+
+# Run bspwm
+exec startlxqt
