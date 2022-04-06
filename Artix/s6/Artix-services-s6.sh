@@ -93,14 +93,8 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-sudo cat << EOF > /etc/s6/sv/zramen/conf
-export ZRAM_COMP_ALGORITHM='zstd'
-#export ZRAM_PRIORITY=32767
-export ZRAM_SIZE=100
-#export ZRAM_STREAMS=1
-EOF
 
-sudo s6-rc-bundle add default nfs-server nmbd smbd statd zramen rpcbind mpd metalog
+sudo s6-rc-bundle add default nfs-server nmbd smbd statd rpcbind mpd metalog
 
 sudo s6-rc -u change nfs-server
 sudo s6-rc -u change nmbd

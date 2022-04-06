@@ -2,9 +2,11 @@
 
 xdg-user-dirs-update
 
-mkdir -p Documents/workspace/{Github,Configs}
+sleep 3
 
-cd Documents/workspace/Configs
+mkdir -pv Documents/workspace/{Github,Configs}
+
+cd $HOME/Documents/workspace/Configs
 git clone --depth=1 https://github.com/JucaRei/ArchInstall
 
 cd $HOME/Documents/workspace/Configs/ArchInstall/Arch/Arch_pkgs
@@ -18,10 +20,10 @@ cd
 
 paru -S netmount-runit nfs-utils nfs-utils-runit samba samba-runit fusesmb metalog metalog-runit mpd mpd-runit zramen-runit
 
-paru -S nvidia-tweaks nvidia-prime xf86-video-intel 
+# paru -S nvidia-tweaks nvidia-prime xf86-video-intel 
 
 
-sudo cat <<EOF > /mnt/etc/samba/smb.conf
+sudo cat <<EOF > /etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
@@ -72,8 +74,8 @@ sudo cat <<EOF > /mnt/etc/samba/smb.conf
 EOF
 
 #Fix mount external HD
-sudo mkdir -pv /mnt/etc/udev/rules.d
-sudo cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
+sudo mkdir -pv /etc/udev/rules.d
+sudo cat << EOF > /etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -83,8 +85,8 @@ EOF
 
 # Not asking for password
 
-sudo mkdir -pv /mnt/etc/polkit-1/rules.d
-sudo cat << EOF > /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+sudo mkdir -pv /etc/polkit-1/rules.d
+sudo cat << EOF > /etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {

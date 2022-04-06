@@ -98,6 +98,7 @@ pacman -Syy
 
 # Enable pacman Color
 sed -i '/Color/s/^#//' /etc/pacman.conf
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
 # Enable multilib repo
 sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
@@ -141,11 +142,11 @@ pacman -U paru-1.9.2-1-x86_64.pkg.tar.zst
 
 cd /
 
-pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet openssh-runit dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog  duf bat exa ripgrep fzf rsm pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip  rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr networkmanager networkmanager-runit network-manager-applet dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog  duf bat exa ripgrep fzf rsm pacman-contrib avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip  rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak sof-firmware nss-mdns acpid-runit os-prober ntfs-3g
 
 
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
@@ -167,6 +168,11 @@ mkinitcpio -p linux-lts
 useradd -m junior
 echo junior:200291 | chpasswd
 usermod -aG libvirt junior
+
+sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
+sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/g' /etc/sudoers
+# sed -i 's/# %sudo ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) ALL/g' /etc/sudoers
+
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 

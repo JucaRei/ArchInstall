@@ -2,14 +2,14 @@
 
 #########                         If Arch or Artix                      #########
 # pacman and yay
-# alias pacsyu='sudo pacman -Syu'                  # update only standard pkgs
-# alias pacsyyu='sudo pacman -Syyu'                # Refresh pkglist & update standard pkgs
+alias pacsyu='sudo pacman -Syu'                  # update only standard pkgs
+alias pacsyyu='sudo pacman -Syyu'                # Refresh pkglist & update standard pkgs
 # alias yaysua='yay -Sua --noconfirm'              # update only AUR pkgs (yay)
 # alias yaysyu='yay -Syu --noconfirm'              # update standard pkgs and AUR pkgs (yay)
-# alias parsua='paru -Sua --noconfirm'             # update only AUR pkgs (paru)
-# alias parsyu='paru -Syu --noconfirm'             # update standard pkgs and AUR pkgs (paru)
-# alias unlock='sudo rm /var/lib/pacman/db.lck'    # remove pacman lock
-# alias cleanup='sudo pacman -Rns (pacman -Qtdq)'  # remove orphaned packages
+alias parsua='paru -Sua --noconfirm'             # update only AUR pkgs (paru)
+alias parsyu='paru -Syu --noconfirm'             # update standard pkgs and AUR pkgs (paru)
+alias unlock='sudo rm /var/lib/pacman/db.lck'    # remove pacman lock
+alias cleanup='sudo pacman -Rns (pacman -Qtdq)'  # remove orphaned packages
 
 
 # get fastest mirrors
@@ -19,21 +19,21 @@
 # alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist"
 
 #get fastest mirrors in your neighborhood
-# alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
 # alias mirrord="sudo reflector --latest 30 --number 10 --sort delay --save /etc/pacman.d/mirrorlist"
 # alias mirrors="sudo reflector --latest 30 --number 10 --sort score --save /etc/pacman.d/mirrorlist"
 # alias mirrora="sudo reflector --latest 30 --number 10 --sort age --save /etc/pacman.d/mirrorlist"
 # our experimental - best option for the moment
 # alias mirrorx="sudo reflector --age 6 --latest 20  --fastest 20 --threads 5 --sort rate --protocol https --save /etc/pacman.d/mirrorlist"
 # alias mirrorxx="sudo reflector --age 6 --latest 20  --fastest 20 --threads 20 --sort rate --protocol https --save /etc/pacman.d/mirrorlist"
-# alias ram='rate-mirrors --allow-root arch | sudo tee /etc/pacman.d/mirrorlist'
+alias ram='rate-mirrors --allow-root arch | sudo tee /etc/pacman.d/mirrorlist'
 
 
 # gpg encryption
 # verify signature for isos
-# alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
+alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
 # receive the key of a developer
-# alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
+alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
 
 #pacman unlock
 # alias unlock="sudo rm /var/lib/pacman/db.lck"
@@ -41,25 +41,25 @@
 
 # Aliases for software managment
 # pacman or pm
-# alias pacman='sudo pacman --color auto'
-# alias update='sudo pacman -Syyu'
+alias pacman='sudo pacman --color auto'
+alias update='sudo pacman -Syyu'
 
 # paru as aur helper - updates everything
 # alias pksyua="paru -Syu --noconfirm"
-# alias upall="paru -Syu --noconfirm"
+alias upall="paru -Syu --noconfirm"
 
 
 #skip integrity check
-# alias paruskip='paru -S --mflags --skipinteg'
+alias paruskip='paru -S --mflags --skipinteg'
 # alias yayskip='yay -S --mflags --skipinteg'
 # alias trizenskip='trizen -S --skipinteg'
 
 #Recent Installed Packages
-# alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl"
-# alias riplong="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -3000 | nl"
+alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl"
+alias riplong="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -3000 | nl"
 
 #Cleanup orphaned packages
-# alias cleanup='sudo pacman -Rns $(pacman -Qtdq)'
+alias cleanup='sudo pacman -Rns $(pacman -Qtdq)'
 
 ####################################################################################
 
@@ -69,7 +69,7 @@
 
 
 #grub update
-# alias update-grub="sudo grub-mkconfig -o /boot/grub/grub.cfg"
+alias update-grub="sudo grub-mkconfig -o /boot/grub/grub.cfg"
 
 # kill commands
 # quickly kill conkies
@@ -86,10 +86,10 @@
 #     (eg: `doas dd status=p<tab>` -> `doas dd status=progress`)
 # -f : Complete arguments as if they were directory names (default behaviour)
 #     (eg: `doas /bi<tab>` -> `doas /bin/`)
-complete -cf doas
+# complete -cf doas
 
 # root privileges
-alias doas="doas --"
+# alias doas="doas --"
 
 #skim
 alias sk="sk --ansi -c 'grep -rI --color=always --line-number "{}" .'"
@@ -120,6 +120,7 @@ alias playmp3='deadbeef *.mp3'
 alias playavi='mpv *.avi'
 alias playmov='mpv *.mov'
 alias playmp4='mpv *.mp4'
+alias playmkv='mpv *.mkv'
 
 # yt-dlp
 # alias yta-aac="yt-dlp --extract-audio --audio-format aac "
@@ -177,6 +178,12 @@ fi
 # export EDITOR='nano'
 # export VISUAL='nano'
 
+
+# Make neovim the default editor
+
+# export EDITOR='nvim'
+# export VISUAL='nvim'
+
 #ignore upper and lowercase when TAB completion
 bind "set completion-ignore-case on"
 
@@ -184,7 +191,7 @@ bind "set completion-ignore-case on"
 export XDG_RUNTIME_DIR=$PATH:~/.cache/xdgr
 
 ### EXPORT
-# export TERM="xterm-256color"                      # getting proper colors
+export TERM="xterm-256color"                      # getting proper colors
 export HISTCONTROL=ignoredups:erasedups           # no duplicate entries
 # export ALTERNATE_EDITOR=""                        # setting for emacsclient
 # export EDITOR="emacsclient -t -a ''"              # $EDITOR use Emacs in terminal
@@ -211,12 +218,12 @@ alias l.='exa -a | egrep "^\."'
 #fix obvious typo's
 alias cd..='cd ..'
 alias pdw="pwd"
-# alias udpate='sudo pacman -Syyu'
-# alias upate='sudo pacman -Syyu'
-# alias updte='sudo pacman -Syyu'
-# alias updqte='sudo pacman -Syyu'
-# alias upqll="paru -Syu --noconfirm"
-# alias upal="paru -Syu --noconfirm"
+alias udpate='sudo pacman -Syyu'
+alias upate='sudo pacman -Syyu'
+alias updte='sudo pacman -Syyu'
+alias updqte='sudo pacman -Syyu'
+alias upqll="paru -Syu --noconfirm"
+alias upal="paru -Syu --noconfirm"
 
 
 #alias ls='ls --color=auto'
@@ -238,7 +245,7 @@ alias mv='mv -i'
 alias rm='rm -i'
 
 #keyboard
-# alias give-me-azerty-be="sudo localectl set-x11-keymap be"
+alias give-me-abnt-br="sudo localectl set-x11-keymap br"
 alias give-me-qwerty-us="sudo localectl set-x11-keymap us"
 
 # adding flags
@@ -271,31 +278,31 @@ alias comused="history | awk '{print $2}' | sort | uniq -c | sort -nr | head -5"
 
 #nano for important configuration files
 #know what you do in these files
-# alias nlxdm="sudo $EDITOR /etc/lxdm/lxdm.conf"
-# alias nlightdm="sudo $EDITOR /etc/lightdm/lightdm.conf"
-# alias npacman="sudo $EDITOR /etc/pacman.conf"
-# alias ngrub="sudo $EDITOR /etc/default/grub"
+alias nlxdm="sudo $EDITOR /etc/lxdm/lxdm.conf"
+alias nlightdm="sudo $EDITOR /etc/lightdm/lightdm.conf"
+alias npacman="sudo $EDITOR /etc/pacman.conf"
+alias ngrub="sudo $EDITOR /etc/default/grub"
 # alias nconfgrub="sudo $EDITOR /boot/grub/grub.cfg"
-# alias nmkinitcpio="sudo $EDITOR /etc/mkinitcpio.conf"
-# alias nmirrorlist="sudo $EDITOR /etc/pacman.d/mirrorlist"
+alias nmkinitcpio="sudo $EDITOR /etc/mkinitcpio.conf"
+alias nmirrorlist="sudo $EDITOR /etc/pacman.d/mirrorlist"
 # alias narcomirrorlist='sudo nano /etc/pacman.d/arcolinux-mirrorlist'
-# alias nsddm="sudo $EDITOR /etc/sddm.conf"
-# alias nsddmk="sudo $EDITOR /etc/sddm.conf.d/kde_settings.conf"
-# alias nfstab="sudo $EDITOR /etc/fstab"
-# alias nnsswitch="sudo $EDITOR /etc/nsswitch.conf"
-# alias nsamba="sudo $EDITOR /etc/samba/smb.conf"
-# alias ngnupgconf="sudo nano /etc/pacman.d/gnupg/gpg.conf"
-# alias nb="$EDITOR ~/.bashrc"
-# alias nz="$EDITOR ~/.zshrc"
+alias nsddm="sudo $EDITOR /etc/sddm.conf"
+alias nsddmk="sudo $EDITOR /etc/sddm.conf.d/kde_settings.conf"
+alias nfstab="sudo $EDITOR /etc/fstab"
+alias nnsswitch="sudo $EDITOR /etc/nsswitch.conf"
+alias nsamba="sudo $EDITOR /etc/samba/smb.conf"
+alias ngnupgconf="sudo nano /etc/pacman.d/gnupg/gpg.conf"
+alias nb="$EDITOR ~/.bashrc"
+alias nz="$EDITOR ~/.zshrc"
 
 #####              #####                ######
 
 ## Settings for umask
-# if (( EUID == 0 )); then
-#       umask 002
-# else
-#       umask 022
-# fi
+if (( EUID == 0 )); then
+      umask 002
+else
+      umask 022
+fi
 
 ## global aliases (for those who like them) ##
 
@@ -446,7 +453,7 @@ shopt -s checkwinsize # checks term size when bash regains control
 
 ### PROMPT
 # This is commented out if using starship prompt
-# PS1='[\u@\h \W]\$ '
+PS1='[\u@\h \W]\$ '
 
 . /home/$USER/.asdf/asdf.sh
 . /home/$USER/.asdf/completions/asdf.bash

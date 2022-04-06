@@ -1,0 +1,405 @@
+# .zshrc
+
+#########                         If Arch or Artix                      #########
+# pacman and yay
+# alias pacsyu='sudo pacman -Syu'                  # update only standard pkgs
+# alias pacsyyu='sudo pacman -Syyu'                # Refresh pkglist & update standard pkgs
+# alias yaysua='yay -Sua --noconfirm'              # update only AUR pkgs (yay)
+# alias yaysyu='yay -Syu --noconfirm'              # update standard pkgs and AUR pkgs (yay)
+# alias parsua='paru -Sua --noconfirm'             # update only AUR pkgs (paru)
+# alias parsyu='paru -Syu --noconfirm'             # update standard pkgs and AUR pkgs (paru)
+# alias unlock='sudo rm /var/lib/pacman/db.lck'    # remove pacman lock
+# alias cleanup='sudo pacman -Rns (pacman -Qtdq)'  # remove orphaned packages
+
+
+# get fastest mirrors
+# alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+# alias mirrord="sudo reflector --latest 50 --number 20 --sort delay --save /etc/pacman.d/mirrorlist"
+# alias mirrors="sudo reflector --latest 50 --number 20 --sort score --save /etc/pacman.d/mirrorlist"
+# alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist"
+
+#get fastest mirrors in your neighborhood
+# alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+# alias mirrord="sudo reflector --latest 30 --number 10 --sort delay --save /etc/pacman.d/mirrorlist"
+# alias mirrors="sudo reflector --latest 30 --number 10 --sort score --save /etc/pacman.d/mirrorlist"
+# alias mirrora="sudo reflector --latest 30 --number 10 --sort age --save /etc/pacman.d/mirrorlist"
+# our experimental - best option for the moment
+# alias mirrorx="sudo reflector --age 6 --latest 20  --fastest 20 --threads 5 --sort rate --protocol https --save /etc/pacman.d/mirrorlist"
+# alias mirrorxx="sudo reflector --age 6 --latest 20  --fastest 20 --threads 20 --sort rate --protocol https --save /etc/pacman.d/mirrorlist"
+# alias ram='rate-mirrors --allow-root arch | sudo tee /etc/pacman.d/mirrorlist'
+
+
+# gpg encryption
+# verify signature for isos
+# alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
+# receive the key of a developer
+# alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
+
+#pacman unlock
+# alias unlock="sudo rm /var/lib/pacman/db.lck"
+# alias rmpacmanlock="sudo rm /var/lib/pacman/db.lck"
+
+# Aliases for software managment
+# pacman or pm
+# alias pacman='sudo pacman --color auto'
+# alias update='sudo pacman -Syyu'
+
+# paru as aur helper - updates everything
+# alias pksyua="paru -Syu --noconfirm"
+# alias upall="paru -Syu --noconfirm"
+
+
+#skip integrity check
+# alias paruskip='paru -S --mflags --skipinteg'
+# alias yayskip='yay -S --mflags --skipinteg'
+# alias trizenskip='trizen -S --skipinteg'
+
+#Recent Installed Packages
+# alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl"
+# alias riplong="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -3000 | nl"
+
+#Cleanup orphaned packages
+# alias cleanup='sudo pacman -Rns $(pacman -Qtdq)'
+
+####################################################################################
+
+#systeminfo (Systemd)
+# alias probe="sudo -E hw-probe -all -upload"
+# alias sysfailed="systemctl list-units --failed"
+
+
+#grub update
+# alias update-grub="sudo grub-mkconfig -o /boot/grub/grub.cfg"
+
+# kill commands
+# quickly kill conkies
+# alias kc='killall conky'
+# quickly kill polybar
+# alias kp='killall polybar'
+
+#update betterlockscreen images
+# alias bls="betterlockscreen -u /usr/share/backgrounds/arcolinux/"
+
+#alias ls='ls --color=auto'
+alias desligar="sudo shutdown -h now"
+alias reiniciar="sudo reboot"
+alias internetPCI="sudo lshw -class network -short"
+alias limpar="sudo vpm cleanup && sudo vpm autoremove"
+alias atualizar="sudo vpm sync && sudo vpm upgrade"
+alias sxorg="export DISPLAY=:0.0"
+
+#keyboard
+# alias give-me-azerty-be="sudo localectl set-x11-keymap be"
+alias give-me-qwerty-us="sudo localectl set-x11-keymap us"
+
+#give the list of all installed desktops - xsessions desktops
+alias xd="ls /usr/share/xsessions"
+
+#check vulnerabilities microcode
+alias microcode='grep . /sys/devices/system/cpu/vulnerabilities/*'
+
+#remove
+alias rmgitcache="rm -r ~/.cache/git"
+
+
+#hardware info --short
+alias hw="hwinfo --short"
+
+#add new fonts
+alias update-fc='sudo fc-cache -fv'
+
+
+#hardware info --short
+alias hw="hwinfo --short"
+
+#add new fonts
+alias update-fc='sudo fc-cache -fv'
+
+
+# Play audio files in current dir by type - If you have DeadBeef
+alias playwav='deadbeef *.wav'
+alias playogg='deadbeef *.ogg'
+alias playmp3='deadbeef *.mp3'
+
+# Play video files in current dir by type
+alias playavi='mpv *.avi'
+alias playmov='mpv *.mov'
+alias playmp4='mpv *.mp4'
+
+# yt-dlp
+# alias yta-aac="yt-dlp --extract-audio --audio-format aac "
+alias yta-best="yt-dlp --extract-audio --audio-format best "
+alias yta-flac="yt-dlp --extract-audio --audio-format flac "
+alias yta-m4a="yt-dlp --extract-audio --audio-format m4a "
+alias yta-mp3="yt-dlp --extract-audio --audio-format mp3 "
+alias yta-opus="yt-dlp --extract-audio --audio-format opus "
+alias yta-vorbis="yt-dlp --extract-audio --audio-format vorbis "
+alias yta-wav="yt-dlp --extract-audio --audio-format wav "
+alias ytv-best="yt-dlp -f bestvideo+bestaudio "
+alias ytv-best-mp4="yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio' --merge-output-format mp4 "
+
+
+# switch between shells
+# I do not recommend switching default SHELL from bash.
+alias tobash="sudo chsh $USER -s /bin/bash && echo 'Now log out.'"
+alias tozsh="sudo chsh $USER -s /bin/zsh && echo 'Now log out.'"
+alias tofish="sudo chsh $USER -s /bin/fish && echo 'Now log out.'"
+
+### EXPORT
+export TERM="xterm-256color"                      # getting proper colors
+export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
+# export EDITOR="emacsclient -t -a ''"              # $EDITOR use Emacs in terminal
+# export VISUAL="emacsclient -c -a emacs"           # $VISUAL use Emacs in GUI mode
+
+### SET MANPAGER
+### Uncomment only one of these!
+
+### "bat" as manpager
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+### "vim" as manpager
+# export MANPAGER='/bin/bash -c "vim -MRn -c \"set buftype=nofile showtabline=0 ft=man ts=8 nomod nolist norelativenumber nonu noma\" -c \"normal L\" -c \"nmap q :qa<CR>\"</dev/tty <(col -b)"'
+
+### "nvim" as manpager
+# export MANPAGER="nvim -c 'set ft=man' -"
+
+### SET VI MODE ###
+# Comment this line out to enable default emacs-like bindings
+bindkey -v
+
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+### PATH
+if [ -d "$HOME/.bin" ] ;
+  then PATH="$HOME/.bin:$PATH"
+fi
+
+if [ -d "$HOME/.local/bin" ] ;
+  then PATH="$HOME/.local/bin:$PATH"
+fi
+
+if [ -d "$HOME/Applications" ] ;
+  then PATH="$HOME/Applications:$PATH"
+fi
+
+alias comused="print -l ${(o)history%% *} | uniq -c | sort -nr | head -n 5"
+
+### CHANGE TITLE OF TERMINALS
+case ${TERM} in
+  xterm*|rxvt*|Eterm*|aterm|kterm|kitty|gnome*|alacritty|st|konsole*)
+    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\007"'
+        ;;
+  screen*)
+    PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\033\\"'
+    ;;
+esac
+
+### Function extract for common file formats ###
+SAVEIFS=$IFS
+IFS=$(echo -en "\n\b")
+
+function extract {
+ if [ -z "$1" ]; then
+    # display usage if no parameters given
+    echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+    echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
+ else
+    for n in "$@"
+    do
+      if [ -f "$n" ] ; then
+          case "${n%,}" in
+            *.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar)
+                         tar xvf "$n"       ;;
+            *.lzma)      unlzma ./"$n"      ;;
+            *.bz2)       bunzip2 ./"$n"     ;;
+            *.cbr|*.rar)       unrar x -ad ./"$n" ;;
+            *.gz)        gunzip ./"$n"      ;;
+            *.cbz|*.epub|*.zip)       unzip ./"$n"       ;;
+            *.z)         uncompress ./"$n"  ;;
+            *.7z|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar)
+                         7z x ./"$n"        ;;
+            *.xz)        unxz ./"$n"        ;;
+            *.exe)       cabextract ./"$n"  ;;
+            *.cpio)      cpio -id < ./"$n"  ;;
+            *.cba|*.ace)      unace x ./"$n"      ;;
+            *)
+                         echo "extract: '$n' - unknown archive method"
+                         return 1
+                         ;;
+          esac
+      else
+          echo "'$n' - file does not exist"
+          return 1
+      fi
+    done
+fi
+}
+
+IFS=$SAVEIFS
+
+### ALIASES ###
+
+# Configure completion for doas
+# -c : Complete arguments as if they were commands
+#     (eg: `doas emer<tab>` -> `doas emerge`)
+#     (eg: `doas dd status=p<tab>` -> `doas dd status=progress`)
+# -f : Complete arguments as if they were directory names (default behaviour)
+#     (eg: `doas /bi<tab>` -> `doas /bin/`)
+complete -cf doas
+
+# root privileges
+alias doas="doas --"
+
+# navigation
+up () {
+  local d=""
+  local limit="$1"
+
+  # Default to limit of 1
+  if [ -z "$limit" ] || [ "$limit" -le 0 ]; then
+    limit=1
+  fi
+
+  for ((i=1;i<=limit;i++)); do
+    d="../$d"
+  done
+
+  # perform cd. Show error if cd fails
+  if ! cd "$d"; then
+    echo "Couldn't go up $limit dirs.";
+  fi
+}
+
+# vim and emacs
+alias vim="nvim"
+# alias em="/usr/bin/emacs -nw"
+# alias emacs="emacsclient -c -a 'emacs'"
+# alias doomsync="~/.emacs.d/bin/doom sync"
+# alias doomdoctor="~/.emacs.d/bin/doom doctor"
+# alias doomupgrade="~/.emacs.d/bin/doom upgrade"
+# alias doompurge="~/.emacs.d/bin/doom purge"
+
+# Changing "ls" to "exa"
+alias ls='exa -al --color=always --group-directories-first' # my preferred listing
+alias la='exa -a --color=always --group-directories-first'  # all files and dirs
+alias ll='exa -l --color=always --group-directories-first'  # long format
+alias lt='exa -aT --color=always --group-directories-first' # tree listing
+alias l.='exa -a | egrep "^\."'
+
+
+# Colorize grep output (good for log files)
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+
+# confirm before overwriting something
+alias cp="cp -i"
+alias mv='mv -i'
+alias rm='rm -i'
+
+# adding flags
+alias df='df -Th'                          # human-readable sizes
+alias free='free -m'                      # show sizes in MB
+# alias lynx='lynx -cfg=~/.lynx/lynx.cfg -lss=~/.lynx/lynx.lss -vikeys'  # Vim broser
+# alias vifm='./.config/vifm/scripts/vifmrun'
+alias ncmpcpp='ncmpcpp ncmpcpp_directory=$HOME/.config/ncmpcpp/'
+# alias mocp='mocp -M "$XDG_CONFIG_HOME"/moc -O MOCDir="$XDG_CONFIG_HOME"/moc' #lastfm
+
+
+# ps
+alias psa="ps auxf"
+alias psgrep="ps aux | grep -v grep | grep -i -e VSZ -e"
+alias psmem='ps auxf | sort -nr -k 4'
+alias pscpu='ps auxf | sort -nr -k 3'
+
+# Merge Xresources
+alias merge='xrdb -merge ~/.Xresources'
+
+# git
+alias addup='git add -u'
+alias addall='git add .'
+alias branch='git branch'
+alias checkout='git checkout'
+alias clone='git clone'
+alias commit='git commit -m'
+alias fetch='git fetch'
+alias pull='git pull origin'
+alias push='git push origin'
+alias stat='git status'  # 'status' is protected name so using 'stat' instead
+alias tag='git tag'
+alias newtag='git tag -a'
+
+# get error messages from journalctl
+alias jctl="journalctl -p 3 -xb"
+
+# gpg encryption
+# verify signature for isos
+alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
+# receive the key of a developer
+alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
+
+# Play audio files in current dir by type
+alias playwav='deadbeef *.wav'
+alias playogg='deadbeef *.ogg'
+alias playmp3='deadbeef *.mp3'
+
+# Play video files in current dir by type
+alias playavi='mpv *.avi'
+alias playmov='mpv *.mov'
+alias playmp4='mpv *.mp4'
+
+
+# bare git repo alias for dotfiles
+# alias config="/usr/bin/git --git-dir=$HOME/dotfiles --work-tree=$HOME"
+
+# termbin
+alias tb="nc termbin.com 9999"
+
+#free
+alias free="free -mt"
+
+#continue download
+alias wget="wget -c"
+
+#ignore upper and lowercase when TAB completion
+bind "set completion-ignore-case on"
+
+#userlist
+alias userlist="cut -d: -f1 /etc/passwd"
+
+#search content with ripgrep
+alias rg="rg --sort path"
+
+# the terminal rickroll
+alias rr='curl -s -L https://raw.githubusercontent.com/keroserene/rickrollrc/master/roll.sh | bash'
+
+# Unlock LBRY tips
+alias tips='lbrynet txo spend --type=support --is_not_my_input --blocking'
+
+### DTOS ###
+# Copy/paste all content of /etc/dtos over to home folder. A backup of config is created. (Be careful running this!)
+# alias dtoscopy='[ -d ~/.config ] || mkdir ~/.config && cp -Rf ~/.config ~/.config-backup-$(date +%Y.%m.%d-%H.%M.%S) && cp -rf /etc/dtos/* ~'
+# Backup contents of /etc/dtos to a backup folder in $HOME.
+# alias dtosbackup='cp -Rf /etc/dtos ~/dtos-backup-$(date +%Y.%m.%d-%H.%M.%S)'
+
+### RANDOM COLOR SCRIPT ###
+# Get this script from my GitLab: gitlab.com/dwt1/shell-color-scripts
+# Or install it from the Arch User Repository: shell-color-scripts
+colorscript random
+
+##### Xdeb Configs (VoidLinux) ####
+
+export XDEB_OPT_DEPS=true
+export XDEB_OPT_SYNC=true
+export XDEB_OPT_WARN_CONFLICT=true
+export XDEB_OPT_FIX_CONFLICT=true
+
+### BASH INSULTER (works in zsh though) ###
+if [ -f /etc/bash.command-not-found ]; then
+    . /etc/bash.command-not-found
+fi
+
+### SETTING THE STARSHIP PROMPT ###
+eval "$(starship init zsh)"
+
