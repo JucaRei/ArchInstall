@@ -17,7 +17,9 @@ paru -Syu
 
 cd
 
-paru -S netmount-runit zramen-runit fusesmb
+paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship bash-zsh-insulter
+
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
 # paru -S nvidia-tweaks nvidia-prime xf86-video-intel
 
