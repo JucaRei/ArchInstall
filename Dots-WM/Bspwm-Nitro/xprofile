@@ -1,0 +1,49 @@
+### Other Ways to launch with dbus session
+
+#exec dbus-launch --exit-with-session bspwm &
+#exec dbus-run-session bspwm &
+
+### 2
+
+#if [ -x /usr/bin/dbus-launch -a -z "${DBUS_SESSION_BUS_ADRESS}" ]; then
+#	eval `dbus-launch --sh-syntax --exit-with-session`
+#fi
+
+### 3
+#exec dbus-launch --autolaunch=$(cat /var/lib/dbus/machine-id) bspwm
+
+### Best One
+# exec dbus-run-session bspwm
+
+# Udevil
+# devmon &
+setxkbmap br &
+nemo --daemon &
+xsetroot -cursor_name left_ptr &
+$HOME/.local/bin/fehauto.sh &
+$HOME/.config/polybar/launch.sh &
+polkit-mate-authentication-agent-1 &
+$HOME/.bin/dualbsp.sh
+
+mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+
+# Add font path
+xset +fp /home/juca/.local/share/fonts/ &
+xset fp rehash &
+
+#XDG DATA DIR
+export XDG_DATA_DIRS="$HOME/.local/share/applications"
+
+# XDG USER DIR
+mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
+export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
+
+# Mount drives, usbs etc...
+if which dbus-run-session >/dev/null && test -z "$DBUS_SESSION_BUS_ADRESS"; then
+    eval "$(dbus-launch --sh-syntax --exit-with-session)"
+fi
+
+exec bspwm

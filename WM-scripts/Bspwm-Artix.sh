@@ -11,18 +11,6 @@ aur_helper=true
 install_ly=true
 gen_xprofile=false
 
-sudo ln -s /etc/runit/sv/NetworkManager /run/runit/service
-sudo ln -s /etc/runit/sv/sshd /run/runit/service
-sudo ln -s /etc/runit/sv/acpid /run/runit/service
-sudo ln -s /etc/runit/sv/ntpd /run/runit/service
-sudo ln -s /etc/runit/sv/bluetoothd /run/runit/service
-sudo ln -s /etc/runit/sv/wpa_supplicant /run/runit/service
-sudo ln -s /etc/runit/sv/avahi-daemon /run/runit/service
-sudo ln -s /etc/runit/sv/alsa /run/runit/service
-sudo ln -s /etc/runit/sv/cupsd /run/runit/service
-sudo ln -s /etc/runit/sv/tlp /run/runit/service
-sudo ln -s /etc/runit/sv/libvirtd/ /run/runit/service
-
 sudo timedatectl set-ntp true
 sudo hwclock --systohc
 
@@ -42,10 +30,13 @@ sudo pacman -Syy
 # fi
 
 #paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
-#paru -S nvidia-lts nvidia-utils nvidia-settings
-#paru -S xorg-server xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama
+#paru -S nvidia-tweaks nvidia-settings
+paru -S xorg-server xorg-font-util xorg-fonts-encondings xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo
 
-paru -S bspwm arandr xorg spacefm glow sxhkd polybar xfce4-terminal light-locker alacritty playerctl awesome-terminal-fonts ttf-font-awesome dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings nerd-fonts-iosevka ttf-icomoon-feather light-locker mpd ncmpcpp mpc neofetch htop geany
+paru -S bspwm arandr firefox-esr-bin glow sxhkd polybar xfce4-terminal light-locker alacritty playerctl dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings light-locker mpd ncmpcpp mpc neofetch htop geany
+
+# File manager
+paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
 
 xdg-user-dirs-update
 
@@ -67,9 +58,6 @@ echo "/usr/bin/numlockx on &" >>$HOME/.config/bspwm/bspwmrc
 #echo "picom &" >>$HOME/.config/bspwm/bspwmrc
 
 cd $HOME/Documents/workspace/Configs
-git clone https://github.com/JucaRei/fonts
-git clone https://github.com/JucaRei/dotfiles
-git clone https://github.com/JucaRei/polybar-themes
 git clone https://github.com/JucaRei/rofi
 
 cd
