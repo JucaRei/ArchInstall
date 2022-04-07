@@ -18,7 +18,7 @@ paru -Syu
 
 cd
 
-paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship bash-zsh-insulter deadbeef mpv yt-dlp
+paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv yt-dlp
 
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
