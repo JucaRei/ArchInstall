@@ -14,8 +14,55 @@ echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 artixnitro.localdomain artixnitro" >>/etc/hosts
 echo root:200291 | chpasswd
 
-pacman -S artix-archlinux-support
-pacman -S artix-keyring
+cat <<EOF >/etc/sudoers
+## sudoers file.
+##
+## This file MUST be edited with the 'visudo' command as root.
+## Failure to use 'visudo' may result in syntax or file permission errors
+## that prevent sudo from running.
+##
+## See the sudoers man page for the details on how to write a sudoers file.
+##
+
+Defaults passwd_timeout=0
+Defaults timestamp_timeout=15
+
+##
+## User privilege specification
+##
+root ALL=(ALL) ALL
+
+## Uncomment to allow members of group wheel to execute any command
+%wheel ALL=(ALL) ALL
+
+## Same thing without a password
+%wheel ALL=(ALL) NOPASSWD: ALL
+
+## Run some commands without a password
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Sy
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw --noconfirm
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syyuw --noconfirm
+
+## Read drop-in files from /etc/sudoers.d
+@includedir /etc/sudoers.d
+EOF
+
+# Enable pacman Color
+sed -i '/Color/s/^#//' /etc/pacman.conf
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
+
+# Enable multilib repo
+sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+
+# Setting package signing option to require signature
+sed -i '/\[core\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[multilib\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[community\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
+
+pacman -S artix-archlinux-support --noconfirm
+pacman -S artix-keyring --noconfirm
 pacman-key --populate artix
 
 pacman-key --populate archlinux
@@ -32,10 +79,10 @@ Include = /etc/pacman.d/mirrorlist-arch
 Include = /etc/pacman.d/mirrorlist-arch
 EOF
 
-pacman -Syyy
+pacman -Syyw
 
-pacman -S archlinux-keyring
-pacman -Syyy
+pacman -S archlinux-keyring --noconfirm
+pacman -Syyw
 
 # cat << EOF >> /etc/pacman.conf
 # [universe]
@@ -55,7 +102,7 @@ pacman -Syy
 
 # paru -S auto-cpufreq
 # pacman -S reflector
-# pacman -S nvidia-lts nvidia-utils nvidia-settings
+# pacman -S nvidia-tweaks nvidia-settings
 # pacman -S glow ncdu2 btop
 
 ### Works on xanmod
@@ -63,52 +110,10 @@ pacman -Syy
 
 #pacman -S zramen-runit
 
-# function install_paru() {
-#     # use build directory to intall pary as "nobody" user
-#     # change the directory's group to "nobody" and make it sticky
-#     # so that all files within get the same properties
-#     mkdir -pv /home/build
-#     cd /home/build
-#     chgrp nobody /home/build
-#     chmod g+ws /home/build
-#     setfacl -m u::rwx,g::rwx /home/build
-#     setfacl -d --set u::rwx,g::rwx,o::- /home/build
-
-#     # clone the repo
-#     git clone --depth=1 https://aur.archlinux.org/paru-bin.git paru
-#     chmod 777 paru
-#     cd paru
-
-#     # make the package as "nobody"
-#     sudo -u nobody makepkg
-
-#     # install the package as root
-#     pacman --noconfirm -U paru-bin*.zst
-
-#     # clean up
-#     cd
-#     rm -rf /home/build
-# }
-
-# install_paru
-
-# Enable pacman Color
-sed -i '/Color/s/^#//' /etc/pacman.conf
-sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
-
-# Enable multilib repo
-sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-
-# Setting package signing option to require signature
-sed -i '/\[core\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
-sed -i '/\[multilib\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
-sed -i '/\[community\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
-sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
-
 # Add Chaotic repo
 pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
 pacman-key --lsign-key FBA220DFC880C036
-pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
 
 cat <<EOF >>/etc/pacman.conf
 
@@ -131,9 +136,9 @@ cat <<EOF >>/etc/fstab
 tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
 EOF
 
-pacman -Syy
+pacman -Syyw
 
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils networkmanager nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils networkmanager reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
 
 cat <<EOF >/etc/samba/smb.conf
 [global]
@@ -223,38 +228,41 @@ ln -s /etc/runit/sv/alsa /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/cupsd /etc/runit/runsvdir/default/
 # ln -s /etc/runit/sv/tlp /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/libvirtd/ /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/nfs-server /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/nmbd /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/smbd /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/statd /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/rpcbind /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/mpd /etc/runit/runsvdir/default/
-sudo ln -s /etc/runit/sv/metalog /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/nfs-server /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/nmbd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/smbd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/statd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/rpcbind /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/mpd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/metalog /etc/runit/runsvdir/default/
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix
 grub-mkconfig -o /boot/grub/grub.cfg
 
 mkinitcpio -p linux-lts
 
+# Normal User
 useradd -m junior
 echo junior:200291 | chpasswd
 usermod -aG libvirt junior
 
-sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
-sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/g' /etc/sudoers
-# sed -i 's/# %sudo ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) ALL/g' /etc/sudoers
+# sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
+# sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/g' /etc/sudoers
+# # sed -i 's/# %sudo ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) ALL/g' /etc/sudoers
+
+# cat <<EOF >>/etc/sudoers
+
+# ## Run some commands without a password
+# %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Sy
+# %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw
+# %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw --noconfirm
+# %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syyuw --noconfirm
+# EOF
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
 # pacman -Rs linux acpi_call --noconfirm
 # pacman -S acpi_call-lts --noconfirm
-
-# running makepkg as nobody user
-# mkdir /home/build
-# chgrp nobody /home/build
-# chmod g+ws /home/build
-# setfacl -m u::rwx,g::rwx /home/build
-# setfacl -d --set u::rwx,g::rwx,o::- /home/build
 
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub

@@ -9,9 +9,10 @@ mkdir -pv Documents/workspace/{Github,Configs}
 git clone --depth=1 https://github.com/JucaRei/ArchInstall $HOME/Documents/workspace/Configs/ArchInstall
 
 cd $HOME/Documents/workspace/Configs/ArchInstall/Arch/Arch_pkgs
-sudo pacman -U paru**.zst
-sudo pacman -U hfsprogs**.zst
-sudo pacman -U nosystemd-boot**.zst
+sudo pacman -U paru**.zst --noconfirm
+sudo pacman -U pikaur**.zst --noconfirm
+sudo pacman -U hfsprogs**.zst --noconfirm
+sudo pacman -U nosystemd-boot**.zst --noconfirm
 
 paru -Syu
 
@@ -28,3 +29,7 @@ sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen
 
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/zramen /run/runit/service
+
+cp -r $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/bashrc ~/.bashrc
+
+source ~/.bashrc
