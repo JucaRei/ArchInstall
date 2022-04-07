@@ -115,20 +115,22 @@ pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
 pacman-key --lsign-key FBA220DFC880C036
 pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
 
-cat <<EOF >>/etc/pacman.conf
-
-[chaotic-aur]
-Include = /etc/pacman.d/chaotic-mirrorlist
-EOF
-
 # Add Liquorix
 pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
 pacman-key --lsign-key 9AE4078033F8024D
+
+# Universe repo optimus-manager-runit
 
 cat <<EOF >>/etc/pacman.conf
 
 #[liquorix]
 #Server = https://liquorix.net/archlinux/$repo$arch
+
+[universe]
+Server = https://universe.artixlinux.org/$arch
+
+[chaotic-aur]
+Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
 
 cat <<EOF >>/etc/fstab
@@ -138,7 +140,7 @@ EOF
 
 pacman -Syyw
 
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils networkmanager reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils backlight-runit networkmanager reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
 
 cat <<EOF >/etc/samba/smb.conf
 [global]
@@ -233,7 +235,9 @@ ln -s /etc/runit/sv/nmbd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/smbd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/statd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/rpcbind /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/rsyncd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/mpd /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/backlight /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/metalog /etc/runit/runsvdir/default/
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix
