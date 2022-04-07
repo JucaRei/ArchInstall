@@ -18,7 +18,9 @@ paru -Syu
 
 cd
 
-paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp
+# EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
+
+paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
 # sudo pacman -S nvidia-tweaks nvidia-settings optimus-manager-git optimus-manager-runit bbswitch lightdm-optimus-runit
 
@@ -42,8 +44,37 @@ sudo ln -sfv /etc/runit/sv/redshift /run/runit/service
 sudo sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
 sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
 
+sudo cat <<EOF >/etc/default/earlyoom
+# Default settings for earlyoom. This file is sourced by /bin/sh from
+# /etc/init.d/earlyoom or by systemd from earlyoom.service.
+
+# Options to pass to earlyoom
+# EARLYOOM_ARGS="-r 3600 -n --avoid '(^|/)(init|systemd|Xorg|sshd)$'"
+
+EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'" #change the runit according to your init
+
+# Examples:
+
+# Print memory report every second instead of every minute
+# EARLYOOM_ARGS="-r 1"
+
+# Available minimum memory 5%
+# EARLYOOM_ARGS="-m 5"
+
+# Available minimum memory 15% and free minimum swap 5%
+# EARLYOOM_ARGS="-m 15 -s 5"
+                                                                                                                       
+# Avoid killing processes whose name matches this regexp                                                               
+# EARLYOOM_ARGS="--avoid '(^|/)(init|X|sshd|firefox)$'"                                                                
+                                                                                                                       
+# See more at 'earlyoom -h'  
+EOF
+
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
+sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
 sudo ln -s /etc/runit/sv/zramen /run/runit/service
+sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
+sudo ln -s /etc/runit/sv/tlp /run/runit/service
 # sudo ln -s /etc/runit/sv/optimus-manager /run/runit/service
 # sudo ln -s /etc/runit/sv/lightdm-optimus /run/runit/service
 
