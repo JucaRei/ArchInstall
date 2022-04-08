@@ -1,52 +1,57 @@
 #!/bin/bash
 
-# Variables
-country=Brazil
-kbmap=br-abnt2
-output=Virtual-1
-resolution=1920x1080
-
-#Options
-aur_helper=true
-install_ly=true
-gen_xprofile=false
-
-sudo timedatectl set-ntp true
 sudo hwclock --systohc
 
 sudo firewall-cmd --add-port=1025-65535/tcp --permanent
 sudo firewall-cmd --add-port=1025-65535/udp --permanent
 sudo firewall-cmd --reload
 
-reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
+# reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
 sudo pacman -Syy
 
-# if [[ $aur_helper = true ]]; then
-#   cd /tmp
-#   git clone https://aur.archlinux.org/paru.git
-#   cd paru/
-#   makepkg -si --noconfirm
-#   cd
-# fi
+# Xorg Packages
+paru -S xorg-server xorg-font-util xorg-fonts-encondings xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft libinput libinput-gestures xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo
 
-#paru -S xf86-video-intel xorg --ignore xorg-server-xdmx
-#paru -S nvidia-tweaks nvidia-settings
-paru -S xorg-server xorg-font-util xorg-fonts-encondings xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo
+paru -S bspwm arandr firefox-esr-bin glow sxhkd polybar flatpak light-locker playerctl dmenu nitrogen feh unclutter picom-ibhagwan-git zathura neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit web-greeter lightdm-settings light-locker ncmpcpp mpc neofetch htop geany
 
-paru -S bspwm arandr firefox-esr-bin glow sxhkd polybar xfce4-terminal light-locker alacritty playerctl dmenu nitrogen feh unclutter libinput libinput-gestures picom evince-no-gnome neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit lightdm-webkit-theme-aether lightdm-webkit2-greeter lightdm-settings light-locker mpd ncmpcpp mpc neofetch htop geany
+# Terminals
+paru -S xfce4-terminal rxvt-unicode-truecolor-wide-glyphs
 
 # File manager
 paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
 
-xdg-user-dirs-update
-
+touch $HOME/.config/starship.toml
+mkdir -p ~/.urxvt/ext
+mkdir -p ~/.config/mpd
+mkdir -p ~/.ncmpcpp
+mkdir -p $HOME/.bin
+mkdir -p $HOME/local/.bin
+mkdir -p $HOME/local/share/applications
 mkdir -p $HOME/.config/{bspwm,sxhkd,dunst,rofi}
-mkdir -p $HOME/Documents/workspace/{Configs,Github}
+mkdir -pv ~/Pictures/Wallpapers
+cd ~/.config/mpd
+touch database mpd.conf mpd.fifo mpd.log mpdstate
 
-#install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
-#install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
-cp $HOME/ArchInstall/bspwm-old/bspwmrc $HOME/.config/bspwm/
-cp $HOME/ArchInstall/bspwm-old/sxhkdrc $HOME/.config/sxhkd/
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf ~/.config/mpd
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config ~/.ncmpcpp
+
+cd
+cp -f ~/Documents/workspace/Configs/ArchInstall/wallpapers ~/Pictures/Wallpapers
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dotw-WM/Bspwm-Nitro/polybar ~/.config
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Xresources ~/.Xresources
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/fehauto.sh ~/.local/bin
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/xprofile-vm ~/.xprofile
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/rxvt/vtwhell ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/rxvt/config-reload ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/dualbsp-VM.sh ~/.bin
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/DualMonPolybar-VM.sh ~/.bin
+sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/Dual-DM-VM.sh /etc/lightdm
+cp -f /etc/dunst/dunstrc ~/.config/dunst/
+
+install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
+install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
+# cp $HOME/ArchInstall/bspwm-old/bspwmrc $HOME/.config/bspwm/
+# cp $HOME/ArchInstall/bspwm-old/sxhkdrc $HOME/.config/sxhkd/
 
 cp /etc/dunst/dunstrc $HOME/.config/dunst
 
@@ -54,7 +59,7 @@ cp /etc/dunst/dunstrc $HOME/.config/dunst
 #cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd
 
 #echo "setxkbmap br &" >>$HOME/.config/bspwm/bspwmrc
-echo "/usr/bin/numlockx on &" >>$HOME/.config/bspwm/bspwmrc
+# echo "/usr/bin/numlockx on &" >>$HOME/.config/bspwm/bspwmrc
 #echo "picom &" >>$HOME/.config/bspwm/bspwmrc
 
 cd $HOME/Documents/workspace/Configs
@@ -63,7 +68,7 @@ git clone https://github.com/JucaRei/rofi
 cd
 
 # Install Fonts
-cd $HOME/Documents/workspace/Configs/fonts/fonts && cp *.ttf *.otf $HOME/.local/share/fonts/
+cd $HOME/Documents/workspace/Configs/ArchInstall/fonts/fonts && cp *.ttf *.otf $HOME/.local/share/fonts/
 fc-cache -fv
 
 #Rofi
@@ -92,30 +97,13 @@ touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd
 
-cp $HOME/ArchInstall/BSPWM/mpd/mpd.conf $HOME/.config/mpd/
-cp $HOME/ArchInstall/BSPWM/ncmpcpp/config $HOME/.config/ncmpcpp/
+cp $HOME/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf $HOME/.config/mpd/
+cp $HOME/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config $HOME/.config/ncmpcpp/
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
 # mv dotfiles/Xresources $HOME/.Xresources
 
-cp $HOME/Documents/workspace/Configs/dotfiles/wallpaper.jpg $HOME/Pictures/
-feh --no-fehbg --bg-scale '$HOME/Pictures/wallpaper.jpg'
-
-#bspwmrc
-cd $HOME/Documents/workspace/Configs/dotfiles
-cp Xresources ~/.Xresources
-echo "xrdb ${HOME}/.Xresources" >>~/.config/bspwm/bspwmrc
-
-#echo "$HOME/.config/polybar/launch.sh --forest &" >>~/.config/bspwm/bspwmrc
-echo "$HOME/.fehbg" >>~/.config/bspwm/bspwmrc
-
-#echo "setxkbmap br &" >> ~/.xinitrc
-#echo "$HOME/.screenlayout/display.sh" >> ~/.xinitrc
-#echo "nitrogen --restore &" >> ~/.xinitrc
-#echo "xsetroot -cursor_name left_ptr &" >> ~/.xinitrc
-#echo "picom -f &" >> ~/.xinitrc
-#echo "exec bspwm" >> ~/.xinitrc
 
 sudo ln -s /etc/runit/sv/lightdm /run/runit/service
 

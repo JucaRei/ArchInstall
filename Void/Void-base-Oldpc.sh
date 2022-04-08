@@ -11,7 +11,6 @@
 # sv restart dhcpcd
 # ip link set up <interface>
 
-
 wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
 xbps-install -Su xbps xz --yes
@@ -58,9 +57,13 @@ mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda4 /mnt/var/cache/xbps
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 
 # Descompacta e copia para /mnt o tarball
-tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
+tar xvf ./void-x86_64-*.tar.xz -C /mnt
+sync
 
-for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+for dir in dev proc sys run; do
+        mount --rbind /$dir /mnt/$dir
+        mount --make-rslave /mnt/$dir
+done
 
 # copia o arquivo de resolv para o /mnt
 cp -v /etc/resolv.conf /mnt/etc/
@@ -68,50 +71,49 @@ cp -v /etc/resolv.conf /mnt/etc/
 # Atualiza o initramfs com dracut
 # Remover se for testar em VM
 mkdir -pv /mnt/etc/dracut.conf.d
-cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 add_drivers+=" nouveau i915 btrfs crc32c-intel "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
 
-cat << EOF > /mnt/etc/dracut.conf.d/10-touchpad.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/10-touchpad.conf
 add_drivers+=" bcm5974 "
 EOF
 
 # Repositorios mais rapidos
-cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
 # Ignorar alguns pacotes
-cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
+cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=linux
 ignorepkg=linux-headers
 EOF
 
-
 # Hostname
-cat << EOF > /mnt/etc/hostname
+cat <<EOF >/mnt/etc/hostname
 oldmac
 EOF
 
 # Hosts
 
-cat << EOF > /mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 oldmac.localdomain oldmac
@@ -126,7 +128,7 @@ echo $UEFI_UUID
 echo $ROOT_UUID
 echo $HOME_UUID
 
-cat << EOF > /mnt/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 #
 # See fstab(5).
 #
@@ -144,11 +146,12 @@ UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 # EFI
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
 
-tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
+# tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
+tmpfs /tmp tmpfs noatime,nosuid 0 0
 EOF
 
 # Set user permition
-cat << EOF > /mnt/etc/doas.conf
+cat <<EOF >/mnt/etc/doas.conf
 # allow user but require password
 permit keepenv :juca
 
@@ -178,7 +181,7 @@ chroot /mnt chown -c root:root /etc/doas.conf
 
 #Conf rc
 
-cat << EOF > /mnt/etc/rc.conf
+cat <<EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
 # Set the host name.
@@ -210,7 +213,6 @@ KEYMAP="us-acentos"
 #TTYS=
 EOF
 
-
 ##    chroot
 
 # chroot /mnt export PS1="(chroot) ${PS1}"
@@ -224,26 +226,26 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight arp-scan xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight arp-scan xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi btop dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi btop dialog --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
-cat <<EOF >> /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
 [device]
 wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
-cat << EOF >> /mnt/etc/rc.local
+cat <<EOF >>/mnt/etc/rc.local
 modprobe -r usbmouse
 modprobe -r bcm5974
 modprobe bcm5974
@@ -269,8 +271,6 @@ chroot /mnt xbps-install -S socklog-void --yes
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
-
-
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
 
@@ -288,7 +288,7 @@ chroot /mnt xbps-reconfigure -fa
 
 # Touchpad
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # Identifier "SynPS/2 Synaptics TouchPad"
@@ -303,14 +303,14 @@ section "InputClass"
 EndSection
 EOF
 
-cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nouveau.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-nouveau.conf
 Section "Device"
     Identifier "Nvidia card"
     Driver "nouveau"
 EndSection
 EOF
 
-cat << EOF > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 Section "InputClass"
         Identifier              "system-keyboard"
         MatchIsKeyboard         "on"
@@ -321,7 +321,7 @@ Section "InputClass"
 EndSection
 EOF
 
-cat << EOF > /mnt/etc/X11/xorg.conf.d/99-killx.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/99-killx.conf
 Section "ServerFlags"
         Option  "DontZap"       "false"
 EndSection
@@ -334,7 +334,7 @@ EndSection
 EOF
 
 mkdir -pv /mnt/etc/elogind
-cat << EOF > /mnt/etc/elogind/logind.conf
+cat <<EOF >/mnt/etc/elogind/logind.conf
 #  This file is part of elogind.
 #
 #  elogind is free software; you can redistribute it and/or modify it
@@ -415,8 +415,6 @@ chroot /mnt ln -srvf /etc/sv/netmount /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/smbd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 
-
-
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
@@ -429,9 +427,7 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # alias dissh="export DISPLAY=:0.0"
 # alias bquit="bspc quit"
 
-
-
-cat <<EOF > /mnt/etc/samba/smb.conf
+cat <<EOF >/mnt/etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
@@ -491,13 +487,13 @@ chroot /mnt mkswap /swapfile
 chroot /mnt swapon /swapfile
 
 # Add to fstab
-echo " " >> /mnt/etc/fstab
-echo "# Swap" >> /mnt/etc/fstab
-echo "/swapfile      none     swap      defaults  0 0" >> /mnt/etc/fstab
+echo " " >>/mnt/etc/fstab
+echo "# Swap" >>/mnt/etc/fstab
+echo "/swapfile      none     swap      defaults  0 0" >>/mnt/etc/fstab
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
+cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -508,7 +504,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /mnt/etc/polkit-1/rules.d
-cat << EOF > /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -536,15 +532,12 @@ chroot /mnt gummiboot install
 
 chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
 
-
-
 # cd ~/Downloads
 # wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
 # ex ncdu-2.1-linux-x86_64.tar.gz
 # mkdir ~/.local/bin
 # mv ncdu ~/.local/bin
 # source ~/.bashrc
-
 
 # git clone https://gitlab.com/dwt1/shell-color-scripts.git
 # cd shell-color-scripts

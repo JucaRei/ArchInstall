@@ -6,7 +6,7 @@
 #wallpaper.sh and save it anywhere. A good place is ~/.config/openbox
 
 #! /usr/bin/env sh
-WALLPAPERS="/home/juca/Pictures/Wallpapers"
+WALLPAPERS="/home/$USER/Pictures/Wallpapers"
 
 desktop_bg=$(find "$WALLPAPERS" -type f | shuf | head -n 1) &&
     exec feh --no-fehbg --bg-scale "$desktop_bg"
