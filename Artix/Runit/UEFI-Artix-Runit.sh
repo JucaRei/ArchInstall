@@ -23,7 +23,7 @@ pacman-key --populate archlinux
 
 # Enable pacman Color
 sed -i '/Color/s/^#//' /etc/pacman.conf
-sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 8/g' /etc/pacman.conf
 
 # Enable multilib repo
 sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
@@ -91,8 +91,8 @@ pacman-key --lsign-key 9AE4078033F8024D
 
 cat <<EOF >>/etc/pacman.conf
 
-[omniverse]
-Server = http://omniverse.artixlinux.org/$arch
+#[omniverse]
+#Server = http://omniverse.artixlinux.org/$arch
 
 #[universe]
 #Server = https://universe.artixlinux.org/$arch
@@ -108,19 +108,35 @@ Server = http://omniverse.artixlinux.org/$arch
 Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
 
+pacman -Sy
+
 cat <<EOF >>/etc/fstab
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
 tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
-pacman -Syyw
+# MakeSwap
+touch /swapfile
+chmod 600 /swapfile
+chattr +C /swapfile
+lsattr /swapfile
+dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
+mkswap /swapfile
+swapon /swapfile
+
+# Add to fstab
+echo " " >>/etc/fstab
+echo "# Swap" >>/etc/fstab
+echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
+
+pacman -Syyy
 
 sleep 3
 
 pacman -Sy
 
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
 
 cat <<EOF >/etc/samba/smb.conf
 [global]

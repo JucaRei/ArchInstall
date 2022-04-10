@@ -2,9 +2,9 @@
 
 
 # Nitro
-mkfs.vfat -F32 /dev/sda5
-mkfs.btrfs /dev/sda6 -f
-mkfs.btrfs /dev/sda7 -f
+mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
+mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
+mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 
 # OldMac
 # mkfs.vfat -F32 /dev/sda1 
@@ -12,7 +12,7 @@ mkfs.btrfs /dev/sda7 -f
 # mkfs.btrfs /dev/sda3 -f
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:13,space_cache=v2,commit=120,autodefrag,discard=async"
 
 # Nitro
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
@@ -75,13 +75,13 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    Artix    ############
 
 ### Artix Runit
-basestrap /mnt base base-devel s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools btrfs-progs --ignore linux
+basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
 fstabgen -U /mnt >> /mnt/etc/fstab
 
 ### Artix s6
-basestrap /mnt base base-devel s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools btrfs-progs --ignore linux
+# basestrap /mnt base base-devel s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools btrfs-progs --ignore linux
 
 # Generate fstab
-fstabgen -U /mnt >> /mnt/etc/fstab
+# fstabgen -U /mnt >> /mnt/etc/fstab

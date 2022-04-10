@@ -8,6 +8,8 @@ mkdir -pv Documents/workspace/{Github,Configs}
 
 git clone --depth=1 https://github.com/JucaRei/ArchInstall $HOME/Documents/workspace/Configs/ArchInstall
 
+sleep 5
+
 cd $HOME/Documents/workspace/Configs/ArchInstall/Arch/Arch_pkgs
 sudo pacman -U paru**.zst --noconfirm
 sudo pacman -U pikaur**.zst --noconfirm
@@ -20,9 +22,13 @@ cd
 
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
-paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+# paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
-# sudo pacman -S nvidia-tweaks nvidia-settings optimus-manager-git optimus-manager-runit bbswitch lightdm-optimus-runit
+
+paru -S nvidia-tweaks nvidia-settings 
+
+# paru -S optimus-manager-git optimus-manager-runit bbswitch lightdm-optimus-runit
 
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
@@ -41,9 +47,10 @@ sudo ln -sfv /etc/runit/sv/redshift /run/runit/service
 # sudo sv start redshift
 # sudo sv start colord
 
-sudo sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
-sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
+#sudo sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
+#sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
 
+sudo touch /etc/default/earlyoom
 sudo cat <<EOF >/etc/default/earlyoom
 # Default settings for earlyoom. This file is sourced by /bin/sh from
 # /etc/init.d/earlyoom or by systemd from earlyoom.service.
@@ -72,7 +79,7 @@ EOF
 
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
-sudo ln -s /etc/runit/sv/zramen /run/runit/service
+# sudo ln -s /etc/runit/sv/zramen /run/runit/service
 sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
 sudo ln -s /etc/runit/sv/tlp /run/runit/service
 # sudo ln -s /etc/runit/sv/optimus-manager /run/runit/service
