@@ -213,6 +213,18 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
+cat << EOF > /etc/polkit-1/rules.d/00-mount-internal.rules
+polkit.addRule(function(action, subject) {
+   if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
+      subject.local && subject.active && subject.isInGroup("storage")))
+      {
+         return polkit.Result.YES;
+      }
+});
+EOF
+
+usermod -aG storage junior
+
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 # ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
