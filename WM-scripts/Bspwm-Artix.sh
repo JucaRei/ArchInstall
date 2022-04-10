@@ -18,7 +18,10 @@ paru -S bspwm arandr firefox-esr-bin glow sxhkd polybar flatpak light-locker pla
 paru -S xfce4-terminal rxvt-unicode-truecolor-wide-glyphs
 
 # File manager
-paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
+paru -S pcmanfm libfm lxqt_wallet ffmpegthumbnailer gst-libav gst-plugins-ugly file-roller xarchiver
+chmod -R 750 ~/.config/libfm
+chmod -R 640 ~/.config/libfm/libfm.conf
+# paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
 
 touch $HOME/.config/starship.toml
 mkdir -p ~/.urxvt/ext
