@@ -22,6 +22,7 @@ pacman-key --populate artix
 pacman-key --populate archlinux
 
 # Enable pacman Color
+sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 8/g' /etc/pacman.conf
 
@@ -205,10 +206,10 @@ powertop --auto-tune
 preload
 EOF
 
-mkdir -p /etc/runit/sv/user-services
+mkdir -p /etc/runit/sv/runsvdir-junior
 touch /etc/runit/sv/user-services/run
-chmod +x /etc/runit/sv/user-services/run
-cat <<EOF >> /etc/runit/sv/user-services/run
+chmod +x /etc/runit/sv/runsvdir-junior/run
+cat <<EOF >> /etc/runit/sv/runsvdir-junior/run
 #!/bin/sh
 
 export USER="junior"
