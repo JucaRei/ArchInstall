@@ -215,7 +215,7 @@ export USER="junior"
 export HOME="/home/$USER"
 
 groups="$(id -Gn "$USER" | tr ' ' ':')"
-svdir="$HOME/.config/services"
+svdir="$HOME/.runit/services"
 
 exec chpst -u "$USER:$groups" runsvdir "$svdir"
 EOF
