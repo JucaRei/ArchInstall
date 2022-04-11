@@ -189,7 +189,8 @@ cat <<EOF >/etc/samba/smb.conf
 EOF
 
 # Power top
-cat <<EOF >>/etc/rc.local
+touch /etc/rc.local
+cat << EOF > /etc/rc.local
 # PowerTop
 powertop --auto-tune
 
