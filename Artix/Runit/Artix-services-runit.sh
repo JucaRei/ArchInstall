@@ -6,6 +6,8 @@ sleep 3
 
 mkdir -pv Documents/workspace/{Github,Configs}
 
+mkdir -pv $HOME/.config/{services,sv}
+
 git clone --depth=1 https://github.com/JucaRei/ArchInstall $HOME/Documents/workspace/Configs/ArchInstall
 
 sleep 5
@@ -79,6 +81,7 @@ EOF
 
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
+sudo ln -s /etc/runit/sv/user-services /run/runit/service
 # sudo ln -s /etc/runit/sv/zramen /run/runit/service
 sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
 sudo ln -s /etc/runit/sv/tlp /run/runit/service
