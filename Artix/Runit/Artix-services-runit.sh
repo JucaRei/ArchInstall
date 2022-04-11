@@ -6,7 +6,7 @@ sleep 3
 
 mkdir -pv Documents/workspace/{Github,Configs}
 
-mkdir -pv $HOME/.config/{services,sv}
+mkdir -pv $HOME/.runit/{services,runsvdir}
 
 git clone --depth=1 https://github.com/JucaRei/ArchInstall $HOME/Documents/workspace/Configs/ArchInstall
 
