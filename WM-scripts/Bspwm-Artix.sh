@@ -93,22 +93,20 @@ cd
 #cp /etc/X11/xinit/xinitrc .xinitrc
 #cp /etc/X11/xinit/xserverrc .xserverrc
 
-cd $HOME/ArchInstall/BSPWM
-
 mkdir -p ~/.config/mpd && cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd
 
-cp $HOME/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf $HOME/.config/mpd/
-cp $HOME/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config $HOME/.config/ncmpcpp/
+cp -r $HOME/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf $HOME/.config/mpd/
+cp -r $HOME/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config $HOME/.config/ncmpcpp/
 
 ###   POLYBAR
 # mv dotfiles/polybar $HOME/.config
 # mv dotfiles/Xresources $HOME/.Xresources
 
 
-sudo ln -s /etc/runit/sv/lightdm /run/runit/service
+# sudo ln -s /etc/runit/sv/lightdm /run/runit/service
 
 printf "\e[1;32mCHANGE NECESSARY FILES BEFORE REBOOT\e[0m"
 printf "\e[1;32mLIGHTDM CONFIG (SEAT: GREETER-SESSION TO lightdm-slick greeter)\e[0m"
