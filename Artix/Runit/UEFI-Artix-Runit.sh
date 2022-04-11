@@ -204,6 +204,21 @@ powertop --auto-tune
 preload
 EOF
 
+mkdir -p /etc/runit/sv/user-services
+touch /etc/runit/sv/user-services/run
+chmod +x /etc/runit/sv/user-services/run
+cat <<EOF >> /etc/runit/sv/user-services/run
+#!/bin/sh
+
+export USER="junior"
+export HOME="/home/$USER"
+
+groups="$(id -Gn "$USER" | tr ' ' ':')"
+svdir="$HOME/.config/services"
+
+exec chpst -u "$USER:$groups" runsvdir "$svdir"
+EOF
+
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
 cat <<EOF >/etc/udev/rules.d/99-udisks2.rules
