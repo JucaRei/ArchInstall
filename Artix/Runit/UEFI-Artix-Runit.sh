@@ -207,16 +207,16 @@ preload
 EOF
 
 mkdir -p /etc/runit/sv/runsvdir-junior
-touch /etc/runit/sv/user-services/run
+touch /etc/runit/sv/runsvdir-junior/run
 chmod +x /etc/runit/sv/runsvdir-junior/run
 cat <<EOF >> /etc/runit/sv/runsvdir-junior/run
 #!/bin/sh
 
 export USER="junior"
-export HOME="/home/$USER"
+export HOME="/home/root"
 
 groups="$(id -Gn "$USER" | tr ' ' ':')"
-svdir="$HOME/.runit/services"
+svdir="$HOME/.runit/sv"
 
 exec chpst -u "$USER:$groups" runsvdir "$svdir"
 EOF
