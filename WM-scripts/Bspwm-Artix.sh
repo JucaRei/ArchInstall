@@ -10,7 +10,7 @@ sudo firewall-cmd --reload
 sudo pacman -Syy
 
 # Xorg Packages
-paru -S xorg-server xorg-font-util xorg-fonts-encondings xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft libinput libinput-gestures xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo
+paru -S xorg-server xorg-font-util xorg-fonts-encodings xorg-fonts-alias-misc xorg-fonts-misc xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft libinput libinput-gestures xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo
 
 paru -S bspwm arandr firefox-esr-bin glow sxhkd polybar flatpak light-locker playerctl dmenu nitrogen feh unclutter picom-ibhagwan-git zathura neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit web-greeter lightdm-settings light-locker ncmpcpp mpc neofetch htop geany
 

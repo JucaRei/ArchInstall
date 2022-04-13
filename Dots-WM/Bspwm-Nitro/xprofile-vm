@@ -17,29 +17,29 @@
 
 # Udevil
 # devmon &
-setxkbmap br &
-nemo --daemon &
-xsetroot -cursor_name left_ptr &
-$HOME/.local/bin/fehauto.sh &
-$HOME/.config/polybar/launch.sh &
-lxqt-policykit-agent &
-$HOME/.bin/dualbsp-VM.sh
+#setxkbmap br &
+#pcmanfm --daemon &
+#xsetroot -cursor_name left_ptr &
+#$HOME/.local/bin/fehauto.sh &
+#$HOME/.config/polybar/launch.sh &
+#lxqt-policykit-agent &
+#$HOME/.bin/dualbsp-VM.sh
 
-mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
-export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
 
 # Add font path
-xset +fp /home/juca/.local/share/fonts/ &
-xset fp rehash &
+#xset +fp /home/junior/.local/share/fonts/ &
+#xset fp rehash &
 
 #XDG DATA DIR
-export XDG_DATA_DIRS="$HOME/.local/share/applications"
+#export XDG_DATA_DIRS="$HOME/.local/share/applications"
 
 # XDG USER DIR
-mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
-export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
-export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
-export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
+#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+#export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
+#export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
 
 # Mount drives, usbs etc...
 if which dbus-run-session >/dev/null && test -z "$DBUS_SESSION_BUS_ADRESS"; then

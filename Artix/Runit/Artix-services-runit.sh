@@ -25,7 +25,7 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb shell-color-scripts pavucontrol light gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
 
 paru -S nvidia-tweaks nvidia-settings 

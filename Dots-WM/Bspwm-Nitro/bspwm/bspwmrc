@@ -43,7 +43,7 @@ xrdb /home/${USER}/.Xresources &
 picom -f &
 
 # Feh
-feh --bg-fill /home/${USER}/Pictures/wallpapers/wallpaper.jpg &
+$HOME/.local/bin/fehauto.sh &
 
 # sxhkd &
 pgrep -x sxhkd > /dev/null || sxhkd &
@@ -52,4 +52,31 @@ pgrep -x sxhkd > /dev/null || sxhkd &
 xsetroot -cursor_name left_ptr
 
 # Dual Monitor
-/home/${USER}/.config/bspwm/dualbsp.sh &
+/home/${USER}/.bin/dualbsp.sh &
+
+
+#bspc monitor -d I II III IV V VI VII VIII IX X
+#~/.bin/dualbsp-VM.sh
+setxkbmap br &
+#pcmanfm --desktop &
+#xsetroot -cursor_name left_ptr &
+lxqt-policykit-agent &
+#$HOME/.bin/dualbsp-VM.sh
+
+#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+
+# Add font path
+#xset +fp /home/junior/.local/share/fonts/ &
+#xset fp rehash &
+
+#XDG DATA DIR
+export XDG_DATA_DIRS="$HOME/.local/share/applications"
+
+# XDG USER DIR
+mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
+export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
+
+~/.bin/dualbsp.sh

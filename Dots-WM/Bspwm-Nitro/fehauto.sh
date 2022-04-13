@@ -6,10 +6,19 @@
 #wallpaper.sh and save it anywhere. A good place is ~/.config/openbox
 
 #! /usr/bin/env sh
+Main=eDP-1
+External=HDMI-1-0
 WALLPAPERS="/home/$USER/Pictures/Wallpapers"
 
-desktop_bg=$(find "$WALLPAPERS" -type f | shuf | head -n 1) &&
-    exec feh --no-fehbg --bg-scale "$desktop_bg"
+#	desktop_bg=$(find "$WALLPAPERS" -type f | shuf | head -n 1) &&
+#		exec feh --no-fehbg --bg-scale "$desktop_bg"
+
+
+while true; do
+	feh --bg-fill --no-fehbh --randomize "$WALLPAPERS"
+	sleep 300
+done
+
 
 # --bg-scale
 
