@@ -25,10 +25,11 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts pavucontrol light gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb shell-color-scripts pavucontrol gvfs-smb gvfs-nfs gvfs-goa gvfs-mtp gvfs-afc udevil light gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
+paru -S nvidia-tweaks nvidia-settings
 
-paru -S nvidia-tweaks nvidia-settings 
+sudo sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
 # paru -S optimus-manager-git optimus-manager-runit bbswitch lightdm-optimus-runit
 

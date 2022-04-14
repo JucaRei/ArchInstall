@@ -191,7 +191,7 @@ EOF
 
 # Power top
 touch /etc/rc.local
-cat << EOF > /etc/rc.local
+cat <<EOF >/etc/rc.local
 # PowerTop
 powertop --auto-tune
 
@@ -209,7 +209,7 @@ EOF
 mkdir -p /etc/runit/sv/runsvdir-junior
 touch /etc/runit/sv/runsvdir-junior/run
 chmod +x /etc/runit/sv/runsvdir-junior/run
-cat <<EOF >> /etc/runit/sv/runsvdir-junior/run
+cat <<EOF >>/etc/runit/sv/runsvdir-junior/run
 #!/bin/sh
 
 export USER="junior"
@@ -246,7 +246,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat << EOF > /etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -289,7 +289,7 @@ mkinitcpio -p linux-lts
 # Normal User
 useradd -m junior
 echo junior:200291 | chpasswd
-usermod -aG libvirt junior
+usermod -aG sys dbus libvirt users storage optical lp kvm audio wheel junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 
