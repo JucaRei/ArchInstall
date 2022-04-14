@@ -292,6 +292,7 @@ echo junior:200291 | chpasswd
 usermod -aG sys dbus libvirt users storage optical lp kvm audio wheel junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
+echo "junior ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/junior
 
 cat <<EOF >/etc/sudoers
 ## sudoers file.

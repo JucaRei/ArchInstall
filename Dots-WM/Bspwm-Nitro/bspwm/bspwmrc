@@ -58,8 +58,8 @@ xsetroot -cursor_name left_ptr
 #bspc monitor -d I II III IV V VI VII VIII IX X
 #~/.bin/dualbsp-VM.sh
 setxkbmap br &
-#pcmanfm --desktop &
-#xsetroot -cursor_name left_ptr &
+dbus-launch pcmanfm --daemon &
+xsetroot -cursor_name left_ptr &
 lxqt-policykit-agent &
 udevil &
 devmon &
