@@ -42,9 +42,9 @@ active-light = #313435
 
 [bar/example]
 tray-position = right
-monitor = Virtual-1
+monitor = eDP-1
 width =  100%
-height = 18
+height = 16
 padding-left =1
 padding-right =0
 
@@ -61,7 +61,7 @@ wm-restack = bspwm
 
 modules-left = round-left bspwm round-right empty-space  round-left polywins round-right mpd_i mpd
 modules-center = title
-modules-right = pulseaudio round-left cpu round-right disks updates user wlan mem xbacklight round-left time  round-right battery  powermenu
+modules-right = pulseaudio round-left cpu round-right temperature disks updates user mem nmanager backlight round-left time  round-right battery  powermenu
 font-0 = JetBrainsMono Nerd Font:style=Bold:pixelsize=11;3
 font-1 = JetBrainsMono Nerd Font:size=14;4
 font-2 = Material Design Icons:style=Bold:size=9;3
@@ -114,7 +114,7 @@ warn-temperature = 70
 format = <ramp> <label>
 format-warn = <ramp> <label-warn>
 format-padding = 1
-label = %temperature%
+label =  %temperature%
 label-warn = %temperature%
 ramp-0 =  "󰜗" 
 ramp-font = 3
@@ -207,6 +207,29 @@ bar-volume-empty-font = 2
 bar-volume-empty-foreground = #565c64
 format-volume-padding = 2
 
+#~ [module/wireless-network]
+#~ type = internal/network
+#~ interface = wlan0
+#~ interval = 1.0
+
+#~ format-connected = <label-connected>
+#~ label-connected = %ifname%
+#~ label-connected-background = ${colors.bg}
+#~ label-connected-foreground = ${colors.green}
+#~ label-connected-padding = 1
+
+#~ format-disconnected = <label-disconnected>
+#~ label-disconnected = Offline
+#~ label-disconnected-background = ${colors.bg}
+#~ label-disconnected-foreground = ${colors.red}
+#~ label-disconnected-padding = 1
+
+
+[module/nmanager]
+type = custom/script
+exec = ~/.config/polybar/scripts/network-networkmanager.sh
+tail = true
+
 [module/time]
 type = internal/date
 interval = 1.0
@@ -256,14 +279,14 @@ format-prefix-foreground = #d19a66
 [module/updates]
 type = custom/script
 ; exec = sudo xbps-install -S > /dev/null 2>&1; xbps-updates
-exec = /home/juca/.config/polybar/scripts/void-updates.sh
+exec = /home/junior/.config/polybar/scripts/artix-updates.sh
 format = <label>
 ; interval = 4600
 interval = 5000 
-label =%output%  
+label = %output%  
 label-padding = 1
 label-foreground = #BF616A
-click-left = kitty -e sudo xbps-install -Su
+click-left = kitty -e sudo pacman -Syu
 
 [module/user]
 type = custom/script
@@ -278,7 +301,7 @@ label-foreground = #C2C094
 type = custom/text 
 content =" " 
 content-padding = 2
-click-left = bash /home/juca/.config/rofi/scripts/menu_powermenu.sh
+click-left = bash /home/junior/.config/rofi/powermenu/powermenu.sh
 content-foreground = #f25287
 
 [module/wlan]
@@ -361,8 +384,8 @@ type = custom/script
 interval = 0.2
 exec = ~/.config/polybar/scripts/backlight.sh
 
-scroll-up = exec light -A 5
-scroll-down = exec light -U 5
+scroll-up = sudo light -A 5
+scroll-down = sudo light -U 5
 
 format-prefix = " "
 
