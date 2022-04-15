@@ -80,6 +80,10 @@ EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'" #ch
 # See more at 'earlyoom -h'  
 EOF
 
+sudo chmod +x /etc/runit/sv/ananicy-cpp/run
+sudo chmod +x /etc/runit/sv/ananicy-cpp/finish
+sudo chmod +x /etc/runit/sv/ananicy-cpp/start
+
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
 sudo ln -s /etc/runit/sv/user-services /run/runit/service

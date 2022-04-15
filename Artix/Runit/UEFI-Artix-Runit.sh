@@ -88,6 +88,10 @@ pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst
 pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
 pacman-key --lsign-key 9AE4078033F8024D
 
+# Add Andontie Repo
+pacman-key --recv-key B545E9B7CD906FE3 
+pacman-key --lsign-key B545E9B7CD906FE3
+
 # Universe repo optimus-manager-runit
 
 cat <<EOF >>/etc/pacman.conf
@@ -107,6 +111,9 @@ cat <<EOF >>/etc/pacman.conf
 
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
+
+[andontie-aur]
+Server = https://aur.andontie.net/$arch
 EOF
 
 pacman -Sy
@@ -204,6 +211,20 @@ powertop --auto-tune
 
 # Preload
 preload
+EOF
+
+mkdir -pv /etc/X11/xorg.conf.d/20-intel.conf
+# Fix tearing with intel
+cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
+Section "Device"
+ Identifier "Intel Graphics"
+ Driver "Intel"
+ Option "AccelMethod" "sna"
+ Option "TearFree" "True"
+ Option "Tiling" "True"
+ Option "SwapbuffersWait" "True"
+ Option "DRI" "3"
+EndSection
 EOF
 
 mkdir -p /etc/runit/sv/runsvdir-junior
