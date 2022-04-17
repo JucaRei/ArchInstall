@@ -51,17 +51,17 @@ padding-right =0
 background = ${colors.background}
 foreground = ${colors.foreground}
 bottom = false
-border-top-size = 5
-border-bottom-size = 5
+border-top-size = 0
+border-bottom-size = 0
 border-top-color = ${colors.background}
 border-bottom-color = ${colors.background}
 
-line-size = 1
+line-size = 1 
 wm-restack = bspwm
 
 modules-left = round-left bspwm round-right empty-space  round-left polywins round-right mpd_i mpd
 modules-center = title
-modules-right = pulseaudio round-left cpu round-right temperature disks updates user mem nmanager backlight round-left time  round-right battery  powermenu
+modules-right = pulseaudio round-left cpu round-right temperature disks updates user mem wlan backlight round-left time  round-right battery  powermenu
 font-0 = JetBrainsMono Nerd Font:style=Bold:pixelsize=11;3
 font-1 = JetBrainsMono Nerd Font:size=14;4
 font-2 = Material Design Icons:style=Bold:size=9;3
@@ -72,6 +72,18 @@ font-5 = Font Awesome 5 Brands:style=Regular:size=9;2
 font-6 = Hack Nerd Font Mono:style=Regular:size=9;2
 
 
+
+[module/wlan-eth]
+type = custom/ipc
+format =<output>
+hook-0 = echo "%{u#1e8a32}%{F#555} %{T9}󰤭%{T-} Off %{F-}"
+hook-1 = $HOME/.config/polybar/scripts/wlan.sh
+hook-2 = echo "%{F#555}%{T9}󰈀%{T-}%{F-} $(ifconfig eth0 | awk '$1=="inet" {print $2}')"
+hook-3 = echo "%{F#555}%{T9}󰤩%{T-} | %{T9}󰈀%{T-}%{F-} $(ifconfig wlan0 | awk '$1=="inet" {print $2}')"
+initial = 1
+format-underline = #2EDE4E
+click-left = /home/junior/.config/rofi/scripts/nmcli-rofi.sh &
+click-right = bspc rule -a '*' -o state=floating && nm-connection-editor &
 
 [module/polywins]
 type = custom/script
@@ -244,6 +256,7 @@ date =  %A, %X
 ;time-alt = 󰃭 %a, %b %d%{F-}
 time-alt =  %a, %d %b %Y%{F-}
 
+
 label = %date%%time%
 
 ;[module/mem]
@@ -306,7 +319,7 @@ content-foreground = #f25287
 
 [module/wlan]
 type = internal/network
-interface = wlp2s0
+interface = wlan0 || eth0
 interval = 3.0
 format-connected =  <label-connected>
 ;label-connected = "󰤪  " 
