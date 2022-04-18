@@ -146,6 +146,24 @@ pacman -Sy
 
 pacman -S grub grub-btrfs efibootmgr mesa mesa-utils backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils alsa-utils-runit bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
 
+# pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
+# pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
+
+# I know you got it working, but just in case (and for future readers sake):
+# you don't need to start pipewire-pulse or wireplumber manually, only pipewire itself with the correct config - see below.
+# also, pipewire-media-session is an inflexible reference implementation not intended for real use, best stick to wireplumber.
+# for the "recommended" pipewire + session manager + pulse setup, do this (all as superuser):
+#     pacman -S pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber
+#     mkdir /etc/pipewire
+#     cp /usr/share/pipewire/pipewire* /etc/pipewire
+#     edit the /etc/pipewire/pipewire.conf file
+#     go to the final option, context.exec = [...]
+#     add the following lines inside the ...
+# { path = "/usr/bin/wireplumber" args = "" }
+# { path = "/usr/bin/pipewire" args = "-c pipewire-pulse.conf" }
+# now simply do the one pipewire & in whatever init script you were using before and it should run pipewire, the pulse layer, and wireplumber to manage the session, all together at once.
+# btw, you probably know this, but you should be able to use any compatible config app for whatever backend pipewire is using, ie. for pulse you can use pavucontrol, for JACK KXStudio stuff like cadence should work..
+
 cat <<EOF >/etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
@@ -216,18 +234,19 @@ EOF
 mkdir -pv /etc/X11/xorg.conf.d/20-intel.conf
 # Fix tearing with intel
 cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
-Section "Device"
- Identifier "Intel Graphics"
- Driver "Intel"
- Option "AccelMethod" "sna"
- Option "TearFree" "True"
- Option "Tiling" "True"
- Option "SwapbuffersWait" "True"
- Option "DRI" "3"
-EndSection
+# Section "Device"
+#  Identifier "Intel Graphics"
+#  Driver "Intel"
+#  Option "AccelMethod" "sna"
+#  Option "TearFree" "True"
+#  Option "Tiling" "True"
+#  Option "SwapbuffersWait" "True"
+#  Option "DRI" "3"
+# EndSection
 EOF
 
-mkdir -p /etc/runit/sv/runsvdir-junior
+mkdir -pv /etc/runit/sv/runsvdir-junior
+mkdir -pv $HOME/.runit/sv
 touch /etc/runit/sv/runsvdir-junior/run
 chmod +x /etc/runit/sv/runsvdir-junior/run
 cat <<EOF >>/etc/runit/sv/runsvdir-junior/run
@@ -282,9 +301,10 @@ usermod -aG storage junior
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 # ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
+ln -s /etc/runit/sv/chrony /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
-ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
+# ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/bluetoothd /etc/runit/runsvdir/default/
 #ln -s /etc/runit/sv/wpa_supplicant /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/avahi-daemon /etc/runit/runsvdir/default/

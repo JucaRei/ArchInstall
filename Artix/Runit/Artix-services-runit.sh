@@ -6,7 +6,7 @@ sleep 3
 
 mkdir -pv Documents/workspace/{Github,Configs}
 
-mkdir -pv $HOME/.runit/{services,runsvdir}
+mkdir -pv $HOME/.runit/{sv,runsvdir}
 
 git clone --depth=1 https://github.com/JucaRei/ArchInstall $HOME/Documents/workspace/Configs/ArchInstall
 
@@ -16,7 +16,7 @@ cd $HOME/Documents/workspace/Configs/ArchInstall/Arch/Arch_pkgs
 sudo pacman -U paru**.zst --noconfirm
 sudo pacman -U pikaur**.zst --noconfirm
 sudo pacman -U hfsprogs**.zst --noconfirm
-sudo pacman -U nosystemd-boot**.zst --noconfirm
+# sudo pacman -U nosystemd-boot**.zst --noconfirm
 
 paru -Syu
 
@@ -40,11 +40,14 @@ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 pikaur -S profile-sync-daemon
 git clone --depth=1 https://github.com/madand/runit-services
 cd runit-services
-sudo mv psd /etc/runit/sv && sudo mv redshift /etc/runit/sv && sudo mv picom /etc/runit/sv && sudo mv colord /etc/runit/sv
+sudo cp -r psd /etc/runit/sv 
+# sudo cp -r redshift /etc/runit/sv && sudo cp -r picom /etc/runit/sv && sudo cp -r colord /etc/runit/sv
+
 sudo ln -sfv /etc/runit/sv/psd /run/runit/service
-sudo ln -sfv /etc/runit/sv/picom /run/runit/service
-sudo ln -sfv /etc/runit/sv/colord /run/runit/service
-sudo ln -sfv /etc/runit/sv/redshift /run/runit/service
+# sudo ln -sfv /etc/runit/sv/picom /run/runit/service
+# sudo ln -sfv /etc/runit/sv/colord /run/runit/service
+# sudo ln -sfv /etc/runit/sv/redshift /run/runit/service
+
 # sudo sv start psd
 # sudo sv start picom
 # sudo sv start redshift
@@ -86,7 +89,7 @@ sudo chmod +x /etc/runit/sv/ananicy-cpp/start
 
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
-sudo ln -s /etc/runit/sv/user-services /run/runit/service
+# sudo ln -s /etc/runit/sv/user-services /run/runit/service
 # sudo ln -s /etc/runit/sv/zramen /run/runit/service
 sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
 sudo ln -s /etc/runit/sv/tlp /run/runit/service

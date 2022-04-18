@@ -1,5 +1,7 @@
 # .bashrc
 
+iatest=$(expr index "$-" i)
+
 #########                         If Arch or Artix                      #########
 # pacman and yay
 alias pacsyu='sudo pacman -Syu'   # update only standard pkgs
@@ -66,6 +68,83 @@ alias cleanup='sudo pacman -Rns $(pacman -Qtdq)'
 
 #grub update
 alias update-grub="sudo grub-mkconfig -o /boot/grub/grub.cfg"
+
+# Search command line history
+alias h="history | grep "
+
+# Alias's to show disk space and space used in a folder
+alias diskspace="du -S | sort -n -r |more"
+alias folders='du -h --max-depth=1'
+alias folderssort='find . -maxdepth 1 -type d -print0 | xargs -0 du -sk | sort -rn'
+alias tree='tree -CAhF --dirsfirst'
+alias treed='tree -CAFd'
+alias mountedinfo='df -hT'
+
+# Copy file with a progress bar
+
+cpp()
+{
+	set -e
+	strace -q -ewrite cp -- "${1}" "${2}" 2>&1 \
+	| awk '{
+	count += $NF
+	if (count % 10 == 0) {
+		percent = count / total_size * 100
+		printf "%3d%% [", percent
+		for (i=0;i<=percent;i++)
+			printf "="
+			printf ">"
+			for (i=percent;i<100;i++)
+				printf " "
+				printf "]\r"
+			}
+		}
+	END { print "" }' total_size=$(stat -c '%s' "${1}") count=0
+}
+
+
+# Copy and go to the directory
+cpg ()
+{
+	if [ -d "$2" ];then
+		cp $1 $2 && cd $2
+	else
+		cp $1 $2
+	fi
+}
+
+# Move and go to the directory
+mvg ()
+{
+	if [ -d "$2" ];then
+		mv $1 $2 && cd $2
+	else
+		mv $1 $2
+	fi
+}
+
+# Create and go to the directory
+mkdirg ()
+{
+	mkdir -p $1
+	cd $1
+}
+
+# Goes up a specified number of directories  (i.e. up 4)
+up ()
+{
+	local d=""
+	limit=$1
+	for ((i=1 ; i <= limit ; i++))
+		do
+			d=$d/..
+		done
+	d=$(echo $d | sed 's/^\///')
+	if [ -z "$d" ]; then
+		d=..
+	fi
+	cd $d
+}
 
 # kill commands
 # quickly kill conkies
@@ -175,15 +254,20 @@ fi
 # export EDITOR='nvim'
 # export VISUAL='nvim'
 
-#ignore upper and lowercase when TAB completion
-bind "set completion-ignore-case on"
+# Ignore case on auto-completion
+# Note: bind used instead of sticking these in .inputrc
+if [[ $iatest > 0 ]]; then bind "set completion-ignore-case on"; fi
+
+
+# Disable the bell
+if [[ $iatest > 0 ]]; then bind "set bell-style visible"; fi
 
 # xdg runtime for apps (remember to create folder
 export XDG_RUNTIME_DIR=$PATH:~/.cache/xdgr
 
 ### EXPORT
 export TERM="xterm-256color"            # getting proper colors
-export HISTCONTROL=ignoredups:erasedups # no duplicate entries
+export HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
 # export ALTERNATE_EDITOR=""                        # setting for emacsclient
 # export EDITOR="emacsclient -t -a ''"              # $EDITOR use Emacs in terminal
 # export VISUAL="emacsclient -c -a emacs"           # $VISUAL use Emacs in GUI mode
@@ -197,6 +281,7 @@ alias la='exa -a --color=always --group-directories-first'  # all files and dirs
 alias ll='exa -l --color=always --group-directories-first'  # long format
 alias lt='exa -aT --color=always --group-directories-first' # tree listing
 alias l.='exa -a | egrep "^\."'
+
 
 # list
 # alias ls='ls --color=auto'
@@ -325,6 +410,22 @@ memusage() {
 ## Set a search path for the cd builtin
 # cdpath=(.. ~)
 
+
+# alias to show the date
+alias da='date "+%Y-%m-%d %A %T %Z"'
+
+
+# Count all files (recursively) in the current folder
+alias countfiles="for t in files links directories; do echo \`find . -type \${t:0:1} | wc -l\` \$t; done 2> /dev/null"
+
+
+
+# editar bashrc
+alias ebrc='vim ~/.bashrc'
+
+# Remove a directory and all files
+alias rmd='/bin/rm  --recursive --force --verbose '
+
 ## Use a default width of 80 for manpages for more convenient reading
 export MANWIDTH=${MANWIDTH:-80}
 
@@ -423,7 +524,8 @@ if ! shopt -oq posix; then
   fi
 fi
 
-bind 'set show-all-if-ambiguous on'
+# Show auto-completion list automatically, without double tab
+if [[ $iatest > 0 ]]; then bind 'set show-all-if-ambiguous on'; fi
 bind 'TAB:menu-complete'
 
 # Add sbin directories to PATH.  This is useful on systems that have sudo
@@ -439,6 +541,8 @@ screen*)
   PROMPT_COMMAND='echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\033\\"'
   ;;
 esac
+
+PROMPT_COMMAND='history -a'
 
 ### SHOPT
 shopt -s autocd  # change to named directory
