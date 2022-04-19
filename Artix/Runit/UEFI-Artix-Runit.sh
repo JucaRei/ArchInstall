@@ -96,18 +96,22 @@ pacman-key --lsign-key B545E9B7CD906FE3
 
 cat <<EOF >>/etc/pacman.conf
 
-#[omniverse]
-#Server = http://omniverse.artixlinux.org/$arch
 
-#[universe]
-#Server = https://universe.artixlinux.org/$arch
-#Server = https://mirror1.artixlinux.org/universe/$arch
-#Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-#Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
-#Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+[omniverse] 
+Server = http://omniverse.artixlinux.org/$arch 
+
+[universe] 
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
+Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
 
 #[liquorix]
-#Server = https://liquorix.net/archlinux/$repo$arch
+#Server = https://liquorix.net/archlinux/
 
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist

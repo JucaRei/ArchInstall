@@ -25,13 +25,13 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts pavucontrol gvfs-smb gvfs-nfs gvfs-goa gvfs-mtp gvfs-afc udevil light gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb shell-color-scripts pavucontrol gvfs-smb gvfs-nfs gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
 paru -S nvidia-tweaks nvidia-settings
 
 sudo sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
-# paru -S optimus-manager-git optimus-manager-runit bbswitch lightdm-optimus-runit
+paru -S optimus-manager-git optimus-manager-runit bbswitch-dkms lightdm-optimus-runit
 
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
@@ -87,20 +87,23 @@ sudo chmod +x /etc/runit/sv/ananicy-cpp/run
 sudo chmod +x /etc/runit/sv/ananicy-cpp/finish
 sudo chmod +x /etc/runit/sv/ananicy-cpp/start
 
+sudo sed -i "s/startup_mode=integrated/startup_mode=hybrid/g"  /usr/share/optimus-manager.conf
+sudo sed -i "s/dynamic_power_management=no/dynamic_power_management=yes/g"  /usr/share/optimus-manager.conf
+
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
 # sudo ln -s /etc/runit/sv/user-services /run/runit/service
 # sudo ln -s /etc/runit/sv/zramen /run/runit/service
 sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
 sudo ln -s /etc/runit/sv/tlp /run/runit/service
-# sudo ln -s /etc/runit/sv/optimus-manager /run/runit/service
-# sudo ln -s /etc/runit/sv/lightdm-optimus /run/runit/service
+sudo ln -s /etc/runit/sv/optimus-manager /run/runit/service
+# sudo ln -s /etc/runit/sv/lightdm /run/runit/service
 
-sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 bbswitch crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
 sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 sudo sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
 
-sudo mkinitcpio -P linux-lts
+sudo mkinitcpio -p linux-lts
 
 cp -r $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/bashrc ~/.bashrc
 
