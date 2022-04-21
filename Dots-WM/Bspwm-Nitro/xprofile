@@ -49,11 +49,12 @@
 
 # exec bspwm
 
-/usr/bin/prime-offload
 
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
         export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
         dbus-daemon --session --nofork --nopidfile --address="$DBUS_SESSION_BUS_ADDRESS" &
 fi
 
-sudo /usr/bin/prime-switch
+/usr/bin/prime-offload &
+/usr/bin/optimus-manager &
+/usr/bin/prime-switch &

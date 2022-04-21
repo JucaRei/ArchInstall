@@ -392,7 +392,7 @@ HandleNvidiaSleep=ignore
 EOF
 
 #Runit por default
-chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
+# chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/acpid /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/

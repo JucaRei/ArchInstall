@@ -16,9 +16,9 @@ wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-2021
 
 xbps-install -Su xbps xz --yes
 
-mkfs.vfat -F32 /dev/sda5
-mkfs.btrfs /dev/sda6 -f
-mkfs.btrfs /dev/sda7 -f
+mkfs.vfat -F32 /dev/sda5 -n "Void"
+mkfs.btrfs /dev/sda6 -f -L "VoidRoot"
+mkfs.btrfs /dev/sda7 -f -L "VoidHome"
 
 set -e
 XBPS_ARCH="x86_64"
@@ -37,6 +37,11 @@ btrfs su cr /mnt/@var_cache_xbps
 # Remove a partição
 umount -v /mnt
 
+# mount home subvolume
+mount -o $BTRFS_OPTS /dev/sda7 /mnt
+btrfs su cr /mnt/@home
+umount -v /mnt
+
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
@@ -46,8 +51,8 @@ mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS /dev/sda7 /mnt/home
+mkdir -pv /mnt/var/cache/
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
@@ -76,7 +81,7 @@ EOF
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" i915 btrfs nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+add_drivers+=" crc32c-intel i915 btrfs nvidia nvidia_drm nvidia_uvm nvidia_modeset "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
@@ -154,6 +159,22 @@ Section "OutputClass"
     # Option "PrimaryGPU" "yes"
     ModulePath "/usr/lib/nvidia/xorg"
     ModulePath "/usr/lib/xorg/modules"
+EndSection
+EOF
+
+mkdir -pv /mnt/etc/X11/xorg.conf.d/
+cat << EOF > /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+Section "InputClass"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # MatchIsTouchpad "on"
+        # Driver "libinput"
+        # Option "Tapping" "on"
+
+        Identifier      "touchpad"
+        Driver          "libinput"
+        MatchIsTouchpad "on"
+        Option          "Tapping"       "on"
 EndSection
 EOF
 
@@ -345,7 +366,7 @@ UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 # EFI
 UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
 
-tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
+tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
 # Set user permition
@@ -363,6 +384,37 @@ EOF
 
 #Conf rc
 
+# Set user permition
+cat <<EOF >/mnt/etc/doas.conf
+# allow user but require password
+permit keepenv :junior
+
+# allow user and dont require a password to execute commands as root
+permit nopass keepenv :junior
+
+# mount drives
+permit nopass :junior cmd mount
+permit nopass :junior cmd umount
+
+# musicpd service start and stop
+#permit nopass :$USER cmd service args musicpd onestart
+#permit nopass :$USER cmd service args musicpd onestop
+
+# pkg update
+#permit nopass :$USER cmd vpm args update
+
+# run personal scripts as root without prompting for a password,
+# requires entering the full path when running with doas
+#permit nopass :$USER cmd /home/username/bin/somescript
+
+# root as root
+#permit nopass keepenv root as root
+EOF
+chroot /mnt chown -c root:root /etc/doas.conf
+# chroot /mnt chmod -c 0400 /etc/doas.conf
+
+
+
 cat << EOF > /mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
@@ -377,11 +429,11 @@ cat << EOF > /mnt/etc/rc.conf
 HARDWARECLOCK="UTC"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
-#TIMEZONE="Europe/Bucharest"
+#TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
-#KEYMAP="br-abnt2"
-KEYMAP="br"
+KEYMAP="br-abnt2"
+#KEYMAP="br"
 
 # Console font to load, see setfont(8).
 #FONT="lat9w-16"
@@ -410,13 +462,13 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel zstd bash-completion linux-lts linux-lts-headers neovim base-devel grub-x86_64-efi ripgrep exa fzf dust xtools lm_sensors inxi lshw intel-ucode zsh minised ncdu necho alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia arp-scan xev opendoas zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar neovim base-devel dropbear grub-x86_64-efi ripgrep alsa-plugins-pulseaudio netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xbacklight xprop  xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xbacklight xprop  xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
@@ -430,7 +482,7 @@ wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit --yes
+chroot /mnt xbps-install -S nvidia nvidia-libs-32bit vulkan-loader nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-vdpau mesa-vulkan-overlay--layer --yes
 
 # Intel Video Drivers
 # chroot /mnt xbps-install -S xf86-video-intel --yes
@@ -449,15 +501,16 @@ chroot /mnt xbps-install -S mons --yes
 # chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management 
-chroot /mnt xbps-install -S gvfs gvfs-smb udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
 
-
+# NFS
+chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
 #Install Grub
-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VOID"
+chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VoidLinux"
 chroot /mnt update-grub
 
 # GRUB Configuration
@@ -470,10 +523,15 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=7
-GRUB_DISTRIBUTOR="VOID"
+GRUB_DISTRIBUTOR="VoidLinux"
 #GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off intel_iommu=igfx_off i915.modeset=1"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=4 mitigations=off nowatchdog nvidia-drm.modeset=1 intel_iommu=igfx_off"
-# Uncomment to use basic console
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX=""
+GRUB_PRELOAD_MODULES="part_gpt part_msdos"
+GRUB_TIMEOUT_STYLE=menu
+GRUB_GFXMODE=auto
+GRUB_GFXPAYLOAD_LINUX=keep
+
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
 #GRUB_TERMINAL_OUTPUT=console
@@ -517,56 +575,85 @@ chroot /mnt usermod -a -G socklog junior
 chroot /mnt xbps-reconfigure -fa
 
 #Runit por default
-chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/sshd /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
 
+# NFS
+chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/statd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/netmount /etc/runit/runsvdir/default/
+
+#Samba
+chroot /mnt ln -srvf /etc/sv/smbd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
+
 # Enable the iNet Wireless Daemon for Wi-Fi support
-chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
-
-# Config zsh
-
-# alias dissh="export DISPLAY=:0.0"
-# alias bquit="bspc quit"
+chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
 
 
-#chroot /mnt sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-# spaceship theme
-# git clone https://github.com/denysdovhan/spaceship-prompt.git "$ZSH_CUSTOM/themes/spaceship-prompt"
-# ln -s "$ZSH_CUSTOM/themes/spaceship-prompt/spaceship.zsh-theme" "$ZSH_CUSTOM/themes/spaceship.zsh-theme"
-# ZSH_THEME="spaceship"
+cat <<EOF >/mnt/etc/samba/smb.conf
+[global]
+   workgroup = WORKGROUP
+   dns proxy = no
+   log file = /var/log/samba/%m.log
+   max log size = 1000
+   client min protocol = NT1
+   server role = standalone server
+   passdb backend = tdbsam
+   obey pam restrictions = yes
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = *New*UNIX*password* %n\n *ReType*new*UNIX*password* %n\n *passwd:*all*authentication*tokens*updated*successfully*
+   pam password change = yes
+   map to guest = Bad Password
+   usershare allow guests = yes
+   name resolve order = lmhosts bcast host wins
+   security = user
+   guest account = nobody
+   usershare path = /var/lib/samba/usershare
+   usershare max shares = 100
+   usershare owner only = yes
+   force create mode = 0070
+   force directory mode = 0070
 
-# cat <<\EOF >> /home/junior/.zshrc
-# SPACESHIP_PROMPT_ORDER=(
-#   user          # Username section
-#   dir           # Current directory section
-#   host          # Hostname section
-#   git           # Git section (git_branch + git_status)
-#   hg            # Mercurial section (hg_branch  + hg_status)
-#   exec_time     # Execution time
-#   line_sep      # Line break
-#   vi_mode       # Vi-mode indicator
-#   jobs          # Background jobs indicator
-#   exit_code     # Exit code section
-#   char          # Prompt character
-# )
-# SPACESHIP_USER_SHOW=always
-# SPACESHIP_PROMPT_ADD_NEWLINE=false
-# SPACESHIP_CHAR_SYMBOL="❯"
-# SPACESHIP_CHAR_SUFFIX=" "
-# EOF
+[homes]
+   comment = Home Directories
+   browseable = no
+   read only = yes
+   create mask = 0700
+   directory mask = 0700
+   valid users = %S
+
+[printers]
+   comment = All Printers
+   browseable = no
+   path = /var/spool/samba
+   printable = yes
+   guest ok = no
+   read only = yes
+   create mask = 0700
+
+[print$]
+   comment = Printer Drivers
+   path = /var/lib/samba/printers
+   browseable = yes
+   read only = yes
+   guest ok = no
+EOF
+
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
@@ -591,3 +678,8 @@ polkit.addRule(function(action, subject) {
     }
 });
 EOF
+
+# install ncdu2
+wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
+tar -xf ncdu-2.1-linux-x86_64.tar.gz
+mv ncdu /mnt/usr/local/bin
