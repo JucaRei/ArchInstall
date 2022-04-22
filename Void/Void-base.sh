@@ -47,11 +47,10 @@ umount -v /mnt
 
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
 mkdir -pv /mnt/boot/efi
-mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/cache/
+mkdir -pv /mnt/var/cache/xbps
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
@@ -361,7 +360,7 @@ UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps 0 2
 
 #HOME_FS
-UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
+UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home           0 2
 
 # EFI
 UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
@@ -510,6 +509,8 @@ chroot /mnt xbps-install -S socklog-void --yes
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
 #Install Grub
+mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
+chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="VoidLinux"
 chroot /mnt update-grub
 
