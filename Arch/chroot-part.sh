@@ -1,13 +1,12 @@
 #!/bin/bash
 
-
 # Nitro
 mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
 mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
 mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 
 # OldMac
-# mkfs.vfat -F32 /dev/sda1 
+# mkfs.vfat -F32 /dev/sda1
 # mkfs.btrfs /dev/sda2 -f
 # mkfs.btrfs /dev/sda3 -f
 
@@ -47,7 +46,7 @@ mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
-# Mount partitions (Oldmac) | W/Systemd-Boot 
+# Mount partitions (Oldmac) | W/Systemd-Boot
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
 # mkdir -pv /mnt/{home,.snapshots,boot,var/log}
 # mount -o $BTRFS_OPTS,subvol=@home /dev/sda3 /mnt/home
@@ -55,13 +54,10 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 # mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
 
-
-
-
 ############    ARCH     ############
 
 ### Nitro
-# pacstrap /mnt base linux-lts linux-lts-headers linux-firmware git nano neovim intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib
+# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware git nano neovim intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib
 
 # Generate fstab
 # genfstab -U /mnt >> /mnt/etc/fstab
@@ -78,7 +74,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
-fstabgen -U /mnt >> /mnt/etc/fstab
+fstabgen -U /mnt >>/mnt/etc/fstab
 
 ### Artix s6
 # basestrap /mnt base base-devel s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools btrfs-progs --ignore linux

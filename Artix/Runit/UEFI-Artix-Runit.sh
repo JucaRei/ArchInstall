@@ -89,7 +89,7 @@ pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
 pacman-key --lsign-key 9AE4078033F8024D
 
 # Add Andontie Repo
-pacman-key --recv-key B545E9B7CD906FE3 
+pacman-key --recv-key B545E9B7CD906FE3
 pacman-key --lsign-key B545E9B7CD906FE3
 
 # Universe repo optimus-manager-runit
@@ -237,7 +237,7 @@ EOF
 
 mkdir -pv /etc/X11/xorg.conf.d/20-intel.conf
 # Fix tearing with intel
-cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
+cat <<EOF >/etc/X11/xorg.conf.d/20-intel.conf
 # Section "Device"
 #  Identifier "Intel Graphics"
 #  Driver "Intel"

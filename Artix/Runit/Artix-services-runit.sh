@@ -27,7 +27,7 @@ cd
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 paru -S netmount-runit fusesmb shell-color-scripts pavucontrol gvfs-smb gvfs-nfs gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 
-paru -S nvidia-tweaks nvidia-settings nvidia-prime xf86-video-intel
+paru -S nvidia-tweaks nvidia-settings nvidia-prime xf86-video-intel mesa dxvk-bin vkd3d vulkan-intel vulkan-tools libva-nvidia-driver intel-media-driver gstreamer-vaapi libvdpau-va-gl libva-utils vdpauinfo
 
 sudo sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
@@ -35,11 +35,10 @@ sudo sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_F
 
 git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 
-
 pikaur -S profile-sync-daemon
 git clone --depth=1 https://github.com/madand/runit-services
 cd runit-services
-sudo cp -r psd /etc/runit/sv 
+sudo cp -r psd /etc/runit/sv
 # sudo cp -r redshift /etc/runit/sv && sudo cp -r picom /etc/runit/sv && sudo cp -r colord /etc/runit/sv
 
 sudo ln -sfv /etc/runit/sv/psd /run/runit/service
@@ -86,7 +85,7 @@ sudo chmod +x /etc/runit/sv/ananicy-cpp/run
 sudo chmod +x /etc/runit/sv/ananicy-cpp/finish
 sudo chmod +x /etc/runit/sv/ananicy-cpp/start
 
-#Optimus Manager 
+#Optimus Manager
 
 # sudo sed -i "s/switching=none/switching=bbswitch/g"  /usr/share/optimus-manager.conf
 # sudo sed -i "s/startup_mode=integrated/startup_mode=hybrid/g"  /usr/share/optimus-manager.conf
