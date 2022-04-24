@@ -1,6 +1,25 @@
 # .bashrc
 
+#┌───────┐
+    #│.bashrc│
+    #└───────┘
+    # ~/.bashrc
+    #
+    #alsi -c1=red -c2=blue -t red
+    #command cowsay -f tux $(fortune all)
+    #cat /etc/motd
+    echo "Hello $USER."
+    echo "Today is $(date +'%a %e %b : %G : %T %p')"
+    echo "Current working directory : $(pwd)"
+
+# Nvidia
+
+__NV_PRIME_RENDER_OFFLOAD=1 
+__VK_LAYER_NV_optimus=NVIDIA_only 
+__GLX_VENDOR_LIBRARY_NAME=nvidia
+
 iatest=$(expr index "$-" i)
+alias gpuNV='prime-offload && optimus-manager --switch nvidia'
 
 #########                         If Arch or Artix                      #########
 # pacman and yay
