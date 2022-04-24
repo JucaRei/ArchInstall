@@ -15,10 +15,10 @@ function main() {
         pactl set-sink-mute @DEFAULT_SINK@ toggle
     else
         if [ "${IS_MUTED}" != "" ]; then
-            #echo " ${SOURCE} |  MUTED ${SINK}"
+            #echo " ${SOURCE} |  MUTED ${SINK} "
             echo " |  MUTED "
         else
-            #echo " ${SOURCE} |  ${VOLUME}% ${SINK}"
+            #echo " ${SOURCE} |  ${VOLUME}% ${SINK} "
             echo " |  ${VOLUME}% "
         fi
     fi
