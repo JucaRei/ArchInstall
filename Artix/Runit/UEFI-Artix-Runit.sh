@@ -118,6 +118,9 @@ Include = /etc/pacman.d/chaotic-mirrorlist
 
 [andontie-aur]
 Server = https://aur.andontie.net/$arch
+
+[herecura]
+Server = https://repo.herecura.be/$repo/$arch
 EOF
 
 pacman -Sy

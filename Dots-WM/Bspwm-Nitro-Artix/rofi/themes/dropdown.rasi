@@ -1,0 +1,39 @@
+* {
+    background-color: argb:031D1D1D;
+    text-color: #ffffff;
+    border-color: #252525;
+    spacing: 0;
+    width:  300;
+	font: "DejaVu Sans Mono Bold 12";
+}
+
+window {
+    border: 2px solid;
+    border-radius: 15px;
+}
+
+inputbar {
+    border: 0 0 1px 0;
+    children: [prompt];
+}
+
+prompt {
+    padding: 16px;
+    border: 0 1px 0 0;
+}
+
+listview {
+    cycle: false;
+    margin: 0 0 -1px 0;
+    scrollbar: false;
+}
+
+element {
+    border: 0 0 1px 0;
+    padding: 16px;
+}
+
+element selected {
+    background-color: argb:E0FA5BF0;
+}
+
