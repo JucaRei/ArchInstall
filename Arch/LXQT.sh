@@ -24,7 +24,7 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # Lxqt
-sudo pikaur -S xorg lxqt libpulse libstatgrab libsysstat lm_sensors network-manager-applet oxygen-icons pavucontrol-qt filezilla leafpad sddm ttf-dejavu tilix ttf-dejavu ttf-liberation vlc firefox-developer-edition ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
+pikaur -S xorg-server xorg-font-util xorg-fonts-encodings xorg-fonts-alias-misc xorg-fonts-misc xorg-setxkbmap xorg-xauth xorg-mkfontscale xorg-xsetroot xorg-xinit libxrandr libxft libinput libinput-gestures xorg-xrdb libxinerama xorg-xbacklight xorg-xcursorgen xorg-xdpyinfo xorg-xdriinfo xorg-xev xorg-xhost xorg-xkbcomp xorg-xkbevd xorg-xkbutils xorg-xkill xorg-xlsclients xorg-xmodmap xorg-xprop xorg-xset xorg-xsetroot xorg-xvinfo xorg-xwininfo lxqt libpulse libstatgrab libsysstat lm_sensors network-manager-applet oxygen-icons pavucontrol-qt filezilla leafpad sddm ttf-dejavu tilix ttf-dejavu ttf-liberation mpv firefox-developer-edition ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
 
 # nvidia 304xx
 # xorg-server1.19-git

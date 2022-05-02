@@ -73,7 +73,7 @@ cp -v /etc/resolv.conf /mnt/etc/
 mkdir -pv /mnt/etc/dracut.conf.d
 cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" nouveau i915 btrfs crc32c-intel "
+add_drivers+=" btrfs nouveau i915 btrfs crc32c-intel "
 omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
@@ -147,7 +147,7 @@ UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
-tmpfs /tmp tmpfs noatime,nosuid 0 0
+tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
 # Set user permition
@@ -195,7 +195,7 @@ cat <<EOF >/mnt/etc/rc.conf
 HARDWARECLOCK="localtime"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
-#TIMEZONE="Europe/Bucharest"
+#TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
 KEYMAP="us-acentos"
@@ -226,7 +226,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight arp-scan xev opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -255,7 +255,7 @@ EOF
 # chroot /mnt xbps-install -S xf86-video-intel --yes
 
 # Intel Video Drivers
-chroot /mnt xbps-install -S xf86-video-nouveau mesa-dri --yes
+chroot /mnt xbps-install -S xf86-video-nouveau mesa mesa-dri mesa-nouveau-dri mesa-demos glu mesa-vulkan-intel mesa-vulkan-overlay-layer MangoHud Vulkan-tools vkd3d vkBasalt --yes
 
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
@@ -331,6 +331,13 @@ Section "InputClass"
         MatchIsKeyboard "yes"
         Option          "XkbOptions"    "terminate:crtl_alt_bksp"
 EndSection
+EOF
+
+touch /mnt/etc/rc.local
+cat <<EOF >/mnt/etc/rc.local
+#PowerTop
+powertop --auto-tune
+
 EOF
 
 mkdir -pv /mnt/etc/elogind

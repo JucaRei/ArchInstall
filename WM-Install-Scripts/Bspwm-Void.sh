@@ -1,21 +1,23 @@
 #!/bin/bash
 
-#xdg-user-dirs-update
+xdg-user-dirs-update
+
+sleep 3
 
 mkdir -pv ~/.cache/xdgr
 
 doas chmod 0700 ~/.cache/xdgr
 
-sudo vpm i bspwm autorandr arandr jq curl viewnior udevil glu starship light libvdpau starship gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty playerctl font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures picom evince neovim rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpd ncmpcpp mpv mpc neofetch htop geany xarchiver zip zenmap --yes
+sudo vpm i bspwm autorandr arandr jq curl viewnior glu gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
 # Old mac
-sudo vpm i kbdlight mbpfan
-git clone https://github.com/linux-on-mac/mbpfan.git
-cd mbpfan/
-make 
-sudo make install
-sudo make   
+# sudo vpm i kbdlight mbpfan
+# git clone https://github.com/linux-on-mac/mbpfan.git
+# cd mbpfan/
+# make
+# sudo make install
+# sudo make
 sudo vpm i sassc gtk-engine-murrine
 
 mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
@@ -24,13 +26,13 @@ mkdir -p ~/.urxvt/ext
 mkdir -p ~/.config/{bspwm,rofi,sxhkd,dunst,polybar}
 mkdir -p ~/.config/mpd
 mkdir -p ~/.local/bin
-mkdir -p ~/.ncmpcpp 
+mkdir -p ~/.ncmpcpp
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd ~/Documents/workspace/Builds
 mkdir -p Xdeb AppImagesFolder Void-Packages
-cd Xdeb 
+cd Xdeb
 wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
 mv xdeb ~/.local/bin && cd ~/.local/bin
 chmod +x xdeb
@@ -70,7 +72,7 @@ git clone --depth 1 https://github.com/JucaRei/ArchInstall
 cd ~/Documents/workspace/Others
 git clone https://github.com/JucaRei/fontpreview
 cd fontpreview
-sudo make install 
+sudo make install
 # echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
 mv fontpreview ~/.local/bin
 cd ..
@@ -114,7 +116,7 @@ install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
 
 sudo sed -i 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-greeter/g' /etc/lightdm/lightdm.conf
 
-cat << EOF >> ~/.config/bspwm/bspwmrc
+cat <<EOF >>~/.config/bspwm/bspwmrc
 
 ~/.fehbg &
 xrdb ~/.Xresources &

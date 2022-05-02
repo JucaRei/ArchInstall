@@ -1,5 +1,9 @@
 #!/bin/bash
 
+xdg-user-dirs-update
+
+sleep 3
+
 sudo hwclock --systohc
 
 sudo firewall-cmd --add-port=1025-65535/tcp --permanent
@@ -15,7 +19,7 @@ paru -S xorg-server xorg-font-util xorg-fonts-encodings xorg-fonts-alias-misc xo
 paru -S bspwm arandr firefox-esr-bin glow sxhkd wmctrl polybar rofi-calc flatpak light-locker playerctl lua dmenu nitrogen feh unclutter picom-ibhagwan-git zathura neovim rofi dunst scrot archlinux-wallpaper lxappearance lightdm lightdm-runit web-greeter lightdm-settings light-locker ncmpcpp mpc neofetch htop geany
 
 # Terminals
-paru -S xfce4-terminal rxvt-unicode-truecolor-wide-glyphs
+paru -S xfce4-terminal kitty rxvt-unicode-truecolor-wide-glyphs
 
 # File manager
 paru -S pcmanfm libfm lxqt_wallet ffmpegthumbnailer gst-libav gst-plugins-ugly file-roller xarchiver
@@ -25,12 +29,13 @@ chmod -R 640 ~/.config/libfm/libfm.conf
 
 touch $HOME/.config/starship.toml
 mkdir -p ~/.urxvt/ext
-mkdir -p ~/.config/mpd
+mkdir -p ~/.conky
 mkdir -p ~/.ncmpcpp
+mkdir -p ~/.runit
 mkdir -p $HOME/.bin
 mkdir -p $HOME/local/.bin
 mkdir -p $HOME/local/share/applications
-mkdir -p $HOME/.config/{bspwm,sxhkd,dunst,rofi}
+mkdir -p $HOME/.config/{conky,bspwm,mpd,sxhkd,picom,dunst,rofi,mpv,zathura}
 mkdir -pv ~/Pictures/Wallpapers
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate

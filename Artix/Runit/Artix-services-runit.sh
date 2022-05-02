@@ -25,7 +25,9 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts pavucontrol gvfs-smb gvfs-nfs playerctl dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb shell-color-scripts pulseaudio-bt-auto-enable-a2dp libgee vala ttf-conkyweather gvfs-smb gvfs-nfs playerctl dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+
+paru -S conky conky conky-manager2-git ttf-conkyweather
 
 paru -S nvidia-tweaks nvidia-settings nvidia-prime xf86-video-intel mesa dxvk-bin vkd3d vulkan-intel vulkan-tools libva-nvidia-driver intel-media-driver gstreamer-vaapi libvdpau-va-gl libva-utils vdpauinfo
 

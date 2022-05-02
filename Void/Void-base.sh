@@ -11,7 +11,6 @@
 # sv restart dhcpcd
 # ip link set up <interface>
 
-
 wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
 xbps-install -Su xbps xz --yes
@@ -58,16 +57,20 @@ mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
-tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
+tar xvf ./void-x86_64-*.tar.xz -C /mnt
+sync
 
-for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+for dir in dev proc sys run; do
+   mount --rbind /$dir /mnt/$dir
+   mount --make-rslave /mnt/$dir
+done
 
 # copia o arquivo de resolv para o /mnt
 cp -v /etc/resolv.conf /mnt/etc/
 
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
-cat << EOF > /mnt/etc/modprobe.d/blacklist.conf
+cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
 #install iTCO_wdt /bin/true
 #install iTCO_vendor_support /bin/true
@@ -78,7 +81,7 @@ EOF
 
 # Atualiza o initramfs com dracut
 mkdir -pv /mnt/etc/dracut.conf.d
-cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 add_drivers+=" crc32c-intel i915 btrfs nvidia nvidia_drm nvidia_uvm nvidia_modeset "
 omit_dracutmodules+=" lvm luks "
@@ -138,7 +141,7 @@ EOF
 
 # no usr/share
 mkdir -pv /mnt/usr/share/X11/xorg.conf.d
-cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+cat <<EOF >/mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
 Section "ServerLayout"
   Identifier "layout"
   Option "AllowNVIDIAGPUScreens"
@@ -162,7 +165,7 @@ EndSection
 EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # Identifier "SynPS/2 Synaptics TouchPad"
@@ -300,39 +303,38 @@ EOF
 # EOF
 
 # Repositorios mais rapidos
-cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
 # Ignorar alguns pacotes
-cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
+cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
 ignorepkg=linux
 ignorepkg=linux-headers
 EOF
 
-
 # Hostname
-cat << EOF > /mnt/etc/hostname
+cat <<EOF >/mnt/etc/hostname
 nitrovoid
 EOF
 
 # Hosts
 
-cat << EOF > /mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 nitrovoid.localdomain nitrovoid
@@ -347,7 +349,7 @@ echo $UEFI_UUID
 echo $ROOT_UUID
 echo $HOME_UUID
 
-cat << EOF > /mnt/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 #
 # See fstab(5).
 #
@@ -412,9 +414,7 @@ EOF
 chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
 
-
-
-cat << EOF > /mnt/etc/rc.conf
+cat <<EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
 # Set the host name.
@@ -447,7 +447,6 @@ KEYMAP="br-abnt2"
 #TTYS=
 EOF
 
-
 ##    chroot
 
 # chroot /mnt export PS1="(chroot) ${PS1}"
@@ -461,27 +460,29 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia arp-scan xev opendoas zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar neovim base-devel dropbear grub-x86_64-efi ripgrep alsa-plugins-pulseaudio netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia tlp acpi acpi_call-dkms acpica-utils acpid acpilight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim base-devel powertop thermald dropbear grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xbacklight xprop  xrefresh  xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb  libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+
+# light
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
-cat <<EOF >> /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
 [device]
 wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit vulkan-loader nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-vdpau mesa-vulkan-overlay--layer --yes
+chroot /mnt xbps-install -S nvidia nvidia-libs-32bit vulkan-loader nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # Intel Video Drivers
 # chroot /mnt xbps-install -S xf86-video-intel --yes
@@ -499,11 +500,14 @@ chroot /mnt xbps-install -S mons --yes
 # Install the Khronos Vulkan Loader for both Intel and nvidia
 # chroot /mnt xbps-install vulkan-loader --yes
 
-#File Management 
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+#File Management
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc gvfs-afp rsync rclone avahi avahi-discover avahi-autoipd avahi-compat-libs avahi-utils udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
+
+# Virt-manager
+chroot /mnt xbps-install -S virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
 
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
@@ -516,7 +520,7 @@ chroot /mnt update-grub
 
 # GRUB Configuration
 
-cat << EOF > /mnt/etc/default/grub
+cat <<EOF >/mnt/etc/default/grub
 #
 # Configuration file for GRUB.
 #
@@ -547,8 +551,16 @@ GRUB_COLOR_HIGHLIGHT="yellow/black"
 GRUB_DISABLE_OS_PROBER=false
 EOF
 
+chroot /mnt update-grub
+
+#udevil
+chroot /mnt sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
+
+# Dumb runtime dir
+chroot /mnt sed -i 's/-session   optional   pam_dumb_runtime_dir.so/session    optional   pam_dumb_runtime_dir.so/g' /etc/pam.d/system-login
+
 # Set zsh as default
-chroot /mnt chsh -s /usr/bin/zsh root
+# chroot /mnt chsh -s /usr/bin/zsh root
 
 # Define user and root password
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
@@ -572,21 +584,34 @@ chroot /mnt usermod -a -G socklog junior
 #EndSection
 #EOF
 
+# zramen
+cat <<EOF >/mnt/etc/sv/zramen/conf
+export ZRAM_COMP_ALGORITHM='zstd'
+#export ZRAM_PRIORITY=32767
+export ZRAM_SIZE=100
+#export ZRAM_STREAMS=1
+EOF
 # Gerar initcpio
 chroot /mnt xbps-reconfigure -fa
 
 #Runit por default
+chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
+
+chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
@@ -603,7 +628,6 @@ chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 
 # Enable the iNet Wireless Daemon for Wi-Fi support
 chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
-
 
 cat <<EOF >/mnt/etc/samba/smb.conf
 [global]
@@ -655,10 +679,15 @@ cat <<EOF >/mnt/etc/samba/smb.conf
    guest ok = no
 EOF
 
+# Boot Faster with intel
+touch /mnt/etc/modprobe.d/i915.conf
+cat <<EOF >/mnt/etc/modprobe.d/i915.conf
+options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
+EOF
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
+cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -666,9 +695,7 @@ cat << EOF > /mnt/etc/udev/rules.d/99-udisks2.rules
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
 
-# Not asking for password
-mkdir -pv /mnt/etc/polkit-1/rules.d
-cat << EOF > /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -678,6 +705,42 @@ polkit.addRule(function(action, subject) {
         return polkit.Result.YES;
     }
 });
+EOF
+
+cat <<EOF >/mnt/etc/polkit-1/rules.d/00-mount-internal.rules
+polkit.addRule(function(action, subject) {
+   if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
+      subject.local && subject.active && subject.isInGroup("storage")))
+      {
+         return polkit.Result.YES;
+      }
+});
+EOF
+
+cat <<EOF >/mnt/etc/udev/rules.d/90-backlight.rules
+SUBSYSTEM=="backlight", ACTION=="add", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+EOF
+# Not asking for password
+mkdir -pv /mnt/etc/polkit-1/rules.d
+cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
+// Allow udisks2 to mount devices without authentication
+// for users in the "wheel" group.
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+         action.id == "org.freedesktop.udisks2.filesystem-mount") &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
+
+touch /mnt/etc/rc.local
+cat <<EOF >/mnt/etc/rc.local
+#PowerTop
+powertop --auto-tune
+
 EOF
 
 # install ncdu2

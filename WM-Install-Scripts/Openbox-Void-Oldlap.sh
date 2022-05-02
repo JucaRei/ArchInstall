@@ -6,19 +6,18 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i  openbox firefox-esr lxappearance-obconf obmenu-generator flatpak network-manager-applet jq lxrandr polybar menumaker gping papirus-folders papirus-icon-theme pcmanfm ImageMagick ranger feh xclip unclutter rofi scrot flameshot  fontmanager --yes
+doas vpm i openbox firefox-esr lxappearance-obconf obmenu-generator flatpak network-manager-applet jq lxrandr polybar menumaker gping papirus-folders papirus-icon-theme pcmanfm-qt ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
 
 # lxqt-notificationd lxappearance-obconf
 
-doas vpm i lightdm lightdm-gtk3-greeter --yes
+doas vpm i lightdm lightdm-gtk3-greeter lightdm-gtk-greeter-settings --yes
 
 # More Packages
-doas vpm i zathura mpv mpd ncmpcpp neofetch glu viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
+doas vpm i zathura mpv mpd ncmpcpp neofetch glu syntax-highlighting viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
 
 ### terminals ###
 doas vpm i xterm rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig --yes
 doas vpm i kitty kitty-terminfo --yes
-
 
 mkdir -p ~/.local/share/applications
 mkdir -p ~/Documents/workspace/{Github,Builds/Void-Packages,Others,Customizations,Configs,Tests,Composes}
@@ -28,7 +27,7 @@ mkdir -p ~/.config/{openbox,rofi,sxhkd,dunst,polybar}
 mkdir -p ~/.config/mpd
 mkdir -p ~/.local/bin
 mkdir -p ~/.bin
-mkdir -p ~/.ncmpcpp 
+mkdir -p ~/.ncmpcpp
 cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
@@ -37,14 +36,14 @@ touch database mpd.conf mpd.fifo mpd.log mpdstate
 cd ~/Documents/workspace/Builds
 git clone https://github.com/linux-on-mac/mbpfan.git
 cd mbpfan/
-make 
+make
 sudo make install
-sudo make   
+sudo make
 sudo vpm i sassc gtk-engine-murrine --yes
 
 cd ~/Documents/workspace/Builds
-mkdir -p Xdeb AppImagesFolder 
-cd Xdeb 
+mkdir -p Xdeb AppImagesFolder
+cd Xdeb
 wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
 mv xdeb ~/.local/bin && cd ~/.local/bin
 chmod +x xdeb
@@ -65,13 +64,13 @@ cd ~/Documents/workspace/Builds/Void-Packages
 git clone --depth 1 https://github.com/void-linux/void-packages BinaryBuilder
 cd ~/Documents/workspace/Builds/Void-Packages/BinaryBuilder
 ./xbps-src binary-bootstrap
-echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+echo XBPS_ALLOW_RESTRICTED=yes >>etc/conf
 
 # Install Picom Ibhagwan
 git clone --depth=1 https://github.com/ibhagwan/picom-ibhagwan-template
 mv picom-ibhagwan-template ./srcpkgs/picom-ibhagwan
 ./xbps-src pkg picom-ibhagwan
-doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
+doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan
 cd
 
 # Install ASDF
@@ -94,7 +93,7 @@ git clone --depth 1 https://github.com/JucaRei/ArchInstall
 cd ~/Documents/workspace/Others
 git clone --depth=1 https://github.com/JucaRei/fontpreview
 cd fontpreview
-sudo make install 
+sudo make install
 # echo 'export PATH="$HOME/scripts/fontpreview:$PATH"' >> ~/.bashrc
 mv fontpreview ~/.local/bin
 cd ..
@@ -141,7 +140,6 @@ sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/display-lightdm.sh 
 cp -f /etc/dunst/dunstrc ~/.config/dunst/
 
 sudo sed -i 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-greeter/g' /etc/lightdm/lightdm.conf
-
 
 # echo 'eval "$(starship init bash)"' >> ~/.bashrc
 

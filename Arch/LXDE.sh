@@ -24,7 +24,7 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # LXDE
-sudo pikaur -S xorg lxde lxdm kitty ttf-dejavu ttf-liberation mpv obconf obmenu xdgmenumaker lxappearence picom firefox-developer-edition ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
+pikaur -S xorg lxde lxdm kitty ttf-dejavu ttf-liberation mpv obconf obmenu xdgmenumaker picom brave-bin ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono breeze-hacked-cursor-theme
 
 # sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
