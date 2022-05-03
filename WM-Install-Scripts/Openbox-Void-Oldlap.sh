@@ -1,12 +1,16 @@
 #!/bin/bash
-#xdg-user-dirs-update
+
+xdg-user-dirs-update
+
+sleep 3
 
 mkdir -pv ~/.cache/xdgr
 
 doas chmod 0700 ~/.cache/xdgr
 
 # Base Openbox
-doas vpm i openbox firefox-esr lxappearance-obconf obmenu-generator flatpak network-manager-applet jq lxrandr polybar menumaker gping papirus-folders papirus-icon-theme pcmanfm-qt ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
+doas vpm i libXft-devel libX11-devel harfbuzz-devel libXext-devel libXrender-devel libXinerama-devel --yes
+doas vpm i openbox firefox-esr lxappearance-obconf obmenu-generator flatpak st network-manager-applet jq lxrandr polybar menumaker gping papirus-folders papirus-icon-theme pcmanfm ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
 
 # lxqt-notificationd lxappearance-obconf
 
