@@ -1,8 +1,10 @@
 #!/bin/bash
 
 function main() {
-    SOURCE=$(pw-record --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
-    SINK=$(pw-play --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
+    SOURCE=$(pw-cat --record --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
+    #SOURCE=$(pw-record --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
+    SINK=$(pw-cat --playback --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
+    #SINK=$(pw-play --list-targets | sed -n 's/^*.*"\(.*\)" prio=.*$/\1/p')
     VOLUME=$(pactl list sinks | sed -n "/${SINK}/,/Volume/ s!^[[:space:]]\+Volume:.* \([[:digit:]]\+\)%.*!\1!p")
     IS_MUTED=$(pactl list sinks | sed -n "/${SINK}/,/Mute/ s/Mute: \(yes\)/\1/p")
 

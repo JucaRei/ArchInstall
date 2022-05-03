@@ -1,44 +1,65 @@
 #! /bin/sh
 
+# Launch Sxhkd
 pgrep -x sxhkd > /dev/null || sxhkd &
 
-#bspc monitor -d I II III IV V VI VII VIII IX X
-#~/.bin/dualbsp-VM.sh
 setxkbmap br &
 dbus-launch pcmanfm --daemon &
 xsetroot -cursor_name left_ptr &
-$HOME/.local/bin/fehauto.sh &
+
+# Feh randomize Wallpapers after period time
+while true; do feh --randomize --bg-fill ~/Pictures/Wallpapers; sleep 600; done &
+
+# Launch polybar
 $HOME/.config/polybar/launch.sh &
-picom --config ~/.config/picom/picom.conf &
+
+# Launch picom--ibhagwan-git
+picom --experimental-backends --config ~/.config/picom/picom.conf &
+
+#Launch Dunst
 /usr/bin/dunst &
 #pulseaudio &
-#~/.bin/pipewire.sh &
-pipewire &
-pipewire-pulse &
+
+# Audio if using pipewire
+
+#pipewire &
+#pipewire-pulse &
+#pipewire-media-session &
+
+# Bluetooth (wireplumber or pipewire-media-session)
+
 #bluetoothctl power on &
 #wireplumber &
-lxqt-policykit-agent &
+
+# Polkit authentication
+/usr/lib/mate-polkit/polkit-mate-authentication-agent-1 &
+
+# For mounting 
 udevil &
 devmon &
-#$HOME/.bin/dualbsp-VM.sh
 
-#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
-#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+# Fix error java apps on bspwm
+wmname LG3D &
+#$HOME/.config/polybar/scripts/polybar_autohide/autohide &
 
 # Add font path
 #xset +fp /home/junior/.local/share/fonts/ &
 #xset fp rehash &
 
 #XDG DATA DIR
-export XDG_DATA_DIRS="$HOME/.local/share/applications"
+export XDG_DATA_DIRS="$HOME/.local/share/applications" &
 
 # XDG USER DIR
 mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
 export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
+# For flatpak run
 export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
 export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
 
-~/.bin/dualbsp-VM.sh
+# Bspwm check if has another monitor
+~/.local/bin/dualbsp.sh &
+
+~/.conky/conky-startup.sh &
 
 # -------------------------#
 # BSPWM THEMES - - - - - - #
@@ -62,12 +83,12 @@ bspc config presel_feedback_color "#96CDFB"
 
 bspc config border_radius				 					0
 bspc config border_width         					2
-bspc config window_gap           					4
+bspc config window_gap           					6
 
-bspc config top_padding                   18
-bspc config bottom_padding                0
-bspc config left_padding                  0
-bspc config right_padding                 0
+bspc config top_padding               		18
+bspc config bottom_padding            		0
+bspc config left_padding              		0
+bspc config right_padding             		0
 
 #bspc config automatic_scheme 	 					spiral
 
@@ -77,10 +98,10 @@ bspc config borderless_monocle   					true
 bspc config gapless_monocle      					true
 bspc config single_monocle       					false
 bspc config paddingless_monocle  					true
-bspc config focus_by_distance             true
-bspc config focus_follows_pointer         true
-bspc config history_aware_focus           true
-bspc config remove_disabled_monitors      true
+bspc config focus_by_distance         		true
+bspc config focus_follows_pointer     		true
+bspc config history_aware_focus       		true
+bspc config remove_disabled_monitors			true
 bspc config merge_overlapping_monitors    true
 bspc config ignore_ewmh_focus 		  			true
 
@@ -92,22 +113,24 @@ bspc config pointer_action3 							resize_corner
 ## BSPWM RULES ========================== # 
 
 bspc rule -a Gimp desktop='^8' state=floating follow=on
+bspc rule -a Virt-manager desktop='^5' state=floating follow=on
 bspc rule -a Chromium desktop='^2'
 bspc rule -a mplayer2 state=floating
 bspc rule -a mpv state=floating desktop='^8'
 bspc rule -a Kupfer.py focus=on
 bspc rule -a Screenkey manage=off
 bspc rule -a Firefox desktop='^2' state=tiled follow=true
-bspc rule -a kitty desktop='^4' follow=true
-bspc rule -a Code desktop='^5'
+# bspc rule -a kitty desktop='^4' follow=true
+bspc rule -a Code desktop='^4'
 bspc rule -a mplayer2 state=floating
 bspc rule -a Kupfer.py focus=on
 bspc rule -a Screenkey manage=off
-bspc rule -a Brave-browser desktop=^2 state=tiled follow=false
+bspc rule -a Brave-browser desktop='^3' state=tiled follow=true
 bspc rule -a Pcmanfm state=floating follow=on desktop='^6'
-bspc rule -a Rhythmbox state=tiled desktop=^4 follow=on
-bspc rule -a VSCodium state=tiled desktop=^1 follow=on
-bspc rule -a Pavucontrol state=tiled desktop=^3 follow=on
+bspc rule -a Rhythmbox state=tiled desktop='^4' follow=on
+bspc rule -a VSCodium state=tiled desktop='^1' follow=on
+bspc rule -a virt-manager state=tiled desktop='^7' follow=on
+bspc rule -a Pavucontrol state=tiled desktop='^4' follow=on
 bspc rule -a Nitrogen state=floating follow=on
 bspc rule -a Gpick state=floating follow=on
 bspc rule -a Lxappearance state=floating follow=on

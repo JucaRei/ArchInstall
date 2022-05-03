@@ -12,7 +12,23 @@
     echo "Today is $(date +'%a %e %b : %G : %T %p')"
     echo "Current working directory : $(pwd)"
 
+
+
+#Mirrors
+
+alias mirrors="rankmirrors -v -n 5 /etc/pacman.d/mirrorlist"
+
+alias dietpi="ssh root@192.168.1.200"
+
+#VSCODE
+export PATH="~/.config/Code:$PATH"
+export PATH="~/.vscode/extensions:$PATH"
+export PATH="/usr/bin/code/:$PATH"
+export PATH="/opt/visual-studio-code/bin/code:$PATH"
+
 # Nvidia
+
+alias videotp="envycontrol --query"
 
 __NV_PRIME_RENDER_OFFLOAD=1 
 __VK_LAYER_NV_optimus=NVIDIA_only 
@@ -302,6 +318,14 @@ alias lt='exa -aT --color=always --group-directories-first' # tree listing
 alias l.='exa -a | egrep "^\."'
 
 
+#Logo-ls
+#alias ls='logo-ls -al --color=always --group-directories-first' # my preferred listing
+#alias la='logo-ls -a --color=always --group-directories-first'  # all files and dirs
+#alias ll='logo-ls -l --color=always --group-directories-first'  # long format
+#alias lt='logo-ls -aT --color=always --group-directories-first' # tree listing
+#alias l.='logo-ls -a | egrep "^\."'
+
+
 # list
 # alias ls='ls --color=auto'
 # alias la='ls -a'
@@ -336,6 +360,11 @@ alias fgrep='fgrep --color=auto'
 alias cp="cp -i"
 alias mv='mv -i'
 alias rm='rm -i'
+
+#cp without confirm overwrint something
+alias cpy="yes | cp -rf"
+alias mvy="yes | mv -rf"
+alias rmy="yes | rm -rf"
 
 #keyboard
 alias give-me-abnt-br="sudo localectl set-x11-keymap br"
@@ -682,3 +711,9 @@ eval "$(starship init bash)"
 
 # xrandr
 # LVDS-1  1920x1200
+
+PATH="/home/junior/perl5/bin${PATH:+:${PATH}}"; export PATH;
+PERL5LIB="/home/junior/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
+PERL_LOCAL_LIB_ROOT="/home/junior/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
+PERL_MB_OPT="--install_base \"/home/junior/perl5\""; export PERL_MB_OPT;
+PERL_MM_OPT="INSTALL_BASE=/home/junior/perl5"; export PERL_MM_OPT;

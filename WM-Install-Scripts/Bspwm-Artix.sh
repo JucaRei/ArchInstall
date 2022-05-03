@@ -4,6 +4,10 @@ xdg-user-dirs-update
 
 sleep 3
 
+mkdir -pv ~/.cache/xdgr
+
+sudo chmod 0700 ~/.cache/xdgr
+
 sudo hwclock --systohc
 
 sudo firewall-cmd --add-port=1025-65535/tcp --permanent

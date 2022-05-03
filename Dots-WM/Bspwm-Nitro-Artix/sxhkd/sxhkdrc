@@ -4,7 +4,8 @@
 
 # terminal emulator
 super + Return
-	kitty
+#	kitty
+	st
 
 # program launcher
 super + @space
@@ -24,9 +25,14 @@ super + shift + c
 super + Escape
 	pkill -USR1 -x sxhkd
 
-# Browser
+# Firefox
 ctrl + shift + f
 	firefox-esr
+
+# Brave
+super + shift + b
+	brave
+
 # Vscode
 ctrl + shift + a
 	code
@@ -90,8 +96,13 @@ super + {_,shift + }c
 	bspc node -{c,k}
 
 # alternate between the tiled and monocle layout
-super + m
-	bspc desktop -l next
+super + m; {h,j,k,l}; {h,j,k,l}
+	bspc node -f {west,south,north,east} \
+    && bspc node --presel-dir {west,south,north,east} -i \
+    && ID=$(bspc query -N -n last) \
+    && bspc node $ID -n $(bspc query -N -n .leaf.\!window) && bspc node $ID -f
+# super + m
+#bspc desktop -l next
 
 # send the newest marked node to the newest preselected node
 super + y
