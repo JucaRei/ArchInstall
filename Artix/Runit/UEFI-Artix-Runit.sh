@@ -329,7 +329,7 @@ ln -s /etc/runit/sv/mpd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/backlight /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/metalog /etc/runit/runsvdir/default/
 
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 
 mkinitcpio -p linux-lts

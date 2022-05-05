@@ -71,7 +71,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    Artix    ############
 
 ### Artix Runit
-basestrap /mnt base base-devel linux-lts linux-lts-headers runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
+basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
 fstabgen -U /mnt >>/mnt/etc/fstab
