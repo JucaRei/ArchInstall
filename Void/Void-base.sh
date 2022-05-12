@@ -21,7 +21,7 @@ mkfs.btrfs /dev/sda7 -f -L "VoidHome"
 
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:12,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
@@ -140,29 +140,29 @@ EOF
 #EOF
 
 # no usr/share
-mkdir -pv /mnt/usr/share/X11/xorg.conf.d
-cat <<EOF >/mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
-Section "ServerLayout"
-  Identifier "layout"
-  Option "AllowNVIDIAGPUScreens"
-EndSection
+# mkdir -pv /mnt/usr/share/X11/xorg.conf.d
+# cat <<EOF >/mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+# Section "ServerLayout"
+#   Identifier "layout"
+#   Option "AllowNVIDIAGPUScreens"
+# EndSection
 
-Section "OutputClass"
-    Identifier "intel"
-    MatchDriver "i915"
-    Driver "modesetting"
-EndSection
+# Section "OutputClass"
+#     Identifier "intel"
+#     MatchDriver "i915"
+#     Driver "modesetting"
+# EndSection
 
-Section "OutputClass"
-    Identifier "nvidia"
-    MatchDriver "nvidia-drm"
-    Driver "nvidia"
-    Option "AllowEmptyInitialConfiguration"
-    # Option "PrimaryGPU" "yes"
-    ModulePath "/usr/lib/nvidia/xorg"
-    ModulePath "/usr/lib/xorg/modules"
-EndSection
-EOF
+# Section "OutputClass"
+#     Identifier "nvidia"
+#     MatchDriver "nvidia-drm"
+#     Driver "nvidia"
+#     Option "AllowEmptyInitialConfiguration"
+#     # Option "PrimaryGPU" "yes"
+#     ModulePath "/usr/lib/nvidia/xorg"
+#     ModulePath "/usr/lib/xorg/modules"
+# EndSection
+# EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
@@ -460,7 +460,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia tlp acpi acpi_call-dkms acpica-utils acpid acpilight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim base-devel powertop thermald dropbear grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia tlp acpi acpi_call-dkms acpica-utils acpid xbacklight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim base-devel powertop thermald dropbear grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio pulseaudio pulseaudio-utils pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
