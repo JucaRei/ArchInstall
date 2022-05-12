@@ -85,7 +85,7 @@ st.opacity: 255
 st.borderpx: 20
 
 !- 0.1 to 0.9 = transparency
-st.alpha: 1.0
+st.alpha: 0.8
 
 *background: #181f21
 *foreground: #dadada
