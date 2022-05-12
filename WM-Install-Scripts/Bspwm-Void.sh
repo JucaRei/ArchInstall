@@ -9,7 +9,7 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 doas vpm i libXft-devel libX11-devel harfbuzz-devel libXext-devel libXrender-devel libXinerama-devel --yes
-doas vpm i bspwm autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
+doas vpm i bspwm autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty st font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
 
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
@@ -50,8 +50,12 @@ chmod +x xdeb
 # EOF
 
 cd ~/Documents/workspace/Builds/Void-Packages
-git clone --depth 1 https://github.com/void-linux/void-packages BinaryBuilder
-
+git clone --depth=1 https://github.com/void-linux/void-packages BinaryBuilder
+# Web-Greeter
+git clone  --depth=1 https://github.com/JezerM/web-greeter Lightdm-Web-GREETER
+cd Lightdm-Web-GREETER
+pip install -r requirements.txt
+sudo make install
 cd
 
 # Install ASDF
@@ -60,13 +64,19 @@ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
 # echo ". $HOME/.asdf/completions/asdf.bash" >> ~/.bashrc
 
 cd ~/Documents/workspace/Customizations
-git clone https://github.com/JucaRei/rofi
-git clone https://github.com/JucaRei/polybar-themes
-git clone https://github.com/JucaRei/dotfiles
+git clone --depth=1 https://github.com/JucaRei/rofi
+# git clone --depth=1 https://github.com/JucaRei/polybar-themes
+# git clone =depth=1   https://github.com/JucaRei/dotfiles
 # git clone https://github.com/JucaRei/fonts
 
 cd ~/Documents/workspace/Configs
 git clone --depth 1 https://github.com/JucaRei/ArchInstall
+cd /Documents/workspace/Configs/ArchInstall/Dots-WM
+cp -rf bashrc-Void ~/.bashrc
+cd ..
+cp -r wallpapers ~/Pictures/Wallpapers
+cd
+
 
 # Font Preview
 # mkdir ~/scripts
@@ -83,9 +93,9 @@ source ~/.bashrc
 
 cd
 
-cd ~/Documents/workspace/Customizations/rofi
-chmod +x setup.sh
-./setup.sh
+# cd ~/Documents/workspace/Customizations/rofi
+# chmod +x setup.sh
+# ./setup.sh
 
 # Install Fonts
 # cd ~/Documents/workspace/Configs/ArchInstall/fonts && cp *.ttf *.otf ~/.local/share/fonts
@@ -95,46 +105,38 @@ fc-cache -fv
 # mpd e ncmpcpp
 cd
 
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/mpd/mpd.conf ~/.config/mpd
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/ncmpcpp/config ~/.ncmpcpp
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf ~/.config/mpd
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config ~/.ncmpcpp
 
 # Xresources | Fehgb | Xprofile etc
 cd
-mkdir -pv ~/Pictures/Wallpapers
-cp -f ~/Documents/workspace/Customizations/dotfiles/wallpaper.jpg ~/Pictures/Wallpapers
-cp -rf ~/Documents/workspace/Customizations/dotfiles/polybar ~/.config
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/Xresources ~/.Xresources
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/fehbg ~/.fehgb
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/xprofile ~/.xprofile
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/rxvt/vtwhell ~/.urxvt/ext
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/rxvt/config-reload ~/.urxvt/ext
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/local ~/.local
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/polybar ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/zathura ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/xprofile ~/.xprofile
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/Xresources ~/.Xresources
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/geany ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/sxhkd ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/themes ~/.themes
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/icons ~/.icons
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/polybar ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/starship~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky ~/.conky
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/picom ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/nano ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/mpv ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/dunst ~/.config
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rxvt/vtwhell ~/.urxvt/ext
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rxvt/config-reload ~/.urxvt/ext
 mkdir ~/.bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/dualbsp.sh ~/.bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/DualMonPolybar.sh ~/.bin
-sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/display-lightdm.sh /etc/lightdm
-cp -f /etc/dunst/dunstrc ~/.config/dunst/
-install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
-install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/bin/ ~/.bin
 
 sudo sed -i 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-greeter/g' /etc/lightdm/lightdm.conf
-
-cat <<EOF >>~/.config/bspwm/bspwmrc
-
-~/.fehbg &
-xrdb ~/.Xresources &
-~/.config/polybar/launch.sh &
-picom -f &
-xsetroot -cursor_name left_ptr &
-~/.bin/dualbsp.sh
-EOF
 
 # echo 'eval "$(starship init bash)"' >> ~/.bashrc
 
 sudo ln -s /etc/sv/mpd /var/service
 
-cd ~/Documents/workspace/Configs/ArchInstall/Dots-Bspwm/
-cp -f bashrc ~/.bashrc
-cp -f zshrc ~/.zshrc
 
 cd
 
@@ -155,5 +157,36 @@ sudo cp colorscript.sh /usr/bin/colorscript
 
 # optional for zsh completion
 sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
+
+cd /etc/lightdm/
+doas touch checkmonitors.sh
+doas cat << EOF > checkmonitors.sh
+#!/bin/sh
+# eDP1 - Lap Screen  |  HDMI-1-0 External monitor
+# Lightdm or other script for dual monitor
+
+#xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
+#xrandr --setprovideroffloadsink 1 0 &
+#xrandr --setprovideroffloadsink modesetting NVIDIA-G0 &
+xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+#xrandr --setprovideroutputsource 1 0 &
+xrandr --setprovideroutputsource modesetting NVIDIA-G0 &
+
+numlockx on &
+
+XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
+XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+XCOM2=$(xrandr --output eDP1 --primary --auto)
+# if the external monitor is connected, then we tell XRANDR to set up an extended desktop
+if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+    echo $XCOM1
+# if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
+else
+    echo $XCOM2
+fi
+
+exit 0
+
+EOF
 
 echo "Installation finished! Please, reboot."
