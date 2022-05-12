@@ -1,46 +1,35 @@
 #! /bin/sh
 
-# Launch Sxhkd
 pgrep -x sxhkd > /dev/null || sxhkd &
 
+#bspc monitor -d I II III IV V VI VII VIII IX X
+#~/.bin/dualbsp-VM.sh
 setxkbmap br &
 dbus-launch pcmanfm --daemon &
 xsetroot -cursor_name left_ptr &
-
-# Feh randomize Wallpapers after period time
+#$HOME/.local/bin/fehauto.sh &
 while true; do feh --randomize --bg-fill ~/Pictures/Wallpapers; sleep 600; done &
-
-# Launch polybar
 $HOME/.config/polybar/launch.sh &
-
-# Launch picom--ibhagwan-git
 picom --experimental-backends --config ~/.config/picom/picom.conf &
-
-#Launch Dunst
 /usr/bin/dunst &
 #pulseaudio &
-
-# Audio if using pipewire
-
-#pipewire &
-#pipewire-pulse &
-#pipewire-media-session &
-
-# Bluetooth (wireplumber or pipewire-media-session)
-
+#~/.bin/pipewire.sh &
+# pipewire &
+# pipewire-pulse &
+# pipewire-media-session &
 #bluetoothctl power on &
 #wireplumber &
-
-# Polkit authentication
+pulseaudio --start -D &
 /usr/lib/mate-polkit/polkit-mate-authentication-agent-1 &
-
-# For mounting 
 udevil &
 devmon &
-
-# Fix error java apps on bspwm
+xfce4-power-manager &
 wmname LG3D &
+#$HOME/.bin/dualbsp-VM.sh
 #$HOME/.config/polybar/scripts/polybar_autohide/autohide &
+
+#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
+#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
 
 # Add font path
 #xset +fp /home/junior/.local/share/fonts/ &
@@ -54,11 +43,11 @@ export XDG_DATA_DIRS="$HOME/.local/share/applications" &
 #export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
 
 if [ -z "${XDG_RUNTIME_DIR}" ]; then
-        export XDG_RUNTIME_DIR="/tmp/runtime-dir-${UID}"
-        if [ ! -d "${XDG_RUNTIME_DIR}" ]; then
-                mkdir "${XDG_RUNTIME_DIR}"
-                chmod 0700 "${XDG_RUNTIME_DIR}"
-        fi
+	export XDG_RUNTIME_DIR="/tmp/runtime-dir-${UID}"
+	if [ ! -d "${XDG_RUNTIME_DIR}" ]; then
+		mkdir "${XDG_RUNTIME_DIR}" 
+		chmod 0700 "${XDG_RUNTIME_DIR}"
+	fi
 fi &
 
 
@@ -66,8 +55,21 @@ fi &
 export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
 export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
 
-# Bspwm check if has another monitor
-~/.local/bin/dualbsp.sh &
+#XDGR
+mkdir -pv ~/.cache/xdgr
+chmod 0700 ~/.cache/xdgr
+export XDG_RUNTIME_DIR=$PATH:~/.cache/xdgr
+
+
+
+# exec folders
+exec /user/lib/xdg-desktop-portal-gtk &
+
+~/.bin/dualbsp-VM.sh &
+
+rm -rf ~/.cache weather.json
+rm -rf ~/.cache weather-icon.png
+
 
 ~/.conky/conky-startup.sh &
 
@@ -100,6 +102,7 @@ bspc config bottom_padding            		0
 bspc config left_padding              		0
 bspc config right_padding             		0
 
+
 #bspc config automatic_scheme 	 					spiral
 
 bspc config click_to_focus       					true
@@ -127,6 +130,7 @@ bspc rule -a Virt-manager desktop='^5' state=floating follow=on
 bspc rule -a Chromium desktop='^2'
 bspc rule -a mplayer2 state=floating
 bspc rule -a mpv state=floating desktop='^8'
+bspc rule -a qalculate-gtk state=floating
 bspc rule -a Kupfer.py focus=on
 bspc rule -a Screenkey manage=off
 bspc rule -a Firefox desktop='^2' state=tiled follow=true
@@ -148,7 +152,7 @@ bspc rule -a Timeshift-gtk state=floating follow=on
 bspc rule -a Xfce4-power-manager-settings state=floating follow=on
 bspc rule -a Pavucontrol state=floating follow=on
 bspc rule -a Engrampa state=floating follow=on
-bspc rule -a Zathura state=tiled follow=on
-bspc rule -a Anki desktop=^1 state=monocole follow=false
 bspc rule -a stacer state=floating
 bspc rule -a Lightdm-gtk-greeter-settings state=floating
+bspc rule -a '*:zathura'                  state=tiled
+

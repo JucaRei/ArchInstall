@@ -31,7 +31,11 @@ ctrl + shift + f
 
 # Brave
 super + shift + b
-	brave
+        prime-run brave --use-gl=desktop --enable-features=VaapiVideoDecoder --disable-features=UseChromeOSDirectVideoDecoder
+
+# Vivaldi
+super + shift + v
+	vivaldi-stable
 
 # Vscode
 ctrl + shift + a

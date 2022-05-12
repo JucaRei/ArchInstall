@@ -1,0 +1,36 @@
+[Default Applications]
+x-scheme-handler/http=userapp-Firefox-KR3RK1.desktop
+x-scheme-handler/https=userapp-Firefox-KR3RK1.desktop
+x-scheme-handler/chrome=userapp-Firefox-KR3RK1.desktop
+text/html=userapp-Firefox-KR3RK1.desktop
+application/x-extension-htm=userapp-Firefox-KR3RK1.desktop
+application/x-extension-html=userapp-Firefox-KR3RK1.desktop
+application/x-extension-shtml=userapp-Firefox-KR3RK1.desktop
+application/xhtml+xml=userapp-Firefox-KR3RK1.desktop
+application/x-extension-xhtml=userapp-Firefox-KR3RK1.desktop
+application/x-extension-xht=userapp-Firefox-KR3RK1.desktop
+text/markdown=typora.desktop
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop
+image/png=feh.desktop
+inode/directory=pcmanfm.desktop
+text/plain=leafpad.desktop
+
+[Added Associations]
+x-scheme-handler/http=userapp-Firefox-KR3RK1.desktop;
+x-scheme-handler/https=userapp-Firefox-KR3RK1.desktop;
+x-scheme-handler/chrome=userapp-Firefox-KR3RK1.desktop;
+text/html=userapp-Firefox-KR3RK1.desktop;
+application/x-extension-htm=userapp-Firefox-KR3RK1.desktop;
+application/x-extension-html=userapp-Firefox-KR3RK1.desktop;
+application/x-extension-shtml=userapp-Firefox-KR3RK1.desktop;
+application/xhtml+xml=userapp-Firefox-KR3RK1.desktop;
+application/x-extension-xhtml=userapp-Firefox-KR3RK1.desktop;
+application/x-extension-xht=userapp-Firefox-KR3RK1.desktop;
+text/markdown=org.pwmt.zathura.desktop;typora.desktop;
+application/pdf=org.pwmt.zathura-pdf-mupdf.desktop;
+image/png=feh.desktop;
+application/x-shellscript=geany.desktop;
+text/x-matlab=geany.desktop;
+text/plain=geany.desktop;leafpad.desktop;
+text/x-csrc=geany.desktop;
+application/octet-stream=geany.desktop;
