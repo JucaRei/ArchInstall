@@ -425,7 +425,7 @@ cat <<EOF >/mnt/etc/rc.conf
 #HOSTNAME="nitrovoid"
 
 # Set RTC to UTC or localtime.
-HARDWARECLOCK="UTC"
+HARDWARECLOCK="localtime"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
 #TIMEZONE="America/Sao_Paulo"
@@ -460,7 +460,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system linux-firmware linux-firmware-intel linux-firmware-intel linux-firmware-nvidia tlp acpi acpi_call-dkms acpica-utils acpid xbacklight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim base-devel powertop thermald dropbear grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio pulseaudio pulseaudio-utils pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel base-files linux-firmware linux-firmware-intel linux-firmware-network linux-firmware-intel linux-firmware-nvidia tlp acpi acpi_call-dkms acpid powerstat xbacklight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim powertop thermald dropbear btop grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio pulseaudio pulseaudio-utils pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
@@ -482,7 +482,7 @@ wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit vulkan-loader nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
+chroot /mnt xbps-install -S nvidia bbswitch nvidia-libs-32bit vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # Intel Video Drivers
 # chroot /mnt xbps-install -S xf86-video-intel --yes
