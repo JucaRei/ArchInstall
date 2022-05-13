@@ -180,128 +180,6 @@ Section "InputClass"
 EndSection
 EOF
 
-#Xorg Conf
-# cat << EOF > /mnt/etc/X11/xorg.conf
-# Section "ServerLayout"
-# 	Identifier     "X.org Configured"
-# 	Screen      0  "Screen0" 0 0
-# 	Screen      1  "Screen1" RightOf "Screen0"
-# 	InputDevice    "Mouse0" "CorePointer"
-# 	InputDevice    "Keyboard0" "CoreKeyboard"
-# EndSection
-
-# Section "Files"
-# 	ModulePath   "/usr/lib/xorg/modules"
-# 	FontPath     "/usr/share/fonts/misc"
-# 	FontPath     "/usr/share/fonts/TTF"
-# 	FontPath     "/usr/share/fonts/OTF"
-# 	FontPath     "/usr/share/fonts/Type1"
-# 	FontPath     "/usr/share/fonts/100dpi"
-# 	FontPath     "/usr/share/fonts/75dpi"
-# EndSection
-
-# Section "Module"
-# 	Load  "glx"
-# EndSection
-
-# Section "InputDevice"
-# 	Identifier  "Keyboard0"
-# 	Driver      "kbd"
-# EndSection
-
-# Section "InputDevice"
-# 	Identifier  "Mouse0"
-# 	Driver      "mouse"
-# 	Option	    "Protocol" "auto"
-# 	Option	    "Device" "/dev/input/mice"
-# 	Option	    "ZAxisMapping" "4 5 6 7"
-# EndSection
-
-# Section "Monitor"
-# 	Identifier   "Monitor0"
-# 	VendorName   "Monitor Vendor"
-# 	ModelName    "Monitor Model"
-# EndSection
-
-# Section "Monitor"
-# 	Identifier   "Monitor1"
-# 	VendorName   "Monitor Vendor"
-# 	ModelName    "Monitor Model"
-# EndSection
-
-# Section "Device"
-# 	Identifier  "Card0"
-# 	Driver      "intel"
-# 	BusID       "PCI:0:2:0"
-# EndSection
-
-# Section "Device"
-# 	Identifier  "Card1"
-# 	Driver      "nvidia"
-# 	BusID       "PCI:1:0:0"
-# EndSection
-
-# Section "Screen"
-# 	Identifier "Screen0"
-# 	Device     "Card0"
-# 	Monitor    "Monitor0"
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     1
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     4
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     8
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     15
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     16
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     24
-# 	EndSubSection
-# EndSection
-
-# Section "Screen"
-# 	Identifier "Screen1"
-# 	Device     "Card1"
-# 	Monitor    "Monitor1"
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     1
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     4
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     8
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     15
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     16
-# 	EndSubSection
-# 	SubSection "Display"
-# 		Viewport   0 0
-# 		Depth     24
-# 	EndSubSection
-# EndSection
-# EOF
-
 # Repositorios mais rapidos
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
@@ -473,6 +351,38 @@ chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop x
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
 
+# Display Manager
+chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter --yes
+chroot /mnt touch /etc/lightdm/dual.sh
+chroot /mnt chmod +x /etc/lightdm/dual.sh
+cat << EOF > /mnt/etc/lightdm/dual.sh
+#!/bin/sh
+# eDP1 - Lap Screen  |  HDMI-1-0 External monitor
+# Lightdm or other script for dual monitor
+
+#xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
+#xrandr --setprovideroffloadsink 1 0 &
+#xrandr --setprovideroffloadsink modesetting NVIDIA-G0 &
+xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+#xrandr --setprovideroutputsource 1 0 &
+xrandr --setprovideroutputsource modesetting NVIDIA-G0 &
+
+numlockx on &
+
+XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
+XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+XCOM2=$(xrandr --output eDP1 --primary --auto)
+# if the external monitor is connected, then we tell XRANDR to set up an extended desktop
+if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+    echo $XCOM1
+# if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
+else
+    echo $XCOM2
+fi
+
+exit 0
+EOF
+
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
 cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
@@ -557,7 +467,7 @@ chroot /mnt update-grub
 chroot /mnt sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
 # Dumb runtime dir
-chroot /mnt sed -i 's/-session   optional   pam_dumb_runtime_dir.so/session    optional   pam_dumb_runtime_dir.so/g' /etc/pam.d/system-login
+# chroot /mnt sed -i 's/-session   optional   pam_dumb_runtime_dir.so/session    optional   pam_dumb_runtime_dir.so/g' /etc/pam.d/system-login
 
 # Set zsh as default
 # chroot /mnt chsh -s /usr/bin/zsh root
