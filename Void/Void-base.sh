@@ -11,17 +11,19 @@
 # sv restart dhcpcd
 # ip link set up <interface>
 
+xbps-install -Sy wget vsv xz vpm neovim git --yes
+
 wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
 
 xbps-install -Su xbps xz --yes
 
-mkfs.vfat -F32 /dev/sda5 -n "Void"
+mkfs.vfat -F32 /dev/sda5 -n "VoidEFI"
 mkfs.btrfs /dev/sda6 -f -L "VoidRoot"
 mkfs.btrfs /dev/sda7 -f -L "VoidHome"
 
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:12,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:16,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
@@ -86,92 +88,85 @@ EOF
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-add_drivers+=" crc32c-intel i915 btrfs nvidia nvidia_drm nvidia_uvm nvidia_modeset "
-omit_dracutmodules+=" lvm luks "
+add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+# omit_dracutmodules+=" lvm luks "
+show_modules="yes"
 compress="zstd"
 EOF
+
+cat << EOF > /mnt/etc/dracut.conf.d/boot.conf
+hostonly=yes
+hostonly_cmdline=no
+use_fstab=yes
+compress="cat"
+omit_dracutmodules+=" dash i18n rpmversion convertfs lvm qemu lunmask fstab-sys terminfo securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+nofscks=yes
+no_hostonly_commandline=yes
+EOF
+
 
 #Dracut hostonly
 touch /mnt/etc/dracut.conf
 echo "hostonly=yes" >> /mnt/etc/dracut.conf
 
-# Arrumar placa intel
-#mkdir -pv /mnt/etc/X11/xorg.conf.d
-#cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
-#Section "Device"
-#	Identifier "Intel Graphics"
-#	Driver "modesetting"
-#EndSection
-#EOF
+# Xorg conf dual gpu
 
-#Alternatively, you can use the nvidia-xconfig utility to insert these changes into xorg.conf with a single command:
-# nvidia-xconfig --busid=PCI:3:0:0 --sli=AA
+mkdir -pv /mnt/etc/X11
+touch /mnt/etc/X11/xorg.conf
+cat << EOF > /mnt/etc/X11/xorg.conf
+Section "Device"
+  Identifier "iGPU"
+  Driver "intel"
+  Option "AccelMethod" "sna"
+  Option "TearFree" "True"
+  Option "Tiling" "True"
+  Option "SwapbuffersWait" "True"
+  Option "DRI" "3"
+EndSection
 
-# Arrumar placa nvidia
-# mkdir -pv /mnt/etc/X11/xorg.conf.d
-# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+Section "Screen"
+  Identifier "iGPU"
+  Device "iGPU"
+EndSection
+
+Section "Device"
+  Identifier "dGPU"
+  Driver "nvidia"
+  BusID "PCI:1:0:0"
+  Option "AllowEmptyInitialConfiguration"
+  BoardName "GeForce 1050"
+EndSection
+
+Section "Files"
+	ModulePath "/usr/lib/nvidia/xorg"
+	ModulePath "/usr/lib/xorg/modules"
+EndSection
+
+Section "Monitor"
+	Identifier "HDMI-1-0"
+	#Option "Position" "1920 0" # FOR INBUILT AS SECOND
+	Option "Position" "0 0"
+EndSection
+
+Section "Monitor"
+	Identifier "eDP-1"
+	# Option "Position" "0 0"
+	Option "Primary" "true"
+EndSection
+EOF
+
+# mkdir -pv /mnt/etc/X11/xorg.conf.d/
+# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
 # Section "Device"
-#     Identifier     "Intel iGPU"
-#     Driver         "intel"
-#     BusID          "PCI:0:2:0"
-# EndSection
-
-# Section "Device"
-#     Identifier "Nvidia Card"
-#     Driver "nvidia"
-#     VendorName "NVIDIA Corporation"
-#     BoardName "GeForce GTX 1050"
-# 	# Option         "Coolbits" "24"
-# 	BusID          "PCI:2:0:0"
-# EndSection
-# EOF
-
-# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
-# Section "Device"
-#        Identifier "Nvidia Card"
-#        Driver "nvidia"
-#        VendorName "NVIDIA Corporation"
-#        BoardName "GeForce GTX 1050"
-# EndSection
-# EOF
-
-# Arrumar placa nvidia
-#mkdir -pv /mnt/etc/X11/xorg.conf.d
-#cat << EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia.conf
-#Section "Device"
-#    Identifier     "Device0"
-#    Driver         "nvidia"
-#    VendorName     "NVIDIA Corporation"
-#    BusID          "PCI:1:0:0"
-#EndSection
-#EOF
-
-# no usr/share
-# mkdir -pv /mnt/usr/share/X11/xorg.conf.d
-# cat <<EOF >/mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
-# Section "ServerLayout"
-#   Identifier "layout"
-#   Option "AllowNVIDIAGPUScreens"
-# EndSection
-
-# Section "OutputClass"
-#     Identifier "intel"
-#     MatchDriver "i915"
-#     Driver "modesetting"
-# EndSection
-
-# Section "OutputClass"
-#     Identifier "nvidia"
-#     MatchDriver "nvidia-drm"
-#     Driver "nvidia"
-#     Option "AllowEmptyInitialConfiguration"
-#     # Option "PrimaryGPU" "yes"
-#     ModulePath "/usr/lib/nvidia/xorg"
-#     ModulePath "/usr/lib/xorg/modules"
+#         Identifier      "Intel Graphics"
+#         Driver          "Intel"
+#         Option          "AccelMethod"           "sna"
+#         Option          "TearFree"              "True"
 # EndSection
 # EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
+touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
@@ -213,6 +208,8 @@ ignorepkg=linux-headers
 ignorepkg=nvi
 ignorepkg=openssh
 ignorepkg=dhcpcd
+ignorepkg=xf86-video-amdgpu
+ignorepkg=xf86-video-ati
 EOF
 
 # Hostname
@@ -274,6 +271,8 @@ EOF
 
 #Conf rc
 
+# DOAS conf
+
 # Set user permition
 cat <<EOF >/mnt/etc/doas.conf
 # allow user but require password
@@ -302,6 +301,8 @@ permit nopass :junior cmd umount
 EOF
 chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
+
+# RC Conf
 
 cat <<EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
@@ -349,9 +350,31 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files fwupd linux-firmware  tlp acpi acpi_call-dkms acpid powerstat xbacklight zramen udevil smartmontools gsmartcontrol ethtool gnome-keyring preload arp-scan xev opendoas zstd bash-completion flatpak dumb_runtime_dir minised mpd ncmpcpp nocache parallel util-linux bcache-tools playerctl necho mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk earlyoom starship linux-lts linux-lts-headers efivar neovim powertop dropbear btop grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober ripgrep lsd alsa-plugins-pulseaudio pulseaudio pulseaudio-utils pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf lm_sensors xtools inxi lshw intel-ucode zsh necho alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop grub-x86_64-efi dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm mate-polkit chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files --yes
+chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware fwupd opendoas --yes
+
+# Remove Base Strap
 chroot /mnt xbps-remove base-voidstrap --yes
-#chroot /mnt xbps-install -y base-minimal thermald zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
+
+# Intel micro-code
+chroot /mnt xbps-install -Sy intel-ucode --yes
+chroot /mnt xbps-reconfigure -f linux-lts
+
+# Grub
+chroot /mnt xbps-install -S efibootmgr efivar grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
+
+# Optimization packages
+chroot /mnt xbps-install -S acpi acpi_call-dkms acpid irqbalance tlp powerstat x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald preload earlyoom powertop bash-completion --yes
+
+# Needed for DE
+chroot /mnt xbps-install -S dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
+
+# Utilities
+chroot /mnt xbps-install -S vpm vsv nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g mtools dosfstools sysfsutils --yes
+
+# Audio/Video & Others
+chroot /mnt xbps-install -S  xbacklight  arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk  starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
+#chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
@@ -363,7 +386,9 @@ chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop x
 chroot /mnt xbps-install -S NetworkManager iwd --yes
 
 # Display Manager
-chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter --yes
+chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
+
+# Config Lightdm
 chroot /mnt touch /etc/lightdm/dual.sh
 chroot /mnt chmod +x /etc/lightdm/dual.sh
 cat << EOF > /mnt/etc/lightdm/dual.sh
@@ -403,7 +428,7 @@ wifi.iwd.autoconnect=yes
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
+chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
 # Intel Video Drivers
@@ -442,6 +467,9 @@ chroot /mnt update-grub
 
 # GRUB Configuration
 
+# ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+# echo $ROOT_UUID
+
 cat <<EOF >/mnt/etc/default/grub
 #
 # Configuration file for GRUB.
@@ -449,17 +477,16 @@ cat <<EOF >/mnt/etc/default/grub
 GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
-GRUB_TIMEOUT=7
+GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=1 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
 GRUB_TIMEOUT_STYLE=menu
 GRUB_GFXMODE=auto
 GRUB_GFXPAYLOAD_LINUX=keep
-
-
 
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
@@ -490,7 +517,7 @@ chroot /mnt sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "junior:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input junior
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input,bumblebee junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog junior
@@ -515,8 +542,6 @@ export ZRAM_COMP_ALGORITHM='zstd'
 export ZRAM_SIZE=100
 #export ZRAM_STREAMS=1
 EOF
-# Gerar initcpio
-chroot /mnt xbps-reconfigure -fa
 
 # MakeSwap
 chroot /mnt mkdir -pv /var/swap
@@ -536,26 +561,31 @@ SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
 echo $SWAP_UUID
 echo " " >> /mnt/etc/fstab
 echo "# Swap" >> /mnt/etc/fstab
+echo " " >> /mnt/etc/fstab
 echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /mnt/etc/fstab
 echo "/var/swap/swapfile none swap sw 0 0" >> /mnt/etc/fstab
 
 
 #Runit por default
 chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-# chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
-# chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
+chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
+chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
+
+
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
 
@@ -574,6 +604,8 @@ chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 
 # Enable the iNet Wireless Daemon for Wi-Fi support
 chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
+
+### SAMBA CONF ###
 
 cat <<EOF >/mnt/etc/samba/smb.conf
 [global]
@@ -628,8 +660,15 @@ EOF
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
+options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
+
+chroot /mnt xbps-reconfigure -f linux-lts
+
+# FIX bad font rendering
+chroot /mnt ln -s /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/
+chroot /mnt xbps-reconfigure -f fontconfig
+
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
@@ -693,3 +732,11 @@ EOF
 wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
 tar -xf ncdu-2.1-linux-x86_64.tar.gz
 mv ncdu /mnt/usr/local/bin
+
+git clone --depth=1 https://github.com/madand/runit-services Services
+mv Services /mnt/home/junior/
+
+# Gerar initcpio
+chroot /mnt xbps-reconfigure -fa
+
+printf "\e[1;32mInstallation finished! Umount -a and reboot.\e[0m"
