@@ -88,26 +88,18 @@ EOF
 mkdir -pv /mnt/etc/dracut.conf.d
 cat << EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
+# hostonly_cmdline=no
+use_fstab=yes
 add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
 # omit_dracutmodules+=" lvm luks "
+omit_dracutmodules+=" dash i18n luks lvm lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
-compress="zstd"
-EOF
-
-cat << EOF > /mnt/etc/dracut.conf.d/boot.conf
-hostonly=yes
-hostonly_cmdline=no
-use_fstab=yes
-compress="cat"
-omit_dracutmodules+=" dash i18n rpmversion convertfs lvm qemu lunmask fstab-sys terminfo securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+# compress="cat"
 nofscks=yes
-no_hostonly_commandline=yes
+compress="zstd"
+# no_host_only_commandline=yes"
 EOF
 
-
-#Dracut hostonly
-touch /mnt/etc/dracut.conf
-echo "hostonly=yes" >> /mnt/etc/dracut.conf
 
 # Xorg conf dual gpu
 
@@ -351,14 +343,17 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
 chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files --yes
-chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware fwupd opendoas --yes
+chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia fwupd opendoas --yes
+# chroot /mnt xbps-install -Sy linux5.4 linux5.4-headers dracut-053_2 dracut-network-053_2 dracut-uefi-053_2 linux-firmware linux-firmware-intel linux-firmware-nvidia linux-firmware-network fwupd opendoas --yes
 
 # Remove Base Strap
 chroot /mnt xbps-remove base-voidstrap --yes
 
 # Intel micro-code
 chroot /mnt xbps-install -Sy intel-ucode --yes
+# chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
+
 
 # Grub
 chroot /mnt xbps-install -S efibootmgr efivar grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
@@ -427,8 +422,19 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
+mkdir -pv /mnt/etc/modprobe.d
+touch /mnt/etc/modprobe.d/bbswitch.conf
+cat << EOF > /mnt/etc/modprobe.d/bbswitch.conf
+options bbswitch load_state=0 unload_state=1 
+EOF
+
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
+chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes 
+# chroot /mnt dracut --force --kver 5.4.**
+chroot /mnt dracut --force --kver 5.10.**
+# chroot /mnt xbps-reconfigure -f linux5.4
+chroot /mnt xbps-reconfigure -f linux-lts
+# chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
 # Intel Video Drivers
@@ -663,6 +669,7 @@ cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
+# chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
 
 # FIX bad font rendering
