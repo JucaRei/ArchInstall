@@ -9,7 +9,7 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 doas vpm i libXft-devel libX11-devel harfbuzz-devel libXext-devel libXrender-devel libXinerama-devel --yes
-doas vpm i bspwm autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty st font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
+doas vpm i bspwm python3-pip autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty st font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
 
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
@@ -20,7 +20,7 @@ doas vpm i bspwm autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-
 # make
 # sudo make install
 # sudo make
-sudo vpm i sassc gtk-engine-murrine
+sudo vpm i sassc gtk-engine-murrine --yes
 
 mkdir -p ~/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
 mkdir -p ~/.local/share/fonts
@@ -33,7 +33,7 @@ cd ~/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
 cd ~/Documents/workspace/Builds
-mkdir -p Xdeb AppImagesFolder Void-Packages
+mkdir -p Xdeb AppImagesFolder 
 cd Xdeb
 wget -c https://github.com/toluschr/xdeb/releases/download/1.3/xdeb
 mv xdeb ~/.local/bin && cd ~/.local/bin
@@ -49,12 +49,24 @@ chmod +x xdeb
 # export XDEB_OPT_FIX_CONFLICT=true
 # EOF
 
-cd ~/Documents/workspace/Builds/Void-Packages
+cd ~/Documents/workspace/Builds/
 git clone --depth=1 https://github.com/void-linux/void-packages BinaryBuilder
+cd BinaryBuilder
+./xbps-src binary-bootstrap
+echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf
+
+# Picom
+cd ..
+git clone --depth=1 https://github.com/ibhagwan/picom-ibhagwan-template
+mv picom-ibhagwan-template BinaryBuilder/srcpkgs/picom-ibhagwan
+cd BinaryBuilder/
+./xbps-src pkg picom-ibhagwan
+doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
+cd ..
 # Web-Greeter
 git clone  --depth=1 https://github.com/JezerM/web-greeter Lightdm-Web-GREETER
 cd Lightdm-Web-GREETER
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 sudo make install
 cd
 
@@ -74,7 +86,7 @@ git clone --depth 1 https://github.com/JucaRei/ArchInstall
 cd /Documents/workspace/Configs/ArchInstall/Dots-WM
 cp -rf bashrc-Void ~/.bashrc
 cd ..
-cp -r wallpapers ~/Pictures/Wallpapers
+cp -rf ~/Documents/workspace/Configs/ArchInstall/wallpapers ~/Pictures/Wallpapers
 cd
 
 
@@ -158,35 +170,6 @@ sudo cp colorscript.sh /usr/bin/colorscript
 # optional for zsh completion
 sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
 
-cd /etc/lightdm/
-doas touch checkmonitors.sh
-doas cat << EOF > checkmonitors.sh
-#!/bin/sh
-# eDP1 - Lap Screen  |  HDMI-1-0 External monitor
-# Lightdm or other script for dual monitor
 
-#xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
-#xrandr --setprovideroffloadsink 1 0 &
-#xrandr --setprovideroffloadsink modesetting NVIDIA-G0 &
-xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
-#xrandr --setprovideroutputsource 1 0 &
-xrandr --setprovideroutputsource modesetting NVIDIA-G0 &
-
-numlockx on &
-
-XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
-XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
-XCOM2=$(xrandr --output eDP1 --primary --auto)
-# if the external monitor is connected, then we tell XRANDR to set up an extended desktop
-if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
-    echo $XCOM1
-# if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
-else
-    echo $XCOM2
-fi
-
-exit 0
-
-EOF
 
 echo "Installation finished! Please, reboot."
