@@ -63,19 +63,19 @@ mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
 mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
-tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
+tar xvf ./void-x86_64-*.tar.xz -C /mnt
+sync
 
 for dir in dev proc sys run; do
    mount --rbind /$dir /mnt/$dir
    mount --make-rslave /mnt/$dir
 done
 
-# copia o arquivo de resolv para o /mnt
 cp -v /etc/resolv.conf /mnt/etc/
 
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
-cat << EOF > /mnt/etc/modprobe.d/blacklist.conf
+cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
 install iTCO_wdt /bin/true
 install iTCO_vendor_support /bin/true
@@ -86,26 +86,25 @@ EOF
 
 # Atualiza o initramfs com dracut
 mkdir -pv /mnt/etc/dracut.conf.d
-cat << EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
-# hostonly_cmdline=no
+hostonly_cmdline=no
+dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
-# omit_dracutmodules+=" lvm luks "
-omit_dracutmodules+=" dash i18n luks lvm lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
-# compress="cat"
-nofscks=yes
+# compress="cat";
+nofscks="yes"
 compress="zstd"
-# no_host_only_commandline=yes"
+no_host_only_commandline="yes"
 EOF
-
 
 # Xorg conf dual gpu
 
 mkdir -pv /mnt/etc/X11
 touch /mnt/etc/X11/xorg.conf
-cat << EOF > /mnt/etc/X11/xorg.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf
 Section "Device"
   Identifier "iGPU"
   Driver "intel"
@@ -175,24 +174,24 @@ EndSection
 EOF
 
 # Repositorios mais rapidos
-cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib.conf
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
 # Ignorar alguns pacotes
-cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
+cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
 ignorepkg=linux
@@ -205,13 +204,13 @@ ignorepkg=xf86-video-ati
 EOF
 
 # Hostname
-cat << EOF > /mnt/etc/hostname
+cat <<EOF >/mnt/etc/hostname
 nitrovoid
 EOF
 
 # Hosts
 
-cat << EOF > /mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 ::1 localhost
 127.0.1.1 nitrovoid.localdomain nitrovoid
@@ -226,7 +225,7 @@ echo $UEFI_UUID
 echo $ROOT_UUID
 echo $HOME_UUID
 
-cat << EOF > /mnt/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 #
 # See fstab(5).
 #
@@ -342,18 +341,22 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files --yes
-chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia fwupd opendoas --yes
+chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm vpsm xbps xbps-tests xbps-triggers --yes
+chroot /mnt vpm up
+chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia dash fwupd opendoas --yes
+chroot /mnt vpm up
+
 # chroot /mnt xbps-install -Sy linux5.4 linux5.4-headers dracut-053_2 dracut-network-053_2 dracut-uefi-053_2 linux-firmware linux-firmware-intel linux-firmware-nvidia linux-firmware-network fwupd opendoas --yes
 
 # Remove Base Strap
 chroot /mnt xbps-remove base-voidstrap --yes
+chroot /mnt vpm up
 
 # Intel micro-code
 chroot /mnt xbps-install -Sy intel-ucode --yes
 # chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
-
+chroot /mnt vpm up
 
 # Grub
 chroot /mnt xbps-install -S efibootmgr efivar grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
@@ -365,10 +368,10 @@ chroot /mnt xbps-install -S acpi acpi_call-dkms acpid irqbalance tlp powerstat x
 chroot /mnt xbps-install -S dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
 
 # Utilities
-chroot /mnt xbps-install -S vpm vsv nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g mtools dosfstools sysfsutils --yes
+chroot /mnt xbps-install -S nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g mtools dosfstools sysfsutils --yes
 
 # Audio/Video & Others
-chroot /mnt xbps-install -S  xbacklight  arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk  starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
+chroot /mnt xbps-install -S xbacklight arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
 #chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
@@ -386,7 +389,7 @@ chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gt
 # Config Lightdm
 chroot /mnt touch /etc/lightdm/dual.sh
 chroot /mnt chmod +x /etc/lightdm/dual.sh
-cat << EOF > /mnt/etc/lightdm/dual.sh
+cat <<EOF >/mnt/etc/lightdm/dual.sh
 #!/bin/sh
 # eDP1 - Lap Screen  |  HDMI-1-0 External monitor
 # Lightdm or other script for dual monitor
@@ -424,14 +427,16 @@ EOF
 
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
-cat << EOF > /mnt/etc/modprobe.d/bbswitch.conf
+cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 options bbswitch load_state=0 unload_state=1 
 EOF
 
 # Install Nvidia video drivers
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes 
+# chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
+chroot /mnt xbps-install -S nvidia470 nvidia470-dkms nvidia470-gtklibs nvidia470-libs nvidia470-opencl nv-codec-headers bumblebee bbswitch mesa --yes
+
 # chroot /mnt dracut --force --kver 5.4.**
-chroot /mnt dracut --force --kver 5.10.**
+chroot /mnt dracut --force --kver 5.10.117_1
 # chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
@@ -565,12 +570,10 @@ chroot /mnt swapon /var/swap/swapfile
 # Add to fstab
 SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
 echo $SWAP_UUID
-echo " " >> /mnt/etc/fstab
-echo "# Swap" >> /mnt/etc/fstab
-echo " " >> /mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /mnt/etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >> /mnt/etc/fstab
-
+echo " " >>/mnt/etc/fstab
+echo "# Swap" >>/mnt/etc/fstab
+echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 #Runit por default
 chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
@@ -590,8 +593,6 @@ chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
 chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
-
-
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
 
@@ -675,7 +676,6 @@ chroot /mnt xbps-reconfigure -f linux-lts
 # FIX bad font rendering
 chroot /mnt ln -s /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/
 chroot /mnt xbps-reconfigure -f fontconfig
-
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d

@@ -255,7 +255,8 @@ EOF
 # chroot /mnt xbps-install -S xf86-video-intel --yes
 
 # Intel Video Drivers
-chroot /mnt xbps-install -S xf86-video-nouveau mesa mesa-dri mesa-nouveau-dri mesa-demos glu mesa-vulkan-intel mesa-vulkan-overlay-layer MangoHud Vulkan-tools vkd3d vkBasalt --yes
+chroot /mnt xbps-install -S xf86-video-nouveau mesa mesa-dri mesa-nouveau-dri mesa-demos glu  mesa-nouveau-dri mesa-nouveau-dri-32bit vkd3d vkBasalt --yes
+# mesa-vulkan-intel mesa-vulkan-overlay-layer MangoHud Vulkan-tools
 
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
@@ -306,7 +307,8 @@ EOF
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-nouveau.conf
 Section "Device"
     Identifier "Nvidia card"
-    Driver "nouveau"
+    Driver      "nouveau"
+    Option      "GLXVBlank"  "true"
 EndSection
 EOF
 
