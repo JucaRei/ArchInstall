@@ -539,7 +539,8 @@ chroot /mnt sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "junior:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input,bumblebee junior
+# chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input,bumblebee junior
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input junior
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog junior
