@@ -100,6 +100,14 @@ compress="zstd"
 no_host_only_commandline="yes"
 EOF
 
+mkdir -pv /mnt/etc/sysctl.d
+cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
+vm.vfs_cache_pressure=500
+vm.swappiness=100
+vm.dirty_background_ratio=1
+vm.dirty_ratio=50
+EOF
+
 # Xorg conf dual gpu
 
 mkdir -pv /mnt/etc/X11
@@ -340,11 +348,12 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
+chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm vpsm xbps xbps-tests xbps-triggers --yes
+chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut vsv vpm dash vpsm xbps xbps-tests xbps-triggers linux-lts linux-lts-headers linux-firmware fwupd opendoas mtools dosfstools sysfsutils --yes
 chroot /mnt vpm up
-chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia dash fwupd opendoas --yes
-chroot /mnt vpm up
+# chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia  fwupd opendoas --yes
+# chroot /mnt vpm up
 
 # chroot /mnt xbps-install -Sy linux5.4 linux5.4-headers dracut-053_2 dracut-network-053_2 dracut-uefi-053_2 linux-firmware linux-firmware-intel linux-firmware-nvidia linux-firmware-network fwupd opendoas --yes
 
@@ -359,19 +368,20 @@ chroot /mnt xbps-reconfigure -f linux-lts
 chroot /mnt vpm up
 
 # Grub
-chroot /mnt xbps-install -S efibootmgr efivar grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
+chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
+# efivar 
 
 # Optimization packages
-chroot /mnt xbps-install -S acpi acpi_call-dkms acpid irqbalance tlp powerstat x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald preload earlyoom powertop bash-completion --yes
+chroot /mnt xbps-install -Sy acpi acpi_call-dkms acpid irqbalance tlp powerstat x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald preload earlyoom powertop bash-completion --yes
 
 # Needed for DE
-chroot /mnt xbps-install -S dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
 
 # Utilities
-chroot /mnt xbps-install -S nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g mtools dosfstools sysfsutils --yes
+chroot /mnt xbps-install -Sy nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g --yes
 
 # Audio/Video & Others
-chroot /mnt xbps-install -S xbacklight arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
+chroot /mnt xbps-install -Sy xbacklight arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
 #chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
@@ -433,7 +443,7 @@ EOF
 
 # Install Nvidia video drivers
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia470 nvidia470-dkms nvidia470-gtklibs nvidia470-libs nvidia470-opencl nv-codec-headers bumblebee bbswitch mesa --yes
+chroot /mnt xbps-install -S linux-firmware-intel linux-firmware-nvidia nvidia nvidia-dkms nvidia-gtklibs nvidia-libs nvidia-opencl nv-codec-headers mesa vulkan-loader libva libva-glx libva-utils libva-intel-driver glu mesa-dri mesa-vulkan-intel mesa-intel-dri intel-video-accel mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # chroot /mnt dracut --force --kver 5.4.**
 chroot /mnt dracut --force --kver 5.10.117_1
@@ -473,7 +483,8 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 #Install Grub
 # mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
+# chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
+chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
 chroot /mnt update-grub
 
 # GRUB Configuration
