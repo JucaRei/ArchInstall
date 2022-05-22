@@ -1,0 +1,8 @@
+#!/bin/bash -e
+###  Chmod 755
+
+
+$HOME/.bin/Dual-DM.sh
+
+exit 0
+
