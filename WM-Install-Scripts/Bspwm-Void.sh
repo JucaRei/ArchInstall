@@ -9,7 +9,7 @@ mkdir -pv ~/.cache/xdgr
 doas chmod 0700 ~/.cache/xdgr
 
 doas vpm i libXft-devel libX11-devel harfbuzz-devel libXext-devel libXrender-devel libXinerama-devel --yes
-doas vpm i bspwm python3-pip autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty st font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance lightdm lightdm-gtk3-greeter light-locker mpc neofetch geany xarchiver zip zenmap --yes
+doas vpm i bspwm python3-pip autorandr arandr jq curl viewnior glu st gping pcmanfm papirus-folders papirus-icon-theme sxhkd glow sxiv ImageMagick fontmanager ranger polybar flameshot light-locker rxvt-unicode rxvt-unicode-terminfo urxvt-perls kitty st font-firacode font-awesome dmenu nitrogen feh unclutter xclip libinput libinput-gestures zathura rofi dunst scrot lxappearance slim slim-void-theme light-locker mpc neofetch geany xarchiver zip zenmap --yes
 
 
 # marktext xinput xsetmode xinput_calibrator xf86-input-evdev
@@ -61,13 +61,13 @@ git clone --depth=1 https://github.com/ibhagwan/picom-ibhagwan-template
 mv picom-ibhagwan-template BinaryBuilder/srcpkgs/picom-ibhagwan
 cd BinaryBuilder/
 ./xbps-src pkg picom-ibhagwan
-doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan 
+doas xbps-install --repository=hostdir/binpkgs picom-ibhagwan --yes
 cd ..
 # Web-Greeter
 git clone  --depth=1 https://github.com/JezerM/web-greeter Lightdm-Web-GREETER
-cd Lightdm-Web-GREETER
-pip3 install -r requirements.txt
-sudo make install
+# cd Lightdm-Web-GREETER
+# pip3 install -r requirements.txt
+# sudo make install
 cd
 
 # Install ASDF
@@ -83,11 +83,11 @@ git clone --depth=1 https://github.com/JucaRei/rofi
 
 cd ~/Documents/workspace/Configs
 git clone --depth 1 https://github.com/JucaRei/ArchInstall
-cd /Documents/workspace/Configs/ArchInstall/Dots-WM
-cp -rf bashrc-Void ~/.bashrc
-cd ..
+cd /Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/
+cp -rf /home/junior/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bashrc ~/.bashrc
+cd 
 cp -rf ~/Documents/workspace/Configs/ArchInstall/wallpapers ~/Pictures/Wallpapers
-cd
+
 
 
 # Font Preview
@@ -117,8 +117,8 @@ fc-cache -fv
 # mpd e ncmpcpp
 cd
 
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf ~/.config/mpd
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config ~/.ncmpcpp
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf ~/.config/mpd/mpd.conf
+cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config ~/.ncmpcpp/config
 
 # Xresources | Fehgb | Xprofile etc
 cd
@@ -127,12 +127,12 @@ cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/polyb
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/zathura ~/.config
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/xprofile ~/.xprofile
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/Xresources ~/.Xresources
-cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/geany ~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/geany ~/.config/
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/sxhkd ~/.config
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/themes ~/.themes
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/icons ~/.icons
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/polybar ~/.config
-cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/starship~/.config
+cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/starship/starship2.toml ~/.config/starship.toml
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky ~/.conky
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/picom ~/.config
 cp -rf ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/nano ~/.config

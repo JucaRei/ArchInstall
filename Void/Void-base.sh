@@ -368,7 +368,7 @@ chroot /mnt xbps-reconfigure -f linux-lts
 chroot /mnt vpm up
 
 # Grub
-chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober btrfs-progs --yes
+chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober acl-progs btrfs-progs --yes
 # efivar 
 
 # Optimization packages
