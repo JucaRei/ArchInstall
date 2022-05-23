@@ -97,18 +97,18 @@ pacman-key --lsign-key B545E9B7CD906FE3
 cat <<EOF >>/etc/pacman.conf
 
 
-[omniverse] 
-Server = http://omniverse.artixlinux.org/$arch 
+#[omniverse] 
+#Server = http://omniverse.artixlinux.org/$arch 
 
-[universe] 
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
-Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+#[universe] 
+#Server = https://universe.artixlinux.org/$arch
+#Server = https://mirror1.artixlinux.org/universe/$arch
+#Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+#Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
+#Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+#Server = https://mirror1.artixlinux.org/universe/$arch
+#Server = https://universe.artixlinux.org/$arch
+#Server = https://mirror.pascalpuffke.de/artix-universe/$arch
 
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
@@ -116,11 +116,11 @@ Server = https://mirror.pascalpuffke.de/artix-universe/$arch
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
 
-[andontie-aur]
-Server = https://aur.andontie.net/$arch
+#[andontie-aur]
+#Server = https://aur.andontie.net/$arch
 
 [herecura]
-Server = https://repo.herecura.be/$repo/$arch
+Server = https://repo.herecura.be/herecura/x86_64
 EOF
 
 pacman -Sy
@@ -132,18 +132,39 @@ tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
 # MakeSwap
-touch /swapfile
-chmod 600 /swapfile
-chattr +C /swapfile
-lsattr /swapfile
-dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
-mkswap /swapfile
-swapon /swapfile
+# touch /swapfile
+# chmod 600 /swapfile
+# chattr +C /swapfile
+# lsattr /swapfile
+# dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
+# mkswap /swapfile
+# swapon /swapfile
+
+touch var/swap/swapfile
+truncate -s 0 /var/swap/swapfile
+chattr +C /var/swap/swapfile
+btrfs property set /var/swap/swapfile compression none
+chmod 600 /var/swap/swapfile
+# dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
+dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
+mkswap /var/swap/swapfile
+swapon /var/swap/swapfile
+
 
 # Add to fstab
-echo " " >>/etc/fstab
-echo "# Swap" >>/etc/fstab
-echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
+# echo " " >>/etc/fstab
+# echo "# Swap" >>/etc/fstab
+# echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
+
+# Add to fstab
+set -e
+SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
+echo $SWAP_UUID
+echo " " >> etc/fstab
+echo "# Swap" >> /etc/fstab
+echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
+echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
+
 
 pacman -Syyy
 
@@ -151,7 +172,7 @@ sleep 3
 
 pacman -Sy
 # alsa-utils alsa-utils-runit
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-pulse pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu qemu-guest-agent-runit qemu-arch-extra vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit os-prober ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
 
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
@@ -213,7 +234,7 @@ cat <<EOF >/etc/samba/smb.conf
    read only = yes
    create mask = 0700
 
-[print$]
+[print$]s/#ParallelDownloads
    comment = Printer Drivers
    path = /var/lib/samba/printers
    browseable = yes
@@ -238,7 +259,8 @@ powertop --auto-tune
 preload
 EOF
 
-mkdir -pv /etc/X11/xorg.conf.d/20-intel.conf
+mkdir -pv /etc/X11/xorg.conf.d/
+touch /etc/X11/xorg.conf.d/20-intel.conf
 # Fix tearing with intel
 cat <<EOF >/etc/X11/xorg.conf.d/20-intel.conf
 # Section "Device"
@@ -303,7 +325,6 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-usermod -aG storage junior
 
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 # ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
@@ -337,7 +358,7 @@ mkinitcpio -p linux-lts
 # Normal User
 useradd -m junior
 echo junior:200291 | chpasswd
-usermod -aG sys dbus libvirt users storage optical lp kvm audio wheel junior
+usermod -aG sys,dbus,libvirt,users,storage,optical,lp,kvm,video,scanner,uucp,input,power,audio,wheel junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 echo "junior ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/junior
@@ -376,6 +397,9 @@ root ALL=(ALL) ALL
 @includedir /etc/sudoers.d
 EOF
 
+echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
+
+
 # sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
 # sed -i 's/# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/g' /etc/sudoers
 # # sed -i 's/# %sudo ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) ALL/g' /etc/sudoers
@@ -400,9 +424,32 @@ EOF
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
+
+mkdir -pv /mnt/etc/sysctl.d
+cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
+vm.vfs_cache_pressure=500
+vm.swappiness=100
+vm.dirty_background_ratio=1
+vm.dirty_ratio=50
+EOF
+
+mkdir -pv /tmp/btrfs
+wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
+filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
+set -e 
+RESUME_OFFSET=$(cat /tmp/resume.txt)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+# export ROOT_UUID
+# export RESUME_OFFSET
+sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
 
 # i915.fastboot=1
 
