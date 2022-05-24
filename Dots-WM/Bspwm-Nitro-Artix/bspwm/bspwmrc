@@ -1,81 +1,13 @@
 #! /bin/sh
 
-pgrep -x sxhkd > /dev/null || sxhkd &
-
-#bspc monitor -d I II III IV V VI VII VIII IX X
-#~/.bin/dualbsp-VM.sh
-setxkbmap br &
-dbus-launch pcmanfm --daemon &
-xsetroot -cursor_name left_ptr &
-#$HOME/.local/bin/fehauto.sh &
-while true; do feh --randomize --bg-fill ~/Pictures/Wallpapers; sleep 600; done &
-$HOME/.config/polybar/launch.sh &
-picom --experimental-backends --config ~/.config/picom/picom.conf &
-/usr/bin/dunst &
-#pulseaudio &
-#~/.bin/pipewire.sh &
-# pipewire &
-# pipewire-pulse &
-# pipewire-media-session &
-#bluetoothctl power on &
-#wireplumber &
-pulseaudio --start -D &
-/usr/lib/mate-polkit/polkit-mate-authentication-agent-1 &
-udevil &
-devmon &
-xfce4-power-manager &
-wmname LG3D &
-#$HOME/.bin/dualbsp-VM.sh
-#$HOME/.config/polybar/scripts/polybar_autohide/autohide &
-
-#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
-#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
-
-# Add font path
-#xset +fp /home/junior/.local/share/fonts/ &
-#xset fp rehash &
-
-#XDG DATA DIR
-export XDG_DATA_DIRS="$HOME/.local/share/applications" &
-
-# XDG USER DIR
-#mkdir -p /tmp/${USER}-runtime && chmod -R 0700 /tmp/${USER}-runtime &
-#export XDG_RUNTIME_DIR=/tmp/${USER}-runtime &
-
-if [ -z "${XDG_RUNTIME_DIR}" ]; then
-	export XDG_RUNTIME_DIR="/tmp/runtime-dir-${UID}"
-	if [ ! -d "${XDG_RUNTIME_DIR}" ]; then
-		mkdir "${XDG_RUNTIME_DIR}" 
-		chmod 0700 "${XDG_RUNTIME_DIR}"
-	fi
-fi &
-
-
-# Flatpak
-export XDG_RUNTIME_DIR="/var/lib/flatpak/exports/share" &
-export XDG_RUNTIME_DIR="/home/juca/.local/share/flatpak/exports/share" &
-
-#XDGR
-mkdir -pv ~/.cache/xdgr
-chmod 0700 ~/.cache/xdgr
-export XDG_RUNTIME_DIR=$PATH:~/.cache/xdgr
-
-
-
-# exec folders
-exec /user/lib/xdg-desktop-portal-gtk &
-
-~/.bin/dualbsp-VM.sh &
-
-rm -rf ~/.cache weather.json
-rm -rf ~/.cache weather-icon.png
-
-
-~/.conky/conky-startup.sh &
+$HOME/.config/bspwm/autostart.sh
 
 # -------------------------#
 # BSPWM THEMES - - - - - - #
 # -------------------------#
+
+#Single monitor
+# bspc monitor -d 1 2 3 4 5 6 7 8 9 10
 
 # Dracula
 #bspc config normal_border_color "#44475a"
@@ -84,46 +16,47 @@ rm -rf ~/.cache weather-icon.png
 #bspc config presel_feedback_color "#6272a4"
 
 # Catpuccin
-bspc config normal_border_color "#1E1E2E"
-bspc config active_border_color " #1E1E2E"
-bspc config focused_border_color "#96CDFB"
-bspc config presel_feedback_color "#96CDFB"
+bspc config normal_border_color 					"#1E1E2E"
+bspc config active_border_color 					"#1E1E2E"
+bspc config focused_border_color 					"#96CDFB"
+bspc config presel_feedback_color 					"#96CDFB"
 
 #-------------------------#
 # BSPWM CONFIGURATION - - #
 #-------------------------#
 
-bspc config border_radius				 					0
-bspc config border_width         					2
-bspc config window_gap           					6
+bspc config border_radius 							0
+bspc config border_width 							2
+bspc config window_gap 								6
 
-bspc config top_padding               		18
-bspc config bottom_padding            		0
-bspc config left_padding              		0
-bspc config right_padding             		0
-
+bspc config top_padding 							18
+bspc config bottom_padding 							0
+bspc config left_padding 							0
+bspc config right_padding 							0
 
 #bspc config automatic_scheme 	 					spiral
 
-bspc config click_to_focus       					true
-bspc config split_ratio          					0.50
-bspc config borderless_monocle   					true
-bspc config gapless_monocle      					true
-bspc config single_monocle       					false
-bspc config paddingless_monocle  					true
-bspc config focus_by_distance         		true
-bspc config focus_follows_pointer     		true
-bspc config history_aware_focus       		true
-bspc config remove_disabled_monitors			true
-bspc config merge_overlapping_monitors    true
-bspc config ignore_ewmh_focus 		  			true
+bspc config click_to_focus 							true
+bspc config split_ratio 							0.50
+bspc config borderless_monocle 						true
+bspc config gapless_monocle 						true
+bspc config single_monocle 							false
+bspc config paddingless_monocle 					true
+bspc config focus_by_distance 						true
+bspc config focus_follows_pointer 					true
+bspc config history_aware_focus 					true
+bspc config remove_disabled_monitors 				true
+bspc config merge_overlapping_monitors 				true
+bspc config ignore_ewmh_focus 						true
+bspc config remove_disabled_monitors 				true
 
-bspc config pointer_modifier 							mod4
-bspc config pointer_action1 							move
-bspc config pointer_action2 							resize_side
-bspc config pointer_action3 							resize_corner
 
-## BSPWM RULES ========================== # 
+bspc config pointer_modifier 						mod4
+bspc config pointer_action1 						move
+bspc config pointer_action2 						resize_side
+bspc config pointer_action3 						resize_corner
+
+## BSPWM RULES ========================== #
 
 bspc rule -a Gimp desktop='^8' state=floating follow=on
 bspc rule -a Virt-manager desktop='^5' state=floating follow=on
@@ -154,5 +87,22 @@ bspc rule -a Pavucontrol state=floating follow=on
 bspc rule -a Engrampa state=floating follow=on
 bspc rule -a stacer state=floating
 bspc rule -a Lightdm-gtk-greeter-settings state=floating
-bspc rule -a '*:zathura'                  state=tiled
+bspc rule -a '*:zathura' state=tiled
 
+
+#Spotify fix  --move desktop 10
+#sleep 1
+#wmctrl -r Spotify -t 10
+#exit
+
+#polybar hidden when fullscreen for vlc, youtube, mpv ...
+#find out the name of your monitor with xrandr
+#xdo below -t $(xdo id -n root) $(xdo id -a polybar-main_DP-1)
+#xdo below -t $(xdo id -n root) $(xdo id -a polybar-main_HDMI1)
+#xdo below -t $(xdo id -n root) $(xdo id -a polybar-main_HDMI2)
+
+###External rules
+##Pseudo automatic mode: always splits focused window when opening new window
+#bspc config external_rules_command ~/.config/bspwm/scripts/pseudo_automatic_mode
+##Adjust new window: splits biggest windows to keep windows about the same size
+#bspc config external_rules_command ~/.config/bspwm/scripts/adjust-new-window
