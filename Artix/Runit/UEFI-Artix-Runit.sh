@@ -428,7 +428,7 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-mkdir -pv /mnt/etc/sysctl.d
+mkdir -pv /etc/sysctl.d
 cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
