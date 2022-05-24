@@ -21,7 +21,7 @@ makepkg -si --noconfirm
 # sudo systemctl enable --now auto-cpufreq
 
 
-### ZEN KERNEL
+### ZEN|LTS KERNEL
 
 sudo mkdir -pv /etc/pacman.d/hooks
 sudo cat << EOF > /etc/pacman.d/hooks/50-bootbackup.hook
@@ -59,19 +59,18 @@ Operation=Upgrade
 Operation=Remove 
 Type=Package
 Target=nvidia-dkms 
-Target=linux-zen
+Target=linux-lts
 # Change the linux part above and in the Exec line if a different kernel is used 
 [Action] 
 Description=Update nvidia dkms modules in Linux initcpio
 Depends=mkinitcpio
 When=PostTransaction 
 NeedsTargets
-Exec=/bin/sh -c while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen
-Exec=/bin/sh -c while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-zen
+Exec=/bin/sh -c while read -r trg; do case $trg in linux-lts) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-lts
 EOF
 
 # KDE
-sudo pikaur -S xorg sddm plasma glow konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition pavucontrol vlc stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf microsoft-edge-stable-bin
+pikaur -S xorg sddm plasma glow konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager zramd firefox-developer-edition pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
 
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
