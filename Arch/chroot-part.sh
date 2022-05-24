@@ -36,7 +36,7 @@ btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@tmp
 btrfs su cr /mnt/@cache
-btrfs su cr /mnt/@swap
+# btrfs su cr /mnt/@swap
 
 # Remove partition
 umount -v /mnt
@@ -53,11 +53,12 @@ umount -v /mnt
 
 # Mount partitions (Nitro)
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
-mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache,var/swap}
+# mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache,var/swap}
+mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache}
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@swap /dev/sda6 /mnt/var/swap
+# mount -o $BTRFS_OPTS,subvol=@swap /dev/sda6 /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol=@cache /dev/sda6 /mnt/var/cache
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/sda6 /mnt/var/tmp
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi

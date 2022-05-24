@@ -295,30 +295,23 @@ EOF
 
 # SWAP
 
-touch var/swap/swapfile
-truncate -s 0 /var/swap/swapfile
-chattr +C /var/swap/swapfile
-btrfs property set /var/swap/swapfile compression none
-chmod 600 /var/swap/swapfile
-# dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
-dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
-mkswap /var/swap/swapfile
-swapon /var/swap/swapfile
-
+# touch var/swap/swapfile
+# truncate -s 0 /var/swap/swapfile
+# chattr +C /var/swap/swapfile
+# btrfs property set /var/swap/swapfile compression none
+# chmod 600 /var/swap/swapfile
+# dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
+# mkswap /var/swap/swapfile
+# swapon /var/swap/swapfile
 
 # Add to fstab
-# echo " " >>/etc/fstab
-# echo "# Swap" >>/etc/fstab
-# echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
-
-# Add to fstab
-set -e
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
-echo $SWAP_UUID
-echo " " >> etc/fstab
-echo "# Swap" >> /etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
+# set -e
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
+# echo $SWAP_UUID
+# echo " " >> etc/fstab
+# echo "# Swap" >> /etc/fstab
+# echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
+# echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
 
 # Mkinitcpio
