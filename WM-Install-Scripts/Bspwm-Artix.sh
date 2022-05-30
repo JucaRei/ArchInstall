@@ -4,9 +4,9 @@ xdg-user-dirs-update
 
 sleep 3
 
-mkdir -pv ~/.cache/xdgr
+mkdir -pv $HOME/.cache/xdgr
 
-sudo chmod 0700 ~/.cache/xdgr
+sudo chmod 0700 $HOME/.cache/xdgr
 
 sudo hwclock --systohc
 
@@ -27,67 +27,60 @@ paru -S xfce4-terminal kitty rxvt-unicode-truecolor-wide-glyphs
 
 # File manager
 paru -S pcmanfm libfm lxqt_wallet ffmpegthumbnailer gst-libav gst-plugins-ugly file-roller xarchiver
-chmod -R 750 ~/.config/libfm
-chmod -R 640 ~/.config/libfm/libfm.conf
+chmod -R 750 $HOME/.config/libfm
+chmod -R 640 $HOME/.config/libfm/libfm.conf
 # paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
 
 touch $HOME/.config/starship.toml
 mkdir -p $HOME/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
-mkdir -p ~/.urxvt/ext
-mkdir -p ~/.conky
-mkdir -p ~/.ncmpcpp
-mkdir -p ~/.config/mpd
-mkdir -p ~/.runit
+mkdir -p $HOME/.urxvt/ext
+mkdir -p $HOME/.conky
+mkdir -p $HOME/.ncmpcpp
+mkdir -p $HOME/.config/mpd
+mkdir -p $HOME/.runit
 mkdir -p $HOME/.bin
-mkdir -p $HOME/local/.bin
-mkdir -p $HOME/local/share/fonts
-mkdir -p $HOME/local/share/applications
+mkdir -p $HOME/.local/bin
+mkdir -p $HOME/.local/share/fonts
+mkdir -p $HOME/.local/share/applications
 mkdir -p $HOME/.config/{conky,bspwm,mpd,sxhkd,picom,dunst,rofi,mpv,zathura}
-# mkdir -pv ~/Pictures/Wallpapers
-cd ~/.config/mpd
+# mkdir -pv $HOME/Pictures/Wallpapers
+cd $HOME/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
 
-cd ~/Documents/workspace/Configs
+cd $HOME/Documents/workspace/Configs
 git clone --depth 1 https://github.com/JucaRei/ArchInstall
 cd /Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/
-cp -rf /home/junior/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bashrc ~/.bashrc
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bashrc $HOME/.bashrc
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/{bspwm/,sxhkd/,picom/,nano/,dunst/,polybar/,rofi/,mpv/,zathura/} $HOME/.config/
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky/ $HOME/.conky/
 cd 
-cp -rf ~/Documents/workspace/Configs/ArchInstall/wallpapers ~/Pictures/Wallpapers
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/wallpapers $HOME/Pictures/Wallpapers
 
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf ~/.config/mpd
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config ~/.ncmpcpp
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf $HOME/.config/mpd/
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config $HOME/.ncmpcpp/
 
 cd
-cp -f ~/Documents/workspace/Configs/ArchInstall/wallpapers ~/Pictures/Wallpapers
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/fehauto.sh ~/.local/bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/xprofile-vm ~/.xprofile
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/rxvt/vtwhell ~/.urxvt/ext
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/rxvt/config-reload ~/.urxvt/ext
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/dualbsp-VM.sh ~/.bin
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/DualMonPolybar-VM.sh ~/.bin
-sudo cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/Dual-DM-VM.sh /etc/lightdm
-cp -f /etc/dunst/ ~/.config/dunst/
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/wallpapers $HOME/Pictures/Wallpapers
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/local/bin/** $HOME/.local/bin
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/xprofile-vm $HOME/.xprofile
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rxvt/vtwhell $HOME/.urxvt/ext
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rxvt/config-reload $HOME/.urxvt/ext
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bin/** $HOME/.bin/
 
-# install -Dm755 /usr/share/doc/bspwm/examples/bspwmrc ~/.config/bspwm/bspwmrc
-# install -Dm644 /usr/share/doc/bspwm/examples/sxhkdrc ~/.config/sxhkd/sxhkdrc
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/polybar/ ~/.config/
-chmod +x ~/.config/polybar/launch.sh
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/starship/starship2.toml ~/.config/starship.toml
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/Xresources ~/.Xresources
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/zathura/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/sxhkd/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/picom/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/themes/ ~/.themes/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/icons/ ~/.icons/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/rofi/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/nano/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/mpv/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/conky/ ~/.conky/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/bspwm/ ~/.config/
-chmod +x ~/.config/bspwm/bspwmrc
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/geany/ ~/.config/
-cp -f ~/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/dunst ~/.config/
-chmod +x ~/.config/dunst/dunstrc
+chmod +x $HOME/.config/polybar/launch.sh
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/starship/starship2.toml $HOME/.config/starship.toml
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/Xresources $HOME/.Xresources
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/themes/ $HOME/.themes/
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/icons/ $HOME/.icons/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rofi/ $HOME/.config/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/nano/ $HOME/.config/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/mpv/ $HOME/.config/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky/ $HOME/.conky/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bspwm/ $HOME/.config/
+chmod +x $HOME/.config/bspwm/bspwmrc
+cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/geany/ $HOME/.config/
+# cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/dunst $HOME/.config/
+chmod +x $HOME/.config/dunst/dunstrc
 
 #cp /usr/share/doc/bspwm/examples/bspwmrc .config/bswpm
 #cp /usr/share/doc/bspwm/examples/sxhkdrc .config/sxhkd

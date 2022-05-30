@@ -94,21 +94,21 @@ pacman-key --lsign-key B545E9B7CD906FE3
 
 # Universe repo optimus-manager-runit
 
-cat <<EOF >>/etc/pacman.conf
+cat <<\EOF >>/etc/pacman.conf
+# Other Repo's
 
+[omniverse] 
+Server = http://omniverse.artixlinux.org/$arch 
 
-#[omniverse] 
-#Server = http://omniverse.artixlinux.org/$arch 
-
-#[universe] 
-#Server = https://universe.artixlinux.org/$arch
-#Server = https://mirror1.artixlinux.org/universe/$arch
-#Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-#Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
-#Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
-#Server = https://mirror1.artixlinux.org/universe/$arch
-#Server = https://universe.artixlinux.org/$arch
-#Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+[universe] 
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
+Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
 
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
@@ -116,12 +116,13 @@ cat <<EOF >>/etc/pacman.conf
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
 
-#[andontie-aur]
-#Server = https://aur.andontie.net/$arch
+[andontie-aur]
+Server = https://aur.andontie.net/$arch
 
 [herecura]
 Server = https://repo.herecura.be/herecura/x86_64
 EOF
+
 
 pacman -Sy
 
@@ -172,7 +173,7 @@ sleep 3
 
 pacman -Sy
 # alsa-utils alsa-utils-runit
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
 
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
@@ -398,6 +399,35 @@ root ALL=(ALL) ALL
 EOF
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
+
+# Doas Set user permition
+cat <<EOF >/etc/doas.conf
+# allow user but require password
+permit keepenv :junior
+
+# allow user and dont require a password to execute commands as root
+permit nopass keepenv :junior
+
+# mount drives
+permit nopass :junior cmd mount
+permit nopass :junior cmd umount
+
+# musicpd service start and stop
+#permit nopass :$USER cmd service args musicpd onestart
+#permit nopass :$USER cmd service args musicpd onestop
+
+# pkg update
+#permit nopass :$USER cmd vpm args update
+
+# run personal scripts as root without prompting for a password,
+# requires entering the full path when running with doas
+#permit nopass :$USER cmd /home/username/bin/somescript
+
+# root as root
+#permit nopass keepenv root as root
+EOF
+
+chown -c root:root /etc/doas.conf
 
 
 # sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers

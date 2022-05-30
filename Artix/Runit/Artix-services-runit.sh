@@ -29,13 +29,13 @@ paru -S netmount-runit fusesmb shell-color-scripts pulseaudio-bt-auto-enable-a2d
 
 paru -S conky conky conky-manager2-git ttf-conkyweather
 
-paru -S nvidia-tweaks nvidia-settings nvidia-prime mesa mesa-utils dxvk-bin vkd3d vulkan-intel vulkan-tools libva-mesa-driver libva-nvidia-driver intel-media-driver gstreamer-vaapi ffnvcodec-headers libvdpau-va-gl libva-utils vdpauinfo cuda-tools
+# paru -S nvidia-tweaks nvidia-settings nvidia-prime mesa mesa-utils dxvk-bin vkd3d vulkan-intel vulkan-tools libva-mesa-driver libva-nvidia-driver intel-media-driver gstreamer-vaapi ffnvcodec-headers libvdpau-va-gl libva-utils vdpauinfo cuda-tools
 
 sudo sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
 # paru -S optimus-manager-git optimus-manager-runit bbswitch-dkms lightdm-optimus-runit
 
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.9.0
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.0
 
 pikaur -S profile-sync-daemon
 git clone --depth=1 https://github.com/madand/runit-services
@@ -109,6 +109,5 @@ sudo sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
 
 sudo mkinitcpio -p linux-lts
 
-cp -r $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro/bashrc ~/.bashrc
-
+cp -r $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bashrc ~/.bashrc
 source ~/.bashrc
