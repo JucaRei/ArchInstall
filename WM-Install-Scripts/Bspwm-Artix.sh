@@ -32,17 +32,17 @@ chmod -R 640 $HOME/.config/libfm/libfm.conf
 # paru -S nemo nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-seahorse nemo-share nemo-terminal folder-color-nemo nemo-compare
 
 touch $HOME/.config/starship.toml
-mkdir -p $HOME/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
-mkdir -p $HOME/.urxvt/ext
-mkdir -p $HOME/.conky
-mkdir -p $HOME/.ncmpcpp
-mkdir -p $HOME/.config/mpd
-mkdir -p $HOME/.runit
-mkdir -p $HOME/.bin
-mkdir -p $HOME/.local/bin
-mkdir -p $HOME/.local/share/fonts
-mkdir -p $HOME/.local/share/applications
-mkdir -p $HOME/.config/{conky,bspwm,mpd,sxhkd,picom,dunst,rofi,mpv,zathura}
+mkdir -pv $HOME/Documents/workspace/{Github,Builds,Others,Customizations,Configs,Tests,Composes}
+mkdir -pv $HOME/.urxvt/ext
+mkdir -pv $HOME/.conky
+mkdir -pv $HOME/.ncmpcpp
+mkdir -pv $HOME/.config/mpd
+mkdir -pv $HOME/.runit
+mkdir -pv $HOME/.bin
+mkdir -pv $HOME/.local/bin
+mkdir -pv $HOME/.local/share/fonts
+mkdir -pv $HOME/.local/share/applications
+mkdir -pv $HOME/.config/{conky,bspwm,mpd,sxhkd,picom,dunst,rofi,mpv,zathura}
 # mkdir -pv $HOME/Pictures/Wallpapers
 cd $HOME/.config/mpd
 touch database mpd.conf mpd.fifo mpd.log mpdstate
@@ -52,7 +52,7 @@ git clone --depth 1 https://github.com/JucaRei/ArchInstall
 cd /Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/
 cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/bashrc $HOME/.bashrc
 cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/{bspwm/,sxhkd/,picom/,nano/,dunst/,polybar/,rofi/,mpv/,zathura/} $HOME/.config/
-cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky/ $HOME/.conky/
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/conky/** $HOME/.conky/
 cd 
 cp -rf $HOME/Documents/workspace/Configs/ArchInstall/wallpapers $HOME/Pictures/Wallpapers
 
@@ -70,8 +70,8 @@ cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/b
 chmod +x $HOME/.config/polybar/launch.sh
 cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/starship/starship2.toml $HOME/.config/starship.toml
 cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/Xresources $HOME/.Xresources
-cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/themes/ $HOME/.themes/
-cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/icons/ $HOME/.icons/
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/themes/ $HOME/.themes/
+cp -rf $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/icons/ $HOME/.icons/
 # cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/rofi/ $HOME/.config/
 # cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/nano/ $HOME/.config/
 # cp -f $HOME/Documents/workspace/Configs/ArchInstall/Dots-WM/Bspwm-Nitro-Artix/mpv/ $HOME/.config/
@@ -102,6 +102,11 @@ fc-cache -fv
 
 cp -r $HOME/workspace/Configs/ArchInstall/Dots-WM/mpd/mpd.conf $HOME/.config/mpd/
 cp -r $HOME/workspace/Configs/ArchInstall/Dots-WM/ncmpcpp/config $HOME/.ncmpcpp/
+
+
+cd $HOME/.icons
+tar -xvf **.tar.xz -C $HOME/.icons/
+cd
 
 printf "\e[1;32mCHANGE NECESSARY FILES BEFORE REBOOT\e[0m"
 printf "\e[1;32mLIGHTDM CONFIG (SEAT: GREETER-SESSION TO lightdm-slick greeter)\e[0m"
