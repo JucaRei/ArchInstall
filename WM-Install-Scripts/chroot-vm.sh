@@ -59,7 +59,7 @@ mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache,var/swap}
 mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
-# mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
+mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol=@cache /dev/vda2 /mnt/var/cache
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/vda2 /mnt/var/tmp
 mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot/efi
@@ -98,4 +98,4 @@ fstabgen -U /mnt >>/mnt/etc/fstab
 #basestrap /mnt base base-devel artools-base s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-s6 pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
-#stabgen -U /mnt >> /mnt/etc/fstab
+#fstabgen -U /mnt >> /mnt/etc/fstab

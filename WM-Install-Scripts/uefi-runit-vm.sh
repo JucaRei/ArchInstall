@@ -133,39 +133,6 @@ cat <<EOF >>/etc/fstab
 tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
-# MakeSwap
-# touch /swapfile
-# chmod 600 /swapfile
-# chattr +C /swapfile
-# lsattr /swapfile
-# dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
-# mkswap /swapfile
-# swapon /swapfile
-
-touch var/swap/swapfile
-truncate -s 0 /var/swap/swapfile
-chattr +C /var/swap/swapfile
-btrfs property set /var/swap/swapfile compression none
-chmod 600 /var/swap/swapfile
-# dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
-dd if=/dev/zero of=/var/swap/swapfile bs=1M count=1536 status=progress
-mkswap /var/swap/swapfile
-swapon /var/swap/swapfile
-
-
-# Add to fstab
-# echo " " >>/etc/fstab
-# echo "# Swap" >>/etc/fstab
-# echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
-
-# Add to fstab
-set -e
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
-echo $SWAP_UUID
-echo " " >> etc/fstab
-echo "# Swap" >> /etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
 
 pacman -Syyy
@@ -461,30 +428,79 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_
 grub-mkconfig -o /boot/grub/grub.cfg
 
 mkdir -pv /etc/sysctl.d
-cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
+cat << EOF > /etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
 
+# MakeSwap
+# touch /swapfile
+# chmod 600 /swapfile
+# chattr +C /swapfile
+# lsattr /swapfile
+# dd if=/dev/zero of=/swapfile bs=1M count=8192 status=progress
+# mkswap /swapfile
+# swapon /swapfile
+
+touch /var/swap/swapfile
+truncate -s 0 /var/swap/swapfile
+chattr +C /var/swap/swapfile
+btrfs property set /var/swap/swapfile compression none
+chmod 600 /var/swap/swapfile
+# dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
+dd if=/dev/zero of=/var/swap/swapfile bs=1M count=1536 status=progress
+mkswap /var/swap/swapfile
+swapon /var/swap/swapfile
+
+
+# Add to fstab
+# echo " " >>/etc/fstab
+# echo "# Swap" >>/etc/fstab
+# echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
+
+# Add to fstab
+set -e
+SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
+echo $SWAP_UUID
+echo " " >> etc/fstab
+echo "# Swap" >> /etc/fstab
+echo "UUID=$SWAP_UUID /var/swap btrfs defaults,compress=no,nodatacow,noatime,nodiratime,noatime,subvol=@swap 0 0" >> /etc/fstab
+# echo "/var/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
+
+
 mkdir -pv /tmp/btrfs
+cd /tmp/btrfs
 wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
 gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+touch btrfs_map_physical.txt
 ./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
+touch resume.txt
 filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
 set -e 
-RESUME_OFFSET=$(cat /tmp/resume.txt)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+RESUME_OFFSET=$(cat /tmp/btrfs/resume.txt)
+ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 # export ROOT_UUID
 # export RESUME_OFFSET
 sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 8/g' /etc/pacman.conf
+sed -i 's/#HandlePowerKey=poweroff/HandlePowerKey=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleSuspendKey=suspend/HandleSuspendKey=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleHibernateKey=hibernate/HandleHibernateKey=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleLidSwitch=suspend/HandleLidSwitch=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleLidSwitchExternalPower=suspend/HandleLidSwitchExternalPower=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleLidSwitchDocked=ignore/HandleLidSwitchDocked=ignore/g' /etc/elogind/logind.conf
+sed -i 's/#HandleNvidiaSleep=no/HandleNvidiaSleep=ignore/g' /etc/elogind/logind.conf
 
 # i915.fastboot=1
-
+pacman -Syyu duf btop lolcat htop --noconfirm
 paccache -rk0
 
+cd /
+rm -rf install.sh
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"

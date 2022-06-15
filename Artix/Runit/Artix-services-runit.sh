@@ -18,16 +18,16 @@ sudo pacman -U pikaur**.zst --noconfirm
 sudo pacman -U hfsprogs**.zst --noconfirm
 # sudo pacman -U nosystemd-boot**.zst --noconfirm
 
-paru -Syu
+paru -Syyu --noconfirm
 
 cd
 
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts pulseaudio-bt-auto-enable-a2dp libgee vala ttf-conkyweather gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-
-paru -S conky conky conky-manager2-git ttf-conkyweather
+paru -S netmount-runit fusesmb shell-color-scripts sparklines-git bash-completion pulseaudio-bt-auto-enable-a2dp libgee vala gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+# paru -Sy mate-polkit
+# paru -S conky conky-manager2-git ttf-conkyweather
 
 # paru -S nvidia-tweaks nvidia-settings nvidia-prime mesa mesa-utils dxvk-bin vkd3d vulkan-intel vulkan-tools libva-mesa-driver libva-nvidia-driver intel-media-driver gstreamer-vaapi ffnvcodec-headers libvdpau-va-gl libva-utils vdpauinfo cuda-tools
 

@@ -674,6 +674,10 @@ case $- in
 *) return ;;
 esac
 
+alias top='htop'
+alias cat='bat --pager=never --theme=ansi'
+alias catf='bat --theme=ansi'
+
 ### ARCHIVE EXTRACTION
 # usage: ex <file>
 ex() {
