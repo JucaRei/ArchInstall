@@ -74,7 +74,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
-pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib --ignore linux openssh
+pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
 
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab
