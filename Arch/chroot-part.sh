@@ -6,9 +6,9 @@ sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
 # Artix
-mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
-mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
-mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
+# mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
+# mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
+# mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 
 #Arch
 mkfs.vfat -F32 /dev/sda5 -n "ArchBoot"
@@ -74,10 +74,10 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
- pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware dropbear git nano neovim intel-ucode fzf duf reflector mtools dosfstools btrfs-progs pacman-contrib --ignore linux openssh
+pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib --ignore linux openssh
 
 # Generate fstab
- genfstab -U /mnt >> /mnt/etc/fstab
+genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
 # pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux

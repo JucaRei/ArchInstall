@@ -20,25 +20,24 @@ makepkg -si --noconfirm
 # pikaur -S --noconfirm auto-cpufreq
 # sudo systemctl enable --now auto-cpufreq
 
-
 ### ZEN|LTS KERNEL
 
 sudo mkdir -pv /etc/pacman.d/hooks
-sudo cat << EOF > /etc/pacman.d/hooks/50-bootbackup.hook
-[Trigger]
-Operation = Upgrade
-Operation = Install
-Operation = Remove
-Type = Path
-Target = boot/*
-[Action]
-Depends = rsync
-Description = Backing up /boot...
-When = PreTransaction
-Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
-EOF
+# sudo cat << EOF > /etc/pacman.d/hooks/50-bootbackup.hook
+# [Trigger]
+# Operation = Upgrade
+# Operation = Install
+# Operation = Remove
+# Type = Path
+# Target = boot/*
+# [Action]
+# Depends = rsync
+# Description = Backing up /boot...
+# When = PreTransaction
+# Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
+# EOF
 
-sudo cat << EOF > /etc/pacman.d/hooks/clean_cache.hook
+sudo cat <<\EOF >/etc/pacman.d/hooks/clean_cache.hook
 [Trigger]
 Operation = Upgrade
 Operation = Install
@@ -51,26 +50,26 @@ When = PostTransaction
 Exec = /usr/bin/paccache -rk 1
 EOF
 
-
-sudo cat << EOF > /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook
-[Trigger]
-Operation=Install 
-Operation=Upgrade 
-Operation=Remove 
-Type=Package
-Target=nvidia-dkms 
-Target=linux-lts
-# Change the linux part above and in the Exec line if a different kernel is used 
-[Action] 
-Description=Update nvidia dkms modules in Linux initcpio
-Depends=mkinitcpio
-When=PostTransaction 
-NeedsTargets
-Exec=/bin/sh -c while read -r trg; do case $trg in linux-lts) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-lts
-EOF
+# sudo cat << EOF > /etc/pacman.d/hooks/90-mkinitcpio-dkms-linux.hook
+# [Trigger]
+# Operation=Install
+# Operation=Upgrade
+# Operation=Remove
+# Type=Package
+# Target=nvidia-dkms
+# Target=linux-lts
+# # Change the linux part above and in the Exec line if a different kernel is used
+# [Action]
+# Description=Update nvidia dkms modules in Linux initcpio
+# Depends=mkinitcpio
+# When=PostTransaction
+# NeedsTargets
+# Exec=/bin/sh -c while read -r trg; do case $trg in linux-lts) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-lts
+# EOF
 
 # KDE
-pikaur -S xorg sddm plasma glow konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager zramd firefox-developer-edition pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
+pikaur -S xorg-server xorg-server-xdmx xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb xorg-libXinerama-devel xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-font-misc terminus-font dejavu-fonts-ttf btop
+pikaur -S sddm kio kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager zramd firefox-developer-edition pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
 
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird

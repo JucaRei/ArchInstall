@@ -11,6 +11,8 @@
 # sv restart dhcpcd
 # ip link set up <interface>
 
+xbps-install -Syu xbps --yes
+
 xbps-install -Sy wget vsv xz vpm neovim git --yes
 
 wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
@@ -66,7 +68,10 @@ mount -t vfat -o rw,defaults,noatime,nodiratime /dev/vda1 /mnt/boot/efi
 tar xvf ./void-x86_64-*.tar.xz -C /mnt
 sync
 
-for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir; mount --make-rslave /mnt/$dir; done
+for dir in dev proc sys run; do
+   mount --rbind /$dir /mnt/$dir
+   mount --make-rslave /mnt/$dir
+done
 
 cp -v /etc/resolv.conf /mnt/etc/
 
@@ -100,7 +105,7 @@ EOF
 
 mkdir -pv /mnt/etc/sysctl.d
 touch /mnt/etc/sysctl.d/00-sysctl.conf
-cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
+cat <<EOF >/mnt/etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
@@ -203,6 +208,7 @@ ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
 # ignorepkg=linux
 # ignorepkg=linux-headers
+ignorepkg=wpa_supplicant
 ignorepkg=nvi
 ignorepkg=openssh
 ignorepkg=dhcpcd
@@ -350,7 +356,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut vsv vpm dash vpsm xbps xbps-tests xbps-triggers linux-lts linux-lts-headers linux-firmware fwupd opendoas mtools dosfstools sysfsutils --yes
+chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut vsv vpm dash vpsm xbps xbps-tests xbps-triggers linux-lts linux-lts-headers linux-firmware fwupd opendoas mtools dosfstools efivar sysfsutils --yes
 chroot /mnt vpm up --yes
 # chroot /mnt xbps-install -Sy linux-lts linux-lts-headers linux-firmware linux-firmware-intel linux-firmware-nvidia  fwupd opendoas --yes
 # chroot /mnt vpm up
@@ -364,12 +370,12 @@ chroot /mnt vpm up --yes
 # Intel micro-code
 chroot /mnt xbps-install -Sy intel-ucode --yes
 # chroot /mnt xbps-reconfigure -f linux5.4
-chroot /mnt xbps-reconfigure -f linux-lts 
+chroot /mnt xbps-reconfigure -f linux-lts
 chroot /mnt vpm up --yes
 
 # Grub
 chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober acl-progs btrfs-progs --yes
-# efivar 
+# efivar
 
 # Optimization packages
 chroot /mnt xbps-install -Sy acpi acpi_call-dkms acpid irqbalance tlp powerstat x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald preload earlyoom powertop bash-completion --yes
@@ -378,7 +384,7 @@ chroot /mnt xbps-install -Sy acpi acpi_call-dkms acpid irqbalance tlp powerstat 
 chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
 
 # Utilities
-chroot /mnt xbps-install -Sy nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g --yes
+chroot /mnt xbps-install -Sy ansible nocache parallel util-linux bcache-tools zramen udevil smartmontools zstd minised gsmartcontrol ethtool cifs-utils necho lm_sensors xtools necho dropbear btop chrony inxi lshw nano ntfs-3g --yes
 
 # Audio/Video & Others
 chroot /mnt xbps-install -Sy xbacklight arp-scan xev mpd ncmpcpp playerctl mpv mpv-mpris deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp redshift redshift-gtk starship neovim ripgrep lsd alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow bluez bluez-alsa sof-firmware --yes
@@ -451,6 +457,7 @@ EOF
 # chroot /mnt dracut --force --kver 5.10.**
 # chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
+# chroot /mnt xbps-reconfigure -f linux
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
@@ -485,6 +492,8 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 #Install Grub
 # mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+# mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+# mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
 chroot /mnt update-grub
@@ -503,13 +512,14 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux video=1920x1080 udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
 GRUB_TIMEOUT_STYLE=menu
-GRUB_GFXMODE=auto
+# GRUB_GFXMODE=auto
+GRUB_GFXMODE=1920x1080
 GRUB_GFXPAYLOAD_LINUX=keep
 
 #GRUB_TERMINAL_INPUT="console"

@@ -48,7 +48,7 @@ pacman-key --lsign-key 9AE4078033F8024D
 pacman-key --recv-key B545E9B7CD906FE3
 pacman-key --lsign-key B545E9B7CD906FE3
 
-cat <<EOF >>/etc/pacman.conf
+cat <<\EOF >>/etc/pacman.conf
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
 
@@ -117,7 +117,6 @@ sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-
 
 # OLDPC don`t need it
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch --recheck
@@ -225,7 +224,7 @@ EOF
 
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
-cat <<EOF >/etc/udev/rules.d/99-udisks2.rules
+cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -236,7 +235,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /etc/polkit-1/rules.d
-cat <<EOF >/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<\EOF >/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -248,7 +247,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat <<EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<\EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -314,7 +313,6 @@ EOF
 # echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
 # echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
-
 # Mkinitcpio
 sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
 sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
@@ -323,20 +321,19 @@ sudo sed -i 's/#COMPRESSION="xz"/COMPRESSION="xz"/g' /etc/mkinitcpio.conf
 mkinitcpio -P linux-lts
 
 # Resume
-mkdir -pv /tmp/btrfs
-wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
-gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
-./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
-filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
-set -e 
-RESUME_OFFSET=$(cat /tmp/resume.txt)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+# mkdir -pv /tmp/btrfs
+# wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+# gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+# ./btrfs_map_physical /var/swap/swapfile >btrfs_map_physical.txt
+# filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >resume.txt
+# set -e
+# RESUME_OFFSET=$(cat /tmp/resume.txt)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 # export ROOT_UUID
 # export RESUME_OFFSET
-sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
+# sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
-
 
 paccache -rk0
 
