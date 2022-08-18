@@ -5,6 +5,8 @@ sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
+pacman -Sy archlinux-keyring --noconfirm
+
 # Artix
 # mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
 # mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
@@ -21,7 +23,7 @@ mkfs.btrfs /dev/sda7 -f -L "ArchHome"
 # mkfs.btrfs /dev/sda3 -f
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:16,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:14,space_cache=v2,commit=120,autodefrag,discard=async"
 
 # Nitro
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
@@ -74,7 +76,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
-pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
+pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
 
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab

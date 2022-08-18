@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo timedatectl set-ntp true
+# sudo timedatectl set-ntp true
 sudo hwclock --systohc
 
 sudo firewall-cmd --add-port=1025-65535/tcp --permanent
@@ -71,6 +71,12 @@ EOF
 pikaur -S xorg-server xorg-server-xdmx xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb xorg-libXinerama-devel xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-font-misc terminus-font dejavu-fonts-ttf btop
 pikaur -S sddm kio kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow konsole kdialog plasma5-applets-eventcalendar wget curl snapd dolphin okular smb4k ark kate kwrite kcalc spectacle krunner partitionmanager zramd firefox-developer-edition pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
 
+
+# Nvidia card
+pikaur -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader nvidia-tweaks
+
+# Intel
+pikaur -S --needed lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
 
