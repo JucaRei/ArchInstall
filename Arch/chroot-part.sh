@@ -1,11 +1,46 @@
 #!/bin/bash
 
+# Arch Linux
+
+# pacman -Sy archlinux-keyring --noconfirm
+
 # Enable pacman Color
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
-pacman -Sy archlinux-keyring --noconfirm
+# ARTIX LINUX
+# ADD Repos
+cat <<\EOF >>/etc/pacman.conf
+
+[universe]
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+Server = https://artixlinux.qontinuum.space/artixlinux/universe/os/$arch
+Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+Server = https://ftp.crifo.org/artix-universe/
+EOF
+
+
+pacman -Sy artix-keyring artix-archlinux-support --noconfirm
+
+pacman -Syyy
+
+cat <<\EOF >>/etc/pacman.conf
+
+### Archlinux Repo's
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[community]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist-arch
+EOF
+
+pacman -Syyy
 
 # Artix
 mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
@@ -82,7 +117,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 # genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
-# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
+# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib --ignore linux
 
 # Generate fstab
 # genfstab -U /mnt >> /mnt/etc/fstab
@@ -90,7 +125,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    Artix    ############
 
 ### Artix Runit
-basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers ansible ansible man-pages man-db perl sysfsutils python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
+basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers man-pages man-db perl sysfsutils ansible duf fzf ripgrep-all python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
 fstabgen -U /mnt >>/mnt/etc/fstab
@@ -99,4 +134,4 @@ fstabgen -U /mnt >>/mnt/etc/fstab
 #basestrap /mnt base base-devel artools-base s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-s6 pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
-#stabgen -U /mnt >> /mnt/etc/fstab
+#fstabgen -U /mnt >> /mnt/etc/fstab
