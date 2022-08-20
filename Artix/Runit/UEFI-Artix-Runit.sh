@@ -14,8 +14,23 @@ echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 artixnitro.localdomain artixnitro" >>/etc/hosts
 echo root:200291 | chpasswd
 
-pacman -Sy artix-archlinux-support --noconfirm
-pacman -Sy artix-keyring --noconfirm
+# ADD Repos
+cat <<\EOF >>/etc/pacman.conf
+
+[universe]
+Server = https://universe.artixlinux.org/$arch
+Server = https://mirror1.artixlinux.org/universe/$arch
+Server = https://mirror.pascalpuffke.de/artix-universe/$arch
+Server = https://artixlinux.qontinuum.space/artixlinux/universe/os/$arch
+Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
+Server = https://ftp.crifo.org/artix-universe/
+EOF
+
+pacman -Syyy
+
+pacman -Sy artix-keyring artix-archlinux-support --noconfirm
+
+
 # pacman -Sy lib32-artix-archlinux-support --noconfirm
 pacman-key --populate artix
 
@@ -37,7 +52,7 @@ sed -i '/\[community\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 
 # ADD Repos
-cat <<EOF >>/etc/pacman.conf
+cat <<\EOF >>/etc/pacman.conf
 [extra]
 Include = /etc/pacman.d/mirrorlist-arch
 
@@ -47,13 +62,6 @@ Include = /etc/pacman.d/mirrorlist-arch
 [multilib]
 Include = /etc/pacman.d/mirrorlist-arch
 
-[universe]
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-Server = https://artixlinux.qontinuum.space/artixlinux/universe/os/$arch
-Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
-Server = https://ftp.crifo.org/artix-universe/
 EOF
 
 pacman -Syyw
@@ -107,16 +115,6 @@ cat <<\EOF >>/etc/pacman.conf
 
 [omniverse] 
 Server = http://omniverse.artixlinux.org/$arch 
-
-[universe] 
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-Server = https://artixlinux.qontinuum.space:4443/artixlinux/universe/os/$arch
-Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
 
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
@@ -181,7 +179,7 @@ sleep 3
 
 pacman -Sy
 # alsa-utils alsa-utils-runit
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
+pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
 
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
@@ -370,14 +368,15 @@ ln -s /etc/runit/sv/mpd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/backlight /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/metalog /etc/runit/runsvdir/default/
 
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix --recheck
+grub-install --target=x86_64-efi --bootloader-id=Artix --efi-directory=/boot/efi --no-nvram --removable
+# grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Artix --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 
 mkinitcpio -p linux-lts
 
 # Normal User
 useradd -m junior
-echo junior:200291 | chpasswd
+echo "junior:200291" | chpasswd
 usermod -aG sys,dbus,libvirt,users,storage,optical,lp,kvm,video,scanner,uucp,input,power,audio,wheel junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
@@ -412,6 +411,16 @@ root ALL=(ALL) ALL
 %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw
 %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syuw --noconfirm
 %wheel ALL=(ALL) NOPASSWD: /usr/bin/pacman -Syyuw --noconfirm
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/poweroff
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/reboot
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/pause
+%wheel ALL=(ALL) NOPASSWD: /usr/bin/halt
+%wheel ALL=(ALL) NOPASSWD: /sbin/halt
+%wheel ALL=(ALL) NOPASSWD: /sbin/reboot
+%wheel ALL=(ALL) NOPASSWD: /sbin/pause
+%wheel ALL=(ALL) NOPASSWD: /sbin/poweroff
+junior artixnitro =NOPASSWD: /usr/bin/poweroff poweroff,/usr/bin/halt halt,/usr/bin/reboot reboot
+
 
 ## Read drop-in files from /etc/sudoers.d
 @includedir /etc/sudoers.d
@@ -470,15 +479,16 @@ cat <<EOF >/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 
-sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
+sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
 mkdir -pv /etc/sysctl.d
-cat << EOF > /mnt/etc/sysctl.d/00-sysctl.conf
+touch /etc/sysctl.d/00-sysctl.conf
+cat << EOF > /etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
@@ -502,6 +512,13 @@ EOF
 
 
 # i915.fastboot=1
+
+pacman -S zramen zramen-runit --noconfirm
+
+sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
+sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
+
+ln -s /etc/runit/sv/zramen /run/runit/service
 
 paccache -rk0
 
