@@ -8,14 +8,14 @@ sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 pacman -Sy archlinux-keyring --noconfirm
 
 # Artix
-# mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
-# mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
-# mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
+mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
+mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
+mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 
 #Arch
-mkfs.vfat -F32 /dev/sda5 -n "ArchBoot"
-mkfs.btrfs /dev/sda6 -f -L "ArchRoot"
-mkfs.btrfs /dev/sda7 -f -L "ArchHome"
+# mkfs.vfat -F32 /dev/sda5 -n "ArchBoot"
+# mkfs.btrfs /dev/sda6 -f -L "ArchRoot"
+# mkfs.btrfs /dev/sda7 -f -L "ArchHome"
 
 # OldMac
 # mkfs.vfat -F32 /dev/sda1
@@ -76,10 +76,10 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
-pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
+# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
 
 # Generate fstab
-genfstab -U /mnt >>/mnt/etc/fstab
+# genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
 # pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
@@ -90,10 +90,10 @@ genfstab -U /mnt >>/mnt/etc/fstab
 ############    Artix    ############
 
 ### Artix Runit
-# basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
+basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers ansible ansible man-pages man-db perl sysfsutils python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
-# fstabgen -U /mnt >>/mnt/etc/fstab
+fstabgen -U /mnt >>/mnt/etc/fstab
 
 ### Artix s6
 #basestrap /mnt base base-devel artools-base s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-s6 pacman-contrib fzf ripgrep btrfs-progs --ignore linux

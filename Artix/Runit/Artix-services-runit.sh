@@ -25,7 +25,7 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb shell-color-scripts sparklines-git bash-completion pulseaudio-bt-auto-enable-a2dp libgee vala gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb zramen-runit shell-color-scripts sparklines-git bash-completion pulseaudio-bt-auto-enable-a2dp libgee vala gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 # paru -Sy mate-polkit
 # paru -S conky conky-manager2-git ttf-conkyweather
 
@@ -53,8 +53,8 @@ sudo ln -sfv /etc/runit/sv/psd /run/runit/service
 # sudo sv start redshift
 # sudo sv start colord
 
-#sudo sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
-#sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
+sudo sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
+sudo sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
 
 sudo touch /etc/default/earlyoom
 sudo cat <<EOF >/etc/default/earlyoom
@@ -97,7 +97,7 @@ sudo chmod +x /etc/runit/sv/ananicy-cpp/start
 sudo ln -s /etc/runit/sv/netmount /run/runit/service
 sudo ln -s /etc/runit/sv/earlyoom /run/runit/service
 # sudo ln -s /etc/runit/sv/user-services /run/runit/service
-# sudo ln -s /etc/runit/sv/zramen /run/runit/service
+sudo ln -s /etc/runit/sv/zramen /run/runit/service
 sudo ln -s /etc/runit/sv/ananicy-cpp /run/runit/service
 sudo ln -s /etc/runit/sv/tlp /run/runit/service
 # sudo ln -s /etc/runit/sv/optimus-manager /run/runit/service

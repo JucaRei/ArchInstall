@@ -141,15 +141,15 @@ EOF
 # mkswap /swapfile
 # swapon /swapfile
 
-touch var/swap/swapfile
-truncate -s 0 /var/swap/swapfile
-chattr +C /var/swap/swapfile
-btrfs property set /var/swap/swapfile compression none
-chmod 600 /var/swap/swapfile
+# touch var/swap/swapfile
+# truncate -s 0 /var/swap/swapfile
+# chattr +C /var/swap/swapfile
+# btrfs property set /var/swap/swapfile compression none
+# chmod 600 /var/swap/swapfile
 # dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
-dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
-mkswap /var/swap/swapfile
-swapon /var/swap/swapfile
+# dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
+# mkswap /var/swap/swapfile
+# swapon /var/swap/swapfile
 
 
 # Add to fstab
@@ -158,13 +158,13 @@ swapon /var/swap/swapfile
 # echo "/swapfile      none     swap      defaults  0 0" >>/etc/fstab
 
 # Add to fstab
-set -e
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
-echo $SWAP_UUID
-echo " " >> etc/fstab
-echo "# Swap" >> /etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
+# set -e
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
+# echo $SWAP_UUID
+# echo " " >> etc/fstab
+# echo "# Swap" >> /etc/fstab
+# echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
+# echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
 
 pacman -Syyy
@@ -293,7 +293,7 @@ EOF
 
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
-cat <<EOF >/etc/udev/rules.d/99-udisks2.rules
+cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -304,7 +304,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /etc/polkit-1/rules.d
-cat <<EOF >/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<\EOF >/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -316,7 +316,18 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat <<EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<\EOF > /etc/polkit-1/rules.d/49-nopasswd_global.rules
+/* Allow members of the wheel group to execute any actions
+ * without password authentication, similar to "sudo NOPASSWD:"
+ */
+polkit.addRule(function(action, subject) {
+    if (subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
+
+cat <<\EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -466,19 +477,20 @@ vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
 
-mkdir -pv /tmp/btrfs
-wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
-gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
-./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
-filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
-set -e 
-RESUME_OFFSET=$(cat /tmp/resume.txt)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+### SWAP
+# mkdir -pv /tmp/btrfs
+# wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+# gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+# ./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
+# filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
+# set -e 
+# RESUME_OFFSET=$(cat /tmp/resume.txt)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 # export ROOT_UUID
 # export RESUME_OFFSET
-sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
+# sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
-grub-mkconfig -o /boot/grub/grub.cfg
+# grub-mkconfig -o /boot/grub/grub.cfg
 
 
 # i915.fastboot=1
