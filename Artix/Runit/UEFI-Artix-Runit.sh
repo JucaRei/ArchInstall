@@ -117,7 +117,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 # genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
-# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
+# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib --ignore linux
 
 # Generate fstab
 # genfstab -U /mnt >> /mnt/etc/fstab
@@ -125,7 +125,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    Artix    ############
 
 ### Artix Runit
-basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers man-pages man-db perl sysfsutils python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
+basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers man-pages man-db perl sysfsutils ansible duf fzf ripgrep-all python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
 
 # Generate fstab
 fstabgen -U /mnt >>/mnt/etc/fstab
