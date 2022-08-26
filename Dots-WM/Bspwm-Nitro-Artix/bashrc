@@ -20,6 +20,9 @@
 alias mirrors="rankmirrors -v -n 5 /etc/pacman.d/mirrorlist"
 
 alias dietpi="ssh root@192.168.1.200"
+#
+
+alias btrfm="findmnt -t btrfs -o TARGET,SOURCE"
 
 #VSCODE
 export PATH="$HOME/.config/Code:$PATH"

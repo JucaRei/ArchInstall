@@ -75,8 +75,8 @@ EOF
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack
 pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fzf ripgrep htop btop networkmanager-iwd opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
 
-# Virt-manager
-pacman -S virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
+# Virt-manager & lxd
+pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
 
 # apci & tlp
 pacman -S acpi acpi_call-lts acpid tlp
@@ -154,7 +154,7 @@ systemctl enable acpid
 
 useradd -m junior
 echo junior:200291 | chpasswd
-usermod -aG storage wheel junior
+usermod -aG wheel junior
 
 echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
 echo "junior ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/junior
@@ -263,7 +263,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-usermod -aG storage junior
+# usermod -aG storage junior
 
 # Doas Set user permition
 cat <<EOF >/etc/doas.conf
@@ -341,7 +341,7 @@ mkinitcpio -P linux-lts
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-paccache -rk0
+paccache -rk1
 
 # pikaur -S powertop-auto-tune zramd
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"

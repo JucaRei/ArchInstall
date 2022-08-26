@@ -19,7 +19,7 @@ btrfs subvol list .
 cd ..
 
 umount /mnt
-mount /dev/sda7 /
+mount /dev/sda7 /mnt
 
 cd /mnt
 ls

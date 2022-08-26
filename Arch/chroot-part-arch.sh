@@ -2,43 +2,12 @@
 
 # Arch Linux
 
-# pacman -Sy archlinux-keyring --noconfirm
+pacman -Sy archlinux-keyring --noconfirm
 
 # Enable pacman Color
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
-
-# ARTIX LINUX
-# ADD Repos
-cat <<\EOF >>/etc/pacman.conf
-
-[universe]
-Server = https://universe.artixlinux.org/$arch
-Server = https://mirror1.artixlinux.org/universe/$arch
-Server = https://mirror.pascalpuffke.de/artix-universe/$arch
-Server = https://artixlinux.qontinuum.space/artixlinux/universe/os/$arch
-Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
-Server = https://ftp.crifo.org/artix-universe/
-EOF
-
-
-pacman -Sy artix-keyring artix-archlinux-support --noconfirm
-
-pacman -Syyy
-
-cat <<\EOF >>/etc/pacman.conf
-
-### Archlinux Repo's
-[extra]
-Include = /etc/pacman.d/mirrorlist-arch
-
-[community]
-Include = /etc/pacman.d/mirrorlist-arch
-
-[multilib]
-Include = /etc/pacman.d/mirrorlist-arch
-EOF
 
 pacman -Syyy
 
@@ -53,12 +22,12 @@ mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 # mkfs.btrfs /dev/sda7 -f -L "ArchHome"
 
 # OldMac
-# mkfs.vfat -F32 /dev/sda1
-# mkfs.btrfs /dev/sda2 -f
-# mkfs.btrfs /dev/sda3 -f
+# mkfs.vfat -F32 /dev/sda1 -n "Archmac"
+# mkfs.btrfs /dev/sda2 -f -L "Archfs"
+# mkfs.btrfs /dev/sda3 -f -L "Archome"
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:14,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
 
 # Nitro
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
@@ -69,8 +38,18 @@ mount -o $BTRFS_OPTS /dev/sda6 /mnt
 #Create Subvolumes
 
 btrfs su cr /mnt/@
+btrfs su cr /mnt/@root
+btrfs su cr /mnt/@srv
+# btrfs su cr /mnt/@var
+btrfs su cr /mnt/@pacman
 btrfs su cr /mnt/@snapshots
+btrfs su cr /mnt/@containers
+btrfs su cr /mnt/@libvirt
+btrfs su cr /mnt/@lxd
+btrfs su cr /mnt/@overlay
 btrfs su cr /mnt/@var_log
+btrfs su cr /mnt/@usr_local
+btrfs su cr /mnt/@var_opt
 btrfs su cr /mnt/@tmp
 btrfs su cr /mnt/@cache
 # btrfs su cr /mnt/@swap
@@ -91,13 +70,30 @@ umount -v /mnt
 # Mount partitions (Nitro)
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
 # mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache,var/swap}
-mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache}
+mkdir -pv /mnt/{home,.snapshots,root,srv,usr/local,boot/efi,var/log,var/opt,var/tmp,var/cache}
+mkdir -pv /mnt/var/lib/containers
+mkdir -pv /mnt/var/lib/containers/storage/overlay
+mkdir -pv /mnt/var/lib/pacman
+mkdir -pv /mnt/var/lib/libvirt
+mkdir -pv /mnt/var/lib/lxd
+
+mount -o $BTRFS_OPTS,subvol=@root /dev/sda6 /mnt/root
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@srv /dev/sda6 /mnt/srv
+# mount -o $BTRFS_OPTS,subvol=@var /dev/sda6 /mnt/var
+mount -o $BTRFS_OPTS,subvol=@pacman /dev/sda6 /mnt/var/lib/pacman
+mount -o $BTRFS_OPTS,subvol=@libvirt /dev/sda6 /mnt/var/lib/libvirt
+mount -o $BTRFS_OPTS,subvol=@lxd /dev/sda6 /mnt/var/lib/lxd
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@usr_local /dev/sda6 /mnt/usr/local
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_opt /dev/sda6 /mnt/var/opt
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/sda6 /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol=@cache /dev/sda6 /mnt/var/cache
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/sda6 /mnt/var/tmp
+mount -o $BTRFS_OPTS,subvol=@containers /dev/sda6 /mnt/var/lib/containers
+mkdir -pv /mnt/var/lib/containers/storage/overlay
+mount -o $BTRFS_OPTS,subvol=@overlay /dev/sda6 /mnt/var/lib/containers/storage/overlay
 mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Mount partitions (Oldmac) | W/Systemd-Boot
@@ -111,27 +107,13 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
-# pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
+pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib mkinitcpio-nfs-utils nfs-utils --ignore linux openssh
 
 # Generate fstab
-# genfstab -U /mnt >>/mnt/etc/fstab
+genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
 # pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib --ignore linux
 
 # Generate fstab
 # genfstab -U /mnt >> /mnt/etc/fstab
-
-############    Artix    ############
-
-### Artix Runit
-basestrap /mnt base base-devel artools-base linux-lts linux-lts-headers man-pages man-db perl sysfsutils ansible duf fzf ripgrep-all python python-pip runit elogind-runit linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-runit pacman-contrib fzf ripgrep btrfs-progs --ignore linux
-
-# Generate fstab
-fstabgen -U /mnt >>/mnt/etc/fstab
-
-### Artix s6
-#basestrap /mnt base base-devel artools-base s6-base linux-lts linux-lts-headers elogind-s6 linux-firmware git intel-ucode nano neovim mtools dosfstools dropbear dropbear-s6 pacman-contrib fzf ripgrep btrfs-progs --ignore linux
-
-# Generate fstab
-#fstabgen -U /mnt >> /mnt/etc/fstab
