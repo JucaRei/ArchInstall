@@ -7,6 +7,7 @@ pacman -Sy archlinux-keyring --noconfirm
 # Enable pacman Color
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
+sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
 pacman -Syyy

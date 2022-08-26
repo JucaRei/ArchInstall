@@ -8,10 +8,10 @@ echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
-echo "archnitro" >>/etc/hostname
+echo "archteste" >>/etc/hostname
 echo "127.0.0.1 localhost" >>/etc/hosts
 echo "::1       localhost" >>/etc/hosts
-echo "127.0.1.1 archnitro.localdomain archnitro" >>/etc/hosts
+echo "127.0.1.1 archteste.localdomain archteste" >>/etc/hosts
 echo root:200291 | chpasswd
 
 # Enable pacman Color
@@ -76,13 +76,13 @@ EOF
 pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fzf ripgrep htop btop networkmanager-iwd opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
 
 # Virt-manager & lxd
-pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
+# pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
 
 # apci & tlp
 pacman -S acpi acpi_call-lts acpid tlp
 
 #Printer
-pacman -S cups hplip
+# pacman -S cups hplip
 
 # OLDMAC INSTALL BASE
 # pacman -S archlinux-keyring
@@ -123,8 +123,8 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_
 # sudo sed -i 's/#GRUB_COLOR_HIGHLIGHT="light-cyan/blue"/GRUB_COLOR_HIGHLIGHT="yellow/black"/g'
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # OLDPC don`t need it
-grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable
-# grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable --recheck --no-rs-codes --modules="btrfs zstd part_gpt part_msdos"
+# grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable
+grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable --recheck --no-rs-codes --modules="btrfs zstd part_gpt part_msdos"
 # grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 
@@ -149,7 +149,7 @@ systemctl enable tlp
 systemctl enable reflector.timer
 systemctl enable fstrim.timer
 # OLDPC don`t need it
-systemctl enable libvirtd
+# systemctl enable libvirtd
 systemctl enable firewalld
 systemctl enable acpid
 
@@ -342,7 +342,7 @@ mkinitcpio -P linux-lts
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-paccache -rk1
+paccache -rk0
 
 # pikaur -S powertop-auto-tune zramd
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
