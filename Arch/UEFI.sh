@@ -342,6 +342,8 @@ mkinitcpio -P linux-lts
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
+usermod -aG libvirt junior
+
 paccache -rk1
 
 # pikaur -S powertop-auto-tune zramd

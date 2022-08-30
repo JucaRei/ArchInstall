@@ -9,16 +9,34 @@ sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
 # Artix
-mkfs.vfat -F32 /dev/vda1 -n "ArtixBoot"
-mkfs.btrfs /dev/vda2 -f -L "ArtixRoot"
-mkfs.btrfs /dev/vda3 -f -L "ArtixHome"
+
+# parted -s -a optimal /dev/vda mklabel gpt
+# parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
+# parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
+# parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+
+# mkfs.vfat -F32 /dev/vda1 -n "ArtixBoot"
+# mkfs.btrfs /dev/vda2 -f -L "ArtixRoot"
+# mkfs.btrfs /dev/vda3 -f -L "ArtixHome"
 
 #Arch
-# mkfs.vfat -F32 /dev/vda1 -n "ArchBoot"
-# mkfs.btrfs /dev/vda2 -f -L "ArchRoot"
-# mkfs.btrfs /dev/vda3 -f -L "ArchHome"
+
+parted -s -a optimal /dev/vda mklabel gpt
+parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
+parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
+parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+
+mkfs.vfat -F32 /dev/vda1 -n "ArchBoot"
+mkfs.btrfs /dev/vda2 -f -L "ArchRoot"
+mkfs.btrfs /dev/vda3 -f -L "ArchHome"
 
 # OldMac
+
+# parted -s -a optimal /dev/vda mklabel gpt
+# parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
+# parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
+# parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+
 # mkfs.vfat -F32 /dev/sda1
 # mkfs.btrfs /dev/sda2 -f
 # mkfs.btrfs /dev/sda3 -f

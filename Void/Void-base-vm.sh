@@ -19,6 +19,11 @@ wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-2021
 
 xbps-install -Su xbps xz --yes
 
+parted -s -a optimal /dev/vda mklabel gpt
+parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
+parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
+parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+
 mkfs.vfat -F32 /dev/vda1 -n "VoidEFI"
 mkfs.btrfs /dev/vda2 -f -L "VoidRoot"
 mkfs.btrfs /dev/vda3 -f -L "VoidHome"
@@ -206,8 +211,8 @@ EOF
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
-# ignorepkg=linux
-# ignorepkg=linux-headers
+ignorepkg=linux
+ignorepkg=linux-headers
 ignorepkg=wpa_supplicant
 ignorepkg=nvi
 ignorepkg=openssh
@@ -495,7 +500,9 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 # mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 # mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
+# chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Void" --efi-directory=/boot/efi --no-nvram --removable
+
 chroot /mnt update-grub
 
 # GRUB Configuration
@@ -579,30 +586,31 @@ export ZRAM_SIZE=100
 EOF
 
 # MakeSwap
-chroot /mnt mkdir -pv /var/swap
-mount -o subvol=@swap /dev/vda2 /mnt/var/swap
+# chroot /mnt mkdir -pv /var/swap
+# mount -o subvol=@swap /dev/vda2 /mnt/var/swap
 # chroot /mnt btrfs subvolume create /var/swap
-chroot /mnt/ touch var/swap/swapfile
-chroot /mnt truncate -s 0 /var/swap/swapfile
-chroot /mnt chattr +C /var/swap/swapfile
-chroot /mnt btrfs property set /var/swap/swapfile compression none
-chroot /mnt chmod 600 /var/swap/swapfile
-chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=100M count=10 status=progress
-chroot /mnt mkswap /var/swap/swapfile
-chroot /mnt swapon /var/swap/swapfile
+# chroot /mnt/ touch var/swap/swapfile
+# chroot /mnt truncate -s 0 /var/swap/swapfile
+# chroot /mnt chattr +C /var/swap/swapfile
+# chroot /mnt lsattr /var/swap/swapfile
+# chroot /mnt btrfs property set /var/swap/swapfile compression none=3
+# chroot /mnt chmod 0600 /var/swap/swapfile
+# chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=100M count=10 status=progress
+# chroot /mnt mkswap /var/swap/swapfile
+# chroot /mnt swapon /var/swap/swapfile
 
 # Add to fstab
-SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
-echo $SWAP_UUID
-echo " " >>/mnt/etc/fstab
-echo "# Swap" >>/mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
+# SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
+# echo $SWAP_UUID
+# echo " " >>/mnt/etc/fstab
+# echo "# Swap" >>/mnt/etc/fstab
+# echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+# echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 #Runit por default
 chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /var/service/
-# chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
