@@ -18,7 +18,7 @@ paru -S netmount-s6 nfs-utils nfs-utils-s6 samba samba-s6 fusesmb metalog metalo
 # paru -S nvidia-tweaks nvidia-prime xf86-video-intel 
 
 
-sudo cat <<EOF > /etc/samba/smb.conf
+sudo cat << \EOF > /etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
@@ -70,7 +70,7 @@ EOF
 
 #Fix mount external HD
 sudo mkdir -pv /etc/udev/rules.d
-sudo cat << EOF > /etc/udev/rules.d/99-udisks2.rules
+sudo cat << \EOF > /etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -81,7 +81,7 @@ EOF
 # Not asking for password
 
 sudo mkdir -pv /etc/polkit-1/rules.d
-sudo cat << EOF > /etc/polkit-1/rules.d/10-udisks2.rules
+sudo cat << \EOF > /etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {

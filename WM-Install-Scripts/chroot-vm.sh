@@ -8,6 +8,12 @@ sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
+# VERIFY BOOT MODE
+# efi_boot_mode(){
+#     [[ -d /sys/firmware/efi/efivars ]] && return 0
+#     return 1
+# }
+
 # Artix
 
 # parted -s -a optimal /dev/vda mklabel gpt
@@ -25,6 +31,57 @@ parted -s -a optimal /dev/vda mklabel gpt
 parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
 parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
 parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+
+    ### SGDISK ###
+
+# Print partition table
+# sgdisk -p /dev/vda 
+
+
+# Delete partition x
+# sgdisk -d -1 /dev/vda 
+
+
+# Create a new partition numbered x, starting at y and ending at z:
+# sgdisk -n 1:1MiB:2MiB /dev/vda
+# sgdisk -n 0:0MiB:600MiB /dev/vda
+
+# Change the name of partition x to y:
+# sgdisk -c 1:grub /dev/vda
+
+
+# Change the type of partition x to y:
+# sgdisk -t 1:ef02 /dev/vda
+
+
+# List the partition type codes:
+# sgdisk --list-types
+
+
+# Destroy all partitions
+# sgdisk --zap-all /dev/vda 
+# sgdisk -Zop /dev/vda
+
+# IN_DEVICE=/dev/vda
+# BOOT_SIZE=512M
+# SWAP_SIZE=2G
+# ROOT_SIZE=6.5G
+# HOME_SIZE= -2048s
+
+# BOOT_DEVICE="${IN_DEVICE}1"
+# ROOT_DEVICE="${IN_DEVICE}2"
+# SWAP_DEVICE="${IN_DEVICE}3"
+# HOME_DEVICE="${IN_DEVICE}3"
+
+
+
+# if $(efi_boot_mode); then
+#     sgdisk -Z "$IN_DEVICE"
+#     sgdisk -n 1::+"$EFI_SIZE" -t 1:ef00 -c 1:EFI "$IN_DEVICE"
+#     sgdisk -n 2::+"$ROOT_SIZE" -t 2:8300 -c 2:ROOT "$IN_DEVICE"
+#     # sgdisk -n 3::+"$SWAP_SIZE" -t 3:8200 -c 3:SWAP "$IN_DEVICE"
+#     sgdisk -n 3 -c 3:HOME "$IN_DEVICE"
+# fi
 
 mkfs.vfat -F32 /dev/vda1 -n "ArchBoot"
 mkfs.btrfs /dev/vda2 -f -L "ArchRoot"
