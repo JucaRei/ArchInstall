@@ -15,12 +15,19 @@
 
 
 
+#NFS
+alias volume2="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_a2 /home/$USER/Videos/Volume2 -o nolock"
+alias volume1="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_b2 /home/$USER/Videos/Volume1 -o nolock"
+
+# Make playlist for mpv
+alias playlistmaker="find ./ -type f | sort > pl.m3u"
+
 #Mirrors
 
 alias mirrors="rankmirrors -v -n 5 /etc/pacman.d/mirrorlist"
 
-alias dietpi="ssh root@192.168.1.200"
-#
+alias dietpi="ssh dietpi@192.168.1.200"
+alias dietroot="ssh root@192.168.1.200"
 
 alias btrfm="findmnt -t btrfs -o TARGET,SOURCE"
 
@@ -114,6 +121,21 @@ alias fix-keyserver="[ -d ~/.gnupg ] || mkdir ~/.gnupg ; cp /etc/pacman.d/gnupg/
 #hblock (stop tracking with hblock)
 #use unhblock to stop using hblock
 alias unhblock="hblock -S none -D none"
+
+#Others
+alias tarnow='tar -acf'
+alias untar='tar -zxvf'
+alias psmem='ps auxf | sort -nr -k 4'
+alias psmem10='ps auxf | sort -nr -k 4 | head -10'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias ......='cd ../../../../..'
+alias dir='dir --color=auto'
+alias vdir='vdir --color=auto'
+alias cat='bat --pager=never --theme=ansi'
+alias catf='bat --theme=ansi'
 
 #clear
 alias clean="clear; seq 1 $(tput cols) | sort -R | sparklines | lolcat"
@@ -680,7 +702,6 @@ esac
 alias top='htop'
 alias cat='bat --pager=never --theme=ansi'
 alias catf='bat --theme=ansi'
-
 ### ARCHIVE EXTRACTION
 # usage: ex <file>
 ex() {
@@ -783,3 +804,4 @@ PERL5LIB="/home/junior/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LI
 PERL_LOCAL_LIB_ROOT="/home/junior/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
 PERL_MB_OPT="--install_base \"/home/junior/perl5\""; export PERL_MB_OPT;
 PERL_MM_OPT="INSTALL_BASE=/home/junior/perl5"; export PERL_MM_OPT;
+
