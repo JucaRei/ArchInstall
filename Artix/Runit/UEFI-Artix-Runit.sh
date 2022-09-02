@@ -26,19 +26,15 @@ Server = https://mirror1.cl.netactuate.com/artix/universe/$arch
 Server = https://ftp.crifo.org/artix-universe/
 EOF
 
-pacman -Syyy
+pacman -Sy
 
-pacman -Sy artix-keyring artix-archlinux-support --noconfirm
+pacman-key --init && pacman-key --populate archlinux artix
 
-
-# pacman -Sy lib32-artix-archlinux-support --noconfirm
-pacman-key --populate artix
-
-pacman-key --populate archlinux
 
 # Enable pacman Color
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
+sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 8/g' /etc/pacman.conf
 
 # Enable multilib repo
@@ -66,9 +62,6 @@ EOF
 
 pacman -Syyw
 
-pacman -S archlinux-keyring --noconfirm
-pacman -Syyw
-
 # cat << EOF >> /etc/pacman.conf
 # [universe]
 # Server = https://universe.artixlinux.org/$arch
@@ -80,10 +73,6 @@ pacman -Syyw
 # [omniverse]
 # Server = http://omniverse.artixlinux.org/$arch
 # EOF
-
-pacman-key --populate archlinux
-
-pacman -Syy
 
 # paru -S auto-cpufreq
 # pacman -S reflector
@@ -285,7 +274,7 @@ mkdir -pv /etc/runit/sv/runsvdir-junior
 mkdir -pv $HOME/.runit/sv
 touch /etc/runit/sv/runsvdir-junior/run
 chmod +x /etc/runit/sv/runsvdir-junior/run
-cat <<EOF >>/etc/runit/sv/runsvdir-junior/run
+cat <<\EOF >>/etc/runit/sv/runsvdir-junior/run
 #!/bin/sh
 
 export USER="junior"

@@ -53,8 +53,8 @@ doas ln -sfv /etc/runit/sv/psd /run/runit/service
 # doas sv start redshift
 # doas sv start colord
 
-doas sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
-doas sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
+# doas sed -i "s/#export ZRAM_COMP_ALGORITHM='lz4'/export ZRAM_COMP_ALGORITHM='zstd'/g" /etc/runit/sv/zramen/conf
+# doas sed -i 's/#export ZRAM_SIZE=25/export ZRAM_SIZE=100/g' /etc/runit/sv/zramen/conf
 
 doas touch /etc/default/earlyoom
 doas cat <<EOF >/etc/default/earlyoom
@@ -104,7 +104,8 @@ doas ln -s /etc/runit/sv/firewalld/ /run/runit/service
 # doas ln -s /etc/runit/sv/optimus-manager /run/runit/service
 # doas ln -s /etc/runit/sv/lightdm /run/runit/service
 
-doas sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+# doas sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+doas sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel)/g' /etc/mkinitcpio.conf
 doas sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
 doas sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
 
