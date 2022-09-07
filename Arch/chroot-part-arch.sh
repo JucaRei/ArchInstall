@@ -12,15 +12,10 @@ sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 5/g' /etc/pacman.conf
 
 pacman -Syyy
 
-# Artix
-mkfs.vfat -F32 /dev/sda5 -n "ArtixBoot"
-mkfs.btrfs /dev/sda6 -f -L "ArtixRoot"
-mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
-
 #Arch
-# mkfs.vfat -F32 /dev/sda5 -n "ArchBoot"
-# mkfs.btrfs /dev/sda6 -f -L "ArchRoot"
-# mkfs.btrfs /dev/sda7 -f -L "ArchHome"
+mkfs.vfat -F32 /dev/sda4 -n "ArchBoot"
+mkfs.btrfs /dev/sda6 -f -L "ArchRoot"
+mkfs.btrfs /dev/sda6 -f -L "ArchHome"
 
 # OldMac
 # mkfs.vfat -F32 /dev/sda1 -n "Archmac"
@@ -30,8 +25,10 @@ mkfs.btrfs /dev/sda7 -f -L "ArtixHome"
 set -e
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
 
+mount -t btrfs /dev/sda6 /mnt
+
 # Nitro
-mount -o $BTRFS_OPTS /dev/sda6 /mnt
+# mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
 # OldMac
 # mount -o $BTRFS_OPTS /dev/sda2 /mnt
@@ -53,15 +50,16 @@ btrfs su cr /mnt/@usr_local
 btrfs su cr /mnt/@var_opt
 btrfs su cr /mnt/@tmp
 btrfs su cr /mnt/@cache
+btrfs su cr /mnt/@home
 # btrfs su cr /mnt/@swap
 
 # Remove partition
 umount -v /mnt
 
-# Nitro mount home
-mount -o $BTRFS_OPTS /dev/sda7 /mnt
-btrfs su cr /mnt/@home
-umount -v /mnt
+# Nitro mount home on separated partition
+# mount -o $BTRFS_OPTS /dev/sda6 /mnt
+# btrfs su cr /mnt/@home
+# umount -v /mnt
 
 # OldMac mount home
 # mount -o $BTRFS_OPTS /dev/sda3 /mnt
@@ -79,7 +77,7 @@ mkdir -pv /mnt/var/lib/libvirt
 mkdir -pv /mnt/var/lib/lxd
 
 mount -o $BTRFS_OPTS,subvol=@root /dev/sda6 /mnt/root
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@srv /dev/sda6 /mnt/srv
 # mount -o $BTRFS_OPTS,subvol=@var /dev/sda6 /mnt/var
 mount -o $BTRFS_OPTS,subvol=@pacman /dev/sda6 /mnt/var/lib/pacman
@@ -95,7 +93,7 @@ mount -o $BTRFS_OPTS,subvol=@tmp /dev/sda6 /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol=@containers /dev/sda6 /mnt/var/lib/containers
 mkdir -pv /mnt/var/lib/containers/storage/overlay
 mount -o $BTRFS_OPTS,subvol=@overlay /dev/sda6 /mnt/var/lib/containers/storage/overlay
-mount -t vfat -o defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
+mount -t vfat -o defaults,noatime,nodiratime /dev/sda4 /mnt/boot/efi
 
 # Mount partitions (Oldmac) | W/Systemd-Boot
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt

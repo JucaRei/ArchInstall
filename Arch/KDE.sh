@@ -10,9 +10,13 @@ sudo firewall-cmd --reload
 reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
 sudo pacman -Syy
 
+cd /tmp
 git clone https://aur.archlinux.org/pikaur.git
 cd pikaur/
 makepkg -si --noconfirm
+cd ..
+rm -rf pikaur/
+cd
 
 # pikaur -S --noconfirm system76-power
 # sudo systemctl enable --now system76-power
@@ -80,6 +84,8 @@ pikaur -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings v
 
 # Intel
 pikaur -S --needed lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader
+
+doas mkinitcpio -P linux-lts
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird
 
