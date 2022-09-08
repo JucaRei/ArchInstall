@@ -229,6 +229,16 @@ cat <<EOF >/etc/samba/smb.conf
    guest ok = no
 EOF
 
+### systemctl
+mkdir -pv /etc/sysctl.d
+touch /etc/sysctl.d/00-sysctl.conf
+cat <<EOF >/etc/sysctl.d/00-sysctl.conf
+vm.vfs_cache_pressure=500
+vm.swappiness=100
+vm.dirty_background_ratio=1
+vm.dirty_ratio=50
+dev.i915.perf_stream_paranoid=0
+EOF
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
 cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
