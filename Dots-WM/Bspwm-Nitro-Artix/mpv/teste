@@ -1,0 +1,333 @@
+###########
+# General #
+###########
+
+input-ipc-server=/tmp/mpvsocket # listen for IPC on this socket
+save-position-on-quit=yes       # handled by a script
+
+border=no                                # no window title bar
+msg-module=yes       # prepend module name to log messages
+msg-color=yes        # color log messages on terminal
+term-osd-bar     # display a progress bar on the terminal
+use-filedir-conf # look for additional config files in the directory of the opened file
+#pause                                    # no autoplay
+keep-open               # keep the player open when a file's end is reached
+autofit-larger=90%x90%  # resize window in case it's larger than W%xH% of the screen
+cursor-autohide-fs-only # don't autohide the cursor in window mode, only fullscreen
+input-media-keys=yes    # enable/disable OSX media keys
+cursor-autohide=1000    # autohide the curser after 1s
+prefetch-playlist=yes
+force-seekable=yes
+
+###############
+# ScreenShots #
+###############
+
+screenshot-format=png
+screenshot-png-compression=8
+screenshot-template='~/Pictures/MPV/%F (%P) %n'
+
+hls-bitrate=max # use max quality for HLS streams
+
+#[ytdl-desktop]
+#profile-desc=cond:is_desktop()
+#yt-dlp-format=bestvideo[height<=?720]+bestaudio/best
+
+# [ytdl-laptop]
+# profile-desc=cond:is_laptop()
+# yt-dlp-format=bestvideo[height<=?720][fps<=?30][vcodec!=?vp9][protocol!=http_dash_segments]+bestaudio/best
+
+# script-opts=ytdl_hook-ytdl_path=yt-dlp
+# script-opts-append="ytdl_hook-ytdl_path=yt-dlp"
+script-opts=ytdl_hook-ytdl_path=/usr/bin/yt-dlp
+
+#[ytdl-desktop]
+#profile-desc=cond:is_desktop()
+#yt-dlp-format=bestvideo[height<=?720]+bestaudio/best
+
+# [ytdl-laptop]
+# profile-desc=cond:is_laptop() yt-dlp-format=bestvideo[height <=?720][fps <=?30][vcodec!=?vp9][protocol!=http_dash_segments]+bestaudio/best
+
+# [ytdl-laptop]
+# profile-desc=cond:not dedicated_gpu()
+# ytdl-format=bestvideo[height<=?1080][fps<=?30][vcodec!=?vp9][protocol!=http_dash_segments]+bestaudio/best
+
+# function yta() {
+# mpv --yt-dlp-format=bestaudio yt-dlp://ytsearch:"$*"
+# }
+
+[default]
+
+#########
+# Cache #
+#########
+
+# Configure the cache to be really big (multiple GBs)
+# We have a lot of memory, so why not use it for something
+
+#cache=yes
+#cache-default=5000000                   # size in KB
+#cache-backbuffer=25000                  # size in KB
+#cache-initial=0                         # start playback when your cache is filled up with x kB
+#cache-secs=10                           # how many seconds of audio/video to prefetch if the cache is active
+#cache-file=/home/junior/.mpv-cache
+#cache-file-size=20971520
+
+#############
+# OSD / OSC #
+#############
+
+osc=no
+osd-level=1       # enable osd and display --osd-status-msg on interaction
+osd-duration=2500 # hide the osd after x ms
+osd-status-msg='${time-pos} / ${duration}${?percent-pos:　(${percent-pos}%)}${?frame-drop-count:${!frame-drop-count==0:　Dropped: ${frame-drop-count}}}\n${?chapter:Chapter: ${chapter}}'
+
+osd-font='GE Inspira'
+osd-font-size=32
+osd-color='#CCFFFFFF'        # ARGB format
+osd-border-color='#DD322640' # ARGB format
+#osd-shadow-offset=1                      # pixel width for osd text and progress bar
+osd-bar-align-y=0 # progress bar y alignment (-1 top, 0 centered, 1 bottom)
+osd-border-size=2 # size for osd text and progress bar
+osd-bar-h=2       # height of osd bar as a fractional percentage of your screen height
+osd-bar-w=60      # width of " " "
+
+#############
+# Subtitles #
+#############
+
+demuxer-mkv-subtitle-preroll=yes # try to show embedded subs when seeking even when no index information is present
+demuxer-mkv-subtitle-preroll-secs=2
+
+sub-auto=all # detect all subtitle
+sub-ass-vsfilter-blur-compat=yes		# Backward compatibility for vsfilter fansubs
+sub-ass-scale-with-window=no			# May have undesired effects with signs being misplaced. 
+#no-sub-visibility                         # hidden as default
+sub-auto=fuzzy            # external subs don't have to match the file name exactly to autoload
+sub-file-paths-append=ass # search for external subs in these relative subdirectories
+sub-bold=yes
+sub-file-paths-append=srt
+sub-file-paths-append=sub
+sub-file-paths-append=subs
+sub-file-paths-append=subtitles
+
+demuxer-mkv-subtitle-preroll    # try to correctly show embedded subs when seeking
+embeddedfonts=yes               # use embedded fonts for SSA/ASS subs
+sub-fix-timing=no               # do not try to fix gaps (which might make it worse in some cases)
+sub-ass-force-style=Kerning=yes # allows you to override style parameters of ASS scripts
+sub-use-margins
+sub-ass-force-margins
+
+# the following options only apply to subtitles without own styling (i.e. not ASS but e.g. SRT)
+sub-font="Roboto Condensed"
+sub-font-size=63
+sub-color="#dbcb4f"
+sub-border-color="#FF262626"
+sub-border-size=3.2
+sub-shadow-offset=1
+sub-shadow-color="#33000000"
+sub-spacing=0.5
+
+#############
+# Languages #
+#############
+
+slang=por,pt_BR,pt,en,eng,de,deu,ger          # automatically select these subtitles (decreasing priority)
+alang=en,ja,jp,jpn,hk,en,eng,pt_BR,de,deu,ger # automatically select these audio tracks (decreasing priority)
+
+#########
+# Audio #
+#########
+
+audio-file-auto=fuzzy      # external audio doesn't has to match the file name exactly to autoload
+audio-pitch-correction=yes # automatically insert scaletempo when playing with higher speed
+volume-max=200             # maximum volume in %, everything above 100 results in amplification
+volume=100                 # default volume, 100 = unchanged
+af=acompressor
+
+#####################
+# High Quality Conf #
+#####################
+
+# Defaults for all profiles
+# tscale=oversample                      # [sharp] oversample <-> linear (triangle) <-> catmull_rom <-> mitchell <-> gaussian <-> bicubic [smooth]
+# opengl-early-flush=no
+# opengl-pbo=no                          # "yes" is currently bugged: https://github.com/mpv-player/mpv/issues/4988
+# icc-profile-auto
+# hwdec=no
+
+# [high-quality]
+# profile-desc=cond:is_high(get('width', 0), get('height', 0), get('estimated-vf-fps', 0))
+# # hanning with this radius is broken on OSX due to OpenGL driver bug
+# #scale=ewa_hanning
+# #scale-radius=3.2383154841662362
+# scale=ewa_lanczossharp
+# cscale=spline36
+# dscale=catmull_rom
+# scale-antiring=0
+# cscale-antiring=0
+# dither-depth=auto
+# correct-downscaling=yes
+# sigmoid-upscaling=yes
+# deband=yes
+# #glsl-shaders-append="~/.mpv/shaders/KrigBilateral.glsl"
+# glsl-shaders-append="~/.mpv/shaders/ravu-lite-r4.hook"
+# glsl-shaders-append="~/.mpv/shaders/ravu-lite-r4.hook"
+# glsl-shaders-append="~/.mpv/shaders/ravu-lite-r4.hook"
+# #glsl-shaders-append="~/.mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl"
+# #glsl-shaders-append="~/.mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl"
+# #glsl-shaders-append="~/.mpv/shaders/FSRCNNX_x2_8-0-4-1.glsl"
+
+# [mid-quality]
+# profile-desc=cond:is_mid(get('width', 0), get('height', 0), get('estimated-vf-fps', 0))
+# scale=spline36
+# cscale=bicubic
+# dscale=catmull_rom
+# scale-antiring=1.0
+# cscale-antiring=1.0
+# dither-depth=auto
+# correct-downscaling=yes
+# sigmoid-upscaling=yes
+# deband=yes
+# glsl-shaders-set=""
+
+# [low-quality]
+# profile-desc=cond:is_low(get('width', 0), get('height', 0), get('estimated-vf-fps', 0))
+# scale=bilinear
+# cscale=bilinear
+# dscale=bilinear
+# scale-antiring=0
+# cscale-antiring=0
+# dither-depth=no
+# correct-downscaling=no
+# sigmoid-upscaling=no
+# deband=no
+# glsl-shaders-set=""
+
+# [4K-lavc-threads]
+# profile-desc=cond:get('width', -math.huge) >= 3840
+# vd-lavc-threads=32
+
+# [4K-lavc-threads-inverted]
+# profile-desc=cond:get('width', math.huge) < 3840
+# vd-lavc-threads=0
+
+#vo=vaapi
+#vo=xv
+#opengl-es=yes
+#hwdec=auto-copy
+#hwdec=nvdec-copy
+
+# [Default]
+# vo=gpu
+# fbo-format=rgb
+# profile=gpu-hq
+# scale=ewa_lanczossharp
+# cscale=ewa_lanczossharp
+# video-sync=display-resample
+# interpolation
+# tscale=oversample # [sharp] oversample <-> linear (triangle) <-> catmull_rom <-> mitchell <-> gaussian <-> bicubic [smooth]
+# hwdec=nvdec
+
+# Old PCs (Increase Perfomance)
+# vd-lavc-fast
+# vd-lavc-skiploopfilter=<skipvalue>
+# vd-lavc-skipframe=<skipvalue>
+# vd-lavc-framedrop=<skipvalue>
+# vd-lavc-threads=<threads>
+
+gpu-api=vulkan
+hwdec=auto-copy
+vulkan-async-compute=yes
+vulkan-async-transfer=yes
+vulkan-queue-count=1
+autofit=85%x85%
+dither=error-diffusion
+deband=yes
+deband-iterations=2
+deband-threshold=20
+deband-range=16
+scale=ewa_hanning
+scale-radius=3.2383154841662362
+cscale=ewa_lanczossoft
+dscale=mitchell
+scale-antiring=0
+cscale-antiring=0
+correct-downscaling=yes
+linear-downscaling=no
+sigmoid-upscaling=yes
+video-sync=display-resample
+tscale=box
+tscale-window=quadric
+tscale-radius=1.1
+tscale-clamp=0.0
+interpolation=no
+blend-subtitles=no
+hdr-compute-peak=yes
+tone-mapping=mobius
+
+###########
+# KDE Fix #
+###########
+
+# x11-bypass-compositor=yes
+x11-bypass-compositor=no
+
+#############
+# Log Files #
+#############
+#log-file=$HOME/.config/mpv/logs
+
+###################################
+# Protocol Specific Configuration #
+###################################
+
+[protocol.file]
+network-timeout=0
+force-window=yes
+cache=yes
+demuxer-max-bytes=2000MiB
+demuxer-readahead-secs=300
+force-seekable=yes
+
+[protocol-network]
+network-timeout=5
+#force-window=immediate
+hls-bitrate=max
+cache=yes
+demuxer-max-bytes=2000MiB
+demuxer-readahead-secs=300
+
+[protocol.http]
+profile=protocol-network
+
+[protocol.https]
+profile=protocol-network
+
+[shaders-high]
+glsl-shaders-clr
+glsl-shader="~/.config/mpv/shaders/TsubaUP.glsl"
+
+[shaders-medium]
+glsl-shaders-clr
+glsl-shader="~~/.config/mpv/shaders/ravu-zoom-r3-rgb.hook"
+
+[default]    
+
+# profile=shaders-high
+profile=shaders-medium
+
+# [protocol.https]
+# cache=yes
+# user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:57.0) Gecko/20100101 Firefox/58.0'
+
+# [protocol.http]
+# cache=yes
+# user-agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:57.0) Gecko/20100101 Firefox/58.0'
+
+# [Idle]
+# profile-cond=p["idle-active"]
+# profile-restore=copy-equal
+# title=' '
+# keepaspect=no
+# background=1
