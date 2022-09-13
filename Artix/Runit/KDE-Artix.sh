@@ -27,10 +27,10 @@ sudo firewall-cmd --reload
 #paru -S nvidia-tweaks nvidia-settings
 
 
-paru -Syu xorg-server xorg-server-xdmx xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh  xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb ttf-dejavu libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font dejavu-fonts-ttf btop
+paru -Syu xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh  xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb ttf-dejavu libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font btop
 
 # KDE
-paru -S sddm sddm-runit plasma-meta wsdd2 glow konsole exa duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular wsdd2 ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition microsoft-edge-stable-bin pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+paru -S sddm sddm-runit plasma-meta glow konsole exa duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular ark kate kwrite kcalc spectacle krunner partitionmanager firefox-esr vivaldi vivaldi-widevine vivaldi-snapshot-ffmpeg-codecs vivaldi-update-ffmpeg-hook pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono gwenview plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 # Nvidia card
 paru -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader nvidia-tweaks
@@ -42,7 +42,7 @@ paru -S --needed lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader li
 # sudo snap install beekeeper-studio postbird
 
 # Enable KDE
-# sudo ln -s /etc/runit/sv/sddm /run/runit/service
+sudo ln -s /etc/runit/sv/sddm /run/runit/service
 
 #Enable Cinnamon
 # sudo systemctl enable lightdm

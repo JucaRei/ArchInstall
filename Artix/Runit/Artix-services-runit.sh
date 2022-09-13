@@ -15,7 +15,7 @@ sleep 5
 cd $HOME/Documents/workspace/Configs/ArchInstall/Arch/Arch_pkgs
 doas pacman -U paru**.zst --noconfirm
 doas pacman -U pikaur**.zst --noconfirm
-doas pacman -U hfsprogs**.zst --noconfirm200291
+doas pacman -U hfsprogs**.zst --noconfirm
 # doas pacman -U nosystemd-boot**.zst --noconfirm
 
 paru -Syyu --noconfirm
@@ -25,7 +25,7 @@ cd
 # EarlyOOM checks the amount of available memory & swap periodically & kills memory according to the set pre-configured value. You can install it with earlyoom-runit.
 
 # paru -S netmount-runit zramen-runit fusesmb shell-color-scripts starship lxpolkit-git bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
-paru -S netmount-runit fusesmb zramen-runit shell-color-scripts sparklines-git bash-completion libgee vala gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
+paru -S netmount-runit fusesmb zramen-runit lolcat shell-color-scripts sparklines-git bash-completion libgee vala gvfs-smb gvfs-nfs playerctl uswsusp-git dbus-python gvfs-goa gvfs-mtp gvfs-afc udevil light smartmontools ethtool gnome-keyring autofs starship bash-zsh-insulter deadbeef mpv redshift yt-dlp earlyoom earlyoom-runit ananicy-cpp-runit tlp tlp-runit
 # paru -Sy mate-polkit
 # paru -S conky conky-manager2-git ttf-conkyweather
 
