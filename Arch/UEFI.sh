@@ -2,7 +2,7 @@
 
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
-sed -i '177s/.//' /etc/locale.gen
+sed -i '171s/.//' /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
@@ -153,12 +153,15 @@ systemctl enable libvirtd
 systemctl enable firewalld
 systemctl enable acpid
 
-useradd -m junior
-echo junior:200291 | chpasswd
-usermod -aG wheel junior
+set -e
+USER=junior
 
-echo "junior ALL=(ALL) ALL" >>/etc/sudoers.d/junior
-echo "junior ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/junior
+useradd -m $USER
+echo $USER:200291 | chpasswd
+usermod -aG wheel $USER
+
+echo "$USER ALL=(ALL) ALL" >>/etc/sudoers.d/$USER
+echo "$USER ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/$USER
 
 # Power top
 touch /etc/rc.local
@@ -238,6 +241,7 @@ vm.swappiness=100
 vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 dev.i915.perf_stream_paranoid=0
+net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
@@ -274,19 +278,19 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-# usermod -aG storage junior
+# usermod -aG storage $USER
 
 # Doas Set user permition
 cat <<EOF >/etc/doas.conf
 # allow user but require password
-permit keepenv :junior
+permit keepenv :$USER
 
 # allow user and dont require a password to execute commands as root
-permit nopass keepenv :junior
+permit nopass keepenv :$USER
 
 # mount drives
-permit nopass :junior cmd mount
-permit nopass :junior cmd umount
+permit nopass :$USER cmd mount
+permit nopass :$USER cmd umount
 
 # musicpd service start and stop
 #permit nopass :$USER cmd service args musicpd onestart
@@ -309,6 +313,47 @@ touch /etc/modprobe.d/i915.conf
 cat <<\EOF >/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
+
+#### Podman ####
+set -e
+USER='junior'
+
+touch /etc/{subgid,subuid}
+
+cat <<EOF >/etc/subuid
+$USER:100000:65536
+test:165536:65536
+EOF
+
+cat <<EOF >/etc/subgid
+$USER:100000:65536
+test:165536:65536
+EOF
+
+chmod 644 /etc/subgid /etc/subuid
+usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER
+
+sysctl -w "net.ipv4.ping_group_range=0 2000000"
+
+pacman -S podman slirp4netns buildah cni-plugins podman-compose podman-dnsname podman-docker fuse-overlayfs --noconfirm
+
+cat <<EOF >>/etc/containers/registries.conf
+
+[registries.search]
+registries = ['docker.io', 'registry.fedoraproject.org', 'quay.io', 'registry.access.redhat.com', 'registry.centos.org']
+EOF
+
+podman system migrate
+loginctl enable-linger $USER
+loginctl user-status $USER
+# rootless
+mkdir -pv /home/$USER/.config/systemd/
+
+## Make persistence
+# $ podman generate systemd --name nginx --files
+# $ systemctl --user daemon-reload
+# $ systemctl --user enable --now container-nginx.service
+# $ systemctl --user status container-nginx.service
 
 # SWAP
 
@@ -352,7 +397,10 @@ mkinitcpio -P linux-lts
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-usermod -aG libvirt junior
+set -e
+USER='junior'
+
+usermod -aG libvirt $USER
 
 paccache -rk1
 

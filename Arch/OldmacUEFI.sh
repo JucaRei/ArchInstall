@@ -13,7 +13,6 @@ echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 oldarch.localdomain oldarch" >>/etc/hosts
 echo root:200291 | chpasswd
 
-
 # OLDMAC INSTALL BASE
 pacman -S archlinux-keyring
 pacman -Syyy
@@ -56,7 +55,7 @@ pacman -Rs linux acpi_call --noconfirm
 
 pacman -S acpi_call-lts --noconfirm
 
-mkinitcpio -P linux-lts 
+mkinitcpio -P linux-lts
 
 # choose which you want
 cd ArchInstall/Arch/Arch_pkgs
@@ -82,13 +81,12 @@ systemctl enable zramd
 # echo "# Swap" >> /etc/fstab
 # echo "/swapfile      none     swap      defaults  0 0" >> /etc/fstab
 
-
 # Systemd-Boot
 bootctl --path=/boot install
-echo "default arch.conf" >> /boot/loader/loader.conf
+echo "default arch.conf" >>/boot/loader/loader.conf
 touch /boot/loader/entries/arch.conf
 
-cat << EOF > /boot/loader/entries/arch.conf
+cat <<EOF >/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-lts
 initrd  /intel-ucode.img
@@ -96,6 +94,5 @@ initrd  /initramfs-linux-lts.img
 options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
 EOF
 # options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce  vt.global_cursor_default=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
-
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"

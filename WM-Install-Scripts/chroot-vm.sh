@@ -32,15 +32,13 @@ parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
 parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
 parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
 
-    ### SGDISK ###
+### SGDISK ###
 
 # Print partition table
-# sgdisk -p /dev/vda 
-
+# sgdisk -p /dev/vda
 
 # Delete partition x
-# sgdisk -d -1 /dev/vda 
-
+# sgdisk -d -1 /dev/vda
 
 # Create a new partition numbered x, starting at y and ending at z:
 # sgdisk -n 1:1MiB:2MiB /dev/vda
@@ -49,17 +47,14 @@ parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
 # Change the name of partition x to y:
 # sgdisk -c 1:grub /dev/vda
 
-
 # Change the type of partition x to y:
 # sgdisk -t 1:ef02 /dev/vda
-
 
 # List the partition type codes:
 # sgdisk --list-types
 
-
 # Destroy all partitions
-# sgdisk --zap-all /dev/vda 
+# sgdisk --zap-all /dev/vda
 # sgdisk -Zop /dev/vda
 
 # IN_DEVICE=/dev/vda
@@ -72,8 +67,6 @@ parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
 # ROOT_DEVICE="${IN_DEVICE}2"
 # SWAP_DEVICE="${IN_DEVICE}3"
 # HOME_DEVICE="${IN_DEVICE}3"
-
-
 
 # if $(efi_boot_mode); then
 #     sgdisk -Z "$IN_DEVICE"
@@ -143,8 +136,12 @@ umount -v /mnt
 mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
 # mkdir -pv /mnt/{home,.snapshots,boot/efi,var/log,var/tmp,var/cache,var/swap}
 mkdir -pv /mnt/{home,.snapshots,root,srv,usr/local,boot/efi,var/log,var/opt,var/tmp,var/cache}
+# docker
+# mkdir -pv /mnt/var/lib/docker
+# podman root or docker
 mkdir -pv /mnt/var/lib/containers
 mkdir -pv /mnt/var/lib/containers/storage/overlay
+
 mkdir -pv /mnt/var/lib/pacman
 mkdir -pv /mnt/var/lib/libvirt
 mkdir -pv /mnt/var/lib/lxd
@@ -178,10 +175,10 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot/efi
 ############    ARCH     ############
 
 ### Nitro
- pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware dropbear git nano neovim intel-ucode fzf duf reflector mtools dosfstools btrfs-progs pacman-contrib --ignore linux openssh
+pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware dropbear git nano neovim intel-ucode fzf duf reflector mtools dosfstools btrfs-progs pacman-contrib --ignore linux openssh
 
 # Generate fstab
- genfstab -U /mnt >> /mnt/etc/fstab
+genfstab -U /mnt >>/mnt/etc/fstab
 
 ### Old Mac
 # pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware btrfs-progs git neovim nano reflector duf exa fzf ripgrep pacman-contrib duf --ignore linux
