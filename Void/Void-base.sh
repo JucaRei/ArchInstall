@@ -11,9 +11,16 @@
 # sv restart dhcpcd
 # ip link set up <interface>
 
+xbps-install -Sy 
+xbps-install -u 
+
 xbps-install -Sy wget vsv xz vpm neovim git --yes
 
-wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
+# GlibC
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
+
+# MUSL
+# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20221001.tar.xz
 
 xbps-install -Su xbps xz --yes
 
@@ -22,8 +29,12 @@ mkfs.btrfs /dev/sda6 -f -L "VoidRoot"
 mkfs.btrfs /dev/sda7 -f -L "VoidHome"
 
 set -e
+
+# GLIBC
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:16,space_cache=v2,commit=120,autodefrag,discard=async"
+# MUSL
+# XBPS_ARCH="x86_64-musl"
+BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda6 /mnt
 
@@ -63,7 +74,10 @@ mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
 mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
+# GLIBC
 tar xvf ./void-x86_64-*.tar.xz -C /mnt
+# Musl
+# tar xvf ./void-x86_64-*.tar.xz -C /mnt
 sync
 
 for dir in dev proc sys run; do
@@ -181,7 +195,7 @@ Section "InputClass"
 EndSection
 EOF
 
-# Repositorios mais rapidos
+# Repositorios mais rapidos GLIBC
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
@@ -197,6 +211,24 @@ EOF
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
+
+# Repositorios mais rapidos MUSL
+# cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
+# EOF
+
 
 # Ignorar alguns pacotes
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
@@ -320,7 +352,7 @@ HARDWARECLOCK="localtime"
 #TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
-KEYMAP="br-abnt2"
+# KEYMAP="br-abnt2"
 #KEYMAP="br"
 
 # Console font to load, see setfont(8).

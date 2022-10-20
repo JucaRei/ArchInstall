@@ -71,11 +71,15 @@ EOF
 # Exec=/bin/sh -c while read -r trg; do case $trg in linux-lts) exit 0; esac; done; /usr/bin/mkinitcpio -p linux-lts
 # EOF
 
-# KDE
-pikaur -S xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font  btop
+# Xorg Packages
+pikaur -S xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font  
 
 #Plasma
 pikaur -S sddm kio zramd kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow kdialog plasma5-applets-eventcalendar wget curl snapd smb4k partitionmanager zramd firefox-esr pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
+
+# Utils
+pacman -S btop --noconfirm
+
 #KDE
 pikaur -S ark dolphin ffmpegthumbs kamoso kate kcalc kdegraphics-thumbnailers kompare konsole okular spectacle
 

@@ -21,8 +21,8 @@ xbps-install -Su xbps xz --yes
 
 parted -s -a optimal /dev/vda mklabel gpt
 parted -s -a optimal /dev/vda mkpart primary fat32 1 200MiB
-parted -s -a optimal /dev/vda mkpart primary 200MiB 7GiB
-parted -s -a optimal -- /dev/vda mkpart primary btrfs 7GiB -2048s
+parted -s -a optimal /dev/vda mkpart primary 200MiB 8GiB
+parted -s -a optimal -- /dev/vda mkpart primary btrfs 8GiB -2048s
 
 mkfs.vfat -F32 /dev/vda1 -n "VoidEFI"
 mkfs.btrfs /dev/vda2 -f -L "VoidRoot"
@@ -461,6 +461,7 @@ EOF
 # chroot /mnt grep 'kversion=$(uname -r)'| dracut --force --kver "$kversion"
 # chroot /mnt dracut --force --kver 5.10.**
 # chroot /mnt xbps-reconfigure -f linux5.4
+chroot /mnt dracut --regenerate-all --force
 chroot /mnt xbps-reconfigure -f linux-lts
 # chroot /mnt xbps-reconfigure -f linux
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
@@ -776,6 +777,60 @@ git clone --depth=1 https://github.com/madand/runit-services Services
 mv Services /mnt/home/juca/
 
 # Gerar initcpio
-chroot /mnt xbps-reconfigure -fa
+chroot /mnt xbps-reconfigure --all
+
+### hrmpf
+
+chroot /mnt vpm i linux5.10 linux5.10-headers base-system-0.114_1 linux-base acpi atop btop blktrace bonnie++ cpuburn cpuinfo diskscan dmidecode dstat extrace f3 fatrace fio hdapsd hddtemp htop hwinfo i2c-tools idle3-tools interbench ioping ioprof iotop ipmitool lm_sensors lshw lsof lsscsi ltrace mcelog mei-amt-check memtester msr-tools nethogs pciutils powertop read-edid smartmontools strace stress stress-ng sysstat tiptop tpm-tools unixbench usbutils virt-what 6tunnel arp-scan avahi avahi-discover samba arpwatch autossh bind-utils bmon bridge-utils bwm-ng chrony create_ap ddclient dhclient dhcpcd dracut-network ethstatus ethtool ferm fping grepcidr horst hostapd httptunnel ifenslave ifstatus iftop inadyn inetutils-hostname inetutils-talk iodine ipcalc iperf iprange iproute2 ipset iptables iptraf-ng iputils iw jnettop ldns lft liboping libressl-netcat lldpd miniupnpc miruo mosh msmtp mtr ndisc6 nemesis net-snmp net-tools nfs-utils sv-netmount nftables ngrep nload nmon ntp openbsd-netcat openssh openssh-sk-helper pchar polysh ppp pptpclient procmail radvd redsocks rpcbind s6 s6-linux-utils s6-dns s6-networking shorewall shorewall6 sipcalc slurm socat sshpass sshuttle swaks tailscale tcpdump tcpflow tcping tcptrack tinyssh tor traceroute vde2 vpnc wavemon whois wireless_tools wol wpa_supplicant NetworkManager iwd wrk wvdial vpm vsv neofetch dust duf bat glow aha alsa-lib alsa-utils ascii at attr bc beep buffer busybox byobu cdrtools cmark colordiff convmv cpulimit cpupower crda cronie curl daemonize dateutils db dbus debootstrap detox di dialog diffutils dos2unix dtach duff dvtm earlyoom efmd entr etckeeper execline fail faketime fbgrab fbset fdupes file findutils firejail fwupd fzy gawk gcal gpm grep hostmux icdiff inotify-tools irqbalance jo jq kbd kexec-tools less linux-firmware linux-firmware-amd intel-ucode linux-firmware-intel linux-firmware-network linux-firmware-nvidia linux-firmware-broadcom acl-progs logrotate lr lrzsz lxc mawk mbuffer mc metalog miller minised ministat mmv msrc_base mtm multitail multitime ncdu gdu necho nocache nq nsjail numactl odo opendoas oue outils par parallel pax-utils perl pfetch picocom pmr progress psmisc pv python3 qrencode quota ranger rdd rdfind reap reptyr ripgrep rlwrap rw rwc s6 sample schedtool screen shmux sispmctl snooze socklog-void su-exec sudo tab the_silver_searcher time tmux tree ttyrec ugrep util-linux vimpager watchdog wgetpaste which xe xjobs xmlstarlet xtools bcache-tools btrfs-progs cryptsetup zoxide dmg2img dmraid dosfstools dumpet e2fsprogs gvfs-smb gvfs-mtp gvfs-afc exfat-utils ext4magic fuse fuse-exfat fuse-sshfs geteltorito gptfdisk hdparm hfsprogs hfsutils jfsutils kpartx lvm2 mdadm mergerfs mhddfs mtools nbd ntfs-3g nvme-cli nwipe open-iscsi partclone parted s3cmd s3fs-fuse sdparm sg3_utils simple-mtpfs squashfs-tools sysfsutils tc-play tgt u9fs udftools xfsdump xfsprogs zerofree zfs efibootmgr efitools efivar grub grub-i386-efi grub-x86_64-efi gummiboot lilo ms-sys sbsigntool syslinux vboot-utils bsdtar bzip2 cabextract cksfv cpio dpkg gzip lbzip2 lrzip lzip lzop p7zip par2cmdline pax pbzip2 pigz pixz plzip rpmextract sharutils tar unp unrar unzip xz zip zstd zutils age ccrypt chntpw dnsmap udisks2 udiskie easyrsa ent ettercap gnupg2 gnupg2-scdaemon hashcat haveged john keyutils kismet masscan minisign nmap opensc opensc-pkcs11 openssl p0f paperkey pass passwdqc pdfcrack pgpdump pwgen reaver reop rng-tools scrypt testssl.sh yubikey-manager zmap autoconf automake binutils bison cpanminus cvs flex gcc gdb gettext git wget inxi glibc-devel libtool m4 make mercurial patch pkg-config rcs redo smake texinfo minised base-devel aide antiword b3sum bcal biew binwalk bvi chkrootkit dcraw ddrescue dhex docx2txt e2tools extundelete fbv flashrom foremost hashdeep hexd ht hyx ired jhead lz4jsoncat mtree pev pixd rhash rkhunter sleuthkit ssdeep testdisk tweak vbindiff cmus cmus-flac cmus-libao cmus-mpc cpat crawl ddate libao-sndio mpg123 nethack nudoku sndio tmines vitetris vorbis-tools mpv attic backupninja borg btrbk bup csync csync2 dar duplicity dvdbackup fsarchiver mt-st rdiff-backup rdumpfs restic rsnapshot rsync snapraid snazzer unison zbackup zpaq dash es ksh mksh pdmenu parallel posh rc bash tcsh yash zsh starship bash-completion dte e3 ed emacs ex-vi jupp mg nano neatvi nvi qed vim neovim alpine bombadillo edbrowse elinks ii inetutils-ftp inetutils-telnet irssi ldapvi lftp links lynx mblaze mcabber mpop mutt ncftp poezio rtorrent s-nail sacc sic tin tnftp trn w3m dnsmasq fastd hitch inetutils-inetd nginx nsd opensmtpd openvpn polipo privoxy rsyslog stunnel tftp-hpa tinyproxy unbound wireguard-tools xinetd ansible python3-xlrd sc sc-im visidata when xev mons xorg-minimal lxdm lxqt volumeicon pavucontrol pulseaudio lxappearance octoxbps gvfs FeatherPad gtk2-engines zip unzip picom xdg-user-dirs gnome-themes-standard network-manager-applet xset pcmanfm libfm libfm-extra libfm-gtk+3 xorg-input-drivers xorg-video-drivers liberation-fonts-ttf dejavu-fonts-ttf dbus-elogind-x11 alsa-plugins-pulseaudio alsa-utils elogind bash-completion xfce4-terminal qterminal ttf-ubuntu-font-family papirus-icon-theme dialog --yes
+
+touch /mnt/tmp/uname.sh
+cat << \EOF > /mnt/tmp/uname.sh
+#!/bin/bash
+
+# Tool to fake the output in chroot to adjust the
+# used kernel version in different Makefiles.
+
+# prepare system by rehash uname from /bin/uname
+# to /tmp/uname: "hash -p /tmp/uname uname"
+
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+
+if [ $# -eq 0 ]; then
+	/bin/uname
+fi
+
+
+while getopts "asnrvmpio" opt; do
+	case "$opt" in
+	## collection of different output options
+		### -r ==================================================================
+		#### return the latest installed kernel version
+		r) ls /boot/vmlinuz* | sed 's/\/boot\/vmlinuz-//' | sort -V | tail -n1
+		#### …
+#		r) …
+		;;
+
+		### -v ==================================================================
+		#### …
+#		v) …
+#		;;
+
+		### -m ==================================================================
+		#### return maschine arch of an arm hard floating platform
+		m) echo armhf
+		;;
+
+		# default: just use original to provide output
+		# currently only working with a single option on the command call
+		*) /bin/uname -$opt
+		;;
+	esac
+done
+EOF
+
+
 
 printf "\e[1;32mInstallation finished! Umount -a and reboot.\e[0m"
+
+# usr/bin/dracut --force '/boot/initramfs-5.10.147_1.img' '5.10.147_1'
