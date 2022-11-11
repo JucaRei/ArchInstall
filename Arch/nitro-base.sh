@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Set Infos
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 sed -i '171s/.//' /etc/locale.gen
@@ -14,7 +15,7 @@ echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 archnitro.localdomain archnitro" >>/etc/hosts
 echo root:200291 | chpasswd
 
-# Enable pacman Color
+# Some pacman confs
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
@@ -32,8 +33,8 @@ sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 
 pacman -Syyw
 
-pacman -S archlinux-keyring --noconfirm
-pacman -Syyw
+# pacman -S archlinux-keyring --noconfirm
+# pacman -Syyw
 
 # Add Chaotic repo
 pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
@@ -62,8 +63,12 @@ sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
 
 pacman -Sy
 
-mkdir -p /media
+set -e 
+USER="junior"
 
+mkdir -pv /media/$USER
+
+# Fix Tmpfs
 cat <<EOF >>/etc/fstab
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
@@ -73,7 +78,7 @@ EOF
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack
-pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fzf ripgrep htop btop networkmanager-iwd opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fzf ripgrep htop btop networkmanager-iwd iwd samba opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
 
 # Virt-manager & lxd
 pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
@@ -89,16 +94,6 @@ pacman -S cups hplip
 # pacman -Syyy
 # pacman -S efibootmgr exfat-utils networkmanager network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools base-devel pacman-contrib reflector bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion zsh ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
 
-# pacman -S xf86-video-intel mesa vulkan-intel
-
-#Open-Source Drivers (Oldpc)
-# pacman -S xf86-video-nouveau
-
-# nvidia if you are using zen linux kernel
-# pacman -S nvidia-dkms nvidia-utils nvidia-settings
-
-# pacman -S nvidia-tweaks nvidia-settings
-
 # OLDMAC (late 2008) lts kernel nvidia-340xx-lts-dkms
 # sudo pacman -S xf86-video-nouveau xf86-video-intel xorg-server xorg-server-common
 # pacman -S nvidia-340xx-lts-dkms
@@ -108,44 +103,51 @@ pacman -S cups hplip
 # sudo pacman -S nvidia-304xx
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
-# mkdir -pv /etc/NetworkManager/conf.d/
-# cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
-# [device]
-# wifi.backend=iwd
-# wifi.iwd.autoconnect=yes
-# EOF
+mkdir -pv /etc/NetworkManager/conf.d/
+touch /etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<EOF >>/etc/NetworkManager/conf.d/wifi_backend.conf
+[device]
+wifi.backend=iwd
+wifi.iwd.autoconnect=yes
+EOF
+
+# Config iwd
+mkdir -pv /etc/iwd
+touch /etc/iwd/main.conf
+cat << EOF > main.conf
+[General]
+EnableNetworkConfiguration=true
+
+[Network]
+NameResolvingService=systemd
+RouterPriorityOffset=30
+EOF
+
 
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-# sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 # sudo sed -i 's/GRUB_COLOR_NORMAL="light-blue/black"/GRUB_COLOR_NORMAL="red/black"/g'
 # sudo sed -i 's/#GRUB_COLOR_HIGHLIGHT="light-cyan/blue"/GRUB_COLOR_HIGHLIGHT="yellow/black"/g'
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
-# OLDPC don`t need it
-grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable
+grub-install --target=x86_64-efi --bootloader-id=Grubarch --efi-directory=/boot/efi --no-nvram --removable --recheck
 # grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable --recheck --no-rs-codes --modules="btrfs zstd part_gpt part_msdos"
-# grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Arch --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 
 systemctl enable NetworkManager
 systemctl enable bluetooth
-systemctl enable iwd
 systemctl enable dropbear
 systemctl enable irqbalance
 systemctl enable preload
 systemctl enable ananicy-cpp
-systemctl enable smbd
-systemctl enable nmbd
+systemctl enable smb
+systemctl enable nmb
 systemctl enable chronyd
-#systemctl enable cups.service
-# OLDPC don`t need it
 #systemctl enable sshd
 systemctl enable dropbear
-# OLDPC don`t need it
 systemctl enable avahi-daemon
 # You can comment this command out if you didn't install tlp, see above
-systemctl enable tlp
+# systemctl enable tlp
 systemctl enable reflector.timer
 systemctl enable fstrim.timer
 # OLDPC don`t need it
@@ -168,13 +170,6 @@ touch /etc/rc.local
 cat <<EOF >/etc/rc.local
 # PowerTop
 powertop --auto-tune
-
-# echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
 
 # Preload
 preload
@@ -235,7 +230,7 @@ EOF
 ### systemctl
 mkdir -pv /etc/sysctl.d
 touch /etc/sysctl.d/00-sysctl.conf
-cat <<EOF >/etc/sysctl.d/00-sysctl.conf
+cat <<\EOF >/etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
@@ -243,11 +238,12 @@ vm.dirty_ratio=50
 dev.i915.perf_stream_paranoid=0
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
+
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
 cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
-# ==1: mount filesystem to a shared directory (/media/VolumeName)
+# ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
 # See udisks(8)
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
@@ -256,7 +252,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /etc/polkit-1/rules.d
-cat <<\EOF >/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<EOF >/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -268,7 +264,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat <<\EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -314,47 +310,6 @@ cat <<\EOF >/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 
-#### Podman ####
-set -e
-USER='junior'
-
-touch /etc/{subgid,subuid}
-
-cat <<EOF >/etc/subuid
-$USER:100000:65536
-test:165536:65536
-EOF
-
-cat <<EOF >/etc/subgid
-$USER:100000:65536
-test:165536:65536
-EOF
-
-chmod 644 /etc/subgid /etc/subuid
-usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER
-
-sysctl -w "net.ipv4.ping_group_range=0 2000000"
-
-pacman -S podman slirp4netns buildah cni-plugins podman-compose podman-dnsname podman-docker fuse-overlayfs --noconfirm
-
-cat <<EOF >>/etc/containers/registries.conf
-
-[registries.search]
-registries = ['docker.io', 'registry.fedoraproject.org', 'quay.io', 'registry.access.redhat.com', 'registry.centos.org']
-EOF
-
-podman system migrate
-loginctl enable-linger $USER
-loginctl user-status $USER
-# rootless
-mkdir -pv /home/$USER/.config/systemd/
-
-## Make persistence
-# $ podman generate systemd --name nginx --files
-# $ systemctl --user daemon-reload
-# $ systemctl --user enable --now container-nginx.service
-# $ systemctl --user status container-nginx.service
-
 # SWAP
 
 # touch var/swap/swapfile
@@ -375,14 +330,7 @@ mkdir -pv /home/$USER/.config/systemd/
 # echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
 # echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
-# Mkinitcpio
-sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
-sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
-sudo sed -i 's/#COMPRESSION="xz"/COMPRESSION="xz"/g' /etc/mkinitcpio.conf
-
-mkinitcpio -P linux-lts
-
-# Resume
+# Resume from Swap
 # mkdir -pv /tmp/btrfs
 # wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
 # gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
@@ -395,6 +343,14 @@ mkinitcpio -P linux-lts
 # export RESUME_OFFSET
 # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
+# Mkinitcpio
+sudo sed -i 's/MODULES=()/MODULES=(btrfs crc32c-intel)/g' /etc/mkinitcpio.conf
+# sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel nvidia nvidia_modeset nvidia_uvm nvidia_drm)/g' /etc/mkinitcpio.conf
+sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
+sudo sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
+
+mkinitcpio -P linux-lts
+
 grub-mkconfig -o /boot/grub/grub.cfg
 
 set -e
@@ -404,5 +360,4 @@ usermod -aG libvirt $USER
 
 paccache -rk1
 
-# pikaur -S powertop-auto-tune zramd
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"

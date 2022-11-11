@@ -1,7 +1,5 @@
 #!/bin/bash
 
-reflector --protocol https --country "Brazil" --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
-
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 sed -i '171s/.//' /etc/locale.gen
@@ -19,7 +17,7 @@ echo root:200291 | chpasswd
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf
 sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i '/Color/s/^#//' /etc/pacman.conf
-sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 3/g' /etc/pacman.conf
+sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 4/g' /etc/pacman.conf
 
 # Enable multilib repo
 sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
