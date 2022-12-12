@@ -14,10 +14,10 @@
     echo "Current working directory : $(pwd)"
 
 
-
 #NFS
 alias volume2="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_a2 /home/$USER/Videos/Volume2 -o nolock"
 alias volume1="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_b2 /home/$USER/Videos/Volume1 -o nolock"
+alias sharecenter="volume1 && volume2"
 
 # Make playlist for mpv
 alias playlistmaker="find ./ -type f | sort > pl.m3u"

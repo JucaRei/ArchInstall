@@ -5,8 +5,8 @@ mkdir -pv ~/.cache/xdgr
 
 doas chmod 0700 ~/.cache/xdgr
 
-# Base Openbox
-doas vpm i lxqt xcompmgr kvantum udiskie compton-conf firefox-esr flatpak network-manager-applet blueman pavucontrol picom jq xkill menumaker gping papirus-folders papirus-icon-theme ImageMagick ranger feh xclip unclutter rofi scrot flameshot fontmanager --yes
+# Base LXQT
+doas vpm i sddm lxqt nm-tray bluedevil kvantum qtpass FeatherPad kcalc qlipper obconf-qt compton-conf xdg-desktop-portal-lxqt lxqt-themes lximage-qt udiskie compton-conf firefox-esr flatpak mpv pavucontrol-qt picom jq xkill menumaker gping papirus-folders papirus-icon-theme ImageMagick feh xclip unclutter scrot flameshot fontmanager --yes
 
 # Some themes
 doas vpm i Adapta yaru numix-themes --yes
@@ -16,11 +16,11 @@ doas vpm i Adapta yaru numix-themes --yes
 doas vpm i lightdm lightdm-gtk3-greeter --yes
 
 # More Packages
-doas vpm i zathura mpv mpd ncmpcpp neofetch glu viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
+doas vpm i alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex zathura mpv mpd ncmpcpp neofetch viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
 
 ### terminals ###      
 doas vpm i xterm rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig --yes
-doas vpm i kitty kitty-terminfo --yes
+# doas vpm i kitty kitty-terminfo --yes
 
 
 mkdir -p ~/.local/share/applications

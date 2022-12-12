@@ -581,9 +581,9 @@
             <action name="Execute">
                 <startupnotify>
                     <enabled>true</enabled>
-                    <name>kitty</name>
+                    <name>urxvt</name>
                 </startupnotify>
-                <command>kitty</command>
+                <command>urxvt</command>
             </action>
         </keybind>
         <!-- Keybindings for running applications -->

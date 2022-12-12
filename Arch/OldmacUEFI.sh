@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# General
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
 sed -i '177s/.//' /etc/locale.gen

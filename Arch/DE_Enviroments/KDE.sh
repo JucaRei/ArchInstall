@@ -89,6 +89,9 @@ pikaur -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings v
 # Intel
 pikaur -S --needed lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader
 
+# Code OSS
+pikaur -Sy code code-icons code-features-insiders
+
 doas mkinitcpio -P linux-lts
 #ferdi freezer
 # sudo snap install beekeeper-studio postbird

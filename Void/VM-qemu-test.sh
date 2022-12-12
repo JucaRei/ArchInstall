@@ -12,9 +12,38 @@
 # ip link set up <interface>
 
 
-wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
 
 xbps-install -Su xbps xz --yes
+
+# -s script call | -a optimal
+# parted -s -a optimal /dev/vda mklabel gpt
+# parted -s /dev/vda1 set 1 esp on
+
+# Print partition table
+sgdisk -p /dev/vda
+
+# Delete partition
+# sgdisk -d 1 /dev/vda
+
+# Create new partition
+sgdisk -n 0:0:100MiB /dev/vda
+sgdisk -n 0:0:2000MiB /dev/vda
+sgdisk -n 0:0:0 /dev/vda
+
+# Change the name of partition
+sgdisk -c 1:VoidBoot /dev/vda
+sgdisk -c 2:Swap /dev/vda
+sgdisk -c 3:Voidlinux /dev/vda
+
+# Change Types
+# sgdisk --list-types
+sgdisk -t 1:ef00 /dev/vda
+sgdisk -t 2:8200 /dev/vda
+sgdisk -t 3:8313 /dev/vda
+
+# Zap entire device
+# sgdisk -Z /dev/vda
 
 mkfs.vfat -F32 /dev/vda1
 mkfs.btrfs /dev/vda2 -f
@@ -72,21 +101,30 @@ compress="zstd"
 EOF
 
 # Repositorios mais rapidos
-cat << EOF > /mnt/etc/xbps.d/00-repository-main.conf
-repository=https://mirrors.servercentral.com/voidlinux/current
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current
+repository=https://voidlinux.com.br/repo/current/
+repository=http://void.chililinux.com/voidlinux/current/
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+repository=https://voidlinux.com.br/repo/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 EOF
 
-cat << EOF > /mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
+# repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+repository=https://voidlinux.com.br/repo/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
 EOF
+
 
 # Ignorar alguns pacotes
 cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
@@ -242,7 +280,7 @@ chroot /mnt xbps-install -S socklog-void --yes
 
 #Install Gummiboot
 mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
-chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+# chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 chroot /mnt gummiboot --path=/boot install
 
 chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@ rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'

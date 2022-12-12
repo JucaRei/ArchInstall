@@ -238,7 +238,6 @@ ignorepkg=linux
 ignorepkg=linux-headers
 ignorepkg=nvi
 ignorepkg=openssh
-ignorepkg=dhcpcd
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
 EOF

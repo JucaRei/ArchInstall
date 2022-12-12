@@ -11,14 +11,18 @@ btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@tmp
 btrfs su cr /mnt/@cache
 btrfs su cr /mnt/@swap
+btrfs su cr /mnt/@home
 ls
 btrfs subvol list .
-cd ..
-umount /mnt
-mount /dev/vda3 /mnt
-cd /mnt
-ls
-btrfs su cr /mnt/@home
+
+# Separate home partition
+# cd ..
+# umount /mnt
+# mount /dev/vda3 /mnt
+# cd /mnt
+# ls
+# btrfs su cr /mnt/@home
+
 cd ..
 umount /mnt
 mount /dev/vda2 /mnt
@@ -33,7 +37,8 @@ mkdir -pv /target/var/log
 mkdir -pv /target/var/tmp
 mkdir -pv /target/var/swap
 mkdir -pv /target/var/cache
-mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /target/home
+# mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /target/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /target/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /target/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /target/var/log
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/vda2 /target/var/tmp
@@ -57,10 +62,10 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /target/boot/efi
 
 UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-HOME_UUID=$(blkid -s UUID -o value /dev/vda3)
+# HOME_UUID=$(blkid -s UUID -o value /dev/vda3)
 echo $UEFI_UUID
 echo $ROOT_UUID
-echo $HOME_UUID
+# echo $HOME_UUID
 
 
 # Add to fstab
@@ -86,7 +91,8 @@ UUID=$ROOT_UUID /var/tmp        btrfs rw,noatime,ssd,compress-force=zstd:18,spac
 UUID=$ROOT_UUID /var/cache      btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@cache          0 2
 
 #HOME_FS
-UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home           0 2
+# UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home           0 2
+UUID=$ROOT_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home           0 2
 
 # EFI
 UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2

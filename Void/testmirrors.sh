@@ -1,64 +1,62 @@
-#!/bin/bash
-#
-# Ref: https://www.reddit.com/r/voidlinux/comments/6xor9j/automatically_find_fastest_update_mirror_and_use/
-# Ref: https://edpsblog.wordpress.com/2019/08/24/how-to-escolhendo-espelhos-mais-rapidos-no-void-linux/
-#
+#!/usr/bin/env -S bash
+## credits to https://paste.sh/1QS8Tgf6#aHTfRy1dOG4rcA5x_6kauwq3
 
-# mkdir -p ~/bin
-# Add to path 
-# export PATH=$HOME/bin:$PATH
+# pkg=current/xbps-0.59.1_6.x86_64.xbps
+pkg=current/xbps-0.59.1_7.x86_64.xbps
+file="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-results"
 
-# Require: xbps-install -S geoip
- 
-declare -a arr=("alpha.de.repo.voidlinux.org" \
-        "mirror.clarkson.edu" \
-        "repo-fi.voidlinux.org" \
-        "alpha.us.repo.voidlinux.org" \
-        "mirrors.servercentral.com" \
-        "repo-us.voidlinux.org" \
-        "void.webconverger.org" \
-        "mirror.ps.kz/voidlinux" \
-        "mirrors.bfsu.edu.cn/voidlinux" \ 
-        "mirrors.cnnic.cn/voidlinux" \
-        "mirrors.tuna.tsinghua.edu.cn/voidlinux" \
-        "mirror.sjtu.edu.cn/voidlinux" \
-        "void.webconverger.org" \
-        "mirror.aarnet.edu.au/pub/voidlinux" \
-        "ftp.swin.edu.au/voidlinux" \
-        "void.cijber.net" \ 
-        "mirror.erickochen.nl/voidlinux" \
-        "ftp.dk.xemacs.org/voidlinux" \
-        "mirrors.dotsrc.org/voidlinux" \
-        "quantum-mirror.hu/mirrors/pub/voidlinux" \
-        "voidlinux.mirror.garr.it" \
-        "voidlinux.qontinuum.space:4443" \
-        "mirror.fit.cvut.cz/voidlinux" \
-        "ftp.debian.ru/mirrors/voidlinux" \
-        "mirror.yandex.ru/mirrors/voidlinux" \
-        "cdimage.debian.org/mirror/voidlinux" \
-        "ftp.acc.umu.se/mirror/voidlinux" \
-        "ftp.lysator.liu.se/pub/voidlinux" \
-        "ftp.sunet.se/mirror/voidlinux" \
-        "mirror.clarkson.edu/voidlinux")
- 
-fping=10000
-frepo=""
- 
-for repo in "${arr[@]}"
-    do
-geo=`geoiplookup $repo | head -1 | sed 's/^.*: //'`
-    echo ""
-    echo "Testing ping for $repo ($geo)"
-ping=`ping -c 4 $repo | tail -1| awk '{print $4}' | cut -d '/' -f 2 | bc -l`
-    echo "$repo Average ping: $ping"
-    if (( $(bc <<< "$ping<$fping") ))
-    then
-    frepo=$repo
-    fping=$ping
-    fi
-done
- 
-geo=`geoiplookup $frepo | head -1 | sed 's/^.*: //'`
-    echo ""
-    echo "Recommended repo is: $frepo ($geo)"
-echo "Ping: $fping"
+mirrormsg() { printf '%s\n' "getting mirrors from void-docs..."; }
+
+get() {
+    rm "$file"
+    while read -r syntax mirror _ loc; do
+        case $syntax in
+        \|)
+            case $mirror in
+            Repository) ;;
+            *)
+                mirror="${mirror#<}"
+                mirror="${mirror%>}"
+                loc="${loc% |}"
+                loc="${loc%%,*}"
+                [ -n "${REGION}" ] && {
+                    [ "${REGION}" = get ] && printf '%s\n' "$loc" && continue
+                    [ ! "${loc%%:*}" = "${REGION}" ] && continue
+                }
+                printf '%s\n' "$mirror"
+                dlspeed="$(curl -Y 1048576 -# -w "%{speed_download}" "$mirror/$pkg" -o/dev/null)"
+                connect=$(printf "%.2fs" "$(curl --connect-timeout 2 -sw "%{time_appconnect}" "$mirror" -o/dev/null)")
+                echo "${mirror},${loc},${dlspeed},${connect}" >>"$file"
+                ;;
+            esac
+            ;;
+        esac
+    done <<<"$(curl -# https://raw.githubusercontent.com/void-linux/void-docs/master/src/xbps/repositories/mirrors/index.md)"
+    #echo "finished writing results of mirrors to $file"
+}
+
+format() {
+    sort -t, -nrk3 <"$file" | numfmt -d , --field 3 --to=iec-i --suffix=B/s | sed '1s/^/mirror,location,dlspeed,connect\n/' | column -s, -t
+}
+
+case "$1" in
+-g) mirrormsg && get ;;
+-f) format ;;
+-r)
+    REGION="$2"
+    mirrormsg && get
+    ;;
+-p)
+    REGION="get"
+    mirrormsg && get | sed '1s/^/region: location\n/' | column -s: -t
+    ;;
+*) cat <<EOF ;;
+usage: ${0##*/} [-g] [-f]
+  -g   get results and write to file
+  -f   format results file 
+  -r   get results from specific region if available
+  -p   print available regions and locations
+
+file: $file
+EOF
+esac
