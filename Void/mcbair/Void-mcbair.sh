@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#Formate e crie Pelo menos 3 partições para o: sistema, boot e home . Swap pode ser feito depois, com zram ou zramen
-# Baixe o tarball e entre na pasta do arquivo como ex: cd Downloads
-#curl or wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
-
 # Instalando pela wifi
 
 # cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
@@ -14,6 +10,10 @@
 wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
 
 xbps-install -Su xbps xz --yes
+
+#####################################
+####Gptfdisk Partitioning example####
+#####################################
 
 # -s script call | -a optimal
 # parted -s -a optimal /dev/vda mklabel gpt
@@ -44,6 +44,10 @@ xbps-install -Su xbps xz --yes
 # Zap entire device
 # sgdisk -Z /dev/vda
 
+#####################################
+##########  FileSystem  #############
+#####################################
+
 #mkfs.vfat -F32 /dev/sda1 -n "EFI"
 # mkfs.vfat -F32 /dev/vda1 -n "EFI"
 # mkswap /dev/vda2
@@ -52,6 +56,7 @@ swapon /dev/sda4
 # mkfs.btrfs /dev/sda4 -f -L "Voidlinux"
 mkfs.btrfs /dev/sda5 -f -L "Voidlinux"
 
+## Volumes Vda apenas para testes em vm
 set -e
 XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
@@ -60,7 +65,6 @@ mount -o $BTRFS_OPTS /dev/sda5 /mnt
 # mount -o $BTRFS_OPTS /dev/vda3 /mnt
 
 #Cria os subvolumes
-
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
@@ -75,8 +79,8 @@ umount -v /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/vda3 /mnt
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
-mkdir -pv /mnt/boot
-mkdir -pv /mnt/boot/grub
+mkdir -pv /mnt/boot     # somente este se for por gummiboot
+mkdir -pv /mnt/boot/grub        
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
@@ -122,7 +126,8 @@ cat << EOF > /mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
-add_drivers+=" btrfs i915 crc32c-intel "
+add_drivers+=" btrfs i915 crc32c-intel z3fold "
+force_drivers+=" z3fold "
 omit_dracutmodules+=" i18n nvidia luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
 nofscks="yes"
@@ -218,14 +223,14 @@ cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # ROOTFS
-UUID=$ROOT_UUID /               btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@                    0 1
-UUID=$ROOT_UUID /.snapshots     btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@snapshots           0 2
-UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_log             0 2
-UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps      0 2
+UUID=$ROOT_UUID /               btrfs rw,$BTRFS_OPTS,subvol=@                    0 0
+UUID=$ROOT_UUID /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots           0 0
+UUID=$ROOT_UUID /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log             0 0
+UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps      0 0
 
 #HOME_FS
-# UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home              0 2
-UUID=$ROOT_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@home                0 2
+# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home              0 0
+UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
 
 # EFI
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
@@ -238,7 +243,7 @@ tmpfs /tmp tmpfs noatime,mode=1777                                              
 EOF
 
 # Set user permition
-cat <<EOF >/mnt/etc/doas.conf
+cat <<\EOF >/mnt/etc/doas.conf
 # allow user but require password
 permit keepenv :juca
 
@@ -300,7 +305,9 @@ KEYMAP="us-acentos"
 #TTYS=
 EOF
 
-##    chroot
+#############################
+#### Base system chroot #####
+#############################
 
 # chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
@@ -318,19 +325,20 @@ chroot /mnt $XBPS_ARCH xbps-install base-minimal linux5.15 linux5.15-headers ope
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 
-# Grub
-chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober acl-progs btrfs-progs --yes
-# Gummiboot
-# chroot /mnt xbps-install -S gummiboot --yes
+# Grub #
+# chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit os-prober acl-progs btrfs-progs --yes
+
+# Gummiboot #
+chroot /mnt xbps-install -S gummiboot --yes
 
 # Some firmwares and utils
-chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi linux-firmware-network gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors --yes
-chroot /mnt xbps-install -S light kbdlight powertop arp-scan skim xev earlyoom bash-completion nocache parallel bcache-tools necho starship dropbear neovim ripgrep dust exa fzf xtools inxi lshw alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex vim git wget curl nano htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
-#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
+chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors --yes
+chroot /mnt xbps-install -S light kbdlight powertop arp-scan skim xev earlyoom bash-completion starship dropbear neovim ripgrep exa fzf xtools inxi lshw alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi btop dialog git wget curl nano htop elogind vsv vpm chrony neofetch duf lua bat glow bluez bluez-alsa sof-firmware xdg-desktop-portal-lxqt xdg-utils --yes
+#chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb dbus-elogind dbus-elogind-libs dbus-elogind-x11 polkit xdg-user-dirs
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf alsa-plugins-pulseaudio netcat lsscsi btop dialog --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
@@ -359,10 +367,10 @@ EOF
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
 # "Mons is a Shell script to quickly manage 2-monitors display using xrandr."
-chroot /mnt xbps-install -S mons --yes
+# chroot /mnt xbps-install -S mons --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
@@ -630,13 +638,13 @@ mv ncdu /mnt/usr/local/bin
 
 # chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
 # chroot /mnt bash -c 'echo "options root=/dev/vda3 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
-# chroot /mnt bash -c 'echo "options root=/dev/sda5 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
+chroot /mnt bash -c 'echo "options root=/dev/sda5 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Grub
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id="Void"
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot --no-nvram --removable --recheck
-chroot /mnt update-grub
+# chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot --no-nvram --removable --recheck
+# chroot /mnt update-grub
 
 
 chroot /mnt xbps-reconfigure -fa

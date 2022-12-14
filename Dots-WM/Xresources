@@ -28,9 +28,9 @@ URxvt.keysym.Shift-Up: command:\033]720;1\007
 URxvt.keysym.Shift-Down: command:\033]721;1\007
 
 ! appearance
-URxvt.geometry: 		100x30
+URxvt.geometry: 		     100x30
 URxvt.depth:             32
-URxvt.transparent:      true
+URxvt.transparent:       true
 URxvt.shading:           50
 URxvt.underlineColor:    #4682B4
 URxvt.highlightColor:    #666666
