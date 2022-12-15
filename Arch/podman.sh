@@ -21,14 +21,17 @@ usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER
 
 sysctl -w "net.ipv4.ping_group_range=0 2000000"
 
-# Install podman needed
+# Install podman needed (arch)
 pacman -S podman slirp4netns buildah cni-plugins podman-compose podman-dnsname podman-docker fuse-overlayfs aardvark-dns --needed --noconfirm
+# Voidlinux
+vpm i podman slirp4netns buildah cni-plugins podman-compose fuse-overlayfs containers.image --yes
 
 # Nvidia Podman or Docker
 pikaur -S libnvidia-container --noconfirm
 
 # Make podman able to run another architectures
 pacman -Sy qemu-user-static qemu-user-static-binfmt --noconfirm
+vpm i qemu-user-static binfmt-support --yes
 
 
 cat <<EOF >>/etc/containers/registries.conf
@@ -76,6 +79,10 @@ loginctl enable-linger $USER
 loginctl user-status $USER
 # rootless
 mkdir -pv /home/$USER/.config/{systemd,containers}
+
+sudo mount -o remount,shared / /
+sudo mount --make-rshared /
+
 
 ## Make persistence
 # $ podman generate systemd --name nginx --files

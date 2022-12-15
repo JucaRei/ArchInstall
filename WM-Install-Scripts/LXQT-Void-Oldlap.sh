@@ -16,7 +16,7 @@ doas vpm i Adapta yaru numix-themes --yes
 doas vpm i lightdm lightdm-gtk3-greeter --yes
 
 # More Packages
-doas vpm i alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex zathura mpv mpd ncmpcpp neofetch viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip zenmap --yes
+doas vpm i alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex zathura mpv mpd ncmpcpp neofetch viewnior udevil htop geany geany-plugins-extra geany-plugins xarchiver zip --yes
 
 ### terminals ###      
 doas vpm i xterm rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig --yes
@@ -165,12 +165,12 @@ cd $HOME/Documents/Workspace/Others
 git clone --depth=1 https://gitlab.com/dwt1/shell-color-scripts.git
 cd shell-color-scripts
 rm -rf /opt/shell-color-scripts || return 1
-sudo mkdir -p /opt/shell-color-scripts/colorscripts || return 1
-sudo cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
-sudo cp colorscript.sh /usr/bin/colorscript
+doas mkdir -p /opt/shell-color-scripts/colorscripts || return 1
+doas cp -rf colorscripts/* /opt/shell-color-scripts/colorscripts
+doas cp colorscript.sh /usr/bin/colorscript
 
 # optional for zsh completion
-sudo cp zsh_completion/_colorscript /usr/share/zsh/site-functions
+doas cp zsh_completion/_colorscript /usr/share/zsh/site-functions
 
 # generate menu
 # mmaker -vf OpenBox3
