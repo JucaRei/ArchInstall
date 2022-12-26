@@ -19,7 +19,7 @@ alias sharecenter="volume1 && volume2"
 alias dietpi="ssh dietpi@192.168.1.200"
 alias dietroot="ssh root@192.168.1.200"
 
-# Echo Path 
+# Echo Path
 alias ep="echo ${PATH} | sed -e $'s/:/\\\n/g'"
 
 # Add an "alert" alias for long running commands.  Use like so:
@@ -53,7 +53,6 @@ alias prettygit="git log --graph --abbrev-commit --no-notes --decorate --format=
 # alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged --name tor-browser jess/tor-browser'
 # alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged -p 5800:5800 --name tor-browser domistyle/tor-browser'
 
-
 ########################################################
 ####################### Utils ##########################
 ########################################################
@@ -75,7 +74,6 @@ alias btrfsli="sudo btrfs su li / -t"
 # export PATH="$HOME/.vscode/extensions:$PATH"
 # export PATH="$HOME/usr/bin/code/:$PATH"
 # export PATH="/opt/visual-studio-code/bin/code:$PATH"
-
 
 # gpg encryption
 # verify signature for isos
@@ -121,7 +119,6 @@ alias fix-permissions="sudo chown -R $USER:$USER ~/.config ~/.local"
 alias probe="sudo -E hw-probe -all -upload"
 alias sysfailed="systemctl list-units --failed"
 
-
 ####################################################################################
 
 #systeminfo (Systemd)
@@ -162,11 +159,10 @@ alias treed='tree -CAFd'
 alias mountedinfo='df -hT'
 
 # Copy file with a progress bar
-cpp()
-{
-	set -e
-	strace -q -ewrite cp -- "${1}" "${2}" 2>&1 \
-	| awk '{
+cpp() {
+  set -e
+  strace -q -ewrite cp -- "${1}" "${2}" 2>&1 |
+    awk '{
 	count += $NF
 	if (count % 10 == 0) {
 		percent = count / total_size * 100
@@ -182,25 +178,22 @@ cpp()
 	END { print "" }' total_size=$(stat -c '%s' "${1}") count=0
 }
 
-
 # Copy and go to the directory
-cpg ()
-{
-	if [ -d "$2" ];then
-		cp $1 $2 && cd $2
-	else
-		cp $1 $2
-	fi
+cpg() {
+  if [ -d "$2" ]; then
+    cp $1 $2 && cd $2
+  else
+    cp $1 $2
+  fi
 }
 
 # Move and go to the directory
-mvg ()
-{
-	if [ -d "$2" ];then
-		mv $1 $2 && cd $2
-	else
-		mv $1 $2
-	fi
+mvg() {
+  if [ -d "$2" ]; then
+    mv $1 $2 && cd $2
+  else
+    mv $1 $2
+  fi
 }
 
 # Create and go to the directory
@@ -360,10 +353,8 @@ alias untar='tar -xvf'
 alias unbz2='tar -xvjf'
 alias ungz='tar -xvzf'
 
-
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
-
 
 # alias chmod commands
 alias mx='chmod a+x'
@@ -374,10 +365,10 @@ alias 755='chmod -R 755'
 alias 777='chmod -R 777'
 
 # Changing "ls" to "exa"
-alias ls='exa -lha --color=always --group-directories-first' # my preferred listing
-alias la='exa -a --color=always --group-directories-first'  # all files and dirs
-alias ll='exa -l --color=always --group-directories-first'  # long format
-alias lt='exa -aT --color=always --group-directories-first' # tree listing
+alias ls='exa -lha --color=always --group-directories-first'  # my preferred listing
+alias la='exa -a --color=always --group-directories-first'    # all files and dirs
+alias ll='exa -l --color=always --group-directories-first'    # long format
+alias lt='exa -aT --color=always --group-directories-first'   # tree listing
 alias lz='exa -lSrh --color=always --group-directories-first' # sort by size
 alias l.='exa -a | egrep "^\."'
 
@@ -423,8 +414,8 @@ alias cp="cp -i"
 alias mv='mv -i'
 alias rm='rm -iv'
 alias mkdir='mkdir -pv'
-alias cpa='advcp -g -i -v --update --recursive'
-alias mva='advmv -g -i -v'
+alias cpa='advcp --progress-bar --interactive --update --recursive --verbose'
+alias mva='advmv --progress-bar --interactive --update --verbose'
 
 #cp without confirm overwrint something
 alias cpay='yes | advcp -g -i -v --update --recursive'
@@ -610,67 +601,63 @@ ex() {
 }
 
 # Returns the last 2 fields of the working directory
-pwdtail ()
-{
-	pwd|awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
+pwdtail() {
+  pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
 # Show the current distribution
-distribution ()
-{
-	local dtype
-	# Assume unknown
-	dtype="unknown"
-	
-	# First test against Fedora / RHEL / CentOS / generic Redhat derivative
-	if [ -r /etc/rc.d/init.d/functions ]; then
-		source /etc/rc.d/init.d/functions
-		[ zz`type -t passed 2>/dev/null` == "zzfunction" ] && dtype="redhat"
-	
-	# Then test against SUSE (must be after Redhat,
-	# I've seen rc.status on Ubuntu I think? TODO: Recheck that)
-	elif [ -r /etc/rc.status ]; then
-		source /etc/rc.status
-		[ zz`type -t rc_reset 2>/dev/null` == "zzfunction" ] && dtype="suse"
-	
-	# Then test against Debian, Ubuntu and friends
-	elif [ -r /lib/lsb/init-functions ]; then
-		source /lib/lsb/init-functions
-		[ zz`type -t log_begin_msg 2>/dev/null` == "zzfunction" ] && dtype="debian"
-	
-	# Then test against Gentoo
-	elif [ -r /etc/init.d/functions.sh ]; then
-		source /etc/init.d/functions.sh
-		[ zz`type -t ebegin 2>/dev/null` == "zzfunction" ] && dtype="gentoo"
-	
-	# For Mandriva we currently just test if /etc/mandriva-release exists
-	# and isn't empty (TODO: Find a better way :)
-	elif [ -s /etc/mandriva-release ]; then
-		dtype="mandriva"
+distribution() {
+  local dtype
+  # Assume unknown
+  dtype="unknown"
 
-	# For Slackware we currently just test if /etc/slackware-version exists
-	elif [ -s /etc/slackware-version ]; then
-		dtype="slackware"
+  # First test against Fedora / RHEL / CentOS / generic Redhat derivative
+  if [ -r /etc/rc.d/init.d/functions ]; then
+    source /etc/rc.d/init.d/functions
+    [ zz$(type -t passed 2>/dev/null) == "zzfunction" ] && dtype="redhat"
 
-	fi
-	echo $dtype
+  # Then test against SUSE (must be after Redhat,
+  # I've seen rc.status on Ubuntu I think? TODO: Recheck that)
+  elif [ -r /etc/rc.status ]; then
+    source /etc/rc.status
+    [ zz$(type -t rc_reset 2>/dev/null) == "zzfunction" ] && dtype="suse"
+
+  # Then test against Debian, Ubuntu and friends
+  elif [ -r /lib/lsb/init-functions ]; then
+    source /lib/lsb/init-functions
+    [ zz$(type -t log_begin_msg 2>/dev/null) == "zzfunction" ] && dtype="debian"
+
+  # Then test against Gentoo
+  elif [ -r /etc/init.d/functions.sh ]; then
+    source /etc/init.d/functions.sh
+    [ zz$(type -t ebegin 2>/dev/null) == "zzfunction" ] && dtype="gentoo"
+
+  # For Mandriva we currently just test if /etc/mandriva-release exists
+  # and isn't empty (TODO: Find a better way :)
+  elif [ -s /etc/mandriva-release ]; then
+    dtype="mandriva"
+
+  # For Slackware we currently just test if /etc/slackware-version exists
+  elif [ -s /etc/slackware-version ]; then
+    dtype="slackware"
+
+  fi
+  echo $dtype
 }
 
 ### ALIASES ###
 
 # Searches for text in all files in the current folder
-ftext ()
-{
-	# -i case-insensitive
-	# -I ignore binary files
-	# -H causes filename to be printed
-	# -r recursive search
-	# -n causes line number to be printed
-	# optional: -F treat search term as a literal, not a regular expression
-	# optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
-	grep -iIHrn --color=always "$1" . | less -r
+ftext() {
+  # -i case-insensitive
+  # -I ignore binary files
+  # -H causes filename to be printed
+  # -r recursive search
+  # -n causes line number to be printed
+  # optional: -F treat search term as a literal, not a regular expression
+  # optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
+  grep -iIHrn --color=always "$1" . | less -r
 }
-
 
 # root privileges
 alias doas="doas --"
@@ -730,4 +717,3 @@ fi
 
 ### SETTING THE STARSHIP PROMPT ###
 eval "$(starship init bash)"
-

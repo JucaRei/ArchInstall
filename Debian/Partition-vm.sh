@@ -1,11 +1,17 @@
 #!/bin/sh
 
 umount /target/boot/efi
-umount /target/home/
+# umount /target/home/
 umount /target/
 mount /dev/vda2 /mnt
 cd /mnt
 ls
+btrfs su cr /mnt/@
+cd @rootfs/
+mv ** ../@/
+cd ..
+ls @/
+btrfs su delete @rootfs
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@tmp
@@ -23,13 +29,14 @@ btrfs subvol list .
 # ls
 # btrfs su cr /mnt/@home
 
-cd ..
+# mount /dev/vda2 /mnt
+cd /
 umount /mnt
-mount /dev/vda2 /mnt
-cd /mnt
+# cd /mnt
+
 set -e
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:16,space_cache=v2,commit=120,autodefrag,discard=async"
-mount -o $BTRFS_OPTS,subvol=@rootfs /dev/vda2 /target
+mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /target
 mkdir -pv /target/home
 mkdir -pv /target/.snapshots
 mkdir -pv /target/boot/efi
@@ -45,7 +52,6 @@ mount -o $BTRFS_OPTS,subvol=@tmp /dev/vda2 /target/var/tmp
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/vda3 /target/var/swap
 mount -o $BTRFS_OPTS,subvol=@cache /dev/vda2 /target/var/cache
 mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /target/boot/efi
-
 
 # SWAP
 
@@ -67,7 +73,6 @@ echo $UEFI_UUID
 echo $ROOT_UUID
 # echo $HOME_UUID
 
-
 # Add to fstab
 # set -e
 # SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
@@ -77,7 +82,7 @@ echo $ROOT_UUID
 # echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
 # echo "/var/swap/swapfile none swap sw 0 0" >> /etc/fstab
 
-cat <<EOF > /target/etc/fstab
+cat <<EOF >/target/etc/fstab
 #
 # See fstab(5).
 #
@@ -100,7 +105,6 @@ UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codep
 tmpfs /tmp tmpfs defaults,noatime,nosuid,nodev,mode=1777 0 0
 EOF
 
-
 # Add to fstab
 # set -e
 # SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
@@ -114,5 +118,3 @@ EOF
 # bootctl --path=/boot install
 # bootctl --path=/boot/efi install
 # echo "default arch.conf" >> /boot/loader/loader.conf
-
-
