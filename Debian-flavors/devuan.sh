@@ -1,76 +1,45 @@
 #!/bin/bash
 
-# BR repo
-cat <<EOF >/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
-repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
-EOF
+apt update && apt install btrfs-progs wget -y
 
-cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-EOF
-
-cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-EOF
-
-cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-EOF
-
-vpm sync
-
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
-
-xbps-install -Su xbps xz --yes
+# wget -c http://deb.devuan.org/devuan/pool/main/d/debootstrap/debootstrap_1.0.126+nmu1devuan1.tar.gz
 
 #####################################
 ####Gptfdisk Partitioning example####
 #####################################
 
 # -s script call | -a optimal
-# parted -s -a optimal /dev/vda mklabel gpt
+sgdisk -Z /dev/sda
+parted -s -a optimal /dev/sda mklabel gpt
 
 # Create new partition
-# sgdisk -n 0:0:100MiB /dev/vda
-# sgdisk -n 0:0:2000MiB /dev/vda
-# sgdisk -n 0:0:0 /dev/vda
+sgdisk -n 0:0:100MiB /dev/sda
+sgdisk -n 0:0:0 /dev/sda
 
 # Change the name of partition
-# sgdisk -c 1:VoidBoot /dev/vda
-# sgdisk -c 2:Swap /dev/vda
-# sgdisk -c 3:Voidlinux /dev/vda
+sgdisk -c 1:Devuan /dev/sda
+sgdisk -c 2:Devroot /dev/sda
 
 # Change Types
-# sgdisk -t 1:ef00 /dev/vda
-# sgdisk -t 2:8200 /dev/vda
-# sgdisk -t 3:8300 /dev/vda
+sgdisk -t 1:ef00 /dev/sda
+sgdisk -t 2:8300 /dev/sda
 
-# sgdisk -p /dev/vda
+sgdisk -p /dev/sda
 
 #####################################
 ##########  FileSystem  #############
 #####################################
 
-# mkfs.vfat -F32 /dev/sda1 -n "EFI"
-mkswap /dev/sda4
-swapon /dev/sda4
-mkfs.btrfs /dev/sda5 -f -L "Voidlinux"
+mkfs.vfat -F32 /dev/sda1 -n "Grub"
+mkfs.btrfs /dev/sda2 -f -L "Devuan"
 
 ## Volumes Vda apenas para testes em vm
 set -e
-XBPS_ARCH="x86_64"
+DEVUAN_ARCH="amd64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:19,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 # mount -o $BTRFS_OPTS /dev/vda5 /mnt
-mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS /dev/sda2 /mnt
 
 #Cria os subvolumes
 btrfs su cr /mnt/@
@@ -78,33 +47,32 @@ btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 # btrfs su cr /mnt/@swap
-btrfs su cr /mnt/@var_cache_xbps
+# btrfs su cr /mnt/@var_cache_xbps
 umount -v /mnt
 
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
-# mkdir -pv /mnt/boot # somente este se for por gummiboot
-mkdir -pv /mnt/boot/grub
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
+mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/swap
-mkdir -pv /mnt/var/cache/xbps
+# mkdir -pv /mnt/var/cache/xbps
 
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
-# mount -o $BTRFS_OPTS,subvol=@swap /dev/sda4 /mnt/var/swap
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda5 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/ #grub
-# mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/   # Gummiboot
-# mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda2 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
+# mount -o $BTRFS_OPTS,subvol=@swap /dev/sda2 /mnt/var/swap
+# mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda2 /mnt/var/cache/xbps
+mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi 
 
-# Descompacta e copia para /mnt o tarball
-tar xvf ./void-x86_64-*.tar.xz -C /mnt
-sync
+# debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
+# debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
+# debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
+debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
+
 
 for dir in dev proc sys run; do
         mount --rbind /$dir /mnt/$dir
@@ -113,10 +81,6 @@ done
 
 # copia o arquivo de resolv para o /mnt
 cp -v /etc/resolv.conf /mnt/etc/
-
-#Copy the RSA keys from the installation medium to the target root directory
-mkdir -p /mnt/var/db/xbps/keys
-cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
@@ -136,32 +100,17 @@ cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
-add_drivers+=" btrfs i915 intel_agp crc32c-intel z3fold "
+add_drivers+=" btrfs i915 crc32c-intel z3fold "
 force_drivers+=" z3fold "
-omit_dracutmodules+=" i18n nvidia brltty convertfs luks rpmversion lvm securityfs fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+omit_dracutmodules+=" i18n nvidia convertfs luks rpmversion lvm securityfs fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
 nofscks="yes"
 no_host_only_commandline="yes"
 compress="zstd"
 EOF
 
-# Early micro code
-cat <<EOF >/mnt/etc/dracut.conf.d/intel_ucode.conf
-early_microcode=yes
-EOF
-
-cat <<EOF > /mnt/etc/resolv.conf 
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-nameserver 1.1.1.1
-EOF
-
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-sysctl.conf
-# Intel Graphics
-dev.i915.perf_stream_paranoid=0
-
-# Swap
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
@@ -182,28 +131,19 @@ EOF
 
 # Repositorios mais rapidos
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
-repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
+# Package repositories
+deb http://devuan.c3sl.ufpr.br/merged chimaera main
+deb http://devuan.c3sl.ufpr.br/merged chimaera-updates main  
+deb http://devuan.c3sl.ufpr.br/merged chimaera-security main  
+deb http://devuan.c3sl.ufpr.br/merged chimaera-backports main  
+
+# Source repositories
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera main  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-updates main  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-security main  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-backports main 
 EOF
 
-cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-EOF
 
 # Ignorar alguns pacotes
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
@@ -234,41 +174,32 @@ EOF
 # chroot /mnt xbps-remove -Rcon f2fs-tools linux linux-headers openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh os-prober rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 chroot /mnt xbps-remove -Rcon f2fs-tools openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh os-prober rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
-cat <<EOF >/mnt/etc/xbps.d/graphics-null.conf
-# ignorepkg=vulkan-loader
-# ignorepkg=mesa-opencl
-# ignorepkg=libclc
-# ignorepkg=ocl-icd
-EOF
 
-cat <<EOF >/mnt/etc/xbps.d/90-lxqt-ignore.conf
-ignorepkg=qterminal
-ignorepkg=lxqt-about
-ignorepkg=lxqt-sudo
-EOF
+HOSTNAME=devnitro
 
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-mcbdev
+$HOSTNAME
 EOF
 
 # Hosts
 
 cat <<EOF >/mnt/etc/hosts
-127.0.0.1 localhost
-::1 localhost
-127.0.1.1 mcbdev.localdomain mcbdev
+127.0.0.1       localhost
+127.0.1.1       $HOSTNAME.localdomain $HOSTNAME
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
 EOF
 
 # fstab
 
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
 
 echo $UEFI_UUID
 echo $ROOT_UUID
-echo $SWAP_UUID
+# echo $SWAP_UUID
 # echo $HOME_UUID
 
 cat <<EOF >/mnt/etc/fstab
@@ -278,7 +209,7 @@ cat <<EOF >/mnt/etc/fstab
 UUID=$ROOT_UUID /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
 UUID=$ROOT_UUID /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 UUID=$ROOT_UUID /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps           0 0
+#UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps           0 0
 
 ### HOME_FS ###
 # UUID=$HOME_UUID /home         btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
@@ -288,11 +219,11 @@ UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home               
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
 
 ### Swap ###
-UUID=$SWAP_UUID                 none swap defaults,noatime                            0 0
+#UUID=$SWAP_UUID                 none swap defaults,noatime                            0 0
 
 ### Tmp ###
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                      0 0
-tmpfs /tmp tmpfs defaults,noatime,mode=1777,nosuid                                             0 0
+tmpfs /tmp tmpfs noatime,mode=1777,nosuid                                             0 0
 EOF
 
 # Set user permition
@@ -324,51 +255,23 @@ EOF
 chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
 
-#Conf rc
-
-cat <<EOF >/mnt/etc/rc.conf
-# /etc/rc.conf - system configuration for void
-
-# Set the host name.
-#
-# NOTE: it's preferred to declare the hostname in /etc/hostname instead:
-#       - echo myhost > /etc/hostname
-#
-#HOSTNAME="mcbdev"
-
-# Set RTC to UTC or localtime.
-HARDWARECLOCK="localtime"
-
-# Set timezone, availables timezones at /usr/share/zoneinfo.
-#TIMEZONE="America/Sao_Paulo"
-
-# Keymap to load, see loadkeys(8).
-KEYMAP="us-acentos"
-
-# Console font to load, see setfont(8).
-#FONT="lat9w-16"
-
-# Console map to load, see setfont(8).
-#FONT_MAP=
-
-# Font unimap to load, see setfont(8).
-#FONT_UNIMAP=
-
-# Amount of ttys which should be setup.
-#TTYS=
-EOF
 
 #############################
 #### Base system chroot #####
 #############################
 
+chroot /mnt apt install locale -y
+
 # chroot /mnt export PS1="(chroot) ${PS1}"
-chroot /mnt ln -sfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+chroot /mnt dpkg-reconfigure -f noninteractive tzdata 
+chroot /mnt echo 'LANG="en_US.UTF-8"'> /etc/default/locale
+chroot /mnt echo 'America/Sao_Paulo'> /etc/timezone
 
 #Locales
-chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt xbps-reconfigure -f glibc-locales
+chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/locale.gen
+chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/locale.gen
+chroot /mnt dpkg-reconfigure --frontend=noninteractive locales
+chroot /mnt update-locale LANG=en_US.UTF-8
 
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
@@ -388,11 +291,10 @@ chroot /mnt xbps-install -S intel-ucode --yes
 # chroot /mnt xbps-install -S efibootmgr gummiboot --yes
 
 # Grub #
-chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi os-prober acl-progs btrfs-progs --yes
+chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit os-prober acl-progs btrfs-progs --yes
 
 # Audio
-# chroot /mnt xbps-install -S alsa-utils alsa-pipewire pipewire libspa-bluetooth libjack-pipewire sof-firmware --yes
-chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-pulseaudio --yes
+chroot /mnt xbps-install -S alsa-utils alsa-pipewire pipewire libspa-bluetooth libjack-pipewire sof-firmware --yes
 
 # Xorg Packages
 chroot /mnt xbps-install -S xorg-minimal xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
@@ -404,23 +306,16 @@ chroot /mnt xbps-install -S bluez --yes
 chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils nm-tray samba arp-scan sv-netmount --yes
 
 # Some firmwares and utils
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget fatresize dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping gtk2-engines htop jq kbdlight libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil unclutter usbutils xtools zip --yes
-# light udisks2 rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig yt-dlp
+chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget fatresize dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping gtk2-engines htop jq kbdlight libgsf libinput-gestures libopenraw light lolcat-c lshw lua ripgrep rofi rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig skim socklog-void speedtest-cli starship tumbler udevil udisks2 unclutter usbutils xtools zip yt-dlp --yes
 
 # Optimizations
 chroot /mnt xbps-install -S earlyoom powertop thermald irqbalance --yes
 
 # Intel video card
-# chroot /mnt xbps-install -S xf86-video-intel mesa-vulkan-intel libva-intel-driver intel-gpu-tools intel-media-driver intel-video-accel --yes
-
-# Video Drivers and Display Server
-# chroot /mnt xbps-install mesa-dri mesa-intel-dri libva-intel-driver vulkan-loader mesa-vulkan-intel --yes
-# chroot /mnt xbps-install mesa-dri libva-intel-driver libva-utils libva-glx glxinfo --yes
-# chroot /mnt xbps-install mesa-dri intel-video-accel libva-utils libva-glx glxinfo --yes
-chroot /mnt xbps-install xf86-video-intel libva-intel-driver libva-utils libva-glx glxinfo --yes
+chroot /mnt xbps-install -S xf86-video-intel mesa-vulkan-intel libva-intel-driver intel-gpu-tools intel-media-driver intel-video-accel --yes
 
 # Infrastructure packages
-chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+chroot /mnt xbps-install -S ansible qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
@@ -591,13 +486,13 @@ EOF
 
 #Runit por default
 # chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/acpid /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -svrf /etc/sv/dropbear /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/dropbear /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
@@ -605,8 +500,6 @@ chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/irqbalance /var/service
 chroot /mnt ln -srvf /etc/sv/thermald /var/service
-chroot /mnt ln -srvf /etc/sv/pulseaudio /var/service
-
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
@@ -618,24 +511,16 @@ chroot /mnt ln -srvf /etc/sv/smbd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 
 # Enable socklog, a syslog implementation from the author of runit.
-chroot /mnt ln -srvf /etc/sv/socklog-unix /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/nanoklogd /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
 
 # Enable the iNet Wireless Daemon for Wi-Fi support
-chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
-
-# Virt-manager
-chroot /mnt ln -svrf /etc/sv/libvirtd /var/service
-chroot /mnt ln -svrf /etc/sv/virtlockd /var/service
-chroot /mnt ln -svrf /etc/sv/virtlogd /var/service
+chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 
 # Config zsh
 
 # alias dissh="export DISPLAY=:0.0"
 # alias bquit="bspc quit"
-
-# Tune chrony
-sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
 
 cat <<EOF >/mnt/etc/samba/smb.conf
 [global]
@@ -716,15 +601,6 @@ cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
 
-# Net
-cat <<\EOF >/mnt/etc/udev/rules.d/50-org.freedesktop.NetworkManager.rules
-polkit.addRule(function(action, subject) {
-  if (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 && subject.isInGroup("network")) {
-    return polkit.Result.YES;
-  }
-});
-EOF
-
 # Not asking for password
 
 mkdir -pv /mnt/etc/polkit-1/rules.d
@@ -765,7 +641,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="VoidLinux"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 b43.allhwsupport=0 init_on_alloc=0 udev.log_level=0 i915.enable_psr=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 b43.allhwsupport=0 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 # Uncomment to use basic console
 #GRUB_TERMINAL_INPUT="console"
@@ -786,19 +662,13 @@ chroot /mnt update-grub
 # chroot /mnt dracut --force --kver 5.15.**
 # chroot /mnt dracut -f $(uname -r)
 # chroot /mnt dracut --force --kver 6.0.13_1
-# chroot /mnt dracut --force --hostonly --kver $(uname -r | sed 's/\.[0-9]*_[0-9]*//')
-# chroot /mnt dracut --force --hostonly --kver 5.10.**
-chroot /mnt xbps-reconfigure -fa
+chroot /mnt dracut --force --hostonly --kver 5.10.156_1
+# chroot /mnt xbps-reconfigure -fa
 
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-EOF
-
-cat <<EOF >/mnt/etc/modprobe.d/alsa.conf
-# Place the following line in this file if you only have 1 sound output:
-options snd_usb_audio index=0
+options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 # Set bash as default

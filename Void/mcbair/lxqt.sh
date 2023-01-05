@@ -14,22 +14,29 @@ doas loginctl user-status $USER
 mkdir -pv /home/$USER/.config/{systemd,containers}
 
 # LXQT Packages and custom
-vpm i Adapta blueman FeatherPad ImageMagick avahi avahi-discover breeze-cursors picom kde-gtk-config5 kvantum xdg-desktop-portal-lxqt xdg-utils lxqt pavucontrol-qt lxqt-themes lxtask mbpfan menumaker numix-themes papirus-folders papirus-icon-theme qtpass sddm sddm-kcm xarchiver xclip xclipboard yaru --yes
+vpm i blueman FeatherPad ImageMagick ncdu avahi avahi-discover breeze-cursors picom kde-gtk-config5 kvantum xdg-desktop-portal-lxqt xdg-utils lxqt pavucontrol-qt lxqt-themes lxtask mbpfan menumaker numix-themes papirus-folders papirus-icon-theme qtpass sddm sddm-kcm xarchiver xclip xclipboard yaru --yes
 
 # Apps
 vpm i firefox-esr flameshot fontmanager geany geany-plugins geany-plugins-extra kcalc mpd mpv ncmpcpp playerctl qbittorrent vscode --yes
 
+# St suckless
+vpm i libXft-devel libX11-devel harfbuzz-devel libXext-devel libXrender-devel libXinerama-devel gd-devel --yes
+
+
 # Graphics
-vpm i intel-gpu-tools inxi libva-intel-driver --yes
+# vpm i intel-gpu-tools inxi libva-intel-driver --yes
 
 sleep 1
 xdg-user-dirs-update
 sleep 1
 
+curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh && (cd advcpmv && sh install.sh)
+
 mkdir -pv ~/.runit/{sv,runsvdir}
 mkdir -pv /home/$USER/Documents/workspace/{Github,Configs,Tests}
 
 git clone --depth=1 https://github.com/madand/runit-services /home/$USER/Documents/workspace/Configs/runit-services
+git clone --depth=1 https://github.com/siduck/st /home/$USER/Documents/workspace/Configs/st
 cd /home/$USER/Documents/workspace/Configs/runit-services
 git clone --depth=1 https://github.com/Nefelim4ag/Ananicy.git Ananicy
 cd /home/$USER/Documents/workspace/Configs/runit-services/Ananicy
