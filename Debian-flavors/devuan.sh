@@ -47,7 +47,7 @@ btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 # btrfs su cr /mnt/@swap
-# btrfs su cr /mnt/@var_cache_xbps
+btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 
 # Monta com os valores selecionados
@@ -59,31 +59,151 @@ mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/swap
-# mkdir -pv /mnt/var/cache/xbps
+mkdir -pv /mnt/var/cache/apt
 
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda2 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/sda2 /mnt/var/swap
-# mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda2 /mnt/var/cache/xbps
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda2 /mnt/var/cache/apt
 mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi 
+
+
 
 # debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 
+deb http://devuan.c3sl.ufpr.br/merged/ ceres main contrib non-free
 
+
+# Mount points
 for dir in dev proc sys run; do
         mount --rbind /$dir /mnt/$dir
         mount --make-rslave /mnt/$dir
 done
 
+
+# Repositorios mais rapidos
+cat <<EOF >/mnt/etc/apt/sources.list
+# Package repositories
+deb http://devuan.c3sl.ufpr.br/merged chimaera main contrib non-free 
+deb http://devuan.c3sl.ufpr.br/merged chimaera-updates main contrib non-free  
+deb http://devuan.c3sl.ufpr.br/merged chimaera-security main contrib non-free  
+deb http://devuan.c3sl.ufpr.br/merged chimaera-backports main contrib non-free  
+
+# Source repositories
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera main contrib non-free  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-updates main contrib non-free  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-security main contrib non-free  
+deb-src http://devuan.c3sl.ufpr.br/merged chimaera-backports main contrib non-free 
+EOF
+
+# Hostname
+HOSTNAME=devnitro
+cat <<EOF >/mnt/etc/hostname
+$HOSTNAME
+EOF
+
+# Hosts
+touch /mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
+127.0.0.1       localhost
+127.0.1.1       $HOSTNAME.localdomain $HOSTNAME
+::1             localhost ip6-localhost ip6-loopback
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+EOF
+
+# fstab
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
+
+echo $UEFI_UUID
+echo $ROOT_UUID
+# echo $SWAP_UUID
+# echo $HOME_UUID
+
+touch /mnt/etc/fstab
+cat <<EOF >/etc/fstab
+# <file system> <dir> <type> <options> <dump> <pass>
+
+### ROOTFS ###
+UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
+UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps           0 0
+
+### HOME_FS ###
+# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
+UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
+
+### EFI ###
+# UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
+UUID=$UEFI_UUID   /boot/efi       vfat rw,defaults,noatime,nodiratime,umask=0077        0 2
+
+### Swap ###
+#UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
+
+### Tmp ###
+# tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                   0 0
+tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid                        0 0
+EOF
+
+
+# Some base packages
+chroot /mnt apt install dracut runit bash zsh locales btrfs-progs grub-efi-amd64 wget curl chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux-free multipath-tools --no-install-recommends -y
+
+# Microcode
+chroot /mnt apt install intel-microcode --no-install-recommends -y
+ 
+# Umount
+# for dir in dev proc sys run; do
+#         umount --rbind /$dir /mnt/$dir
+#         umount --make-rslave /mnt/$dir
+# done
+
 # copia o arquivo de resolv para o /mnt
-cp -v /etc/resolv.conf /mnt/etc/
+# cp -v /etc/resolv.conf /mnt/etc/
+
+cat <<EOF > /mnt/etc/resolv.conf 
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 1.1.1.1
+EOF
+
+# Locales
+chroot /mnt echo "America/Sao_Paulo" > /mnt/etc/timezone && \
+                dpkg-reconfigure -f noninteractive tzdata && \
+                sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+                sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+                echo 'LANG="en_US.UTF-8"'>/etc/default/locale && \
+                dpkg-reconfigure --frontend=noninteractive locales && \
+                update-locale LANG=en_US.UTF-8 && \
+                localedef -i en_US -f UTF-8 en_US.UTF-8
+
+
+# Set bash as default
+chroot /mnt chsh -s /usr/bin/bash root
+
+# Define user and root password
+chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
+chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
+chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input juca
+chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
+chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
+chroot /mnt usermod -a -G socklog juca
+
+
+# install sudo
+chroot /mnt apt install sudo -y
+chroot /mnt usermod -aG sudo juca
 
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
+touch /mnt/etc/modprobe.d/blacklist.conf
 cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
 install iTCO_wdt /bin/true
@@ -96,13 +216,13 @@ EOF
 # Atualiza o initramfs com dracut
 # Remover se for testar em VM
 mkdir -pv /mnt/etc/dracut.conf.d
-cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/10-debian.conf
 hostonly="yes"
 hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
-add_drivers+=" btrfs i915 crc32c-intel z3fold "
+add_drivers+=" btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset crc32c-intel z3fold "
 force_drivers+=" z3fold "
-omit_dracutmodules+=" i18n nvidia convertfs luks rpmversion lvm securityfs fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+omit_dracutmodules+=" i18n convertfs luks rpmversion lvm securityfs fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
 nofscks="yes"
 no_host_only_commandline="yes"
@@ -125,25 +245,10 @@ cat <<EOF >/mnt/etc/dracut.conf.d/10-lz4.conf
 add_drivers+=" lz4hc lz4hc_compress "
 EOF
 
+# Mac touchpad
 cat <<EOF >/mnt/etc/dracut.conf.d/10-touchpad.conf
-add_drivers+=" bcm5974 "
+# add_drivers+=" bcm5974 "
 EOF
-
-# Repositorios mais rapidos
-cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# Package repositories
-deb http://devuan.c3sl.ufpr.br/merged chimaera main
-deb http://devuan.c3sl.ufpr.br/merged chimaera-updates main  
-deb http://devuan.c3sl.ufpr.br/merged chimaera-security main  
-deb http://devuan.c3sl.ufpr.br/merged chimaera-backports main  
-
-# Source repositories
-deb-src http://devuan.c3sl.ufpr.br/merged chimaera main  
-deb-src http://devuan.c3sl.ufpr.br/merged chimaera-updates main  
-deb-src http://devuan.c3sl.ufpr.br/merged chimaera-security main  
-deb-src http://devuan.c3sl.ufpr.br/merged chimaera-backports main 
-EOF
-
 
 # Ignorar alguns pacotes
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
@@ -171,60 +276,11 @@ ignorepkg=ipw2100-firmware
 ignorepkg=f2fs-tools
 ignorepkg=mobile-broadband-provider-info
 EOF
+
 # chroot /mnt xbps-remove -Rcon f2fs-tools linux linux-headers openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh os-prober rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 chroot /mnt xbps-remove -Rcon f2fs-tools openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh os-prober rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 
-HOSTNAME=devnitro
-
-# Hostname
-cat <<EOF >/mnt/etc/hostname
-$HOSTNAME
-EOF
-
-# Hosts
-
-cat <<EOF >/mnt/etc/hosts
-127.0.0.1       localhost
-127.0.1.1       $HOSTNAME.localdomain $HOSTNAME
-::1             localhost ip6-localhost ip6-loopback
-ff02::1         ip6-allnodes
-ff02::2         ip6-allrouters
-EOF
-
-# fstab
-
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
-
-echo $UEFI_UUID
-echo $ROOT_UUID
-# echo $SWAP_UUID
-# echo $HOME_UUID
-
-cat <<EOF >/mnt/etc/fstab
-# <file system> <dir> <type> <options> <dump> <pass>
-
-### ROOTFS ###
-UUID=$ROOT_UUID /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-UUID=$ROOT_UUID /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-UUID=$ROOT_UUID /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-#UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps           0 0
-
-### HOME_FS ###
-# UUID=$HOME_UUID /home         btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
-UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
-
-### EFI ###
-UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
-
-### Swap ###
-#UUID=$SWAP_UUID                 none swap defaults,noatime                            0 0
-
-### Tmp ###
-# tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                      0 0
-tmpfs /tmp tmpfs noatime,mode=1777,nosuid                                             0 0
-EOF
 
 # Set user permition
 cat <<\EOF >/mnt/etc/doas.conf
@@ -320,7 +376,7 @@ chroot /mnt xbps-install -S ansible qemu qemu-ga qemu-user-static qemuconf podma
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
 touch /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
-cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<EOF >>/mnt/etc/NetworkManager/conf.d/iwd.conf
 [device]
 wifi.backend=iwd
 wifi.iwd.autoconnect=yes
