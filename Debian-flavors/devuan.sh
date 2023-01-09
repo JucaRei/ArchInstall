@@ -75,7 +75,7 @@ mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 
-deb http://devuan.c3sl.ufpr.br/merged/ ceres main contrib non-free
+# deb http://devuan.c3sl.ufpr.br/merged/ main contrib non-free
 
 
 # Mount points
@@ -101,7 +101,7 @@ deb-src http://devuan.c3sl.ufpr.br/merged chimaera-backports main contrib non-fr
 EOF
 
 # Hostname
-HOSTNAME=devnitro
+HOSTNAME=devuan
 cat <<EOF >/mnt/etc/hostname
 $HOSTNAME
 EOF
@@ -153,7 +153,9 @@ EOF
 
 
 # Some base packages
-chroot /mnt apt install dracut runit bash zsh locales btrfs-progs grub-efi-amd64 wget curl chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux-free multipath-tools --no-install-recommends -y
+chroot /mnt apt install dracut runit bash zsh zstd locales btrfs-progs grub-efi-amd64 wget curl chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux-free multipath-tools --no-install-recommends -y
+
+chroot /mnt apt update
 
 # Microcode
 chroot /mnt apt install intel-microcode --no-install-recommends -y
