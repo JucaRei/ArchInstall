@@ -2,26 +2,23 @@
 # .bashrc
 
 # Initialize `~/.bashrc.d`
-if [ -d ${HOME}/.bashrc.d ]
-then
-  for file in ~/.bashrc.d/*.bashrc
-  do
+if [ -d ${HOME}/.bashrc.d ]; then
+  for file in ~/.bashrc.d/*.bashrc; do
     source "${file}"
   done
 fi
 
 #┌───────┐
-    #│.bashrc│
-    #└───────┘
-    # ~/.bashrc
-    #
-    #alsi -c1=red -c2=blue -t red
-    #command cowsay -f tux $(fortune all)
-    #cat /etc/motd
-    echo "Hello $USER."
-    echo "Today is $(date +'%a %e %b : %G : %T %p')"
-    echo "Current working directory : $(pwd)"
-
+#│.bashrc│
+#└───────┘
+# ~/.bashrc
+#
+#alsi -c1=red -c2=blue -t red
+#command cowsay -f tux $(fortune all)
+#cat /etc/motd
+echo "Hello $USER."
+echo "Today is $(date +'%a %e %b : %G : %T %p')"
+echo "Current working directory : $(pwd)"
 
 #NFS
 # alias volume2="sudo mount -t nfs 192.168.1.207:/mnt/HD/HD_a2 /home/$USER/Videos/Volume2 -o nolock"
@@ -37,7 +34,6 @@ alias dietpi="ssh dietpi@192.168.1.200"
 alias dietroot="ssh root@192.168.1.200"
 
 alias btrfm="findmnt -t btrfs -o TARGET,SOURCE"
-
 
 # gpg encryption
 # verify signature for isos
@@ -103,7 +99,6 @@ alias clean="clear; seq 1 $(tput cols) | sort -R | sparklines | lolcat"
 alias probe="sudo -E hw-probe -all -upload"
 alias sysfailed="systemctl list-units --failed"
 
-
 #maintenance
 alias big="expac -H M '%m\t%n' | sort -h | nl"
 alias downgrada="sudo downgrade --ala-url https://ant.seedhost.eu/arcolinux/"
@@ -139,7 +134,6 @@ alias nb="$EDITOR ~/.bashrc"
 alias nz="$EDITOR ~/.zshrc"
 alias nf="$EDITOR ~/.config/fish/config.fish"
 
-
 # Alias's to show disk space and space used in a folder
 alias diskspace="du -S | sort -n -r |more"
 alias folders='du -h --max-depth=1'
@@ -154,11 +148,11 @@ alias mkbz2='tar -cvjf'
 alias mkgz='tar -cvzf'
 
 # Copy file with a progress bar
-cpp()
-{
-	set -e
-	strace -q -ewrite cp -- "${1}" "${2}" 2>&1 \
-	| awk '{
+cpp() {
+  set -e
+  strace -q -ewrite cp -- "${1}" "${2}" \
+  2>&1
+  awk '{
 	count += $NF
 	if (count % 10 == 0) {
 		percent = count / total_size * 100
@@ -174,48 +168,42 @@ cpp()
 	END { print "" }' total_size="$(stat -c '%s' "${1}")" count=0
 }
 
-
 # Copy and go to the directory
-cpg ()
-{
-	if [ -d "$2" ];then
-		cp $1 $2 && cd $2
-	else
-		cp $1 $2
-	fi
+cpg() {
+  if [ -d "$2" ]; then
+    cp $1 $2 && cd $2
+  else
+    cp $1 $2
+  fi
 }
 
 # Move and go to the directory
-mvg ()
-{
-	if [ -d "$2" ];then
-		mv $1 $2 && cd $2
-	else
-		mv $1 $2
-	fi
+mvg() {
+  if [ -d "$2" ]; then
+    mv $1 $2 && cd $2
+  else
+    mv $1 $2
+  fi
 }
 
 # Create and go to the directory
-mkdirg ()
-{
-	mkdir -p $1
-	cd $1
+mkdirg() {
+  mkdir -p $1
+  cd $1
 }
 
 # Goes up a specified number of directories  (i.e. up 4)
-up ()
-{
-	local d=""
-	limit=$1
-	for ((i=1 ; i <= limit ; i++))
-		do
-			d=$d/..
-		done
-	d=$(echo $d | sed 's/^\///')
-	if [ -z "$d" ]; then
-		d=..
-	fi
-	cd $d
+up() {
+  local d=""
+  limit=$1
+  for ((i = 1; i <= limit; i++)); do
+    d=$d/..
+  done
+  d=$(echo $d | sed 's/^\///')
+  if [ -z "$d" ]; then
+    d=..
+  fi
+  cd $d
 }
 
 # kill commands
@@ -332,7 +320,6 @@ export PAGER='most'
 # Note: bind used instead of sticking these in .inputrc
 if [[ $iatest > 0 ]]; then bind "set completion-ignore-case on"; fi
 
-
 # Disable the bell
 if [[ $iatest > 0 ]]; then bind "set bell-style visible"; fi
 
@@ -340,7 +327,7 @@ if [[ $iatest > 0 ]]; then bind "set bell-style visible"; fi
 export XDG_RUNTIME_DIR=$PATH:~/.cache/xdgr
 
 ### EXPORT
-export TERM="xterm-256color"            # getting proper colors
+export TERM="xterm-256color"                        # getting proper colors
 export HISTCONTROL=ignoredups:erasedups:ignorespace # no duplicate entries
 # export ALTERNATE_EDITOR=""                        # setting for emacsclient
 # export EDITOR="emacsclient -t -a ''"              # $EDITOR use Emacs in terminal
@@ -356,14 +343,12 @@ alias ll='exa -l --color=always --group-directories-first'  # long format
 alias lt='exa -aT --color=always --group-directories-first' # tree listing
 alias l.='exa -a | egrep "^\."'
 
-
 #Logo-ls
 #alias ls='logo-ls -al --color=always --group-directories-first' # my preferred listing
 #alias la='logo-ls -a --color=always --group-directories-first'  # all files and dirs
 #alias ll='logo-ls -l --color=always --group-directories-first'  # long format
 #alias lt='logo-ls -aT --color=always --group-directories-first' # tree listing
 #alias l.='logo-ls -a | egrep "^\."'
-
 
 # list
 # alias ls='ls --color=auto'
@@ -497,15 +482,11 @@ memusage() {
 ## Set a search path for the cd builtin
 # cdpath=(.. ~)
 
-
 # alias to show the date
 alias da='date "+%Y-%m-%d %A %T %Z"'
 
-
 # Count all files (recursively) in the current folder
 alias countfiles="for t in files links directories; do echo \`find . -type \${t:0:1} | wc -l\` \$t; done 2> /dev/null"
-
-
 
 # editar bashrc
 alias ebrc='vim ~/.bashrc'
@@ -756,9 +737,13 @@ eval "$(starship init bash)"
 # xrandr
 # LVDS-1  1920x1200
 
-PATH="/home/junior/perl5/bin${PATH:+:${PATH}}"; export PATH;
-PERL5LIB="/home/junior/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"; export PERL5LIB;
-PERL_LOCAL_LIB_ROOT="/home/junior/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"; export PERL_LOCAL_LIB_ROOT;
-PERL_MB_OPT="--install_base \"/home/junior/perl5\""; export PERL_MB_OPT;
-PERL_MM_OPT="INSTALL_BASE=/home/junior/perl5"; export PERL_MM_OPT;
-
+PATH="/home/junior/perl5/bin${PATH:+:${PATH}}"
+export PATH
+PERL5LIB="/home/junior/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
+export PERL5LIB
+PERL_LOCAL_LIB_ROOT="/home/junior/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
+export PERL_LOCAL_LIB_ROOT
+PERL_MB_OPT="--install_base \"/home/junior/perl5\""
+export PERL_MB_OPT
+PERL_MM_OPT="INSTALL_BASE=/home/junior/perl5"
+export PERL_MM_OPT
