@@ -1,16 +1,5 @@
 #!/bin/bash
 
-#Formate e crie Pelo menos 3 partições para o: sistema, boot e home . Swap pode ser feito depois, com zram ou zramen
-# Baixe o tarball e entre na pasta do arquivo como ex: cd Downloads
-#curl or wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
-
-# Instalando pela wifi
-
-# cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
-# wpa_passphrase <ssid> <passphrase> >> /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
-# sv restart dhcpcd
-# ip link set up <interface>
-
 # BR repo
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
 repository=https://voidlinux.com.br/repo/current
@@ -36,7 +25,7 @@ repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
-vpm sync
+xbps-install -Sy
 
 # GlibC
 wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
@@ -57,7 +46,6 @@ sgdisk -c 6:Voidlinux /dev/vda
 sgdisk -p /dev/vda
 mkfs.vfat -F32 /dev/sda5 -n "VoidEFI"
 mkfs.btrfs /dev/sda6 -f -L "VoidRoot"
-# mkfs.btrfs /dev/sda7 -f -L "VoidHome"
 
 set -e
 
@@ -79,13 +67,7 @@ btrfs su cr /mnt/@var_cache_xbps
 btrfs su cr /mnt/@tmp
 # btrfs su cr /mnt/@swap
 
-# Remove a partição
 umount -v /mnt
-
-# mount home subvolume separated home
-# mount -o $BTRFS_OPTS /dev/sda7 /mnt
-# btrfs su cr /mnt/@home
-# umount -v /mnt
 
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
@@ -97,7 +79,6 @@ mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/xbps
-# mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
@@ -128,7 +109,7 @@ nameserver 1.1.1.1
 EOF
 
 #Copy the RSA keys from the installation medium to the target root directory
-mkdir -p /mnt/var/db/xbps/keys
+mkdir -pv /mnt/var/db/xbps/keys
 cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 
 #desabilitar algumas coisas
@@ -226,23 +207,6 @@ repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
-# Repositorios mais rapidos MUSL
-# cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
-# EOF
-
 # Ignorar alguns pacotes
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux
@@ -271,9 +235,11 @@ EOF
 # Remove some packages
 chroot /mnt xbps-remove -Rcon f2fs-tools openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
+HOSTNAME="nitrovoid"
+
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-nitrovoid
+$HOSTNAME
 EOF
 
 # Hosts
@@ -281,7 +247,7 @@ EOF
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1      localhost
 ::1            localhost ip6-locahost ip6-loopback
-127.0.1.1      nitrovoid.localdomain nitrovoid
+127.0.1.1      $HOSTNAME.localdomain $HOSTNAME
 ff02::1        ip6-allnodes
 ff02::2        ip6-allrouters
 EOF
@@ -290,10 +256,8 @@ EOF
 
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
 ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
-# HOME_UUID=$(blkid -s UUID -o value /dev/sda7)
 echo $UEFI_UUID
 echo $ROOT_UUID
-# echo $HOME_UUID
 
 cat <<EOF >/mnt/etc/fstab
 #
@@ -318,34 +282,20 @@ UUID=$UEFI_UUID /boot/efi vfat noatime,nodiratime,defaults 0 2
 tmpfs /tmp tmpfs defaults,noatime,nosuid,nodev,mode=1777 0 0
 EOF
 
-# Set user permition
-# cat << EOF > /mnt/etc/doas.conf
-# permit persist :wheel
-# permit nopass junior cmd reboot
-# permit nopass junior cmd poweroff
-# permit nopass junior cmd shutdown
-# permit nopass junior cmd halt
-# permit nopass junior cmd zzz
-# permit nopass junior cmd ZZZ
-# EOF
-# chroot /mnt chown -c root:root /etc/doas.conf
-# chroot /mnt chmod -c 0400 /etc/doas.conf
-
-#Conf rc
+USER=junior
 
 # DOAS conf
-
 # Set user permition
 cat <<\EOF >/mnt/etc/doas.conf
 # allow user but require password
-permit keepenv :junior
+permit keepenv :$USER
 
 # allow user and dont require a password to execute commands as root
-permit nopass keepenv :junior
+permit nopass keepenv :$USER
 
 # mount drives
-permit nopass :junior cmd mount
-permit nopass :junior cmd umount
+permit nopass :$USER cmd mount
+permit nopass :$USER cmd umount
 
 # musicpd service start and stop
 #permit nopass :$USER cmd service args musicpd onestart
@@ -361,11 +311,11 @@ permit nopass :junior cmd umount
 # root as root
 #permit nopass keepenv root as root
 EOF
+
 chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
 
 # RC Conf
-
 cat <<EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
@@ -380,7 +330,7 @@ cat <<EOF >/mnt/etc/rc.conf
 HARDWARECLOCK="localtime"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
-#TIMEZONE="America/Sao_Paulo"
+TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
 KEYMAP="br-abnt2"
@@ -401,7 +351,6 @@ EOF
 
 ##    chroot
 
-# chroot /mnt export PS1="(chroot) ${PS1}"
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
 #Locales
@@ -416,7 +365,6 @@ chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
 chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi vsv vpm vspm util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
-# chroot /mnt vpm up
 
 # Grub #
 chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi os-prober acl-progs btrfs-progs --yes
@@ -431,7 +379,6 @@ chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-
 # Intel micro-code
 chroot /mnt xbps-install -Sy intel-ucode --yes
 chroot /mnt xbps-reconfigure -fa linux-lts
-chroot /mnt vpm up
 
 # Xorg Packages
 chroot /mnt xbps-install -S xorg-minimal xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
@@ -453,61 +400,7 @@ chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom bash-completion --
 chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # utils
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
-
-# Needed for DE
-# chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
-
-# Utilities
-chroot /mnt xbps-install -Sy util-linux zramen udevil cifs-utils necho lm_sensors xtools dropbear inxi lshw nano ntfs-3g --yes
-
-# Audio/Video & Others
-# alsa-firmware alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol bluez bluez-alsa sof-firmware
-chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv deadbeef deadbeef-fb deadbeef-waveform-seekbar yt-dlp neovim ripgrep netcat lsscsi dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
-#chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
-#chroot /mnt xbps-remove -oORvy sudo
-
-# Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
-
-# light
-
-# NetworkManager e iNet Wireless Daemon
-chroot /mnt xbps-install -S NetworkManager iwd --yes
-
-# Display Manager
-# chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
-
-# Config Lightdm
-# chroot /mnt touch /etc/lightdm/dual.sh
-# chroot /mnt chmod +x /etc/lightdm/dual.sh
-# cat <<EOF >/mnt/etc/lightdm/dual.sh
-# #!/bin/sh
-# # eDP1 - Lap Screen  |  HDMI-1-0 External monitor
-# # Lightdm or other script for dual monitor
-
-# #xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
-# #xrandr --setprovideroffloadsink 1 0 &
-# #xrandr --setprovideroffloadsink modesetting NVIDIA-G0 &
-# xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
-# #xrandr --setprovideroutputsource 1 0 &
-# xrandr --setprovideroutputsource modesetting NVIDIA-G0 &
-
-# numlockx on &
-
-# XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
-# XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
-# XCOM2=$(xrandr --output eDP1 --primary --auto)
-# # if the external monitor is connected, then we tell XRANDR to set up an extended desktop
-# if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
-#     echo $XCOM1
-# # if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
-# else
-#     echo $XCOM2
-# fi
-
-# exit 0
-# EOF
+chroot /mnt xbps-install -S util-linux lm_sensors inxi lshw nano ntfs-3g cifs-utils zramen bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf git htop exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
@@ -524,40 +417,6 @@ cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 #options bbswitch load_state=0 unload_state=1 
 EOF
 
-# Install Nvidia video drivers
-# chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-# chroot /mnt xbps-install -S linux-firmware-intel linux-firmware-nvidia nvidia nvidia-dkms nvidia-gtklibs nvidia-libs nvidia-opencl nv-codec-headers mesa vulkan-loader libva libva-glx libva-utils libva-intel-driver glu mesa-dri mesa-vulkan-intel mesa-intel-dri intel-video-accel mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
-
-# chroot /mnt dracut --force --kver 5.10.162_1
-chroot /mnt xbps-reconfigure -f linux-lts
-# chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
-# bbswitch
-
-# Intel Video Drivers
-# chroot /mnt xbps-install -S xf86-video-intel --yes
-
-#chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
-
-# "Mons is a Shell script to quickly manage 2-monitors display using xrandr."
-# chroot /mnt xbps-install -S mons --yes
-
-# chroot /mnt alias ker="uname-r"
-# chroot /mnt sudo dracut --force --hostonly --kver $ker
-
-# Install the OpenGL driver for both Intel and AMD
-# chroot /mnt xbps-install mesa-dri --yes
-# Install the Khronos Vulkan Loader for both Intel and nvidia
-# chroot /mnt xbps-install vulkan-loader --yes
-
-#File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc gvfs-afp rsync rclone avahi avahi-discover avahi-autoipd avahi-compat-libs avahi-utils udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
-
-# PACKAGES FOR SYSTEM LOGGING
-chroot /mnt xbps-install -S socklog-void --yes
-
-# Virt-manager
-chroot /mnt xbps-install -S virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
-
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
@@ -567,11 +426,6 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
 chroot /mnt update-grub
-
-# GRUB Configuration
-
-# ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
-# echo $ROOT_UUID
 
 cat <<EOF >/mnt/etc/default/grub
 #
@@ -610,12 +464,6 @@ chroot /mnt update-grub
 #udevil
 chroot /mnt sed -i 's/allowed_types = $KNOWN_FILESYSTEMS, file/allowed_types = $KNOWN_FILESYSTEMS, file, cifs, nfs, sshfs, curlftpfs, davfs/g' /etc/udevil/udevil.conf
 
-# Dumb runtime dir
-# chroot /mnt sed -i 's/-session   optional   pam_dumb_runtime_dir.so/session    optional   pam_dumb_runtime_dir.so/g' /etc/pam.d/system-login
-
-# Set zsh as default
-# chroot /mnt chsh -s /usr/bin/zsh root
-
 # Define user and root password
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd junior -m -c "Reinaldo P JR" -s /bin/bash
@@ -647,44 +495,18 @@ export ZRAM_SIZE=100
 #export ZRAM_STREAMS=1
 EOF
 
-# MakeSwap
-# chroot /mnt mkdir -pv /var/swap
-# mount -o subvol=@swap /dev/sda6 /mnt/var/swap
-# chroot /mnt btrfs subvolume create /var/swap
-# chroot /mnt/ touch var/swap/swapfile
-# chroot /mnt truncate -s 0 /var/swap/swapfile
-# chroot /mnt chattr +C /var/swap/swapfile
-# chroot /mnt btrfs property set /var/swap/swapfile compression none
-# chroot /mnt chmod 600 /var/swap/swapfile
-# chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1G count=8 status=progress
-# chroot /mnt mkswap /var/swap/swapfile
-# chroot /mnt swapon /var/swap/swapfile
-
-# Add to fstab
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda6)
-echo $SWAP_UUID
-echo " " >>/mnt/etc/fstab
-echo "# Swap" >>/mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
-
 #Runit por default
 chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/preload /var/service/
-# chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
-# chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
-# chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
-chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
+# chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
 chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
@@ -772,7 +594,7 @@ chroot /mnt xbps-reconfigure -f fontconfig
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
+cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -780,7 +602,7 @@ cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
 
-cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<\EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -827,11 +649,6 @@ cat <<EOF >/mnt/etc/rc.local
 powertop --auto-tune
 
 EOF
-
-# install ncdu2
-wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
-tar -xf ncdu-2.1-linux-x86_64.tar.gz
-mv ncdu /mnt/usr/local/bin
 
 git clone --depth=1 https://github.com/madand/runit-services Services
 mv Services /mnt/home/junior/

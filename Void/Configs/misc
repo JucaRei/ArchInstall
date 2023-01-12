@@ -1,0 +1,57 @@
+Section "Device"
+Identifier "iGPU"
+Driver "intel"
+Option "AccelMethod" "sna"
+Option "TearFree" "True"
+Option "Tiling" "True"
+Option "SwapbuffersWait" "True"
+Option "DRI" "3"
+EndSection
+
+Section "Screen"
+Identifier "iGPU"
+Device "iGPU"
+EndSection
+
+Section "Device"
+Identifier "dGPU"
+Driver "nvidia"
+BusID "PCI:1:0:0"
+Option "AllowEmptyInitialConfiguration"
+BoardName "GeForce 1050"
+EndSection
+
+Section "Files"
+ModulePath "/usr/lib/nvidia/xorg"
+ModulePath "/usr/lib/xorg/modules"
+EndSection
+
+Section "Monitor"
+Identifier "HDMI-1-0"
+#Option "Position" "1920 0" # FOR INBUILT AS SECOND
+Option "Position" "0 0"
+EndSection
+
+Section "Monitor"
+Identifier "eDP-1"
+# Option "Position" "0 0"
+Option "Primary" "true"
+EndSection
+
+# Xorg conf dual gpu
+
+# mkdir -pv /mnt/etc/X11
+# touch /mnt/etc/X11/xorg.conf
+# cat <<EOF >/mnt/etc/X11/xorg.conf
+
+# EOF
+
+# mkdir -pv /mnt/etc/X11/xorg.conf.d/
+# cat << EOF > /mnt/etc/X11/xorg.conf.d/20-intel.conf
+# Section "Device"
+#         Identifier      "Intel Graphics"
+#         Driver          "Intel"
+#         Option          "AccelMethod"           "sna"
+#         Option          "TearFree"              "True"
+# EndSection
+# EOF

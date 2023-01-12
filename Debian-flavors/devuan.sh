@@ -73,8 +73,7 @@ mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi
 # debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-
+debootstrap --variant=minbase --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # deb http://devuan.c3sl.ufpr.br/merged/ main contrib non-free
 
 
@@ -84,10 +83,29 @@ for dir in dev proc sys run; do
         mount --make-rslave /mnt/$dir
 done
 
+# Desabilita instalar recomendados
+touch /mnt/etc/apt/apt.conf
+cat <<EOF > /mnt/etc/apt/apt.conf
+#Recommends are as of now still abused in many packages
+APT::Install-Recommends "0";
+APT::Install-Suggests "0";
+EOF
+
+mkdir -pv /mnt/etc/apt/preferences.d
+touch /mnt/etc/apt/preferences.d/00systemd
+cat <<\EOF > /mnt/etc/apt/preferences.d/00systemd
+Package: *systemd*:any
+Pin: origin *
+Pin-Priority: -1
+EOF
 
 # Repositorios mais rapidos
-cat <<EOF >/mnt/etc/apt/sources.list
-# Package repositories
+rm /mnt/etc/apt/sources.list
+# mkdir -pv /mnt/etc/apt/sources.d/
+touch /mnt/etc/apt/sources.list.d/{devuan.list,various.list}
+# touch /mnt/etc/apt/sources.d/{antix.list,various.list}
+cat <<\EOF > /mnt/etc/apt/sources.list.d/devuan.list
+### Repositories ###
 deb http://devuan.c3sl.ufpr.br/merged chimaera main contrib non-free 
 deb http://devuan.c3sl.ufpr.br/merged chimaera-updates main contrib non-free  
 deb http://devuan.c3sl.ufpr.br/merged chimaera-security main contrib non-free  
@@ -126,7 +144,7 @@ echo $ROOT_UUID
 # echo $HOME_UUID
 
 touch /mnt/etc/fstab
-cat <<EOF >/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 ### ROOTFS ###
@@ -151,14 +169,31 @@ UUID=$UEFI_UUID   /boot/efi       vfat rw,defaults,noatime,nodiratime,umask=0077
 tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid                        0 0
 EOF
 
+# antix-archive-keyring
+# devuan-keyring
 
 # Some base packages
-chroot /mnt apt install dracut runit bash zsh zstd locales btrfs-progs grub-efi-amd64 wget curl chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux-free multipath-tools --no-install-recommends -y
+chroot /mnt apt install dracut manpages dbus devuan-keyring bash zstd locales btrfs-progs build-essential grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux multipath-tools --no-install-recommends -y
 
-chroot /mnt apt update
+chroot /mnt apt update runit --no-install-recommends -y
+
+# Init System
+chroot /mnt apt install
+
+# Utils
+chroot /mnt apt install bash-completion bzip2 man-db gptfdisk dosfstools mtools p7zip neofetch fzf bat duf --no-install-recommends -y
+
+# Optimizations
+chroot /mnt apt install earlyoom powertop thermald irqbalance --yes
+
+
+zsh stterm rxvt-unicode-256color
 
 # Microcode
 chroot /mnt apt install intel-microcode --no-install-recommends -y
+
+# Audio, Bluetooth and wifi
+chroot /mnt apt install iwd rfkill --no-install-recommends -y
  
 # Umount
 # for dir in dev proc sys run; do

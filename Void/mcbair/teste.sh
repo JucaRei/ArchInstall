@@ -150,7 +150,7 @@ cat <<EOF >/mnt/etc/dracut.conf.d/intel_ucode.conf
 early_microcode=yes
 EOF
 
-cat <<EOF > /mnt/etc/resolv.conf 
+cat <<EOF >/mnt/etc/resolv.conf
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 nameserver 1.1.1.1
@@ -176,6 +176,7 @@ cat <<EOF >/mnt/etc/dracut.conf.d/10-lz4.conf
 add_drivers+=" lz4hc lz4hc_compress "
 EOF
 
+# touchpad older macbooks
 cat <<EOF >/mnt/etc/dracut.conf.d/10-touchpad.conf
 add_drivers+=" bcm5974 "
 EOF
@@ -606,7 +607,6 @@ chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/irqbalance /var/service
 chroot /mnt ln -srvf /etc/sv/thermald /var/service
 chroot /mnt ln -srvf /etc/sv/pulseaudio /var/service
-
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/

@@ -1,0 +1,66 @@
+/etc/apt/sources.list.d
+
+####################
+#### antix.list ####
+####################
+
+#Use with Debian Bullseye repositories.
+deb http://la.mxrepo.com/antix/bullseye bullseye main nosystemd nonfree
+
+# Use with Debian Testing/'rolling' repositories.
+# deb http://la.mxrepo.com/antix/testing testing main nosystemd nonfree
+# deb-src http://la.mxrepo.com/antix/testing testing main nosystemd nonfree
+
+# Use with Debian Sid repositories.
+# deb http://la.mxrepo.com/antix/sid sid main nosystemd nonfree
+# deb-src http://la.mxrepo.com/antix/sid sid main nosystemd nonfree
+
+#########################
+#bullseye-backports.list#
+#########################
+
+# Debian Bullseye backports. Use with caution.
+deb http://deb.debian.org/debian bullseye-backports main contrib non-free
+
+###################
+### debian.list ###
+###################
+
+# Debian Bullseye/Stable
+deb http://ftp.de.debian.org/debian/ bullseye main contrib non-free
+deb http://security.debian.org/debian/ bullseye-security main contrib non-free
+
+# Multimedia Stable!
+# ONLY use to install libdvdcss2 and codecs.
+#deb http://www.deb-multimedia.org bullseye main non-free
+
+# Debian Testing.
+# Testing enabled for 'rolling' release.
+# deb http://ftp.de.debian.org/debian/ testing main contrib non-free
+# deb http://security.debian.org/ testing-security main contrib non-free
+#deb-src http://ftp.de.debian/debian/ testing main contrib non-free
+
+# Multimedia Testing!
+# ONLY use to install libdvdcss2 and codecs.
+#deb http://www.deb-multimedia.org testing main non-free
+
+### Debian Unstable/Sid ###
+### Use at your own risk! ###
+#deb http://ftp.de.debian.org/debian/ unstable main contrib non-free
+# Multimedia Unstable/Sid!
+# Only use to install libdvdcss2 and codecs.
+#deb http://www.deb-multimedia.org sid main non-free 
+
+##################################
+### debian-stable-updates.list ###
+##################################
+
+# Debian Bullseye Updates
+deb http://ftp.us.debian.org/debian/ bullseye-updates main contrib non-free
+
+####################
+### various.list ###
+####################
+
+# liquorix kernel
+#deb http://liquorix.net/debian/ sid main
