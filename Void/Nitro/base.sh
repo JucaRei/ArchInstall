@@ -25,7 +25,6 @@ repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
-xbps-install -Sy
 
 # GlibC
 wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
@@ -34,17 +33,14 @@ wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221
 
 xbps-install -Su xbps xz --yes
 
-xbps-install -Sy
-xbps-install -u
+xbps-install -Su wget vsv xz vpm neovim git --yes
 
-xbps-install -Sy wget vsv xz vpm neovim git --yes
-
-sgdisk -t 5:ef00 /dev/vda
-sgdisk -c 5:VoidGrub /dev/vda
+sgdisk -t 4:ef00 /dev/vda
+sgdisk -c 4:VoidGrub /dev/vda
 sgdisk -t 6:8300 /dev/vda
 sgdisk -c 6:Voidlinux /dev/vda
 sgdisk -p /dev/vda
-mkfs.vfat -F32 /dev/sda5 -n "VoidEFI"
+mkfs.vfat -F32 /dev/sda4 -n "VoidEFI"
 mkfs.btrfs /dev/sda6 -f -L "VoidRoot"
 
 set -e
@@ -64,7 +60,6 @@ btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_xbps
-btrfs su cr /mnt/@tmp
 # btrfs su cr /mnt/@swap
 
 umount -v /mnt
@@ -77,14 +72,12 @@ mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/xbps
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@tmp /dev/sda6 /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda6 /mnt/var/cache/xbps
-mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sda5 /mnt/boot/efi
+mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sda4 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
 # GLIBC
@@ -100,13 +93,13 @@ for dir in dev proc sys run; do
 done
 
 # copia o arquivo de resolv para o /mnt
-# cp -v /etc/resolv.conf /mnt/etc/
+cp -v /etc/resolv.conf /mnt/etc/
 
-cat <<EOF >/mnt/etc/resolv.conf
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-nameserver 1.1.1.1
-EOF
+#~ cat <<EOF >/mnt/etc/resolv.conf
+#~ nameserver 8.8.8.8
+#~ nameserver 8.8.4.4
+#~ nameserver 1.1.1.1
+#~ EOF
 
 #Copy the RSA keys from the installation medium to the target root directory
 mkdir -pv /mnt/var/db/xbps/keys
@@ -131,6 +124,7 @@ hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+force_drivers+=" z3fold "
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
 # compress="cat";
@@ -221,19 +215,21 @@ ignorepkg=xf86-input-wacon
 ignorepkg=xf86-video-fbdev
 ignorepkg=rtkit
 ignorepkg=dhcpcd
-ignorepkg=nvi
 ignorepkg=openssh
+ignorepkg=sudo
+ignorepkg=nvi
 ignorepkg=xf86-video-amdgpu
-ignorepkg=xf86-video-amdgpu
+ignorepkg=xf86-input-wacon
 ignorepkg=xf86-video-ati
 ignorepkg=xf86-video-vmware
 ignorepkg=xf86-video-nouveau
+ignorepkg=xf86-video-vesa
 ignorepkg=zd1211-firmware
 ignorepkg=mobile-broadband-provider-info
 EOF
 
 # Remove some packages
-chroot /mnt xbps-remove -Rcon f2fs-tools openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
+chroot /mnt xbps-remove -Rcon openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 HOSTNAME="nitrovoid"
 
@@ -242,19 +238,23 @@ cat <<EOF >/mnt/etc/hostname
 $HOSTNAME
 EOF
 
-# Hosts
+cat <<EOF >/mnt/etc/xbps.d/90-lxqt-ignore.conf
+ignorepkg=qterminal
+ignorepkg=lxqt-about
+ignorepkg=lxqt-sudo
+EOF
 
+
+# Hosts
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1      localhost
-::1            localhost ip6-locahost ip6-loopback
-127.0.1.1      $HOSTNAME.localdomain $HOSTNAME
-ff02::1        ip6-allnodes
-ff02::2        ip6-allrouters
+::1            localhost
+127.0.1.1      nitrovoid.localdomain nitrovoid
 EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda4)
 ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 echo $UEFI_UUID
 echo $ROOT_UUID
@@ -269,11 +269,10 @@ cat <<EOF >/mnt/etc/fstab
 UUID=$ROOT_UUID /               btrfs $BTRFS_OPTS,subvol=@               0 0
 UUID=$ROOT_UUID /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
 UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
-UUID=$ROOT_UUID /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
 UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
 
 #HOME_FS
-UUID=$HOME_UUID /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
+UUID=$ROOT_UUID /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
 
 # EFI
 # UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
@@ -282,31 +281,29 @@ UUID=$UEFI_UUID /boot/efi vfat noatime,nodiratime,defaults 0 2
 tmpfs /tmp tmpfs defaults,noatime,nosuid,nodev,mode=1777 0 0
 EOF
 
-USER=junior
-
 # DOAS conf
 # Set user permition
 cat <<\EOF >/mnt/etc/doas.conf
 # allow user but require password
-permit keepenv :$USER
+permit keepenv :junior
 
 # allow user and dont require a password to execute commands as root
-permit nopass keepenv :$USER
+permit nopass keepenv :junior
 
 # mount drives
-permit nopass :$USER cmd mount
-permit nopass :$USER cmd umount
+permit nopass :junior cmd mount
+permit nopass :junior cmd umount
 
 # musicpd service start and stop
-#permit nopass :$USER cmd service args musicpd onestart
-#permit nopass :$USER cmd service args musicpd onestop
+#permit nopass :junior cmd service args musicpd onestart
+#permit nopass :junior cmd service args musicpd onestop
 
 # pkg update
-#permit nopass :$USER cmd vpm args update
+#permit nopass :junior cmd vpm args update
 
 # run personal scripts as root without prompting for a password,
 # requires entering the full path when running with doas
-#permit nopass :$USER cmd /home/username/bin/somescript
+#permit nopass :junior cmd /home/username/bin/somescript
 
 # root as root
 #permit nopass keepenv root as root
@@ -333,7 +330,7 @@ HARDWARECLOCK="localtime"
 TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
-KEYMAP="br-abnt2"
+KEYMAP="br-abnt"
 #KEYMAP="br"
 
 # Console font to load, see setfont(8).
@@ -363,15 +360,17 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi vsv vpm vspm util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi util-linux bash linux-lts linux-lts-headers efibootmgr sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs btrfs-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt xbps-remove base-voidstrap --yes
+
+# Xbps wrapper
+chroot /mnt xbps-install -Sy vsv vpm --yes
+
+
 chroot /mnt vpm up
 
 # Grub #
 chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi os-prober acl-progs btrfs-progs --yes
-
-# Remove Base Strap
-chroot /mnt xbps-remove base-voidstrap --yes
-chroot /mnt vpm up
 
 #Audio
 chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-pulseaudio --yes
@@ -394,13 +393,16 @@ chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils nm-tray samba ar
 # efivar
 
 # Optimization packages
-chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom bash-completion --yes
+chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom bash-completion zramen --yes
 
 # Infrastructure packages
 chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
-# utils
-chroot /mnt xbps-install -S util-linux lm_sensors inxi lshw nano ntfs-3g cifs-utils zramen bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf git htop exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
+# Some firmwares and utils
+chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq kbdlight libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
+
+# Optimizations
+chroot /mnt xbps-install -S earlyoom powertop thermald irqbalance --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
@@ -417,6 +419,10 @@ cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 #options bbswitch load_state=0 unload_state=1 
 EOF
 
+# Set bash as default
+chroot /mnt chsh -s /usr/bin/bash root
+
+
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
@@ -424,7 +430,7 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 # mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void Linux" --recheck
-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id="Void"
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot/efi --no-nvram --removable --recheck
 chroot /mnt update-grub
 
 cat <<EOF >/mnt/etc/default/grub
@@ -436,7 +442,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=vendor vt.global_cursor_default==0 gpt intel_pstate=hwp_only acpi=force init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet apci_osi=Linux udev.log_level=0 acpi_backlight=vendor vt.global_cursor_default=0 gpt intel_pstate=hwp_only acpi=force init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 GRUB_CMDLINE_LINUX=""
@@ -507,6 +513,7 @@ chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
+chroot /mnt ln -srvf /etc/sv/thermald /var/service
 chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
@@ -526,6 +533,15 @@ chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 
 # Enable the iNet Wireless Daemon for Wi-Fi support
 chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
+
+# Virt-manager
+chroot /mnt ln -svrf /etc/sv/libvirtd /var/service
+chroot /mnt ln -svrf /etc/sv/virtlockd /var/service
+chroot /mnt ln -svrf /etc/sv/virtlogd /var/service
+
+# Tune chrony
+sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
+
 
 ### SAMBA CONF ###
 
@@ -629,19 +645,6 @@ SUBSYSTEM=="backlight", ACTION=="add", \
   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
 EOF
-# Not asking for password
-mkdir -pv /mnt/etc/polkit-1/rules.d
-cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
-// Allow udisks2 to mount devices without authentication
-// for users in the "wheel" group.
-polkit.addRule(function(action, subject) {
-    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
-         action.id == "org.freedesktop.udisks2.filesystem-mount") &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
-});
-EOF
 
 touch /mnt/etc/rc.local
 cat <<EOF >/mnt/etc/rc.local
@@ -650,10 +653,86 @@ powertop --auto-tune
 
 EOF
 
+mkdir -pv /mnt/etc/elogind
+cat <<EOF >/mnt/etc/elogind/logind.conf
+#  This file is part of elogind.
+#
+#  elogind is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See logind.conf(5) for details.
+
+[Login]
+#KillUserProcesses=no
+#KillOnlyUsers=
+#KillExcludeUsers=root
+#InhibitDelayMaxSec=5
+HandlePowerKey=ignore
+HandleSuspendKey=ignore
+HandleHibernateKey=ignore
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+#PowerKeyIgnoreInhibited=no
+#SuspendKeyIgnoreInhibited=no
+#HibernateKeyIgnoreInhibited=no
+#LidSwitchIgnoreInhibited=yes
+#HoldoffTimeoutSec=30s
+#IdleAction=ignore
+#IdleActionSec=30min
+#RuntimeDirectorySize=10%
+#RuntimeDirectoryInodes=400k
+#RemoveIPC=yes
+#InhibitorsMax=8192
+#SessionsMax=8192
+
+[Sleep]
+#AllowSuspend=yes
+#AllowHibernation=yes
+#AllowSuspendThenHibernate=yes
+#AllowHybridSleep=yes
+#AllowPowerOffInterrupts=no
+#BroadcastPowerOffInterrupts=yes
+#AllowSuspendInterrupts=no
+#BroadcastSuspendInterrupts=yes
+#HandleNvidiaSleep=ignore
+#SuspendState=mem standby freeze
+#SuspendMode=
+#HibernateState=disk
+#HibernateMode=platform shutdown
+#HybridSleepState=disk
+#HybridSleepMode=suspend platform shutdown
+#HibernateDelaySec=10800
+EOF
+
+# Touchpad
+mkdir -pv /mnt/etc/X11/xorg.conf.d/
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+section "InputClass"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # MatchIsTouchpad "on"
+        # Driver "libinput"
+        # Option "Tapping" "on"
+
+        Identifier      "touchpad"
+        Driver          "libinput"
+        MatchIsTouchpad "on"
+        Option          "Tapping"       "on"
+EndSection
+EOF
+
+
 git clone --depth=1 https://github.com/madand/runit-services Services
 mv Services /mnt/home/junior/
 
 # Gerar initcpio
-chroot /mnt xbps-reconfigure -fa
+chroot /mnt dracut --force --hostonly --kver 5.15.85_1
 
 printf "\e[1;32mInstallation finished! Umount -a and reboot.\e[0m"
