@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-apt update && apt install btrfs-progs wget -y
+apt update && apt install debootstrap btrfs-progs wget -y
 
 # wget -c http://deb.devuan.org/devuan/pool/main/d/debootstrap/debootstrap_1.0.126+nmu1devuan1.tar.gz
 
@@ -10,36 +10,35 @@ apt update && apt install btrfs-progs wget -y
 #####################################
 
 # -s script call | -a optimal
-sgdisk -Z /dev/sda
-parted -s -a optimal /dev/sda mklabel gpt
+# sgdisk -Z /dev/sda
+# parted -s -a optimal /dev/sda mklabel gpt
 
 # Create new partition
-sgdisk -n 0:0:100MiB /dev/sda
-sgdisk -n 0:0:0 /dev/sda
+# sgdisk -n 0:0:100MiB /dev/sda
+# sgdisk -n 0:0:0 /dev/sda
 
 # Change the name of partition
-sgdisk -c 1:Devuan /dev/sda
-sgdisk -c 2:Devroot /dev/sda
+# sgdisk -c 1:Deboot /dev/sda
+# sgdisk -c 2:Debian /dev/sda
 
 # Change Types
-sgdisk -t 1:ef00 /dev/sda
-sgdisk -t 2:8300 /dev/sda
+# sgdisk -t 1:ef00 /dev/sda
+# sgdisk -t 2:8300 /dev/sda
 
-sgdisk -p /dev/sda
+# sgdisk -p /dev/sda
 
 #####################################
 ##########  FileSystem  #############
 #####################################
 
 mkfs.vfat -F32 /dev/sda1 -n "Grub"
-mkfs.btrfs /dev/sda2 -f -L "Devuan"
+mkfs.btrfs /dev/sda2 -f -L "Debian"
 
 ## Volumes Vda apenas para testes em vm
 set -e
-DEVUAN_ARCH="amd64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:19,space_cache=v2,commit=120,autodefrag,discard=async"
+Debian_ARCH="amd64"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-# mount -o $BTRFS_OPTS /dev/vda5 /mnt
 mount -o $BTRFS_OPTS /dev/sda2 /mnt
 
 #Cria os subvolumes
@@ -59,24 +58,31 @@ mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/swap
 mkdir -pv /mnt/var/cache/apt
 
 mount -o $BTRFS_OPTS,subvol=@home /dev/sda2 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
-# mount -o $BTRFS_OPTS,subvol=@swap /dev/sda2 /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda2 /mnt/var/cache/apt
 mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi 
 
+
+# Check important packages
+#dpkg-query -f '${binary:Package} ${Priority}\n' -W \
+#   | grep -w 'required\|important'
 
 
 # debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-debootstrap --variant=minbase --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-# deb http://devuan.c3sl.ufpr.br/merged/ main contrib non-free
+debootstrap --variant=minbase --include=apt,apt-utils,cpio,cron,debconf-i18n,debian-archive-keyring,zstd,locales,btrfs-progs,dmidecode,kmod,less,fdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail,ca-certificates --arch amd64 bullseye /mnt http://debian.c3sl.ufpr.br/debian/ bullseye
+# deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 
+# whiptail or dialog 
+# tasksel-data
+
+
+ca-certificates
 
 # Mount points
 for dir in dev proc sys run; do
@@ -86,11 +92,11 @@ done
 
 # Desabilita instalar recomendados
 touch /mnt/etc/apt/apt.conf
-cat <<EOF > /mnt/etc/apt/apt.conf
-#Recommends are as of now still abused in many packages
+cat > /mnt/etc/apt/apt.conf << HEREDOC
+#Recommends are as of now abused in many packages
 APT::Install-Recommends "0";
 APT::Install-Suggests "0";
-EOF
+HEREDOC
 
 # Repositorios mais rapidos
 rm /mnt/etc/apt/sources.list
@@ -99,7 +105,7 @@ touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
 apt install lsb-release
 CODENAME=$(lsb_release --codename --short)
-cat > /etc/apt/sources.list << HEREDOC
+cat > /mnt/etc/apt/sources.list.d/debian.list << HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
 
@@ -109,23 +115,24 @@ deb-src https://security.debian.org/debian-security $CODENAME-security main cont
 deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
 HEREDOC
+
 # Hostname
-HOSTNAME=devuan
+HOSTNAME=debian
 cat <<EOF >/mnt/etc/hostname
 $HOSTNAME
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat > /etc/hosts << HEREDOC
+cat << EOF > /etc/hosts
 127.0.0.1 localhost
-127.0.1.1 nitro
+127.0.1.1 $HOSTNAME
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
-HEREDOC
+EOF
 
 # fstab
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
@@ -152,7 +159,7 @@ UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home             
 
 ### EFI ###
 # UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
-UUID=$UEFI_UUID   /boot/efi       vfat rw,defaults,noatime,nodiratime,umask=0077        0 2
+UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
 
 ### Swap ###
 #UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
@@ -163,18 +170,59 @@ tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid                
 EOF
 
 # antix-archive-keyring
-# devuan-keyring
+# Locales
+chroot /mnt echo "America/Sao_Paulo" > /mnt/etc/timezone && \
+                dpkg-reconfigure -f noninteractive tzdata && \
+                sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+                sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+                echo 'LANG="en_US.UTF-8"'>/etc/default/locale && \
+                export LC_ALL=C && \
+                dpkg-reconfigure --frontend=noninteractive locales && \
+                update-locale LANG=en_US.UTF-8 && \
+                localedef -i en_US -f UTF-8 en_US.UTF-8
 
-# Some base packages
-chroot /mnt apt install dracut manpages dbus devuan-keyring bash zstd locales btrfs-progs build-essential grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux multipath-tools --no-install-recommends -y
 
-chroot /mnt apt update runit --no-install-recommends -y
 
-# Init System
-chroot /mnt apt install
+chroot /mnt apt update
+
+# Network
+chroot /mnt apt install network-manager iwd rfkill --no-install-recommends -y
+
+# Config iwd as backend instead of wpasupplicant
+cat << EOF > /mnt/etc/NetworkManager/conf.d/iwd.conf 
+[device]
+wifi.backend=iwd
+EOF
+
+# Audio, Bluetooth 
+chroot /mnt apt install pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries --no-install-recommends -y
+
+# Config pipewire
+touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
+cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
 
 # Utils
-chroot /mnt apt install bash-completion bzip2 man-db gptfdisk dosfstools mtools p7zip neofetch fzf bat duf --no-install-recommends -y
+chroot /mnt apt install dracut manpages debian-keyring build-essential grub-efi-amd64 os-prober wget curl sysfsutils chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux --no-install-recommends -y
+# aptitude initramfs-tools
+# dracut --list-modules --kver 5.10.0-20-amd64
+
+cat <<EOF >/mnt/etc/dracut.conf.d/10-debian.conf
+hostonly="yes"
+hostonly_cmdline=no
+dracutmodules+=" bash systemd kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
+use_fstab=yes
+add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+force_drivers+=" z3fold "
+omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+show_modules="yes"
+# compress="cat";
+nofscks="yes"
+compress="zstd"
+no_host_only_commandline="yes"
+EOF
+
+# Tools
+chroot /mnt apt install bash-completion bzip2 man-db gdisk dosfstools mtools p7zip neofetch fzf bat duf --no-install-recommends -y
 
 # Optimizations
 chroot /mnt apt install earlyoom powertop thermald irqbalance --yes
@@ -185,8 +233,6 @@ zsh stterm rxvt-unicode-256color
 # Microcode
 chroot /mnt apt install intel-microcode --no-install-recommends -y
 
-# Audio, Bluetooth and wifi
-chroot /mnt apt install iwd rfkill --no-install-recommends -y
  
 # Umount
 # for dir in dev proc sys run; do
@@ -208,7 +254,9 @@ chroot /mnt echo "America/Sao_Paulo" > /mnt/etc/timezone && \
                 dpkg-reconfigure -f noninteractive tzdata && \
                 sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
                 sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-                echo 'LANG="en_US.UTF-8"'>/etc/default/locale && \
+                echo 'LANGUAGE="en_US.UTF-8"'>/etc/default/locale && \
+                export LANGUAGE=en_US.UTF-8 && \
+                export LC_ALL=en_US.UTF-8 && \
                 dpkg-reconfigure --frontend=noninteractive locales && \
                 update-locale LANG=en_US.UTF-8 && \
                 localedef -i en_US -f UTF-8 en_US.UTF-8
@@ -230,3 +278,33 @@ chroot /mnt usermod -a -G socklog juca
 # install sudo
 chroot /mnt apt install sudo -y
 chroot /mnt usermod -aG sudo juca
+
+### Services
+
+#Network
+chroot /mnt systemctl enable NetworkManager.service
+chroot /mnt systemctl enable iwd.service
+
+# Audio
+chroot /mnt systemctl --user enable pipewire pipewire-pulse
+chroot /mnt systemctl --user daemon-reload
+# chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
+chroot /mnt systemctl --user mask pulseaudio
+# Allow run as root
+# sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/usr/lib/systemd/user/pipewire.socket 
+# sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/pipewire-pulse.service 
+# sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/sockets.target.wants/pipewire.socket 
+# sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/pipewire-pulse.socket
+# sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/default.target.wants/pipewire.service 
+#Audio user setting
+chroot /mnt systemctl --user enable pipewire pipewire-pulse
+# chroot /mnt systemctl --user --now enable pipewire pipewire-pulse
+# check witch server is in use
+# LANG=C pactl info | grep '^Server Name'
+
+
+# Optimizations
+chroot /mnt systemctl enable earlyoom.service 
+chroot /mnt systemctl enable powertop.service 
+chroot /mnt systemctl enable thermald.service 
+chroot /mnt systemctl enable irqbalance.service

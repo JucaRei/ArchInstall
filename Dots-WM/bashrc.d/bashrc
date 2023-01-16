@@ -1,0 +1,2 @@
+# Initialize `~/.bashrc.d`
+[[ -s "${HOME}/.bashrc.d/.init.sh" ]] && source ${HOME}/.bashrc.d/.init.sh
