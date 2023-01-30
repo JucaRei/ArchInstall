@@ -2,6 +2,8 @@
 
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
+umount -R /dev/vda
+
 CODENAME=$(lsb_release --codename --short)
 cat >/etc/apt/sources.list <<HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
@@ -99,8 +101,8 @@ mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
 # debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-# debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,console-setup,dosfstools,keyboard-configuration,debian-archive-keyring,zstd,locales,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail,ca-certificates --arch amd64 bullseye /mnt http://debian.c3sl.ufpr.br/debian/ bullseye
-debootstrap --arch=amd64 --include=zstd,locales,btrfs-progs,ca-certificates,sudo,neovim,initramfs-tools,dhcpcd5 bullseye /mnt http://debian.c3sl.ufpr.br/debian/ bullseye
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt http://debian.c3sl.ufpr.br/debian/ bullseye
+# debootstrap --arch=amd64 --include=zstd,locales,btrfs-progs,ca-certificates,sudo,neovim,initramfs-tools,dhcpcd5 bullseye /mnt http://debian.c3sl.ufpr.br/debian/ bullseye
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 
 # apt install --yes console-setup locales chrony dosfstools wget dracut efitools efibootmgr sbsigntool python3 tpm2-tools linux-image-amd64 linux-doc systemd-boot systemd-boot-efi mokutil gdisk
@@ -212,14 +214,14 @@ HEREDOC
 
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-debian
+devnitro
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<EOF >/etc/hosts
+cat <<\EOF >/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 debian
+127.0.1.1 devnitro
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -264,15 +266,22 @@ EOF
 
 # antix-archive-keyring
 # Locales
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
-        dpkg-reconfigure -f noninteractive tzdata &&
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
-        # export LC_ALL=C &&
-        dpkg-reconfigure --frontend=noninteractive locales &&
-        update-locale LANG=en_US.UTF-8 &&
-        localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
+        dpkg-reconfigure -f noninteractive tzdata && \
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
+        # export LC_ALL=C && \
+        export LANGUAGE=en_US.UTF-8 && \
+        export LC_ALL=en_US.UTF-8 && \
+        export LANG=en_US.UTF-8 && \
+        export LC_CTYPE=en_US.UTF-8 && \
+        # locale-gen en_US.UTF-8 && \
+        dpkg-reconfigure --frontend=noninteractive locales && \
+        # update-locale LANG=en_US.UTF-8 && \
+        # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+        localectl set-locale LANG="en_US.UTF-8" && \
+        locale-gen 
 
 chroot /mnt apt update
 
@@ -283,24 +292,26 @@ chroot /mnt apt install network-manager iwd rfkill --no-install-recommends -y
 cat <<EOF >/mnt/etc/NetworkManager/conf.d/iwd.conf
 [device]
 wifi.backend=iwd
+wifi.iwd.autoconnect=yes
 EOF
 
+#### Pipewire ####
 # Audio, Bluetooth
-chroot /mnt apt install pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries --no-install-recommends -y
+# chroot /mnt apt install pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries --no-install-recommends -y
 
 # Config pipewire
-touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
-cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
+# touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
+# cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
 
 # Utils
-chroot /mnt apt install dracut manpages linux-image-amd64 debian-keyring build-essential grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd  --no-install-recommends -y
+chroot /mnt apt install manpages linux-image-amd64 debian-keyring build-essential htop grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd  --no-install-recommends -y
 # aptitude initramfs-tools firmware-linux
 # dracut --list-modules --kver 5.10.0-20-amd64
 
-### /etc/initramfs-tools/modules
+cat << EOF > /mnt/etc/initramfs-tools/modules
 # List of modules that you want to include in your initramfs.
 # They will be loaded at boot time in the order below.
 #
@@ -312,43 +323,52 @@ chroot /mnt apt install dracut manpages linux-image-amd64 debian-keyring build-e
 #
 # raid1
 # sd_mod
+crc32c-intel
+btrfs
+ahci
+lz4hc
+lz4hc_compress
+zstd
+zram
+z3fold
+EOF
 
 # chroot /mnt update-initramfs -u
 
-cat <<EOF >/mnt/etc/dracut.conf.d/10-debian.conf
-hostonly="yes"
-hostonly_cmdline=no
-dracutmodules+=" bash systemd kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
-use_fstab=yes
+# cat <<EOF >/mnt/etc/dracut.conf.d/10-debian.conf
+# hostonly="yes"
+# hostonly_cmdline=no
+# dracutmodules+=" bash systemd kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
+# use_fstab=yes
 
-### Bare
-# add_drivers+=" crc32c-intel btrfs i915 ahci nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+# ### Bare
+# # add_drivers+=" crc32c-intel btrfs i915 ahci nvidia nvidia_drm nvidia_uvm nvidia_modeset "
 
-### VM's
-add_drivers+=" crc32c-intel btrfs "
-force_drivers+=" z3fold "
-omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
-show_modules="yes"
-do_prelink=no
-# compress="cat";
-nofscks=yes
-compress="zstd"
-# compress="lz4hc -l -9"
-no_host_only_commandline=yes
-EOF
+# ### VM's
+# add_drivers+=" crc32c-intel btrfs "
+# force_drivers+=" z3fold "
+# omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+# show_modules="yes"
+# do_prelink=no
+# # compress="cat";
+# nofscks=yes
+# compress="zstd"
+# # compress="lz4hc -l -9"
+# no_host_only_commandline=yes
+# EOF
 
 # Early micro code
-cat <<EOF >/mnt/etc/dracut.conf.d/intel_ucode.conf
-early_microcode=yes
-EOF
+# cat <<EOF >/mnt/etc/dracut.conf.d/intel_ucode.conf
+# early_microcode=yes
+# EOF
 
-cat <<EOF >/mnt/etc/dracut.conf.d/10-zram.conf
-# add_drivers+=" zram "
-EOF
+# cat <<EOF >/mnt/etc/dracut.conf.d/10-zram.conf
+# # add_drivers+=" zram "
+# EOF
 
-cat <<EOF >/mnt/etc/dracut.conf.d/10-lz4.conf
-add_drivers+=" lz4 lz4hc lz4hc_compress "
-EOF
+# cat <<EOF >/mnt/etc/dracut.conf.d/10-lz4.conf
+# add_drivers+=" lz4 lz4hc lz4hc_compress "
+# EOF
 
 # Touchpad tap to click
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
@@ -386,7 +406,7 @@ chroot /mnt apt install bash-completion bzip2 man-db gdisk dosfstools mtools p7z
 # chroot /mnt apt install nvidia-driver libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 
 # Minimal xorg packages
-# chroot /mnt apt install xserver-xorg-core xserver-xorg-video-intel xserver-xorg-input-evdev x11-xserver-utils x11-xkb-utils x11-utils xinit --no-install-recommends -y
+chroot /mnt apt install xserver-xorg-core xserver-xorg-video-intel xserver-xorg-input-evdev x11-xserver-utils x11-xkb-utils x11-utils xinit --no-install-recommends -y
 
 # Infrastructure packages
 # chroot /mnt apt install ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --no-install-recommends -y
@@ -436,11 +456,44 @@ chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 # chroot /mnt usermod -a -G socklog juca
 
-### Services
+## NetworkManager config
+cat << EOF > /mnt/etc/NetworkManager/NetworkManager.conf
+[main]
+plugins=ifupdown,keyfile
 
+[ifupdown]
+managed=true
+EOF
+
+touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+cat << EOF > /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+#!/bin/sh
+
+# Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
+# replacing LAN_interface with yours
+
+# if [ "$1" = "LAN_interface" ]; then
+if [ "$1" = "eth0" ]; then
+    case "$2" in
+        up)
+            nmcli radio wifi off
+            ;;
+        down)
+            nmcli radio wifi on
+            ;;
+    esac
+# elif [ "$(nmcli -g GENERAL.STATE device show LAN_interface)" = "20 (unavailable)" ]; then
+elif [ "$(nmcli -g GENERAL.STATE device show eth0)" = "20 (unavailable)" ]; then
+    nmcli radio wifi on
+fi
+EOF
+
+### Services
 #Network
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
+chroot /mnt systemctl enable ssh.service
 
 # Audio
 # chroot /mnt systemctl --user enable pipewire pipewire-pulse
@@ -472,6 +525,8 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 # chroot /mnt systemctl enable powertop.service
 # chroot /mnt systemctl enable thermald.service
 # chroot /mnt systemctl enable irqbalance.service
+
+chroot /mnt update-initramfs -u
 
 chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --no-nvram --removable --recheck
 
@@ -506,9 +561,35 @@ chroot /mnt update-grub
 
 # chroot /mnt dracut --regenete-all --force --hostonly --kver 5.10.0-20-amd64
 
-chroot /mnt dracut --force --hostonly --kver 5.10.0-21-amd64
+# chroot /mnt dracut --force --hostonly --kver 5.10.0-21-amd64
 
 rm -rf /mnt/vmlinuz.old
 rm -rf /mnt/vmlinuz
 rm -rf /mnt/initrd.img
 rm -rf /mnt/initrd.img.old
+
+# Add pacstall
+# bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
+
+# this makes X server run only on your nvidia card considering you have optimus graphics (intel+nvidia)
+# cat <<\EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
+# Section "OutputClass"
+#     Identifier "intel"
+#     MatchDriver "i915"
+#     Driver "modesetting"
+# EndSection
+
+# Section "OutputClass"
+#     Identifier "nvidia"
+#     MatchDriver "nvidia-drm"
+#     Driver "nvidia"
+#     Option "AllowEmptyInitialConfiguration"
+#     Option "PrimaryGPU" "yes"
+#     ModulePath "/usr/lib/nvidia/xorg"
+#     ModulePath "/usr/lib/xorg/modules"
+# EndSection
+# EOF
+
+# if X Server 'Crashes' while opening electron/chromium based programs or Chromium/Electron based Windows open up as black through prime-run or on nVidia cards then do this:
+# using this flag --use-gl=desktop works
+# hardware acceleration also works this way (electron apps only) 

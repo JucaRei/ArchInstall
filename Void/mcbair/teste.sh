@@ -405,7 +405,7 @@ chroot /mnt xbps-install -S bluez --yes
 chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils nm-tray samba arp-scan sv-netmount --yes
 
 # Some firmwares and utils
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget fatresize dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping gtk2-engines htop jq kbdlight libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil unclutter usbutils xtools zip --yes
+chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget fatresize dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping gtk2-engines htop jq kbdlight libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
 # light udisks2 rxvt-unicode rxvt-unicode-terminfo urxvt-bidi urxvt-perls urxvtconfig yt-dlp
 
 # Optimizations
@@ -421,7 +421,8 @@ chroot /mnt xbps-install -S earlyoom powertop thermald irqbalance --yes
 chroot /mnt xbps-install xf86-video-intel libva-intel-driver libva-utils libva-glx glxinfo --yes
 
 # Infrastructure packages
-chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+# chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+chroot /mnt xbps-install -S ansible podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
@@ -476,7 +477,7 @@ chroot /mnt usermod -a -G socklog juca
 # Gerar initcpio
 # chroot /mnt dracut --force --kver 5.15.82_1
 # chroot /mnt dracut --force --kver 6.0.13_1
-chroot /mnt dracut --force --kver 5.10.159_1
+chroot /mnt dracut --force --kver 5.15.85_1
 # chroot /mnt dracut -f /boot/initramfs-$(uname -r).img
 chroot /mnt xbps-reconfigure -fa
 
@@ -710,7 +711,7 @@ chroot /mnt xbps-reconfigure -f fontconfig
 mkdir -pv /mnt/etc/udev/rules.d
 cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
-# ==1: mount filesystem to a shared directory (/media/VolumeName)
+# ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
 # See udisks(8)
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
