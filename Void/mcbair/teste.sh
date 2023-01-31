@@ -246,6 +246,8 @@ cat <<EOF >/mnt/etc/xbps.d/90-lxqt-ignore.conf
 ignorepkg=qterminal
 ignorepkg=lxqt-about
 ignorepkg=lxqt-sudo
+ignorepkg=lxdm
+ignorepkg=lxterminal
 EOF
 
 # Hostname
@@ -804,6 +806,10 @@ EOF
 
 # Set bash as default
 chroot /mnt chsh -s /usr/bin/bash juca
+
+# Apply compression to system
+chroot /mnt btrfs filesystem defragment -r -v -czstd /
+
 
 # Some other runit services
 git clone --depth=1 https://github.com/madand/runit-services runit-services

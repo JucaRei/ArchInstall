@@ -295,6 +295,9 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
+### Pulseaudio
+chroot /mnt apt install bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol -y
+
 #### Pipewire ####
 # Audio, Bluetooth
 # chroot /mnt apt install pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries --no-install-recommends -y
@@ -307,7 +310,7 @@ EOF
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
 
 # Utils
-chroot /mnt apt install manpages linux-image-amd64 debian-keyring build-essential htop grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd  --no-install-recommends -y
+chroot /mnt apt install manpages btrfs-compsize linux-image-amd64 debian-keyring build-essential htop grub-efi-amd64 wget curl sysfsutils chrony --no-install-recommends -y
 # aptitude initramfs-tools firmware-linux
 # dracut --list-modules --kver 5.10.0-20-amd64
 
@@ -494,6 +497,7 @@ EOF
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
 chroot /mnt systemctl enable ssh.service
+chroot /mnt systemctl enable pulseaudio.service
 
 # Audio
 # chroot /mnt systemctl --user enable pipewire pipewire-pulse
