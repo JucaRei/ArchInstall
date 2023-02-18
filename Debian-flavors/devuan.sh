@@ -36,7 +36,7 @@ mkfs.btrfs /dev/sda2 -f -L "Devuan"
 ## Volumes Vda apenas para testes em vm
 set -e
 DEVUAN_ARCH="amd64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:19,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 # mount -o $BTRFS_OPTS /dev/vda5 /mnt
 mount -o $BTRFS_OPTS /dev/sda2 /mnt
@@ -94,6 +94,7 @@ EOF
 mkdir -pv /mnt/etc/apt/preferences.d
 touch /mnt/etc/apt/preferences.d/00systemd
 cat <<\EOF > /mnt/etc/apt/preferences.d/00systemd
+# Remove systemd priority
 Package: *systemd*:any
 Pin: origin *
 Pin-Priority: -1

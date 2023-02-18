@@ -1,0 +1,47 @@
+Maybe some more practical infos:
+You have a hybrid amd/nvidia system so you can’t/mustn’t use nvidia-xconfig, you’ll never get a working config out of it. In general, nvidia-xconfig shouldn’t be used on modern systems.
+
+The problem with Ubuntu’s prime-select feature is it (still) doesn’t work for amd/nvidia but only for intel/nvidia. Needs manual tweaking of the config files.
+
+You could try this:
+Please delete /etc/X11/xorg.conf
+and modify /usr/share/X11/xorg.conf.d/10-amdgpu.conf
+replacing only
+
+Driver "amdgpu"
+
+with
+
+Driver "modesetting"
+
+Please add
+
+Option "PrimaryGPU" "Yes"
+
+inside the OutputClass of /usr/share/X11/xorg.conf.d/10-nvidia.conf
+Then create two files optimus.desktop in /etc/xdg/autostart/ and /usr/share/gdm/greeter/autostart/ containing
+
+[Desktop Entry]
+Type=Application
+Name=Optimus
+Exec=sh -c "xrandr --setprovideroutputsource modesetting NVIDIA-0; xrandr --auto"
+NoDisplay=true
+X-GNOME-Autostart-Phase=DisplayServer
+
+This should enable the nvidia profile on Ubuntu.
+
+The “render offload” feature needs a patched Xserver, I don’t know if Ubuntu is providing this. If so, it could be enabled by not doing any of the above mentioned settings, but by creating an /etc/X11/xorg.conf just containing
+
+Section "ServerLayout"
+  Identifier "layout"
+  Option "AllowNVIDIAGPUScreens"
+EndSection
+
+Afterwards, function can be checked running
+
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep vendor
+
+should return something “Nvidia”.
+Then applications can be started on the nvidia gpu running
+__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia
+Downside of this is that no external monitors connected to the nvidia gpu will work.

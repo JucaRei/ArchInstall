@@ -1,16 +1,5 @@
 #!/bin/bash
 
-#Formate e crie Pelo menos 3 partições para o: sistema, boot e home . Swap pode ser feito depois, com zram ou zramen
-# Baixe o tarball e entre na pasta do arquivo como ex: cd Downloads
-#curl or wget -c https://alpha.de.repo.voidlinux.org/live/current/void-x86_64-ROOTFS-20210930.tar.xz
-
-# Instalando pela wifi
-
-# cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
-# wpa_passphrase <ssid> <passphrase> >> /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
-# sv restart dhcpcd
-# ip link set up <interface>
-
 # BR repo
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
 repository=https://voidlinux.com.br/repo/current
@@ -50,13 +39,13 @@ xbps-install -Su xbps xz --yes
 
 # xbps-install -Sy wget vsv xz vpm neovim git --yes
 
-sgdisk -t 4:ef00 /dev/sdb
-sgdisk -c 4:VoidGrub /dev/sdb
-sgdisk -t 5:8300 /dev/sdb
-sgdisk -c 5:Voidlinux /dev/sdb
-sgdisk -p /dev/sdb
-mkfs.vfat -F32 /dev/sdb4 -n "VoidEFI"
-mkfs.btrfs /dev/sdb5 -f -L "VoidRoot"
+sgdisk -t 1:ef00 /dev/vda
+sgdisk -c 1:VoidGrub /dev/vda
+sgdisk -t 2:8300 /dev/vda
+sgdisk -c 2:Voidlinux /dev/vda
+sgdisk -p /dev/vda
+mkfs.vfat -F32 /dev/vda1 -n "VoidEFI"
+mkfs.btrfs /dev/vda2 -f -L "VoidRoot"
 # mkfs.btrfs /dev/sdb7 -f -L "VoidHome"
 
 set -e
@@ -67,7 +56,7 @@ XBPS_ARCH="x86_64"
 # XBPS_ARCH="x86_64-musl"
 BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sdb5 /mnt
+mount -o $BTRFS_OPTS /dev/vda2 /mnt
 
 #Cria os subvolumes
 
@@ -90,7 +79,7 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sdb5 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
@@ -98,12 +87,12 @@ mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/xbps
 # mount -o $BTRFS_OPTS,subvol=@home /dev/sdb7 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@home /dev/sdb5 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sdb5 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sdb5 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@tmp /dev/sdb5 /mnt/var/tmp
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sdb5 /mnt/var/cache/xbps
-mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sdb4 /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@tmp /dev/vda2 /mnt/var/tmp
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda2 /mnt/var/cache/xbps
+mount -t vfat -o rw,defaults,noatime,nodiratime /dev/vda1 /mnt/boot/efi
 
 # Descompacta e copia para /mnt o tarball
 # GLIBC
@@ -135,11 +124,11 @@ cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
 mkdir -pv /mnt/etc/modprobe.d
 cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
-install iTCO_wdt /bin/true
-install iTCO_vendor_support /bin/true
+#install iTCO_wdt /bin/true
+#install iTCO_vendor_support /bin/true
 
 # Disable nouveau
-blacklist nouveau
+#blacklist nouveau
 EOF
 
 # Atualiza o initramfs com dracut
@@ -149,10 +138,9 @@ hostonly="yes"
 hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
-add_drivers+=" crc32c-intel btrfs i915 nvidia nvidia_drm nvidia_uvm nvidia_modeset "
+add_drivers+=" crc32c-intel btrfs "
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
 show_modules="yes"
-kernel_cmdline="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # compress="cat";
 nofscks="yes"
 compress="zstd"
@@ -174,11 +162,11 @@ EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/00-intel.conf
 # Intel Graphics
-dev.i915.perf_stream_paranoid=0
+# dev.i915.perf_stream_paranoid=0
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/10-zram.conf
-# add_drivers+=" zram "
+add_drivers+=" zram z3fold "
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/10-lz4.conf
@@ -204,20 +192,20 @@ EOF
 
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-Section "Device"
-    Identifier "Nvidia GTX 1050"
-    Driver "nvidia"
-    BusID "PCI:1:0:0"
-    Option "DPI" "96 x 96"
-    Option "AllowEmptyInitialConfiguration" "Yes"
-    #  Option "UseDisplayDevice" "none"
-EndSection
+#Section "Device"
+#    Identifier "Nvidia GTX 1050"
+#    Driver "nvidia"
+#    BusID "PCI:1:0:0"
+#    Option "DPI" "96 x 96"
+#    Option "AllowEmptyInitialConfiguration" "Yes"
+#    #  Option "UseDisplayDevice" "none"
+#EndSection
 EOF
 
 # Fix tearing with intel
 touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-Section "Device"
+#Section "Device"
 #   Identifier "Intel Graphics 630"
 #   Driver "intel"
 #   Option "AccelMethod" "sna"
@@ -225,13 +213,13 @@ Section "Device"
 #   Option "Tiling" "True"
 #   Option "SwapbuffersWait" "True"
 #   Option "DRI" "3"
-
-    Identifier  "Intel Graphics"
-    Driver      "modesetting"
-    Option      "TearFree"       "True"
-    Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "3"
-EndSection
+#
+#    Identifier  "Intel Graphics"
+#    Driver      "modesetting"
+#    Option      "TearFree"       "True"
+#    Option      "AccelMethod"    "glamor"
+#    Option      "DRI"            "3"
+#EndSection
 EOF
 
 # Repositorios mais rapidos GLIBC
@@ -306,7 +294,7 @@ chroot /mnt xbps-remove -Rconn openssh dhcpcd hicolor-icon-theme ipw2100-firmwar
 
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-nitrovoid
+voidvm
 EOF
 
 # Hosts
@@ -314,15 +302,15 @@ EOF
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1      localhost
 ::1            localhost ip6-locahost ip6-loopback
-127.0.1.1      nitrovoid.localdomain nitrovoid
+127.0.1.1      voidvm.localdomain voidvm
 ff02::1        ip6-allnodes
 ff02::2        ip6-allrouters
 EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sdb4)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sdb5)
+UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
+ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 # HOME_UUID=$(blkid -s UUID -o value /dev/sdb7)
 echo $UEFI_UUID
 echo $ROOT_UUID
@@ -448,7 +436,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel cpufrequtils acpica-utils libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
 # chroot /mnt vpm up
 
@@ -463,12 +451,12 @@ chroot /mnt vpm up
 chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-pulseaudio --yes
 
 # Intel micro-code
-chroot /mnt xbps-install -Sy intel-ucode --yes
+chroot /mnt xbps-install -S intel-ucode --yes
 chroot /mnt xbps-reconfigure -fa linux-lts
 chroot /mnt vpm up
 
 # Xorg Packages
-chroot /mnt xbps-install -S xorg-minimal xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
+# chroot /mnt xbps-install -S xorg-minimal xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
 
 # Bluetooth
 chroot /mnt xbps-install -S bluez --yes
@@ -484,7 +472,7 @@ chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils nm-tray samba ar
 chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom bash-completion --yes
 
 # Infrastructure packages
-chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+# chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # utils
 chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
@@ -502,7 +490,7 @@ chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep ne
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+chroot /mnt xbps-install -Sy xorg-minimal numlockx xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
 
 # light
 
@@ -510,12 +498,12 @@ chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xdmx xrdb xsetroot xprop x
 chroot /mnt xbps-install -S NetworkManager iwd --yes
 
 # Display Manager
-chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
+# chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
 
 # Config Lightdm
-chroot /mnt touch /etc/lightdm/dual.sh
-chroot /mnt chmod +x /etc/lightdm/dual.sh
-cat <<EOF >/mnt/etc/lightdm/dual.sh
+# chroot /mnt touch /etc/lightdm/dual.sh
+# chroot /mnt chmod +x /etc/lightdm/dual.sh
+# cat <<EOF >/mnt/etc/lightdm/dual.sh
 #!/bin/sh
 # eDP1 - Lap Screen  |  HDMI-1-0 External monitor
 # Lightdm or other script for dual monitor
@@ -523,25 +511,25 @@ cat <<EOF >/mnt/etc/lightdm/dual.sh
 # #xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
 # #xrandr --setprovideroffloadsink 1 0 &
 # #xrandr --setprovideroffloadsink modesetting NVIDIA-G0 &
-xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+#xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
 # #xrandr --setprovideroutputsource 1 0 &
 # xrandr --setprovideroutputsource modesetting NVIDIA-G0 &
 
-numlockx on &
+#numlockx on &
 
-XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
-XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
-XCOM2=$(xrandr --output eDP1 --primary --auto)
+# XCOM0=$(xrandr -q | grep 'HDMI-1-0 connected')
+# XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+# XCOM2=$(xrandr --output eDP1 --primary --auto)
 # if the external monitor is connected, then we tell XRANDR to set up an extended desktop
-if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
-    echo $XCOM1
+# if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+#     echo $XCOM1
 # if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
-else
-    echo $XCOM2
-fi
+# else
+#     echo $XCOM2
+# fi
 
-exit 0
-EOF
+# exit 0
+# EOF
 
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
@@ -560,7 +548,7 @@ EOF
 
 # Install Nvidia video drivers
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes
+#chroot /mnt xbps-install -S nvidia nvidia-libs-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes
 # chroot /mnt xbps-install -S linux-firmware-intel linux-firmware-nvidia nvidia nvidia-dkms nvidia-gtklibs nvidia-libs nvidia-opencl nv-codec-headers mesa vulkan-loader libva libva-glx libva-utils libva-intel-driver glu mesa-dri mesa-vulkan-intel mesa-intel-dri intel-video-accel mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # chroot /mnt dracut --force --kver 5.10.162_1
@@ -585,20 +573,20 @@ chroot /mnt xbps-reconfigure -f linux-lts
 # chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc gvfs-afp rsync rclone avahi avahi-discover avahi-autoipd avahi-compat-libs avahi-utils udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb rsync rclone avahi avahi-discover avahi-utils udisks2 samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
 
 # Virt-manager
-chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
+# chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
 
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
 
 # Plymouth
 # chroot /mnt xbps-install -S plymouth plymouth-data --yes
-chroot /mnt xbps-install -S plymouth plymouth-data fbv --yes
+# chroot /mnt xbps-install -S plymouth plymouth-data fbv --yes
 
 #Install Grub
 # mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
@@ -610,7 +598,7 @@ chroot /mnt update-grub
 
 # GRUB Configuration
 
-# ROOT_UUID=$(blkid -s UUID -o value /dev/sdb5)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 # echo $ROOT_UUID
 
 cat <<EOF >/mnt/etc/default/grub
@@ -622,8 +610,8 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
@@ -692,7 +680,7 @@ EOF
 
 # MakeSwap
 # chroot /mnt mkdir -pv /var/swap
-# mount -o subvol=@swap /dev/sdb5 /mnt/var/swap
+# mount -o subvol=@swap /dev/vda2 /mnt/var/swap
 # chroot /mnt btrfs subvolume create /var/swap
 # chroot /mnt/ touch var/swap/swapfile
 # chroot /mnt truncate -s 0 /var/swap/swapfile
@@ -704,7 +692,7 @@ EOF
 # chroot /mnt swapon /var/swap/swapfile
 
 # Add to fstab
-# SWAP_UUID=$(blkid -s UUID -o value /dev/sdb5)
+# SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
 # echo $SWAP_UUID
 # echo " " >>/mnt/etc/fstab
 # echo "# Swap" >>/mnt/etc/fstab
@@ -731,16 +719,6 @@ chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
 chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
-
-# podman 
-chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
-chroot /mnt ln -srvf /etc/sv/podman /var/service
-chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
-chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
-
-cat << EOF >>/mnt/etc/rc.local
-mount --make-rshared /
-EOF
 
 # Enable socklog, a syslog implementation from the author of runit.
 chroot /mnt ln -sv /etc/sv/socklog-unix /etc/runit/runsvdir/default/
@@ -819,17 +797,17 @@ EOF
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+#options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 touch /mnt/etc/modprobe.d/nvidia.conf
 cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
-options nvidia_drm modeset=1
+#options nvidia_drm modeset=1
 EOF
 
 touch /mnt/etc/modprobe.d/nouveau-kms.conf
 cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
-options nouveau modeset=0
+#options nouveau modeset=0
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
@@ -838,7 +816,7 @@ EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
-dev.i915.perf_stream_paranoid=0
+#dev.i915.perf_stream_paranoid=0
 EOF
 
 
@@ -853,8 +831,8 @@ chroot /mnt xbps-reconfigure -f fontconfig
 mkdir -pv /mnt/etc/udev/rules.d
 cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
-# ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
-# ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
+# ==1: mount filesystem to a shared directory (/media/VolumeName)
+# ==0: mount filesystem to a private directory (/run/media/VolumeName)
 # See udisks(8)
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
@@ -934,7 +912,7 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 
 # chroot /mnt xbps-install -Sy xorg-minimal xfce4-appfinder xfce4-battery-plugin xfce4-clipman-plugin xfce4-cpufreq-plugin xfce4-genmon-plugin xfce4-notifyd xfce4-panel xfce4-panel-appmenu xfce4-places-plugin xfce4-power-manager xfce4-pulseaudio-plugin xfce4-screensaver xfce4-screenshooter xfce4-sensors-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-verve-plugin xfce4-whiskermenu-plugin xfce4-xkb-plugin Thunar thunar-volman thunar-archive-plugin thunar-media-tags-plugin ristretto xarchiver mousepad xfwm4 xfdesktop zathura zathura-pdf-poppler gvfs gvfs-mtp gvfs-gphoto2 xfce-polkit parole
 # chroot /mnt xbps-install -Sy xfce4
-printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
+# printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 
 ###################################
 ############## Gnome ##############
@@ -950,8 +928,8 @@ printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 # ignorepkg=yelp
 # EOF
 
-# xinput xload xlsatoms xlsclients
+# chroot /mnt xbps-install -Sy gnome tilix python3 python3-pip sushi python3-psutil nautilus-python --yes
 
-chroot /mnt xbps-install -Sy gnome tilix python3 python3-pip sushi python3-psutil nautilus-python --yes
+# tilix --quake
 
-#  cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+vpm i gtksourceview4 autoconf automake bison m4 make libtool flex meson ninja optipng sassc tilix dust gnome gdm octoxbps nix docker xdg-desktop-portal-gnome xdg-user-dirs xdg-user-dirs-gtk xdg-utils gnome-browser-connector python3 python3-pip python3-psutil nautilus-python syncthing

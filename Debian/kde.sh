@@ -1,0 +1,2 @@
+apt purge -y konqueror
+apt install --no-install-recommends -y kde-config-plymouth kde-config-screenlocker plasma-discover kde-config-sddm xdg-utils xdg-user-dirs xdg-desktop-portal-kde systemsettings kde-plasma-desktop plasma-desktop plasma-workspace plasma-integration plasma-pa plasma-nm firefox-esr kate arc kcalc plasma-discover-backend-snap plasma-discover-backend-flatpak kwin-x11  kio-extras plasma-discover-backend-fwupd kde-spectacle okular powerdevil bluedevil qml-module-org-kde-newstuff kscreen kmix libcanberra-pulse

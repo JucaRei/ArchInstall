@@ -2,7 +2,8 @@
 
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
-sed -i '177s/.//' /etc/locale.gen
+sed -i '171s/.//' /etc/locale.gen
+sed -i '387s/.//' /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
@@ -123,11 +124,11 @@ Server = http://omniverse.artixlinux.org/$arch
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
 
-[andontie-aur]
-Server = https://aur.andontie.net/$arch
+#[andontie-aur]
+#Server = https://aur.andontie.net/$arch
 
-[herecura]
-Server = https://repo.herecura.be/herecura/x86_64
+#[herecura]
+#Server = https://repo.herecura.be/herecura/x86_64
 EOF
 
 
@@ -179,9 +180,9 @@ pacman -Syyy
 sleep 3
 
 pacman -Sy
-alsa-utils alsa-utils-dinit
-pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-dinit networkmanager preload reflector nfs-utils nfs-utils-dinit samba samba-dinit metalog metalog-dinit mpd mpd-dinit networkmanager-dinit network-manager-applet dropbear dropbear-dinit powertop thermald thermald-dinit htop neofetch chrony chrony-dinit dialog duf bat exa lsd avahi avahi-dinit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-dinit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf bash-completion exfat-utils cups cups-dinit hplip rsync rsync-dinit acpi acpid acpi_call-dkms virt-manager libvirt-dinit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-dinit vde2 opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-dinit flatpak nss-mdns acpid-dinit ntfs-3g
-
+# alsa-utils alsa-utils-dinit
+pacman -S grub grub-btrfs efibootmgr wget curl backlight-dinit networkmanager preload reflector nfs-utils nfs-utils-dinit samba samba-dinit metalog metalog-dinit networkmanager-dinit network-manager-applet dropbear dropbear-dinit powertop thermald thermald-dinit htop neofetch chrony chrony-dinit duf bat exa avahi avahi-dinit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-dinit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack bash-completion exfat-utils cups cups-dinit hplip rsync rsync-dinit acpi acpid acpi_call-dkms virt-manager libvirt-dinit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-dinit opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-dinit flatpak nss-mdns acpid-dinit ntfs-3g
+# mesa mesa-utils
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
 # pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
 
@@ -264,30 +265,46 @@ powertop --auto-tune
 # echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
 
 # Preload
-preload
+#preload
 EOF
 
 mkdir -pv /etc/X11/xorg.conf.d/
 touch /etc/X11/xorg.conf.d/20-intel.conf
 # Fix tearing with intel
 cat <<EOF >/etc/X11/xorg.conf.d/20-intel.conf
-# Section "Device"
-#  Identifier "Intel Graphics"
-#  Driver "Intel"
-#  Option "AccelMethod" "sna"
-#  Option "TearFree" "True"
-#  Option "Tiling" "True"
-#  Option "SwapbuffersWait" "True"
-#  Option "DRI" "3"
-# EndSection
+Section "Device"
+#   Identifier "Intel Graphics 630"
+#   Driver "intel"
+#   Option "AccelMethod" "sna"
+#   Option "TearFree" "True"
+#   Option "Tiling" "True"
+#   Option "SwapbuffersWait" "True"
+#   Option "DRI" "3"
+
+    Identifier  "Intel Graphics"
+    Driver      "modesetting"
+    Option      "TearFree"       "True"
+    Option      "AccelMethod"    "glamor"
+    Option      "DRI"            "3"
+EndSection
 EOF
 
+cat << EOF > /etc/X11/xorg.conf.d/30-nvidia.conf
+#Section "Device"
+#    Identifier "Nvidia GTX 1050"
+#    Driver "nvidia"
+#    BusID "PCI:1:0:0"
+#    Option "DPI" "96 x 96"
+#    Option "AllowEmptyInitialConfiguration" "Yes"
+    #  Option "UseDisplayDevice" "none"
+#EndSection
+EOF
 
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
 cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
-# ==1: mount filesystem to a shared directory (/media/VolumeName)
+# ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
 # See udisks(8)
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
@@ -337,9 +354,9 @@ ln -s /etc/dinit.d/chronyd /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/thermald /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/dropbear /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/bluetoothd /etc/dinit.d/boot.d/
-ln -s /etc/dinit.d/alsa /etc/dinit.d/boot.d/
+#ln -s /etc/dinit.d/alsa /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/cupsd /etc/dinit.d/boot.d/
-ln -s /etc/dinit.d/libvirtd /etc/dinit.d/boot.d/
+#ln -s /etc/dinit.d/libvirtd /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/nfs-server /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/nmbd /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/smbd /etc/dinit.d/boot.d/
@@ -347,7 +364,7 @@ ln -s /etc/dinit.d/statd /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/rpcbind /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/rsync /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/backlight /etc/dinit.d/boot.d/
-ln -s /etc/dinit.d/mpd /etc/dinit.d/boot.d/
+#ln -s /etc/dinit.d/mpd /etc/dinit.d/boot.d/
 ln -s /etc/dinit.d/metalog /etc/dinit.d/boot.d/
 
 grub-install --target=x86_64-efi --bootloader-id=Artix --efi-directory=/boot/efi --no-nvram --removable
@@ -464,7 +481,9 @@ EOF
 sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 # sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+#sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
