@@ -39,9 +39,13 @@ xbps-install -Su xbps xz --yes
 
 # xbps-install -Sy wget vsv xz vpm neovim git --yes
 
+sgdisk -Z /dev/vda
+parted -s -a optimal /dev/vda mklabel gpt
+sgdisk -n 0:0:200MiB /dev/vda
+sgdisk -n 0:0:0 /dev/vda
 sgdisk -t 1:ef00 /dev/vda
-sgdisk -c 1:VoidGrub /dev/vda
 sgdisk -t 2:8300 /dev/vda
+sgdisk -c 1:VoidGrub /dev/vda
 sgdisk -c 2:Voidlinux /dev/vda
 sgdisk -p /dev/vda
 mkfs.vfat -F32 /dev/vda1 -n "VoidEFI"
@@ -136,7 +140,7 @@ mkdir -pv /mnt/etc/dracut.conf.d
 cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
-dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
+dracutmodules+=" dash plymouth drm kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel btrfs "
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
@@ -436,7 +440,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc dracut dracut-uefi vsv vpm vpsm vpnd util-linux bash linux-lts linux-lts-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
 # chroot /mnt vpm up
 
@@ -932,4 +936,4 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 
 # tilix --quake
 
-vpm i gtksourceview4 autoconf automake bison m4 make libtool flex meson ninja optipng sassc tilix dust gnome gdm octoxbps nix docker xdg-desktop-portal-gnome xdg-user-dirs xdg-user-dirs-gtk xdg-utils gnome-browser-connector python3 python3-pip python3-psutil nautilus-python syncthing
+# vpm i gtksourceview4 autoconf automake bison m4 make libtool flex meson ninja optipng sassc tilix dust gnome gdm octoxbps nix docker xdg-desktop-portal-gnome xdg-user-dirs xdg-user-dirs-gtk xdg-utils gnome-browser-connector python3 python3-pip python3-psutil nautilus-python syncthing

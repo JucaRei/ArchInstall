@@ -5,7 +5,6 @@ apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
 umount -R /dev/sda
-# umount -R /dev/vda
 
 #### Add faster repo's ####
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
@@ -57,28 +56,6 @@ apt update
 ####Gptfdisk Partitioning example####
 #####################################
 
-####################
-#### VM testing ####
-####################
-
-# sgdisk -Z /dev/vda
-# parted -s -a optimal /dev/vda mklabel gpt
-
-## Create new partition
-# sgdisk -n 0:0:200MiB /dev/vda
-# sgdisk -n 0:0:0 /dev/vda
-
-## Change the name of partition
-# sgdisk -c 1:GRUB /dev/vda
-# sgdisk -c 2:Debian /dev/vda
-
-## Change Types
-# sgdisk -t 1:ef00 /dev/sda #
-# sgdisk -t 2:8300 /dev/sda #
-
-## Print drives partitions 
-# sgdisk -p /dev/vda
-
 #######################
 #### real hardware ####
 #######################
@@ -87,7 +64,7 @@ sgdisk -Z /dev/sda4
 sgdisk -Z /dev/sda5
 parted -s -a optimal /dev/sda4 mklabel gpt
 parted -s -a optimal /dev/sda5 mklabel gpt
-sgdisk -c 4:GRUB /dev/sda
+sgdisk -c 4:Grub /dev/sda
 sgdisk -c 5:Debian /dev/sda
 sgdisk -t 4:ef00 /dev/sda
 sgdisk -t 5:8300 /dev/sda
@@ -98,13 +75,6 @@ sgdisk -p /dev/sda
 #####################################
 ##########  FileSystem  #############
 #####################################
-
-####################
-#### VM testing ####
-####################
-
-# mkfs.vfat -F32 /dev/vda1 -n "GRUB"
-# mkfs.btrfs /dev/vda2 -f -L "Debian"
 
 #######################
 #### real hardware ####
@@ -134,31 +104,6 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 ###########################################
 #### Mount and create Btrfs Subvolumes ####
 ###########################################
-
-####################
-#### VM testing ####
-####################
-# mount -o $BTRFS_OPTS /dev/vda2 /mnt
-# btrfs su cr /mnt/@
-# btrfs su cr /mnt/@home
-# btrfs su cr /mnt/@snapshots
-# btrfs su cr /mnt/@var_log
-## btrfs su cr /mnt/@swap
-# btrfs su cr /mnt/@var_cache_apt
-# umount -v /mnt
-## Make directories for mount ##
-# mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
-# mkdir -pv /mnt/boot/efi
-# mkdir -pv /mnt/home
-# mkdir -pv /mnt/.snapshots
-# mkdir -pv /mnt/var/log
-# mkdir -pv /mnt/var/cache/apt
-## Mount btrfs subvolumes ##
-# mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
-# mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
-# mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
-# mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/vda2 /mnt/var/cache/apt
-# mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
 
 #######################
 #### real hardware ####
@@ -417,7 +362,7 @@ chroot /mnt apt upgrade -y
 ######################
 #### Set Hostname ####
 ######################
-real=nitro
+# real=nitro
 
 cat <<EOF >/mnt/etc/hostname
 nitro
@@ -537,10 +482,13 @@ EOF
 ###############
 
 ## Pulseaudio
-# chroot /mnt apt install bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
+# chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
+
 
 ## Pipewire 
-chroot /mnt apt install pipewire pipewire-pulse bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
+chroot /mnt apt purge pipewire* pipewire-bin -y
+chroot /mnt apt install pipewire pipewire-audio-client-libraries --no-install-recommends -y
+chroot /mnt apt install alsa-utils rtkit pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
 
 ## Config pipewire
 touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
@@ -550,7 +498,7 @@ cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/s
 #### Utils ####
 ###############
 
-chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
+chroot /mnt apt install fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
 debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
 efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
@@ -687,6 +635,12 @@ chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdag
 dnsmasq ipset ansible libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
 
+############################
+#### BTRFS Backup tools ####
+############################
+
+chroot /mnt apt install snapper snapper-gui --no-install-recommends -y
+
 #################################
 #### Plymouth animation boot ####
 #################################
@@ -770,7 +724,7 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,video,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
 chroot /mnt usermod -aG sudo juca
 
 # AppArmor podman fix
@@ -830,17 +784,24 @@ EOF
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
 chroot /mnt systemctl enable ssh.service
-chroot /mnt systemctl enable --user pulseaudio.service
+# chroot /mnt systemctl enable --user pulseaudio.service
+chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 
 
 ## Audio
-chroot /mnt systemctl --user enable pipewire pipewire-pulse
+## Pipewire 
+chroot /mnt systemctl --user --now enable pipewire{,-pulse}.{socket,service}
+chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
+chroot /mnt systemctl --user mask pulseaudio.{socket,service}
 # chroot /mnt systemctl --user daemon-reload
 
-# chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
-# chroot /mnt systemctl --user mask pulseaudio
+##Pulseaudio
+#chroot /mnt systemctl --user enable pulseaudio.{socket,service}
+#chroot /mnt systemctl --user --now disable pipewire{,-pulse}.{socket,service}
+#chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
+
 
 # Allow run as root
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/usr/lib/systemd/user/pipewire.socket
@@ -848,6 +809,10 @@ chroot /mnt systemctl --user enable pipewire pipewire-pulse
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/sockets.target.wants/pipewire.socket
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/pipewire-pulse.socket
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/default.target.wants/pipewire.service
+
+## Pulseaudio
+# chroot /mnt systemctl --user enable pulseaudio
+
 
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
@@ -885,8 +850,8 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=2
 # GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
 GRUB_DISTRIBUTOR="Debian"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 
 # Uncomment to use basic console

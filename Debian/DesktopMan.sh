@@ -17,8 +17,19 @@ stterm thunar-archive-plugin xfconf xfdesktop4 obconf adwaita-qt qt5ct \
 xdg-user-dirs-gtk xdg-utils blueman xfwm4 pavucontrol debian-goodies zenity zenity-common xfce4-battery-plugin \
 xfce4-notifyd xfce4-xkb-plugin xfce4-power-manager thunar-volman thunar-font-manager \
 lightdm at-spi2-core orchis-gtk-theme network-manager-gnome slick-greeter lightdm-settings light-locker xfce4-places-plugin \
-mpv xfce4-appmenu-plugin gnome-disk-utility thunar-media-tags-plugin gigolo xfce4-weather-plugin fancontrol \
-xfce4-systemload-plugin
+mpv xfce4-appmenu-plugin gnome-disk-utility thunar-media-tags-plugin xfce4-weather-plugin fancontrol \
+xfce4-systemload-plugin libnotify-bin python3-xlib firefox-esr exa
+
+chroot /mnt /bin/su - juca
+
+git clone --depth=1 https://github.com/jaywilkas/xpytile/
+
+mkdir -pv /home/juca/Documents/workspace/{Github,lab,podmanComposes,configs}
+
+# ./xpytile.py
+# or, to let run in background: nohup ./xpytile.py > /dev/null 2>&1 & You may want to assign a hotkey.
+# In Xfce for example, add a shortcut to xpytile.py with:
+# Xfce-Menu -> Settings -> Keyboard -> Application Shortcuts
 
 # Install pacstall
 yes | sudo bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
@@ -29,12 +40,18 @@ yes | sudo bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/
 
 #apt purge -y konqueror
 
-#apt install --no-install-recommends -y kde-config-plymouth kde-config-screenlocker plasma-discover \
-#kde-config-sddm xdg-utils xdg-user-dirs xdg-desktop-portal-kde systemsettings kde-plasma-desktop \
-#plasma-desktop plasma-workspace plasma-integration plasma-pa plasma-nm firefox-esr kate arc kcalc \
-#plasma-discover-backend-snap plasma-discover-backend-flatpak kwin-x11 \
-#kio-extras qml-module-qtbluetooth plasma-discover-backend-fwupd kde-spectacle okular powerdevil bluedevil \
-#qml-module-org-kde-newstuff shedtool kwalletmanager ark kscreen libcanberra-pulse qt5-style-kvantum qt5-style-kvantum-themes \
+# apt install --no-install-recommends -y kde-config-plymouth kde-config-screenlocker plasma-discover \
+# kde-config-sddm xdg-utils xdg-user-dirs xdg-desktop-portal-kde systemsettings kde-plasma-desktop \
+# plasma-desktop plasma-workspace plasma-integration plasma-pa plasma-nm firefox-esr kate arc kcalc \
+# plasma-discover-backend-snap plasma-discover-backend-flatpak kwin-x11 \
+# kio-extras qml-module-qtbluetooth plasma-discover-backend-fwupd kde-spectacle okular powerdevil bluedevil sddm \
+# qml-module-org-kde-newstuff schedtool kwalletmanager ark kscreen libcanberra-pulse qt5-style-kvantum qt5-style-kvantum-themes \
+
+#systemctl enable --user pulseaudio.service
+systemctl --user --now disable pulseaudio.service pulseaudio.socket
+systemctl --user mask pulseaudio
+systemctl --user enable pipewire pipewire-pulse
+systemctl --user daemon-reload
 
 ###########################
 ########## LXQT ###########

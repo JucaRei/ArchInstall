@@ -53,3 +53,5 @@ doas cat <<EOF >>/etc/sv/ananicy/finish
 exec /sbin/sysctl -e kernel.sched_autogroup_enabled=1
 EOF
 doas ln -sfv /etc/sv/ananicy /var/service
+
+# /usr/share/plymouth/plymouthd.defaults
