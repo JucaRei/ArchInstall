@@ -9,13 +9,14 @@ echo "Current working directory : $(pwd)"
 alias monitor="xrandr --setprovideroutputsource NVIDIA-G0 modesetting"
 
 #NFS
-alias volume2="sudo mount -t nfs 192.168.1.207:/mnt/HD/HD_a2 /home/$USER/Videos/Volume2 -o nolock"
-alias volume1="sudo mount -t nfs 192.168.1.207:/mnt/HD/HD_b2 /home/$USER/Videos/Volume1 -o nolock"
+alias volume2="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_a2 /home/$USER/Videos/Volume2 -o nolock"
+alias volume1="doas mount -t nfs 192.168.1.207:/mnt/HD/HD_b2 /home/$USER/Videos/Volume1 -o nolock"
 alias sharecenter="volume1 && volume2"
 
 # Raspberry
-alias dietpi="ssh dietpi@192.168.1.200"
-alias dietroot="ssh root@192.168.1.200"
+alias dietpi="dbclient dietpi@192.168.1.200"
+alias dietroot="dbclient root@192.168.1.200"
+alias ssh="dbclient"
 
 # Echo Path 
 alias ep="echo ${PATH} | sed -e $'s/:/\\\n/g'"
@@ -42,8 +43,8 @@ alias podclean='podrm; podrmv; podrmi'
 # alias podtail='podman logs -f $(podman ps -lq)'
 
 # Tor browser
-# alias tor='sudo podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged --name tor-browser jess/tor-browser'
-# alias tor='sudo podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged -p 5800:5800 --name tor-browser domistyle/tor-browser'
+# alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged --name tor-browser jess/tor-browser'
+# alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged -p 5800:5800 --name tor-browser domistyle/tor-browser'
 
 ########################################################
 ####################### Utils ##########################
@@ -58,20 +59,11 @@ alias playlistmaker="find ./ -type f | sort > playlist.m3u"
 
 # BTRFS
 alias btrfm="findmnt -t btrfs -o TARGET,SOURCE"
-alias btrfsfs="sudo btrfs filesystem df /"
-alias btrfsli="sudo btrfs su li / -t"
-
-# gpg encryption
-# verify signature for isos
-alias gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
-# receive the key of a developer
-alias gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
-alias fix-gpg-check="gpg2 --keyserver-options auto-key-retrieve --verify"
-alias fix-gpg-retrieve="gpg2 --keyserver-options auto-key-retrieve --receive-keys"
-alias fix-keyserver="[ -d ~/.gnupg ] || mkdir ~/.gnupg ; cp /etc/pacman.d/gnupg/gpg.conf ~/.gnupg/ ; echo 'done'"
+alias btrfsfs="doas btrfs filesystem df /"
+alias btrfsli="doas btrfs su li / -t"
 
 #Others
-alias tarnowsu='sudo tar -azcvf --exclude={dev/pts,home,lost+found,media,mnt,mnt2,proc,run,sys,tmp,var/lib/lxcfs,var/lib/lxd/unix.socket}'
+alias tarnowsu='doas tar -azcvf --exclude={dev/pts,home,lost+found,media,mnt,mnt2,proc,run,sys,tmp,var/lib/lxcfs,var/lib/lxd/unix.socket}'
 alias tarnow='tar -azcvf'
 alias EXCLUDE="--exclude=proc --exclude=sys --exclude=dev/pts --exclude=/var/backups"
 alias untar='tar -zxvf'
@@ -89,34 +81,33 @@ alias catf='bat --theme=ansi'
 alias clean="clear; seq 1 $(tput cols) | sort -R | sparklines | lolcat"
 
 #fixes
-alias fix-permissions="sudo chown -R $USER:$USER ~/.config ~/.local"
+alias fix-permissions="doas chown -R $USER:$USER ~/.config ~/.local"
 
 #systeminfo
-alias probe="sudo -E hw-probe -all -upload"
-alias sysfailed="systemctl list-units --failed"
+alias probe="doas -E hw-probe -all -upload"
 
 #systeminfo (Systemd)
-alias probe="sudo -E hw-probe -all -upload"
+alias probe="doas -E hw-probe -all -upload"
 alias sysfailed="systemctl list-units --failed"
 
 # Search command line history
 alias h="history | grep "
 
 #know what you do in these files
-alias nlxdm="sudo editor /etc/lxdm/lxdm.conf"
-alias nlightdm="sudo editor /etc/lightdm/lightdm.conf"
-alias ngrub="sudo editor /etc/default/grub"
-alias nconfgrub="sudo editor /boot/grub/grub.cfg"
-alias nsddm="sudo editor /etc/sddm.conf"
-alias nsddmk="sudo editor /etc/sddm.conf.d/kde_settings.conf"
-alias nfstab="sudo editor /etc/fstab"
-alias nnsswitch="sudo editor /etc/nsswitch.conf"
-alias nsamba="sudo editor /etc/samba/smb.conf"
-alias ngnupgconf="sudo editor /etc/pacman.d/gnupg/gpg.conf"
-alias nhosts="sudo editor /etc/hosts"
-alias nb="editor ~/.bashrc"
-alias nz="editor ~/.zshrc"
-alias nf="editor ~/.config/fish/config.fish"
+alias nlxdm="doas vi /etc/lxdm/lxdm.conf"
+alias nlightdm="doas vi /etc/lightdm/lightdm.conf"
+alias ngrub="doas vi /etc/default/grub"
+alias nconfgrub="doas vi /boot/grub/grub.cfg"
+alias nsddm="doas vi /etc/sddm.conf"
+alias nsddmk="doas vi /etc/sddm.conf.d/kde_settings.conf"
+alias nfstab="doas vi /etc/fstab"
+alias nnsswitch="doas vi /etc/nsswitch.conf"
+alias nsamba="doas vi /etc/samba/smb.conf"
+alias ngnupgconf="doas vi /etc/pacman.d/gnupg/gpg.conf"
+alias nhosts="doas vi /etc/hosts"
+alias nb="vi ~/.bashrc"
+alias nz="vi ~/.zshrc"
+alias nf="vi ~/.config/fish/config.fish"
 alias ba="source ~/.bashrc"
 
 # Alias's to show disk space and space used in a folder
@@ -207,17 +198,17 @@ if [ -d "$HOME/.local/bin" ]; then
   PATH="$HOME/.local/bin:$PATH"
 fi
 
-if [ -d "$HOME/Applications" ]; then
-  PATH="$HOME/Applications:$PATH"
+if [ -d "$HOME/.local/share/applications" ]; then
+  PATH="$HOME/.local/share/applications:$PATH"
 fi
 
 # export EDITOR='nvim'
 # export VISUAL='nvim'
 export HISTCONTROL=ignoreboth:erasedups
 #export PAGER='most'
-export PAGER='batcat'
+export PAGER='bat'
 ### "bat" as manpager
-export MANPAGER="sh -c 'col -bx | batcat -l man -p'"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 # Ignore case on auto-completion
 # Note: bind used instead of sticking these in .inputrc
 # if [[ $iatest > 0 ]]; then bind "set completion-ignore-case on"; fi
@@ -233,7 +224,7 @@ alias checkcommand="type -t"
 
 alias chmod='chmod -c --preserve-root'
 alias chown='chown -c --preserve-root'
-alias flushmem="sudo sync; echo 3 > /proc/sys/vm/drop_caches"
+alias flushmem="doas sync; echo 3 > /proc/sys/vm/drop_caches"
 
 # Show open ports
 alias openports='netstat -nape --inet'
@@ -247,7 +238,7 @@ alias unbz2='tar -xvjf'
 alias ungz='tar -xvzf'
 
 # Show all logs in /var/log
-alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
+alias logs="doas find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
 
 # alias chmod commands
 alias mx='chmod a+x'
@@ -290,8 +281,8 @@ alias mvy="yes | mv -rf"
 alias rmy="yes | rm -rf"
 
 #keyboard
-alias give-me-abnt-br="sudo localectl set-x11-keymap br"
-alias give-me-qwerty-us="sudo localectl set-x11-keymap us"
+alias give-me-abnt-br="doas localectl set-x11-keymap br"
+alias give-me-qwerty-us="doas localectl set-x11-keymap us"
 alias df='df -Th'    # human-readable sizes
 
 # ps
@@ -307,8 +298,8 @@ alias jctl="journalctl -p 3 -xb"
 alias merge='xrdb -merge ~/.Xresources'
 
 # Arp get all devices on lan
-alias localdevicesET="sudo arp-scan --interface=eth0 --localnet"
-alias localdevicesWI="sudo arp-scan --interface=wlan0 --localnet"
+alias localdevicesET="doas arp-scan --interface=eth0 --localnet"
+alias localdevicesWI="doas arp-scan --interface=wlan0 --localnet"
 
 ## get top 10 shell commands:
 alias top10='print -l ${(o)history%% *} | uniq -c | sort -nr | head -n 10'
@@ -363,8 +354,8 @@ shopt -s checkwinsize
 #[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
+if [ -z "${void_chroot:-}" ] && [ -r /etc/void_chroot ]; then
+    void_chroot=$(cat /etc/void_chroot)
 fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
@@ -374,7 +365,7 @@ esac
 
 ### CHANGE TITLE OF TERMINALS
 case ${TERM} in
-xterm* | rxvt* | Eterm* | aterm | kitty | kterm | gnome* | alacritty | st | konsole*)
+xterm* | rxvt* | Eterm* | aterm | kitty | tilix | kterm | gnome* | alacritty | st | konsole*)
   PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/\~}\007"'
   ;;
 screen*)
@@ -417,16 +408,16 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    PS1='${void_chroot:+($void_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+    PS1='${void_chroot:+($void_chroot)}\u@\h:\w\$ '
 fi
 unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
 xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    PS1="\[\e]0;${void_chroot:+($void_chroot)}\u@\h: \w\a\]$PS1"
     ;;
 *)
     ;;
@@ -509,10 +500,10 @@ distribution ()
 		source /etc/rc.status
 		[ zz`type -t rc_reset 2>/dev/null` == "zzfunction" ] && dtype="suse"
 	
-	# Then test against Debian, Ubuntu and friends
+	# Then test against void, Ubuntu and friends
 	elif [ -r /lib/lsb/init-functions ]; then
 		source /lib/lsb/init-functions
-		[ zz`type -t log_begin_msg 2>/dev/null` == "zzfunction" ] && dtype="debian"
+		[ zz`type -t log_begin_msg 2>/dev/null` == "zzfunction" ] && dtype="void"
 	
 	# Then test against Gentoo
 	elif [ -r /etc/init.d/functions.sh ]; then
