@@ -11,7 +11,7 @@ trim_at = "-"
 ssh_only = false
 
 [cmd_duration]
-min_time = 1
+min_time = 1000
 format = "took [$duration]($style)"
 
 [character]

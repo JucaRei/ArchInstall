@@ -165,6 +165,7 @@ hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel drm plymouth "
+# force_drivers+=""
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid  "
 show_modules="yes"
 # compress="cat";
@@ -188,7 +189,7 @@ add_drivers+=" i915 "
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/kernel-cmdline.conf
-# kernel_cmdline="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# kernel_cmdline=" quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable "
 EOF
 
 mkdir -pv /mnt/etc/sysctl.d
@@ -332,6 +333,11 @@ ignorepkg=rtkit
 ignorepkg=dhcpcd
 ignorepkg=nvi
 ignorepkg=openssh
+ignorepkg=sudo
+ignorepkg=xf86-input-wacon
+ignorepkg=xf86-video-vesa
+
+
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
@@ -420,15 +426,15 @@ permit nopass :juca cmd mount
 permit nopass :juca cmd umount
 
 # musicpd service start and stop
-#permit nopass :$USER cmd service args musicpd onestart
-#permit nopass :$USER cmd service args musicpd onestop
+#permit nopass :juca cmd service args musicpd onestart
+#permit nopass :juca cmd service args musicpd onestop
 
 # pkg update
-#permit nopass :$USER cmd vpm args update
+#permit nopass :juca cmd vpm args update
 
 # run personal scripts as root without prompting for a password,
 # requires entering the full path when running with doas
-#permit nopass :$USER cmd /home/username/bin/somescript
+#permit nopass :juca cmd /home/username/bin/somescript
 
 # root as root
 #permit nopass keepenv root as root
@@ -454,7 +460,7 @@ cat <<EOF >/mnt/etc/rc.conf
 HARDWARECLOCK="localtime"
 
 # Set timezone, availables timezones at /usr/share/zoneinfo.
-#TIMEZONE="America/Sao_Paulo"
+TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
 KEYMAP="br-abnt2"
@@ -699,7 +705,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apci_osi=Linux apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
@@ -792,21 +798,30 @@ chroot /mnt chmod 600 /var/swap/swapfile
 chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
 
 chroot /mnt mkswap /var/swap/swapfile
-chroot /mnt swapon /var/swap/swapfile
+chroot /mnt swapon -va /var/swap/swapfile
+
+
+# resume_offset=$(chroot /mnt btrfs inspect-internal map-swapfile -r /var/swap/swapfile)
+wget https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+gcc -O2 btrfs_map_physical.c -o btrfs_map_physical
+RESUME_OFFSET=$(($(./btrfs_map_physical /mnt/var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
+sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/default/grub
+sed -i "/kernel_cmdline=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/dracut.conf.d/kernel-cmdline.conf
 
 # Add to fstab
 SWAP_UUID=$(blkid -s UUID -o value /dev/sda5)
 echo $SWAP_UUID
 echo " " >>/mnt/etc/fstab
 echo "# Swap" >>/mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+# echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+echo "UUID=$SWAP_UUID /var/swap btrfs noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
 echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 ################################
 #### Runit Default Services ####
 ################################
 
-chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
@@ -858,6 +873,11 @@ chroot /mnt ln -srvf /etc/sv/nmbd /etc/runit/runsvdir/default/
 # Enable the iNet Wireless Daemon for Wi-Fi support
 chroot /mnt ln -srvf /etc/sv/iwd /etc/runit/runsvdir/default/
 
+# Virt-manager
+chroot /mnt ln -svrf /etc/sv/libvirtd /var/service
+chroot /mnt ln -svrf /etc/sv/virtlockd /var/service
+chroot /mnt ln -svrf /etc/sv/virtlogd /var/service
+
 ### SAMBA CONF ###
 
 cat <<EOF >/mnt/etc/samba/smb.conf
@@ -868,7 +888,7 @@ cat <<EOF >/mnt/etc/samba/smb.conf
    max log size = 1000
    client min protocol = NT1
    server role = standalone server
-   passda backend = tdbsam
+   passdb backend = tdbsam
    obey pam restrictions = yes
    unix password sync = yes
    passwd program = /usr/bin/passwd %u
@@ -951,15 +971,15 @@ chroot /mnt xbps-reconfigure -f fontconfig
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
+cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
-# ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
-# ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
+# ==1: mount filesystem to a shared directory (/media/juca/VolumeName)
+# ==0: mount filesystem to a private directory (/run/media/juca/VolumeName)
 # See udisks(8)
 ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
 EOF
 
-cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<\EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -1007,6 +1027,50 @@ powertop --auto-tune
 
 EOF
 
+mkdir -pv /mnt/etc/elogind
+cat <<EOF >/mnt/etc/elogind/logind.conf
+[Login]
+#KillUserProcesses=no
+#KillOnlyUsers=
+#KillExcludeUsers=root
+#InhibitDelayMaxSec=5
+#HandlePowerKey=ignore
+#HandleSuspendKey=ignore
+#HandleHibernateKey=ignore
+#HandleLidSwitch=ignore
+#HandleLidSwitchExternalPower=ignore
+#HandleLidSwitchDocked=ignore
+#PowerKeyIgnoreInhibited=no
+#SuspendKeyIgnoreInhibited=no
+#HibernateKeyIgnoreInhibited=no
+#LidSwitchIgnoreInhibited=yes
+#HoldoffTimeoutSec=30s
+#IdleAction=ignore
+#IdleActionSec=30min
+#RuntimeDirectorySize=10%
+#RuntimeDirectoryInodes=400k
+#RemoveIPC=yes
+#InhibitorsMax=8192
+#SessionsMax=8192
+
+[Sleep]
+AllowSuspend=yes
+AllowHibernation=yes
+AllowSuspendThenHibernate=yes
+AllowHybridSleep=yes
+#AllowPowerOffInterrupts=no
+#BroadcastPowerOffInterrupts=yes
+#AllowSuspendInterrupts=no
+#BroadcastSuspendInterrupts=yes
+HandleNvidiaSleep=ignore
+#SuspendState=mem standby freeze
+#SuspendMode=
+#HibernateState=disk
+#HibernateMode=platform shutdown
+#HybridSleepState=disk
+#HybridSleepMode=suspend platform shutdown
+#HibernateDelaySec=10800
+EOF
 # install ncdu2
 # wget -c https://dev.yorhel.nl/download/ncdu-2.1-linux-x86_64.tar.gz
 # tar -xf ncdu-2.1-linux-x86_64.tar.gz
