@@ -640,7 +640,7 @@ EOF
 ##############################################
 
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia nvidia-opencl nvtop nvidia-libs-32bit nvidia-gtklibs-32bit nvidia-opencl-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
+chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-525.89.02_1 nvidia-libs-32bit-525.89.02_1 nvidia-gtklibs-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
 chroot /mnt xbps-install -S mesa-intel-dri libva-glx libva-utils libva-intel-driver mesa-vulkan-intel --yes # intel
 
 # chroot /mnt dracut --force --kver 5.10.162_1
