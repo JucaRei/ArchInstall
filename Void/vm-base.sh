@@ -137,10 +137,11 @@ EOF
 
 # Atualiza o initramfs com dracut
 mkdir -pv /mnt/etc/dracut.conf.d
+touch /mnt/etc/dracut.conf.d/00-dracut.conf
 cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
-dracutmodules+=" dash plymouth drm kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
+dracutmodules+=" dash drm kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel btrfs "
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
@@ -304,11 +305,11 @@ EOF
 # Hosts
 
 cat <<EOF >/mnt/etc/hosts
-127.0.0.1      localhost
-::1            localhost ip6-locahost ip6-loopback
+127.0.0.1       localhost
+::1                 localhost ip6-locahost ip6-loopback
 127.0.1.1      voidvm.localdomain voidvm
-ff02::1        ip6-allnodes
-ff02::2        ip6-allrouters
+ff02::1          ip6-allnodes
+ff02::2          ip6-allrouters
 EOF
 
 # fstab
@@ -494,7 +495,7 @@ chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep ne
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal numlockx xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+chroot /mnt xbps-install -Sy xorg-minimal libglapi numlockx xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
 
 # light
 
@@ -556,7 +557,7 @@ EOF
 # chroot /mnt xbps-install -S linux-firmware-intel linux-firmware-nvidia nvidia nvidia-dkms nvidia-gtklibs nvidia-libs nvidia-opencl nv-codec-headers mesa vulkan-loader libva libva-glx libva-utils libva-intel-driver glu mesa-dri mesa-vulkan-intel mesa-intel-dri intel-video-accel mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # chroot /mnt dracut --force --kver 5.10.162_1
-chroot /mnt xbps-reconfigure -f linux-lts
+chroot /mnt xbps-reconfigure -fa linux-lts
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
@@ -704,7 +705,7 @@ EOF
 # echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 #Runit por default
-chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
@@ -823,6 +824,11 @@ cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 #dev.i915.perf_stream_paranoid=0
 EOF
 
+### LIBVIRT
+
+# /etc/libvirt/qemu.conf
+# security_driver = "apparmor"
+# security_driver = "none"
 
 # chroot /mnt xbps-reconfigure -f linux5.4
 chroot /mnt xbps-reconfigure -f linux-lts
@@ -906,16 +912,16 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 ############# XFCE4 ###############
 ###################################
 
-# cat <<EOF >/mnt/etc/xbps.d/90-xfce-ignore.conf
-# ignorepkg=ristretto
-# ignorepkg=mousepad
-# ignorepkg=xfce4-terminal
-# ignorepkg=parole
-# EOF
-# 
+cat <<EOF >/mnt/etc/xbps.d/90-xfce-ignore.conf
+ignorepkg=ristretto
+ignorepkg=mousepad
+ignorepkg=xfce4-terminal
+ignorepkg=parole
+EOF
+
 
 # chroot /mnt xbps-install -Sy xorg-minimal xfce4-appfinder xfce4-battery-plugin xfce4-clipman-plugin xfce4-cpufreq-plugin xfce4-genmon-plugin xfce4-notifyd xfce4-panel xfce4-panel-appmenu xfce4-places-plugin xfce4-power-manager xfce4-pulseaudio-plugin xfce4-screensaver xfce4-screenshooter xfce4-sensors-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-verve-plugin xfce4-whiskermenu-plugin xfce4-xkb-plugin Thunar thunar-volman thunar-archive-plugin thunar-media-tags-plugin ristretto xarchiver mousepad xfwm4 xfdesktop zathura zathura-pdf-poppler gvfs gvfs-mtp gvfs-gphoto2 xfce-polkit parole
-# chroot /mnt xbps-install -Sy xfce4
+# chroot /mnt xbps-install -Sy xfce4 lightdm light-locker lightdm-webkit2-greeter -y
 # printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 
 ###################################
@@ -930,9 +936,20 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 # ignorepkg=gnome-console
 # ignorepkg=gnome-system-monitor
 # ignorepkg=yelp
+# ignorepkg=Endeavour
+# ignorepkg=epiphany
+# ignorepkg=gnome-boxes
+# ignorepkg=xorg-server-xwayland
+# ignorepkg=gnome-builder
+# ignorepkg=gnome-terminal
+# ignorepkg=cinnamon-translations
+# ignorepkg=nautilus
 # EOF
 
-# chroot /mnt xbps-install -Sy gnome tilix python3 python3-pip sushi python3-psutil nautilus-python --yes
+# chroot /mnt vpm i gnome gnome-apps nemo nemo-extensions xdg-utils polkit-gnome seahorse pinentry-gnome gnome-usage gthumb nautilus-gnome-terminal-extension gparted gnome-colors-icon-theme gnome-screensaver gnome-icon-theme-extras gnome-epub-thumbnailer gnome-mpv firefox-esr Komikku gnome-power-manager gnome-browser-connector xorg mesa tilix python3 python3-pip sushi python3-psutil --yes
+
+# WaylandEnable=false
+# DefaultSession=gnome-xorg.desktop
 
 # tilix --quake
 

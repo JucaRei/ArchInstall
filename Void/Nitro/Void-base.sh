@@ -477,9 +477,6 @@ KEYMAP="br-abnt2"
 
 # Amount of ttys which should be setup.
 #TTYS=
-
-# Podman fix
-mount --make-rshared /
 EOF
 
 #######################
@@ -547,13 +544,14 @@ chroot /mnt xbps-install -S bluez --yes
 #### Network ####
 #################
 
-chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils nm-tray samba arp-scan sv-netmount --yes
+chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils samba arp-scan sv-netmount --yes
+# nm-tray
 
 ###############################
 #### Optimization packages ####
 ###############################
 
-chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom bash-completion --yes
+chroot /mnt xbps-install -Sy irqbalance tlp powertop thermald preload earlyoom bash-completion --yes
 
 #################################
 #### Infrastructure packages ####
@@ -565,7 +563,7 @@ chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-
 #### Utils ####
 ###############
 
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
+chroot /mnt xbps-install -S bash-completion bat p7zip neofetch btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
 chroot /mnt xbps-install -Sy util-linux zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools dropbear inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
 
 # Needed for DE
@@ -642,7 +640,7 @@ EOF
 ##############################################
 
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia nvidia-libs-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
+chroot /mnt xbps-install -S nvidia nvidia-opencl nvtop nvidia-libs-32bit nvidia-gtklibs-32bit nvidia-opencl-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
 chroot /mnt xbps-install -S mesa-intel-dri libva-glx libva-utils libva-intel-driver mesa-vulkan-intel --yes # intel
 
 # chroot /mnt dracut --force --kver 5.10.162_1
@@ -667,13 +665,14 @@ chroot /mnt xbps-reconfigure -f linux-lts
 # chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc gvfs-afp rsync rclone avahi avahi-discover avahi-autoipd avahi-compat-libs avahi-utils udisks2 udiskie samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc gvfs-afp rsync rclone avahi avahi-discover avahi-autoipd avahi-compat-libs avahi-utils samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+# udisks2 udiskie
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
 
 # Virt-manager
-chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
+chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga spice-vdagent vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
 
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
@@ -798,6 +797,7 @@ chroot /mnt chmod 600 /var/swap/swapfile
 chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
 
 chroot /mnt mkswap /var/swap/swapfile
+chroot /mnt chmod u=rw,go= /var/swap/swapfile # Set the permissions for the swapfile (only readable and writable by root)
 chroot /mnt swapon -va /var/swap/swapfile
 
 
@@ -846,11 +846,6 @@ chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
 chroot /mnt ln -srvf /etc/sv/podman /var/service
 chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
 chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
-
-cat << EOF >>/mnt/etc/rc.local
-# Fix podman
-mount --make-rshared /
-EOF
 
 # virtmanager #
 ln -s /etc/sv/libvirtd /var/service
@@ -929,12 +924,6 @@ cat <<EOF >/mnt/etc/samba/smb.conf
    read only = yes
    guest ok = no
 EOF
-
-# # Boot Faster with intel
-# touch /mnt/etc/modprobe.d/i915.conf
-# cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-# options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-# EOF
 
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
@@ -1021,10 +1010,45 @@ polkit.addRule(function(action, subject) {
 EOF
 
 touch /mnt/etc/rc.local
-cat <<EOF >/mnt/etc/rc.local
-#PowerTop
+cat << EOF >>/mnt/etc/rc.local
+# Podman fix
+mount --make-rshared /
+
+# Powertop
 powertop --auto-tune
 
+# Dual GPU
+/home/juca/.envs/dual.sh
+
+exit 0
+EOF
+
+mkdir -pv /mnt/home/juca/.envs/
+chown -R juca:juca /mnt/home/juca/.envs/
+chmod u+x /mnt/home/juca/.envs/dual.sh
+touch /mnt/home/juca/.envs/dual.sh
+cat <<\EOF >> /mnt/home/juca/.envs/dual.sh
+#!/bin/sh
+### Dual graphics
+# eDP1 - Lap Screen  |  HDMI-1-0 External monitor
+# Lightdm etc
+
+#xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
+xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+numlockx on &
+
+XCOM0="$(xrandr -q | grep 'HDMI-1-0 connected')"
+# XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+XCOM1="$(xrandr --output eDP-1 --primary --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-1-0 --mode 1920x1080 --pos 0x0 --rotate normal)"
+XCOM2="$(xrandr --output eDP1 --primary --auto)"
+
+#if the external monitor is connected, then we tell XRANDR to set up an extended desktop
+if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+  echo $XCOM1
+# if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
+else
+  echo $XCOM2
+fi
 EOF
 
 mkdir -pv /mnt/etc/elogind
@@ -1034,10 +1058,10 @@ cat <<EOF >/mnt/etc/elogind/logind.conf
 #KillOnlyUsers=
 #KillExcludeUsers=root
 #InhibitDelayMaxSec=5
-#HandlePowerKey=ignore
-#HandleSuspendKey=ignore
-#HandleHibernateKey=ignore
-#HandleLidSwitch=ignore
+HandlePowerKey=Poweroff
+HandleSuspendKey=Suspend
+HandleHibernateKey=Hibernate
+HandleLidSwitch=HybridSleep
 #HandleLidSwitchExternalPower=ignore
 #HandleLidSwitchDocked=ignore
 #PowerKeyIgnoreInhibited=no
@@ -1062,13 +1086,13 @@ AllowHybridSleep=yes
 #BroadcastPowerOffInterrupts=yes
 #AllowSuspendInterrupts=no
 #BroadcastSuspendInterrupts=yes
-HandleNvidiaSleep=ignore
+#HandleNvidiaSleep=ignore
 #SuspendState=mem standby freeze
 #SuspendMode=
-#HibernateState=disk
-#HibernateMode=platform shutdown
-#HybridSleepState=disk
-#HybridSleepMode=suspend platform shutdown
+HibernateState=disk
+HibernateMode=platform shutdown
+HybridSleepState=disk
+HybridSleepMode=suspend platform shutdown
 #HibernateDelaySec=10800
 EOF
 # install ncdu2
@@ -1103,7 +1127,7 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 touch /mnt/home/juca/.xsessionrc
 cat << EOF > /mnt/home/juca/.xsessionrc
 ### Dual Video
-xrandr --setprovideroutputsource NVIDIA-G0 modesetting &
+#xrandr --setprovideroutputsource NVIDIA-G0 modesetting &
 EOF
 
 ##Fix distrobox
@@ -1134,6 +1158,8 @@ printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 # ignorepkg=gnome-console
 # ignorepkg=gnome-system-monitor
 # ignorepkg=yelp
+# ignorepkg=orca
+# ignorepkg=xorg-server-xwayland
 # EOF
 
 # xinput xload xlsatoms xlsclients
@@ -1145,3 +1171,29 @@ printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 # https://superuser.com/questions/1581885/btrfs-luks-swapfile-how-to-hibernate-on-swapfile
 
 # chroot /mnt /bin/su - juca
+
+### GDM
+
+#chroot /mnt touch /etc/gdm/dual.sh
+#chroot /mnt chmod +x /etc/lightdm/dual.sh
+#cat <<EOF >/mnt/etc/lightdm/dual-xrandr.sh
+##!/bin/sh
+## eDP1 - Lap Screen  |  HDMI-1-0 External monitor
+## Lightdm or other script for dual monitor
+
+# #xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
+#xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+#numlockx on &
+
+#XCOM0="$(xrandr -q | grep 'HDMI-1-0 connected')"
+## XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+#XCOM1="$(xrandr --output eDP-1 --primary --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-1-0 --mode 1920x1080 --pos 0x0 --rotate normal)"
+#XCOM2="$(xrandr --output eDP1 --primary --auto)"
+
+##if the external monitor is connected, then we tell XRANDR to set up an extended desktop
+#if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+#   echo $XCOM1
+## if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
+#else
+#   echo $XCOM2
+#fi
