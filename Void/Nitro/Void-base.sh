@@ -162,9 +162,9 @@ mkdir -pv /mnt/etc/dracut.conf.d
 cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
-dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
+dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib plymouth shutdown "
 use_fstab=yes
-add_drivers+=" crc32c-intel drm plymouth "
+add_drivers+=" crc32c-intel drm ahci "
 # force_drivers+=""
 omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid  "
 show_modules="yes"
@@ -499,14 +499,17 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel cpufrequtils acpica-utils libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid acpi opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel cpufrequtils usbutils acpica-utils libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid acpi opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
+
+# libusbmuxd libgusb
 
 #######################
 #### Grub Packages ####
 #######################
 
-chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi os-prober btrfs-progs grub-btrfs grub-btrfs-runit grub-customizer --yes
+chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi os-prober btrfs-progs grub-customizer --yes
+# grub-btrfs grub-btrfs-runit grub-customizer
 
 ###########################
 #### Remove Base Strap ####
@@ -532,7 +535,7 @@ chroot /mnt vpm up
 #######################
 #### Xorg Packages ####
 #######################
-chroot /mnt xbps-install -S xorg-minimal xhost xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
+chroot /mnt xbps-install -S xorg-minimal xinput xsetmode xhost xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes
 
 ###################
 #### Bluetooth ####
@@ -544,7 +547,7 @@ chroot /mnt xbps-install -S bluez --yes
 #### Network ####
 #################
 
-chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils samba arp-scan sv-netmount --yes
+chroot /mnt xbps-install -S NetworkManager NetworkManager-openvpn NetworkManager-openconnect NetworkManager-vpnc NetworkManager-l2tp iwd netcat nfs-utils samba arp-scan sv-netmount --yes
 # nm-tray
 
 ###############################
@@ -704,8 +707,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apci_osi=Linux apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
@@ -814,7 +816,7 @@ echo $SWAP_UUID
 echo " " >>/mnt/etc/fstab
 echo "# Swap" >>/mnt/etc/fstab
 # echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+echo "UUID=$SWAP_UUID /var/swap btrfs noatime,discard,subvol=@swap 0 0" >>/mnt/etc/fstab
 echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 ################################
@@ -1018,15 +1020,15 @@ mount --make-rshared /
 powertop --auto-tune
 
 # Dual GPU
-/home/juca/.envs/dual.sh
+#/home/juca/.envs/dual.sh
 
 exit 0
 EOF
 
 mkdir -pv /mnt/home/juca/.envs/
-chown -R juca:juca /mnt/home/juca/.envs/
-chmod u+x /mnt/home/juca/.envs/dual.sh
 touch /mnt/home/juca/.envs/dual.sh
+chroot /mnt chmod u+x /home/juca/.envs/dual.sh
+chroot /mnt chown -R juca:juca /home/juca/.envs/
 cat <<\EOF >> /mnt/home/juca/.envs/dual.sh
 #!/bin/sh
 ### Dual graphics
@@ -1100,11 +1102,25 @@ EOF
 # tar -xf ncdu-2.1-linux-x86_64.tar.gz
 # mv ncdu /mnt/usr/local/bin
 
+mkdir -pv /mnt/home/juca/Documents/workspace/github
+mkdir -pv /mnt/home/juca/Documents/workspace/lab
+mkdir -pv /mnt/home/juca/Documents/workspace/containers
+mkdir -pv /mnt/home/juca/Documents/workspace/configs
+
+### XBPS ###
+chroot /mnt git clone --depth=1 --recurse-submodules https://github.com/void-linux/void-packages /home/juca/Documents/workspace/configs/void-packages
+chroot /mnt chown -R juca:juca /home/juca/Documents
+chroot /mnt su juca /home/juca/Documents/workspace/configs/void-packages/xbps-src binary-bootstrap
+touch /mnt/home/juca/Documents/workspace/configs/void-packages/etc/conf
+touch /mnt/home/juca/Documents/workspace/configs/void-packages/etc/conf
+echo "XBPS_ALLOW_RESTRICTED=yes" >> /mnt/home/juca/Documents/workspace/configs/void-packages/etc/conf
+chroot /mnt chown -R juca:juca /home/juca/Documents/workspace/configs/void-packages/etc/conf
+
 git clone --depth=1 https://github.com/madand/runit-services Services
 mv Services /mnt/home/juca/
+chroot /mnt chown -R juca:juca /home/juca/Services
 
-# Gerar initcpio
-chroot /mnt xbps-reconfigure -fa
+
 
 printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 
@@ -1124,8 +1140,8 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 #### Fix Dual provider ####
 ###########################
 
-touch /mnt/home/juca/.xsessionrc
-cat << EOF > /mnt/home/juca/.xsessionrc
+chroot /mnt touch /home/juca/.xsessionrc
+chroot /mnt cat << EOF >/home/juca/.xsessionrc
 ### Dual Video
 #xrandr --setprovideroutputsource NVIDIA-G0 modesetting &
 EOF
@@ -1144,6 +1160,10 @@ chroot /mnt chown -R juca:juca /home/juca/.xprofile
 
 # chroot /mnt xbps-install -Sy xorg-minimal xfce4-appfinder xfce4-battery-plugin xfce4-clipman-plugin xfce4-cpufreq-plugin xfce4-genmon-plugin xfce4-notifyd xfce4-panel xfce4-panel-appmenu xfce4-places-plugin xfce4-power-manager xfce4-pulseaudio-plugin xfce4-screensaver xfce4-screenshooter xfce4-sensors-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-verve-plugin xfce4-whiskermenu-plugin xfce4-xkb-plugin Thunar thunar-volman thunar-archive-plugin thunar-media-tags-plugin ristretto xarchiver mousepad xfwm4 xfdesktop zathura zathura-pdf-poppler gvfs gvfs-mtp gvfs-gphoto2 xfce-polkit parole
 # chroot /mnt xbps-install -Sy xfce4
+
+# Gerar initcpio
+chroot /mnt xbps-reconfigure -fa
+
 printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 
 ###################################
@@ -1197,3 +1217,16 @@ printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 #else
 #   echo $XCOM2
 #fi
+
+###################################
+############# XFCE4 ###############
+###################################
+
+chroot /mnt cat <<EOF > /etc/xbps.d/90-xfce-ignore.conf
+ignorepkg=ristretto
+ignorepkg=mousepad
+ignorepkg=xfce4-terminal
+ignorepkg=parole
+EOF
+
+# chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y

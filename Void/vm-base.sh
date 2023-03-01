@@ -912,7 +912,7 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 ############# XFCE4 ###############
 ###################################
 
-cat <<EOF >/mnt/etc/xbps.d/90-xfce-ignore.conf
+chroot /mnt cat <<EOF > /etc/xbps.d/90-xfce-ignore.conf
 ignorepkg=ristretto
 ignorepkg=mousepad
 ignorepkg=xfce4-terminal

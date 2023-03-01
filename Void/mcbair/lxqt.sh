@@ -55,3 +55,5 @@ EOF
 doas ln -sfv /etc/sv/ananicy /var/service
 
 # /usr/share/plymouth/plymouthd.defaults
+
+#usr/share/sddm/scripts/Xsetup
