@@ -6,25 +6,25 @@
 
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
 repository=https://voidlinux.com.br/repo/current
-# repository=http://void.chililinux.com/voidlinux/current
+repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
 repository=https://voidlinux.com.br/repo/current/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
 repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
 repository=https://voidlinux.com.br/repo/current/multilib
-# repository=http://void.chililinux.com/voidlinux/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
@@ -162,7 +162,8 @@ mkdir -pv /mnt/etc/dracut.conf.d
 cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
-dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib plymouth shutdown "
+# dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib plymouth shutdown "
+dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 use_fstab=yes
 add_drivers+=" crc32c-intel drm ahci "
 # force_drivers+=""
@@ -272,25 +273,25 @@ EOF
 
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://voidlinux.com.br/repo/current
-# repository=http://void.chililinux.com/voidlinux/current
+repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://voidlinux.com.br/repo/current/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 repository=https://voidlinux.com.br/repo/current/multilib
-# repository=http://void.chililinux.com/voidlinux/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
@@ -332,7 +333,7 @@ ignorepkg=xf86-video-fbdev
 ignorepkg=rtkit
 ignorepkg=dhcpcd
 ignorepkg=nvi
-ignorepkg=openssh
+# ignorepkg=openssh
 ignorepkg=sudo
 ignorepkg=xf86-input-wacon
 ignorepkg=xf86-video-vesa
@@ -351,7 +352,8 @@ EOF
 #### Remove some packages ####
 ##############################
 
-chroot /mnt xbps-remove -Rconn openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
+# chroot /mnt xbps-remove -Rconn openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
+chroot /mnt xbps-remove -Rconn dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 ###################
 #### Hostname #####
@@ -566,8 +568,9 @@ chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-
 #### Utils ####
 ###############
 
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
-chroot /mnt xbps-install -Sy util-linux zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools dropbear inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
+chroot /mnt xbps-install -S bash-completion bat p7zip neofetch btop chrony curl wget dialog duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
+chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools openssh inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
+chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
 
 # Needed for DE
 # chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
@@ -643,7 +646,7 @@ EOF
 ##############################################
 
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-525.89.02_1 nvidia-libs-32bit-525.89.02_1 nvidia-gtklibs-32bit mesa-vaapi intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
+chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-525.89.02_1 nvidia-libs-32bit-525.89.02_1 nvidia-gtklibs-32bit mesa-vaapi nvidia-container-toolkit intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
 chroot /mnt xbps-install -S mesa-intel-dri libva-glx libva-utils libva-intel-driver mesa-vulkan-intel --yes # intel
 
 # chroot /mnt dracut --force --kver 5.10.162_1
@@ -707,7 +710,8 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_pstate=disable apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
@@ -782,42 +786,42 @@ EOF
 #### SWAPFILE #####
 ###################
 
-chroot /mnt mkdir -pv /var/swap
-mount -o subvol=@swap /dev/sda5 /mnt/var/swap
-touch /mnt/var/swap/swapfile
-# chroot /mnt btrfs filesystem mkswapfile --size 8g /var/swap/swapfile
-# chroot /mnt swapon /var/swap/swapfile
+# chroot /mnt mkdir -pv /var/swap
+# mount -o subvol=@swap /dev/sda5 /mnt/var/swap
+# touch /mnt/var/swap/swapfile
+# # chroot /mnt btrfs filesystem mkswapfile --size 8g /var/swap/swapfile
+# # chroot /mnt swapon /var/swap/swapfile
 
 
-# chroot /mnt btrfs subvolume create /var/swap
-# chroot /mnt/ touch var/swap/swapfile
-chroot /mnt truncate -s 0 /var/swap/swapfile
-chroot /mnt chattr +C /var/swap/swapfile
-# chroot /mnt btrfs property set /var/swap/swapfile compression none
-chroot /mnt btrfs property set /var/swap/swapfile compression ""
-chroot /mnt chmod 600 /var/swap/swapfile
-chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
-
-chroot /mnt mkswap /var/swap/swapfile
-chroot /mnt chmod u=rw,go= /var/swap/swapfile # Set the permissions for the swapfile (only readable and writable by root)
-chroot /mnt swapon -va /var/swap/swapfile
+# # chroot /mnt btrfs subvolume create /var/swap
+# # chroot /mnt/ touch var/swap/swapfile
+# chroot /mnt truncate -s 0 /var/swap/swapfile
+# chroot /mnt chattr +C /var/swap/swapfile
+# # chroot /mnt btrfs property set /var/swap/swapfile compression none
+# chroot /mnt btrfs property set /var/swap/swapfile compression ""
+# chroot /mnt chmod 600 /var/swap/swapfile
+# chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
+# 
+# chroot /mnt mkswap /var/swap/swapfile
+# chroot /mnt chmod u=rw,go= /var/swap/swapfile # Set the permissions for the swapfile (only readable and writable by root)
+# chroot /mnt swapon -va /var/swap/swapfile
 
 
 # resume_offset=$(chroot /mnt btrfs inspect-internal map-swapfile -r /var/swap/swapfile)
-wget https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
-gcc -O2 btrfs_map_physical.c -o btrfs_map_physical
-RESUME_OFFSET=$(($(./btrfs_map_physical /mnt/var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
-sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/default/grub
-sed -i "/kernel_cmdline=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/dracut.conf.d/kernel-cmdline.conf
+# wget https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+# gcc -O2 btrfs_map_physical.c -o btrfs_map_physical
+# RESUME_OFFSET=$(($(./btrfs_map_physical /mnt/var/swap/swapfile | awk -F " " 'FNR == 2 {print $NF}')/$(getconf PAGESIZE)))
+# sed -i "/GRUB_CMDLINE_LINUX_DEFAULT=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/default/grub
+# sed -i "/kernel_cmdline=/s/\"$/ resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET&/" /mnt/etc/dracut.conf.d/kernel-cmdline.conf
 
 # Add to fstab
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda5)
-echo $SWAP_UUID
-echo " " >>/mnt/etc/fstab
-echo "# Swap" >>/mnt/etc/fstab
-# echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
-echo "UUID=$SWAP_UUID /var/swap btrfs noatime,discard,subvol=@swap 0 0" >>/mnt/etc/fstab
-echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda5)
+# echo $SWAP_UUID
+# echo " " >>/mnt/etc/fstab
+# echo "# Swap" >>/mnt/etc/fstab
+# # echo "UUID=$SWAP_UUID /var/swap btrfs defaults,noatime,subvol=@swap 0 0" >>/mnt/etc/fstab
+# echo "UUID=$SWAP_UUID /var/swap btrfs noatime,discard,subvol=@swap 0 0" >>/mnt/etc/fstab
+# echo "/var/swap/swapfile none swap sw 0 0" >>/mnt/etc/fstab
 
 ################################
 #### Runit Default Services ####
@@ -830,7 +834,7 @@ chroot /mnt ln -srvf /etc/sv/preload /var/service/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -1017,7 +1021,7 @@ cat << EOF >>/mnt/etc/rc.local
 mount --make-rshared /
 
 # Powertop
-powertop --auto-tune
+# powertop --auto-tune
 
 # Dual GPU
 #/home/juca/.envs/dual.sh
@@ -1030,27 +1034,27 @@ touch /mnt/home/juca/.envs/dual.sh
 chroot /mnt chmod u+x /home/juca/.envs/dual.sh
 chroot /mnt chown -R juca:juca /home/juca/.envs/
 cat <<\EOF >> /mnt/home/juca/.envs/dual.sh
-#!/bin/sh
-### Dual graphics
-# eDP1 - Lap Screen  |  HDMI-1-0 External monitor
-# Lightdm etc
-
-#xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
-xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
-numlockx on &
-
-XCOM0="$(xrandr -q | grep 'HDMI-1-0 connected')"
-# XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
-XCOM1="$(xrandr --output eDP-1 --primary --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-1-0 --mode 1920x1080 --pos 0x0 --rotate normal)"
-XCOM2="$(xrandr --output eDP1 --primary --auto)"
-
-#if the external monitor is connected, then we tell XRANDR to set up an extended desktop
-if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
-  echo $XCOM1
-# if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
-else
-  echo $XCOM2
-fi
+# #!/bin/sh
+# ### Dual graphics
+# # eDP1 - Lap Screen  |  HDMI-1-0 External monitor
+# # Lightdm etc
+# 
+# #xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
+# xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
+# numlockx on &
+# 
+# XCOM0="$(xrandr -q | grep 'HDMI-1-0 connected')"
+# # XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
+# XCOM1="$(xrandr --output eDP-1 --primary --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-1-0 --mode 1920x1080 --pos 0x0 --rotate normal)"
+# XCOM2="$(xrandr --output eDP1 --primary --auto)"
+# 
+# #if the external monitor is connected, then we tell XRANDR to set up an extended desktop
+# if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
+#   echo $XCOM1
+# # if the external monitor is disconnected, then we tell XRANDR to output only to the laptop screen
+# else
+#   echo $XCOM2
+# fi
 EOF
 
 mkdir -pv /mnt/etc/elogind
@@ -1060,12 +1064,16 @@ cat <<EOF >/mnt/etc/elogind/logind.conf
 #KillOnlyUsers=
 #KillExcludeUsers=root
 #InhibitDelayMaxSec=5
-HandlePowerKey=Poweroff
-HandleSuspendKey=Suspend
-HandleHibernateKey=Hibernate
-HandleLidSwitch=HybridSleep
-#HandleLidSwitchExternalPower=ignore
-#HandleLidSwitchDocked=ignore
+# HandlePowerKey=Poweroff
+HandlePowerKey=ignore
+# HandleSuspendKey=Suspend
+HandleSuspendKey=ignore
+# HandleHibernateKey=Hibernate
+HandleHibernateKey=ignore
+# HandleLidSwitch=HybridSleep
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
 #PowerKeyIgnoreInhibited=no
 #SuspendKeyIgnoreInhibited=no
 #HibernateKeyIgnoreInhibited=no
@@ -1080,21 +1088,21 @@ HandleLidSwitch=HybridSleep
 #SessionsMax=8192
 
 [Sleep]
-AllowSuspend=yes
-AllowHibernation=yes
-AllowSuspendThenHibernate=yes
-AllowHybridSleep=yes
+# AllowSuspend=yes
+# AllowHibernation=yes
+# AllowSuspendThenHibernate=yes
+# AllowHybridSleep=yes
 #AllowPowerOffInterrupts=no
 #BroadcastPowerOffInterrupts=yes
 #AllowSuspendInterrupts=no
 #BroadcastSuspendInterrupts=yes
-#HandleNvidiaSleep=ignore
+HandleNvidiaSleep=ignore
 #SuspendState=mem standby freeze
 #SuspendMode=
-HibernateState=disk
-HibernateMode=platform shutdown
-HybridSleepState=disk
-HybridSleepMode=suspend platform shutdown
+# HibernateState=disk
+# HibernateMode=platform shutdown
+# HybridSleepState=disk
+HybridSle/epMode=suspend platform shutdown
 #HibernateDelaySec=10800
 EOF
 # install ncdu2
@@ -1230,3 +1238,7 @@ ignorepkg=parole
 EOF
 
 # chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y
+
+### KDE
+
+chroot /mnt vpm i kde5 kde5-baseapps firefox sddm sddm-kcm

@@ -28,6 +28,7 @@ vpm i podman slirp4netns buildah cni-plugins podman-compose fuse-overlayfs conta
 
 # Nvidia Podman or Docker
 pikaur -S libnvidia-container --noconfirm
+# nvidia-container-toolkit
 
 # Make podman able to run another architectures
 pacman -Sy qemu-user-static qemu-user-static-binfmt --noconfirm

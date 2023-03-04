@@ -482,22 +482,22 @@ EOF
 ###############
 
 ## Pulseaudio
-# chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
+chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
 
 ## Pipewire 
-chroot /mnt apt purge pipewire* pipewire-bin -y
-chroot /mnt apt install pipewire pipewire-audio-client-libraries --no-install-recommends -y
-chroot /mnt apt install alsa-utils rtkit pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
+# chroot /mnt apt purge pipewire* pipewire-bin -y
+# chroot /mnt apt install pipewire pipewire-audio-client-libraries --no-install-recommends -y
+# chroot /mnt apt install alsa-utils rtkit pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
 
 ## Config pipewire
-touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
-cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
+# touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
+# cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
 
 ###############
 #### Utils ####
 ###############
-
+#
 chroot /mnt apt install fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
 debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
 efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
@@ -633,7 +633,7 @@ EOF
 
 chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset ansible libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
+bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs zsync --no-install-recommends -y
 
 ############################
 #### BTRFS Backup tools ####
@@ -792,15 +792,16 @@ chroot /mnt systemctl enable fstrim.timer
 
 ## Audio
 ## Pipewire 
-chroot /mnt systemctl --user --now enable pipewire{,-pulse}.{socket,service}
-chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
-chroot /mnt systemctl --user mask pulseaudio.{socket,service}
+# chroot /mnt systemctl --user --now enable pipewire{,-pulse}.{socket,service}
+# chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
+# chroot /mnt systemctl --user mask pulseaudio.{socket,service}
+
 # chroot /mnt systemctl --user daemon-reload
 
 ##Pulseaudio
-#chroot /mnt systemctl --user enable pulseaudio.{socket,service}
+chroot /mnt systemctl --user enable pulseaudio.{socket,service}
 #chroot /mnt systemctl --user --now disable pipewire{,-pulse}.{socket,service}
-#chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
+chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 
 
 # Allow run as root
@@ -851,7 +852,9 @@ GRUB_TIMEOUT=2
 # GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 
 # Uncomment to use basic console
