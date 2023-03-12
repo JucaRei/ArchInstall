@@ -78,7 +78,7 @@ btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_xbps
 btrfs su cr /mnt/@tmp
-btrfs su cr /mnt/@swap
+# btrfs su cr /mnt/@swap
 
 # Remove a partição
 umount -v /mnt
@@ -353,7 +353,7 @@ EOF
 ##############################
 
 # chroot /mnt xbps-remove -Rconn openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
-chroot /mnt xbps-remove -Rconn dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
+chroot /mnt xbps-remove -Rconn dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 ###################
 #### Hostname #####
@@ -501,7 +501,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel cpufrequtils usbutils acpica-utils libgcc dracut dracut-uefi vsv vpm vpsm util-linux bash linux-lts linux-lts-headers sysfsutils acpid acpi opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel cpufrequtils usbutils acpica-utils libgcc dracut vsv vpm vpsm util-linux bash linux linux-headers sysfsutils acpid acpi opendoas efivar ncurses grep tar less man-pages mdocml elogind acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk linux-firmware-intel linux-firmware-nvidia lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
 
 # libusbmuxd libgusb
@@ -531,7 +531,8 @@ chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-
 ##########################
 
 chroot /mnt xbps-install -Sy intel-ucode --yes
-chroot /mnt xbps-reconfigure -fa linux-lts
+chroot /mnt xbps-reconfigure -fa linux
+# chroot /mnt xbps-reconfigure -fa linux-lts
 chroot /mnt vpm up
 
 #######################
@@ -556,7 +557,8 @@ chroot /mnt xbps-install -S NetworkManager NetworkManager-openvpn NetworkManager
 #### Optimization packages ####
 ###############################
 
-chroot /mnt xbps-install -Sy irqbalance tlp powertop thermald preload earlyoom bash-completion --yes
+chroot /mnt xbps-install -Sy irqbalance powertop thermald preload earlyoom bash-completion --yes
+# tlp
 
 #################################
 #### Infrastructure packages ####
@@ -568,9 +570,9 @@ chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-
 #### Utils ####
 ###############
 
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch btop chrony curl wget dialog duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
+chroot /mnt xbps-install -S bash-completion fuse-9pfs ifuse fuse-usmb basu bat p7zip neofetch btop chrony curl wget dialog duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
 chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools openssh inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
-chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
+# chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
 
 # Needed for DE
 # chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
@@ -650,7 +652,8 @@ chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-525.89.02_1 nvidia-libs-32b
 chroot /mnt xbps-install -S mesa-intel-dri libva-glx libva-utils libva-intel-driver mesa-vulkan-intel --yes # intel
 
 # chroot /mnt dracut --force --kver 5.10.162_1
-chroot /mnt xbps-reconfigure -f linux-lts
+# chroot /mnt xbps-reconfigure -f linux-lts
+chroot /mnt xbps-reconfigure -f linux
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
@@ -833,8 +836,9 @@ chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
+# chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 # chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/sshd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -958,7 +962,8 @@ EOF
 
 
 # chroot /mnt xbps-reconfigure -f linux5.4
-chroot /mnt xbps-reconfigure -f linux-lts
+chroot /mnt xbps-reconfigure -f linux
+# chroot /mnt xbps-reconfigure -f linux-lts
 
 # FIX bad font rendering
 chroot /mnt ln -s /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/
@@ -1021,7 +1026,14 @@ cat << EOF >>/mnt/etc/rc.local
 mount --make-rshared /
 
 # Powertop
-# powertop --auto-tune
+powertop --auto-tune
+
+echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
 
 # Dual GPU
 #/home/juca/.envs/dual.sh
@@ -1237,8 +1249,8 @@ ignorepkg=xfce4-terminal
 ignorepkg=parole
 EOF
 
-# chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y
+# chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin network-manager-applet blueman xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y
 
 ### KDE
 
-chroot /mnt vpm i kde5 kde5-baseapps firefox sddm sddm-kcm
+# chroot /mnt vpm i kde5 kde5-baseapps firefox sddm sddm-kcm

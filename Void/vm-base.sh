@@ -1,5 +1,8 @@
 #!/bin/bash
 
+vpm sync
+xbps-install -Su xbps --y
+
 # BR repo
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
 repository=https://voidlinux.com.br/repo/current
@@ -452,9 +455,9 @@ chroot /mnt vpm up
 chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-pulseaudio --yes
 
 # Intel micro-code
-chroot /mnt xbps-install -S intel-ucode --yes
-chroot /mnt xbps-reconfigure -fa linux
-chroot /mnt vpm up
+# chroot /mnt xbps-install -S intel-ucode --yes
+# chroot /mnt xbps-reconfigure -fa linux
+# chroot /mnt vpm up
 
 # Xorg Packages
 # chroot /mnt xbps-install -S xorg-minimal xsetroot xrefresh xsettingsd xrandr arandr mkfontdir mkfontscale xrdb xev xorg-fonts xprop xcursorgen --yes

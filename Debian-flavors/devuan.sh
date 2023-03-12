@@ -9,29 +9,29 @@ apt update && apt install btrfs-progs wget -y
 #####################################
 
 # -s script call | -a optimal
-sgdisk -Z /dev/sda
-parted -s -a optimal /dev/sda mklabel gpt
+sgdisk -Z /dev/vda
+parted -s -a optimal /dev/vda mklabel gpt
 
 # Create new partition
-sgdisk -n 0:0:100MiB /dev/sda
-sgdisk -n 0:0:0 /dev/sda
+sgdisk -n 0:0:100MiB /dev/vda
+sgdisk -n 0:0:0 /dev/vda
 
 # Change the name of partition
-sgdisk -c 1:Devuan /dev/sda
-sgdisk -c 2:Devroot /dev/sda
+sgdisk -c 1:Devuan /dev/vda
+sgdisk -c 2:Devroot /dev/vda
 
 # Change Types
-sgdisk -t 1:ef00 /dev/sda
-sgdisk -t 2:8300 /dev/sda
+sgdisk -t 1:ef00 /dev/vda
+sgdisk -t 2:8300 /dev/vda
 
-sgdisk -p /dev/sda
+sgdisk -p /dev/vda
 
 #####################################
 ##########  FileSystem  #############
 #####################################
 
-mkfs.vfat -F32 /dev/sda1 -n "Grub"
-mkfs.btrfs /dev/sda2 -f -L "Devuan"
+mkfs.vfat -F32 /dev/vda1 -n "Grub"
+mkfs.btrfs /dev/vda2 -f -L "Devuan"
 
 ## Volumes Vda apenas para testes em vm
 set -e
@@ -39,7 +39,7 @@ DEVUAN_ARCH="amd64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 # mount -o $BTRFS_OPTS /dev/vda5 /mnt
-mount -o $BTRFS_OPTS /dev/sda2 /mnt
+mount -o $BTRFS_OPTS /dev/vda2 /mnt
 
 #Cria os subvolumes
 btrfs su cr /mnt/@
@@ -53,7 +53,7 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda2 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
@@ -61,27 +61,30 @@ mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/swap
 mkdir -pv /mnt/var/cache/apt
 
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda2 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda2 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda2 /mnt/var/log
-# mount -o $BTRFS_OPTS,subvol=@swap /dev/sda2 /mnt/var/swap
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda2 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi 
+mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
+# mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/vda2 /mnt/var/cache/apt
+mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi 
 
 
 
 # debootstrap --include "bash,zsh,wpasupplicant,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --include "bash,zsh,iwd,locales,grub2,wget,curl,ntp,network-manager,dhcpcd5,linux-image-amd64,firmware-linux-free" --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
 # debootstrap --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
-debootstrap --variant=minbase --arch amd64 chimaera /mnt http://devuan.c3sl.ufpr.br/merged/ chimaera
+# debootstrap --variant=minbase --arch amd64 chimaera /mnt "http://devuan.c3sl.ufpr.br/merged/ chimaera contrib non-free"
+debootstrap --variant=minbase --include="apt,apt-utils,isc-dhcp-client,inetutils-ping,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-keyring,devuan-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,runit-init,eudev,ifupdown,init,iproute2,bash,whiptail" --arch amd64 chimaera /mnt "http://devuan.c3sl.ufpr.br/merged/ chimaera contrib non-free"
 # deb http://devuan.c3sl.ufpr.br/merged/ main contrib non-free
-
+# iputils-ping
 
 # Mount points
 for dir in dev proc sys run; do
         mount --rbind /$dir /mnt/$dir
         mount --make-rslave /mnt/$dir
 done
+
+chroot /mnt apt update
 
 # Desabilita instalar recomendados
 touch /mnt/etc/apt/apt.conf
@@ -127,17 +130,21 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<EOF >/mnt/etc/hosts
+cat <<\EOF >/mnt/etc/hosts
 127.0.0.1       localhost
-127.0.1.1       $HOSTNAME.localdomain $HOSTNAME
+127.0.1.1       devuan.localdomain devuan
+
+# The following lines are desirable for IPv6 capable hosts
 ::1             localhost ip6-localhost ip6-loopback
+fe00::0         ip6-localnet
+ff00::0         ip6-mcastprefix
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 EOF
 
 # fstab
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
+UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
+ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 
 echo $UEFI_UUID
 echo $ROOT_UUID
@@ -173,8 +180,11 @@ EOF
 # antix-archive-keyring
 # devuan-keyring
 
+chroot /mnt apt update
+chroot /mnt apt upgrade -y
+
 # Some base packages
-chroot /mnt apt install dracut manpages dbus devuan-keyring bash zstd locales btrfs-progs build-essential grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux multipath-tools --no-install-recommends -y
+chroot /mnt apt install dracut manpages dbus devuan-keyring bash zstd locales btrfs-progs build-essential grub-efi-amd64 wget curl sysfsutils chrony network-manager iwd linux-image-amd64 linux-headers-amd64 firmware-linux --no-install-recommends -y
 
 chroot /mnt apt update runit --no-install-recommends -y
 
@@ -717,9 +727,9 @@ EOF
 # sleep 2
 # chroot /mnt gummiboot install --path=/boot
 
-# chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
-# chroot /mnt bash -c 'echo "options root=/dev/sda5 rootflags=subvol=@ ro quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
-# chroot /mnt bash -c 'echo "options root=/dev/sda5 rootflags=subvol=@ ro quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-6.0.**'
+# chroot /mnt bash -c 'echo "options root=/dev/vda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
+# chroot /mnt bash -c 'echo "options root=/dev/vda5 rootflags=subvol=@ ro quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
+# chroot /mnt bash -c 'echo "options root=/dev/vda5 rootflags=subvol=@ ro quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-6.0.**'
 
 # Grub
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id="Void"
