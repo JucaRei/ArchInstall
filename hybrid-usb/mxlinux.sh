@@ -78,7 +78,9 @@ mount -t vfat /dev/sda2 /mnt/boot
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,arch-install-scripts,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,arch-install-scripts,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,mx21-archive-keyring,antix-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt \
+"http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free \
+http://mxrepo.com/mx/repo/ bullseye main non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -304,14 +306,14 @@ chroot /mnt apt upgrade -y
 # real=nitro
 
 cat <<EOF >/mnt/etc/hostname
-debianusb
+mxusb
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<\EOF >/mnt/etc/hosts
 127.0.0.1   localhost
-127.0.1.1   debianusb.localdomain debianusb
+127.0.1.1   mxusb.localdomain mxusb
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1         localhost ip6-localhost ip6-loopback
@@ -423,7 +425,7 @@ chroot /mnt apt install xorg xinput intel-media-va-driver-non-free vainfo intel-
 ##################################
 
 # chroot /mnt apt build-dep -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
-chroot /mnt apt install -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
+chroot /mnt apt install nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
 vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
 libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
@@ -450,6 +452,76 @@ Section "InputClass"
         MatchIsTouchpad "on"
         Option          "Tapping"       "on"
 EndSection
+EOF
+
+touch /mnt/etc/X11/xorg.conf.d/10-evdev.conf
+cat << EOF > /mnt/etc/X11/xorg.conf.d/10-touchpad.conf
+#
+# Catch-all evdev loader for udev-based systems
+# We don't simply match on any device since that also adds accelerometers
+# and other devices that we don't really want to use. The list below
+# matches everything but joysticks.
+
+#Section "InputClass"
+#        Identifier "evdev pointer catchall"
+#        MatchIsPointer "on"
+#        MatchDevicePath "/dev/input/event*"
+#        Driver "evdev"
+#EndSection
+#
+#Section "InputClass"
+#        Identifier "evdev keyboard catchall"
+#        MatchIsKeyboard "on"
+#        MatchDevicePath "/dev/input/event*"
+#        Driver "evdev"
+#EndSection
+#
+#Section "InputClass"
+#        Identifier "evdev touchpad catchall"
+#        MatchIsTouchpad "on"
+#        MatchDevicePath "/dev/input/event*"
+#        Driver "evdev"
+#EndSection
+#
+##Section "InputClass"
+##        Identifier "evdev tablet catchall"
+##        MatchIsTablet "on"
+##        MatchDevicePath "/dev/input/event*"
+##        Driver "evdev"
+##EndSection
+#
+#Section "InputClass"
+#        Identifier "evdev touchscreen catchall"
+#        MatchIsTouchscreen "on"
+#        MatchDevicePath "/dev/input/event*"
+#        Driver "evdev"
+#EndSection
+EOF
+
+touch /mnt/etc/X11/xorg.conf.d/20-synaptics.conf
+cat << EOF > /mnt/etc/X11/xorg.conf.d/20-synaptics.conf
+#Section "InputClass"
+#        Identifier      "touchpad catchall"             # required
+#        MatchIsTouchpad "on"                            # required
+#        Driver          "synaptics"                     # required
+#        Option          "MinSpeed"              "0.5"
+#        Option          "MaxSpeed"              "1.0"
+#        Option          "AccelFactor"           "0.075"
+#        Option          "TapButton1"            "1"
+#        Option          "TapButton2"            "2"     # multitouch
+#        Option          "TapButton3"            "3"     # multitouch
+#        Option          "VertTwoFingerScroll"   "1"     # multitouch
+#        Option          "HorizTwoFingerScroll"  "1"     # multitouch
+#        Option          "VertEdgeScroll"        "1"
+#        Option          "HorizEdgeScroll"       "1" 
+#        Option          "CoastingSpeed"         "8"
+#        Option          "CornerCoasting"        "1"
+#        Option          "CircularScrolling"     "1"
+#        Option          "CircScrollTrigger"     "7"
+#        Option          "EdgeMotionUseAlways"   "1"
+#        Option          "LBCornerButton"        "8"     # browser "back" btn
+#        Option          "RBCornerButton"        "9"     # browser "forward" btn
+#EndSection
 EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d
@@ -653,8 +725,8 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
-# GRUB_CMDLINE_LINUX_DEFAULT="quiet kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet rootflags=atgc kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet rootflags=atgc kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Uncomment to use basic console
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
@@ -672,7 +744,7 @@ EOF
 
 chroot /mnt update-grub
 
-chroot /mnt update-initramfs -c -k all
+chroot /mnt update-initramfs -u -t -c -v -k all
 
 rm -rf /mnt/vmlinuz.old
 rm -rf /mnt/vmlinuz
