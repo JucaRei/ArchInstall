@@ -1,4 +1,14 @@
 {
   "spellright.language": ["en"],
-  "spellright.documentTypes": ["latex", "plaintext"]
+  "spellright.documentTypes": [
+    "latex",
+    "plaintext"
+  ],
+  "workbench.colorCustomizations": {
+    "editor.lineHighlightBackground": "#1073cf2d",
+    "editor.lineHighlightBorder": "#9fced11f",
+    "activityBar.background": "#0D2F4B",
+    "titleBar.activeBackground": "#124269",
+    "titleBar.activeForeground": "#F8FBFE"
+  }
 }

@@ -830,7 +830,7 @@ EOF
 #### Runit Default Services ####
 ################################
 
-# chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
@@ -1168,9 +1168,10 @@ EOF
 
 ##Fix distrobox
 touch /mnt/home/juca/.xprofile
-cat << EOF > /mnt/home/juca/.xprofile
+cat <<\EOF > /mnt/home/juca/.xprofile
 ### Distrobox
-xhost +si:localuser:$USER
+# xhost +si:localuser:$USER
+xhost +si:localuser:juca
 EOF
 
 chroot /mnt chmod +x /home/juca/.xsessionrc
@@ -1193,14 +1194,14 @@ printf "\e[1;32mInstallation xfce4 finished! Umount -a and reboot.\e[0m"
 # https://gist.github.com/karyan40024/398671398915888f977b8bddb33ab1f1#installation
 # https://www.reddit.com/r/voidlinux/comments/xpl3vx/void_gnome/
 
-# cat <<EOF >/mnt/etc/xbps.d/90-gnome-ignore.conf
-# ignorepkg=gnome-maps
-# ignorepkg=gnome-console
-# ignorepkg=gnome-system-monitor
-# ignorepkg=yelp
-# ignorepkg=orca
-# ignorepkg=xorg-server-xwayland
-# EOF
+cat <<EOF >/mnt/etc/xbps.d/90-gnome-ignore.conf
+ignorepkg=gnome-maps
+ignorepkg=gnome-console
+ignorepkg=gnome-system-monitor
+ignorepkg=yelp
+ignorepkg=orca
+ignorepkg=xorg-server-xwayland
+EOF
 
 # xinput xload xlsatoms xlsclients
 
@@ -1252,5 +1253,9 @@ EOF
 # chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin network-manager-applet blueman xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y
 
 ### KDE
+
+cat <<EOF >/mnt/etc/xbps.d/90-kde-ignore.conf
+ignorepkg=plasma-thunderbolt
+EOF
 
 # chroot /mnt vpm i kde5 kde5-baseapps firefox sddm sddm-kcm
