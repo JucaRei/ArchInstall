@@ -70,8 +70,6 @@ sgdisk -t 4:ef00 /dev/sda
 sgdisk -t 5:8300 /dev/sda
 sgdisk -p /dev/sda
 
-
-
 #####################################
 ##########  FileSystem  #############
 #####################################
@@ -93,11 +91,11 @@ Debian_ARCH="amd64"
 ## btrfs options ##
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 
-## fstab real hardware ## 
+## fstab real hardware ##
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda4)
 ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 
-## fstab virtual hardware ## 
+## fstab virtual hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 
@@ -195,13 +193,13 @@ HEREDOC
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
 # && echo >> /mnt/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
 
-######################################################## 
+########################################################
 #### Mount points for chroot, just like arch-chroot ####
 ########################################################
 
 for dir in dev proc sys run; do
-        mount --rbind /$dir /mnt/$dir
-        mount --make-rslave /mnt/$dir
+    mount --rbind /$dir /mnt/$dir
+    mount --make-rslave /mnt/$dir
 done
 
 ##################################################
@@ -254,7 +252,7 @@ options nvidia_drm modeset=1
 EOF
 
 touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
+cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
 ## Disable nouveau on earlyboot ##
 options nouveau modeset=0
 EOF
@@ -415,24 +413,24 @@ EOF
 #### Setting Locales ####
 #########################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
-        # export LC_ALL=C && \
-        export LANGUAGE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        export LANG=en_US.UTF-8 && \
-        export LC_CTYPE=en_US.UTF-8 && \
-        # locale-gen en_US.UTF-8 && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-        #localectl set-locale LANG="en_US.UTF-8"
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+    dpkg-reconfigure -f noninteractive tzdata &&
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+    sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+    echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
+    # export LC_ALL=C && \
+    export LANGUAGE=en_US.UTF-8 &&
+    export LC_ALL=en_US.UTF-8 &&
+    export LANG=en_US.UTF-8 &&
+    export LC_CTYPE=en_US.UTF-8 &&
+    # locale-gen en_US.UTF-8 && \
+    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+#dpkg-reconfigure --frontend=noninteractive locales && \
+# update-locale LANG=en_US.UTF-8 && \
+# localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+#localectl set-locale LANG="en_US.UTF-8"
+# update-locale LANG=en_US.UTF-8 && \
+# localedef -i en_US -f UTF-8 en_US.UTF-8
 
 chroot /mnt apt update
 
@@ -451,7 +449,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 #############
 
 chroot /mnt apt install prettyping nftables crda net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
-firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
+    firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
@@ -484,8 +482,7 @@ EOF
 ## Pulseaudio
 chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
-
-## Pipewire 
+## Pipewire
 # chroot /mnt apt purge pipewire* pipewire-bin -y
 # chroot /mnt apt install pipewire pipewire-audio-client-libraries --no-install-recommends -y
 # chroot /mnt apt install alsa-utils rtkit pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
@@ -499,11 +496,11 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 ###############
 #
 chroot /mnt apt install fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
-efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+    debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+    efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
-cat << EOF > /mnt/etc/initramfs-tools/modules
+cat <<EOF >/mnt/etc/initramfs-tools/modules
 crc32c-intel
 btrfs
 #drm
@@ -551,9 +548,9 @@ chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gs
 
 # chroot /mnt apt build-dep -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 chroot /mnt apt install -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
-vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
-libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
-libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
+    vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
+    libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
+    libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 # chroot /mnt apt install nvidia-driver firmware-misc-nonfree libnvidia-fbc1 nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 
 ###############################
@@ -586,7 +583,7 @@ EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 Section "Device"
     Identifier "Nvidia GTX 1050"
     Driver "nvidia"
@@ -680,7 +677,7 @@ EOF
 
 mkdir -pv /mnt/etc/default/
 touch /mnt/etc/default/keyboard
-cat << EOF > /mnt/etc/default/keyboard
+cat <<EOF >/mnt/etc/default/keyboard
 # KEYBOARD CONFIGURATION FILE
 
 # Consult the keyboard(5) manual page.
@@ -695,18 +692,18 @@ EOF
 #### Locales ####
 #################
 
-chroot /mnt echo "America/Sao_Paulo" >/etc/timezone && \
-        #dpkg-reconfigure -f noninteractive tzdata && \
-        #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale && \
-        export LANGUAGE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        dpkg-reconfigure --frontend noninteractive keyboard-configuration && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        #update-locale LANG=en_US.UTF-8
-        #localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/etc/timezone &&
+    #dpkg-reconfigure -f noninteractive tzdata && \
+    #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+    echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale &&
+    export LANGUAGE=en_US.UTF-8 &&
+    export LC_ALL=en_US.UTF-8 &&
+    dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
+    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+#dpkg-reconfigure --frontend=noninteractive locales && \
+#update-locale LANG=en_US.UTF-8
+#localedef -i en_US -f UTF-8 en_US.UTF-8
 
 # setxkbmap -model pc105 -layout br -variant abnt2 &
 # dpkg-reconfigure keyboard-configuration
@@ -751,7 +748,7 @@ chroot /mnt usermod -aG sudo juca
 #### NetworkManager config as default instead of dhcpd5 ####
 ############################################################
 
-cat << EOF > /mnt/etc/NetworkManager/NetworkManager.conf
+cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 plugins=ifupdown,keyfile
 
@@ -761,7 +758,7 @@ EOF
 
 touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-cat << EOF > /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 #!/bin/sh
 
 # Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
@@ -796,9 +793,8 @@ chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 
-
 ## Audio
-## Pipewire 
+## Pipewire
 # chroot /mnt systemctl --user --now enable pipewire{,-pulse}.{socket,service}
 # chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
 # chroot /mnt systemctl --user mask pulseaudio.{socket,service}
@@ -810,7 +806,6 @@ chroot /mnt systemctl --user enable pulseaudio.{socket,service}
 #chroot /mnt systemctl --user --now disable pipewire{,-pulse}.{socket,service}
 chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 
-
 # Allow run as root
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/usr/lib/systemd/user/pipewire.socket
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/etc/xdg/systemd/user/pipewire-pulse.service
@@ -821,11 +816,10 @@ chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 ## Pulseaudio
 # chroot /mnt systemctl --user enable pulseaudio
 
-
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
 # sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<\EOF >>/mnt/etc/chrony.conf 
+cat <<\EOF >>/mnt/etc/chrony.conf
 server time.windows.com iburst prefer
 EOF
 
@@ -856,7 +850,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
-# GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+# GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
@@ -893,7 +887,7 @@ rm -rf /mnt/initrd.img.old
 ###########################
 
 touch /mnt/home/juca/.xsessionrc
-cat << EOF > /mnt/home/juca/.xsessionrc
+cat <<EOF >/mnt/home/juca/.xsessionrc
 xrandr --setprovideroutputsource NVIDIA-G0 modesetting
 EOF
 
@@ -932,3 +926,14 @@ chroot /mnt chown -R juca:juca /home/juca/.xsessionrc
 # gnome-disk-utilities
 # nosuid,nodev,nofail,x-gvfs-show,auto
 # https://github.com/fkortsagin/Simple-Debian-Setup
+
+# virt-install \
+# --name nixos \
+# --boot uefi \
+# --ram 8196 \
+# --vcpus 4 \
+# --network bridge:virbr0 \
+# --os-variant nixos-unstable \
+# --disk path=/var/lib/libvirt/images/nixos.qcow2,size=100 \
+# --console pty,target_type=serial \
+# --cdrom ~/Downloads/nixos-minimal-*-x86_64-linux.iso
