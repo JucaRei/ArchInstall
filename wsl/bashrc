@@ -60,8 +60,8 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ......='cd ../../../../..'
-alias cat='batcat --pager=never --theme=ansi'
-alias catf='batcat --theme=ansi'
+alias cat='bat --pager=never --theme=ansi'
+alias catf='bat --theme=ansi'
 
 #fixes
 alias fix-permissions="sudo chown -R $USER:$USER ~/.config ~/.local"
@@ -292,8 +292,8 @@ else
 fi
 
 alias top='htop'
-alias cat='batcat --pager=never --theme=ansi'
-alias catf='batcat --theme=ansi'
+alias cat='bat --pager=never --theme=ansi'
+alias catf='bat --theme=ansi'
 
 ### SHOPT
 shopt -s autocd  # change to named directory
