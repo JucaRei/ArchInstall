@@ -635,9 +635,7 @@ chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 #Podman 
-chroot /mnt apt install podman buildah crun fuse-overlayfs slirp4netns containers-storage lrzip nftables tini dumb-init golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
-#Ansible
-chroot /mnt apt install ansible --no-install-recommends -y
+chroot /mnt apt install -t testing podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
 
 ############################
 #### BTRFS Backup tools ####

@@ -93,7 +93,7 @@ Debian_ARCH="amd64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda4)
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
 SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
 ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 
@@ -418,7 +418,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 #############
 
 chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
-    firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
+    firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill firmware-brcm80211 --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
@@ -464,9 +464,8 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 #
-chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-    debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
-    efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+chroot /mnt apt install duperemove aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
+    debian-keyring git htop efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -481,8 +480,6 @@ zram
 z3fold
 i915.modeset=1
 intel_agp
-#nvidia-drm.modeset=1
-#nvidia-drm
 EOF
 
 # chroot /mnt update-initramfs -c -k all
