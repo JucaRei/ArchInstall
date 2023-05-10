@@ -60,14 +60,14 @@ apt update
 #### real hardware ####
 #######################
 
-sgdisk -Z /dev/sda4
 sgdisk -Z /dev/sda5
-parted -s -a optimal /dev/sda4 mklabel gpt
+sgdisk -Z /dev/sda6
 parted -s -a optimal /dev/sda5 mklabel gpt
-sgdisk -c 4:Grub /dev/sda
-sgdisk -c 5:Debian /dev/sda
-sgdisk -t 4:ef00 /dev/sda
-sgdisk -t 5:8300 /dev/sda
+parted -s -a optimal /dev/sda6 mklabel gpt
+sgdisk -c 5:Grub /dev/sda
+sgdisk -c 6:Debian /dev/sda
+sgdisk -t 5:ef00 /dev/sda
+sgdisk -t 6:8300 /dev/sda
 sgdisk -p /dev/sda
 
 #####################################
@@ -78,8 +78,8 @@ sgdisk -p /dev/sda
 #### real hardware ####
 #######################
 
-mkfs.vfat -F32 /dev/sda4 -n "GRUB"
-mkfs.btrfs /dev/sda5 -f -L "Debian"
+mkfs.vfat -F32 /dev/sda5 -n "GRUB"
+mkfs.btrfs /dev/sda6 -f -L "Debian"
 
 ###############################
 #### Enviroments variables ####
@@ -92,8 +92,8 @@ Debian_ARCH="amd64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda4)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 
 ## fstab virtual hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
@@ -106,7 +106,7 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 #######################
 #### real hardware ####
 #######################
-mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS /dev/sda6 /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
@@ -115,18 +115,18 @@ btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/apt
 ## Mount btrfs subvolumes ##
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda5 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/sda4 /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda6 /mnt/var/cache/apt
+mount -t vfat -o noatime,nodiratime /dev/sda5 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -217,6 +217,59 @@ install iTCO_vendor_support /bin/true
 
 # Disable nouveau
 blacklist nouveau
+
+# This file lists those modules which we don't want to be loaded by
+# alias expansion, usually so some other driver will be loaded for the
+# device instead.
+
+# evbug is a debug tool that should be loaded explicitly
+blacklist evbug
+
+# these drivers are very simple, the HID drivers are usually preferred
+blacklist usbmouse
+blacklist usbkbd
+
+# replaced by e100
+blacklist eepro100
+
+# replaced by tulip
+blacklist de4x5
+
+# causes no end of confusion by creating unexpected network interfaces
+blacklist eth1394
+
+# snd_intel8x0m can interfere with snd_intel8x0, doesn't seem to support much
+# hardware on its own (Ubuntu bug #2011, #6810)
+blacklist snd_intel8x0m
+
+# Conflicts with dvb driver (which is better for handling this device)
+blacklist snd_aw2
+
+# replaced by p54pci
+blacklist prism54
+
+# replaced by b43 and ssb.
+blacklist bcm43xx
+
+# most apps now use garmin usb driver directly (Ubuntu: #114565)
+blacklist garmin_gps
+
+# replaced by asus-laptop (Ubuntu: #184721)
+blacklist asus_acpi
+
+# low-quality, just noise when being used for sound playback, causes
+# hangs at desktop session start (Ubuntu: #246969)
+blacklist snd_pcsp
+
+# ugly and loud noise, getting on everyone's nerves; this should be done by a
+# nice pulseaudio bing (Ubuntu: #77010)
+blacklist pcspkr
+
+# EDAC driver for amd76x clashes with the agp driver preventing the aperture
+# from being initialised (Ubuntu: #297750). Blacklist so that the driver
+# continues to build and is installable for the few cases where its
+# really needed.
+blacklist amd76x_edac
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
@@ -257,6 +310,15 @@ cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
 options nouveau modeset=0
 EOF
 
+mkdir -pv /mnt/etc/modules-load.d
+touch /mnt/etc/modules-load.d/iptables.conf
+cat << EOF > /mnt/etc/modules-load.d/iptables.conf
+ip6_tables
+ip6table_nat
+ip_tables
+iptable_nat
+EOF
+
 #######################################
 #### Kernel params for tune system ####
 #######################################
@@ -279,6 +341,73 @@ EOF
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-console-messages.conf
+# the following stops low-level messages on console
+kernel.printk = 4 4 1 7
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-ipv6-privacy.conf
+# IPv6 Privacy Extensions (RFC 4941)
+# ---
+# IPv6 typically uses a device's MAC address when choosing an IPv6 address
+# to use in autoconfiguration. Privacy extensions allow using a randomly
+# generated IPv6 address, which increases privacy.
+#
+# Acceptable values:
+#    0 - don’t use privacy extensions.
+#    1 - generate privacy addresses
+#    2 - prefer privacy addresses and use them over the normal addresses.
+net.ipv6.conf.all.use_tempaddr = 2
+net.ipv6.conf.default.use_tempaddr = 2
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-kernel-hardening.conf
+# These settings are specific to hardening the kernel itself from attack
+# from userspace, rather than protecting userspace from other malicious
+# userspace things.
+#
+#
+# When an attacker is trying to exploit the local kernel, it is often
+# helpful to be able to examine where in memory the kernel, modules,
+# and data structures live. As such, kernel addresses should be treated
+# as sensitive information.
+#
+# Many files and interfaces contain these addresses (e.g. /proc/kallsyms,
+# /proc/modules, etc), and this setting can censor the addresses. A value
+# of "0" allows all users to see the kernel addresses. A value of "1"
+# limits visibility to the root user, and "2" blocks even the root user.
+kernel.kptr_restrict = 1
+
+# Access to the kernel log buffer can be especially useful for an attacker
+# attempting to exploit the local kernel, as kernel addresses and detailed
+# call traces are frequently found in kernel oops messages. Setting
+# dmesg_restrict to "0" allows all users to view the kernel log buffer,
+# and setting it to "1" restricts access to those with CAP_SYSLOG.
+#
+# dmesg_restrict defaults to 1 via CONFIG_SECURITY_DMESG_RESTRICT, only
+# uncomment the following line to disable.
+# kernel.dmesg_restrict = 0
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-network-security.conf
+# Turn on Source Address Verification in all interfaces to
+# prevent some spoofing attacks.
+net.ipv4.conf.default.rp_filter=2
+net.ipv4.conf.all.rp_filter=2
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-zeropage.conf
+# Protect the zero page of memory from userspace mmap to prevent kernel
+# NULL-dereference attacks against potential future kernel security
+# vulnerabilities.  (Added in kernel 2.6.23.)
+#
+# While this default is built into the Ubuntu kernel, there is no way to
+# restore the kernel default if the value is changed during runtime; for
+# example via package removal (e.g. wine, dosemu).  Therefore, this value
+# is reset to the secure default each time the sysctl values are loaded.
+vm.mmap_min_addr = 65536
 EOF
 
 ######################################
