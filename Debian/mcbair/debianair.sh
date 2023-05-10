@@ -60,14 +60,14 @@ apt update
 #### real hardware ####
 #######################
 
+sgdisk -Z /dev/sda4
 sgdisk -Z /dev/sda5
-sgdisk -Z /dev/sda6
+parted -s -a optimal /dev/sda4 mklabel gpt
 parted -s -a optimal /dev/sda5 mklabel gpt
-parted -s -a optimal /dev/sda6 mklabel gpt
-sgdisk -c 5:Grub /dev/sda
-sgdisk -c 6:Debian /dev/sda
-sgdisk -t 5:ef00 /dev/sda
-sgdisk -t 6:8300 /dev/sda
+sgdisk -c 4:SWAP /dev/sda
+sgdisk -c 5:Debian /dev/sda
+sgdisk -t 4:8200 /dev/sda
+sgdisk -t 5:8300 /dev/sda
 sgdisk -p /dev/sda
 
 #####################################
@@ -78,8 +78,9 @@ sgdisk -p /dev/sda
 #### real hardware ####
 #######################
 
-mkfs.vfat -F32 /dev/sda5 -n "GRUB"
-mkfs.btrfs /dev/sda6 -f -L "Debian"
+mkswap /dev/sda4 -L "LinuxSwap"
+swapon /dev/sda4
+mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
 
 ###############################
 #### Enviroments variables ####
@@ -92,8 +93,9 @@ Debian_ARCH="amd64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
+SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 
 ## fstab virtual hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
@@ -106,27 +108,26 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 #######################
 #### real hardware ####
 #######################
-mount -o $BTRFS_OPTS /dev/sda6 /mnt
+mount -o $BTRFS_OPTS /dev/sda5 /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
-## btrfs su cr /mnt/@swap
 btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/apt
 ## Mount btrfs subvolumes ##
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda6 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/sda5 /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda5 /mnt/var/cache/apt
+mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -214,109 +215,16 @@ cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
 install iTCO_wdt /bin/true
 install iTCO_vendor_support /bin/true
-
-# Disable nouveau
-blacklist nouveau
-
-# This file lists those modules which we don't want to be loaded by
-# alias expansion, usually so some other driver will be loaded for the
-# device instead.
-
-# evbug is a debug tool that should be loaded explicitly
-blacklist evbug
-
-# these drivers are very simple, the HID drivers are usually preferred
-blacklist usbmouse
-blacklist usbkbd
-
-# replaced by e100
-blacklist eepro100
-
-# replaced by tulip
-blacklist de4x5
-
-# causes no end of confusion by creating unexpected network interfaces
-blacklist eth1394
-
-# snd_intel8x0m can interfere with snd_intel8x0, doesn't seem to support much
-# hardware on its own (Ubuntu bug #2011, #6810)
-blacklist snd_intel8x0m
-
-# Conflicts with dvb driver (which is better for handling this device)
-blacklist snd_aw2
-
-# replaced by p54pci
-blacklist prism54
-
-# replaced by b43 and ssb.
-blacklist bcm43xx
-
-# most apps now use garmin usb driver directly (Ubuntu: #114565)
-blacklist garmin_gps
-
-# replaced by asus-laptop (Ubuntu: #184721)
-blacklist asus_acpi
-
-# low-quality, just noise when being used for sound playback, causes
-# hangs at desktop session start (Ubuntu: #246969)
-blacklist snd_pcsp
-
-# ugly and loud noise, getting on everyone's nerves; this should be done by a
-# nice pulseaudio bing (Ubuntu: #77010)
-blacklist pcspkr
-
-# EDAC driver for amd76x clashes with the agp driver preventing the aperture
-# from being initialised (Ubuntu: #297750). Blacklist so that the driver
-# continues to build and is installable for the few cases where its
-# really needed.
-blacklist amd76x_edac
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
 options iwlwifi enable_ini=N
 EOF
 
-touch /mnt/etc/modprobe.d/blacklist-nouveau.conf
-cat <<EOF | tee /mnt/etc/modprobe.d/blacklist-nouveau.conf
-blacklist nouveau
-blacklist lbm-nouveau
-options nouveau modeset=0
-alias nouveau off
-alias lbm-nouveau off
-EOF
-
-mkdir -pv /mnt/etc/modprobe.d
-touch /mnt/etc/modprobe.d/bbswitch.conf
-cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-## Early module for bbswitch dual graphics ##
-#options bbswitch load_state=0 unload_state=1 
-EOF
-
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 ## Boot Faster with intel ##
 options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-EOF
-
-touch /mnt/etc/modprobe.d/nvidia.conf
-cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
-## Nvidia early module ##
-options nvidia_drm modeset=1
-EOF
-
-touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
-## Disable nouveau on earlyboot ##
-options nouveau modeset=0
-EOF
-
-mkdir -pv /mnt/etc/modules-load.d
-touch /mnt/etc/modules-load.d/iptables.conf
-cat << EOF > /mnt/etc/modules-load.d/iptables.conf
-ip6_tables
-ip6table_nat
-ip_tables
-iptable_nat
 EOF
 
 #######################################
@@ -341,73 +249,6 @@ EOF
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
-EOF
-
-cat <<EOF >/mnt/etc/sysctl.d/10-console-messages.conf
-# the following stops low-level messages on console
-kernel.printk = 4 4 1 7
-EOF
-
-cat <<EOF >/mnt/etc/sysctl.d/10-ipv6-privacy.conf
-# IPv6 Privacy Extensions (RFC 4941)
-# ---
-# IPv6 typically uses a device's MAC address when choosing an IPv6 address
-# to use in autoconfiguration. Privacy extensions allow using a randomly
-# generated IPv6 address, which increases privacy.
-#
-# Acceptable values:
-#    0 - don’t use privacy extensions.
-#    1 - generate privacy addresses
-#    2 - prefer privacy addresses and use them over the normal addresses.
-net.ipv6.conf.all.use_tempaddr = 2
-net.ipv6.conf.default.use_tempaddr = 2
-EOF
-
-cat <<EOF >/mnt/etc/sysctl.d/10-kernel-hardening.conf
-# These settings are specific to hardening the kernel itself from attack
-# from userspace, rather than protecting userspace from other malicious
-# userspace things.
-#
-#
-# When an attacker is trying to exploit the local kernel, it is often
-# helpful to be able to examine where in memory the kernel, modules,
-# and data structures live. As such, kernel addresses should be treated
-# as sensitive information.
-#
-# Many files and interfaces contain these addresses (e.g. /proc/kallsyms,
-# /proc/modules, etc), and this setting can censor the addresses. A value
-# of "0" allows all users to see the kernel addresses. A value of "1"
-# limits visibility to the root user, and "2" blocks even the root user.
-kernel.kptr_restrict = 1
-
-# Access to the kernel log buffer can be especially useful for an attacker
-# attempting to exploit the local kernel, as kernel addresses and detailed
-# call traces are frequently found in kernel oops messages. Setting
-# dmesg_restrict to "0" allows all users to view the kernel log buffer,
-# and setting it to "1" restricts access to those with CAP_SYSLOG.
-#
-# dmesg_restrict defaults to 1 via CONFIG_SECURITY_DMESG_RESTRICT, only
-# uncomment the following line to disable.
-# kernel.dmesg_restrict = 0
-EOF
-
-cat <<EOF >/mnt/etc/sysctl.d/10-network-security.conf
-# Turn on Source Address Verification in all interfaces to
-# prevent some spoofing attacks.
-net.ipv4.conf.default.rp_filter=2
-net.ipv4.conf.all.rp_filter=2
-EOF
-
-cat <<EOF >/mnt/etc/sysctl.d/10-zeropage.conf
-# Protect the zero page of memory from userspace mmap to prevent kernel
-# NULL-dereference attacks against potential future kernel security
-# vulnerabilities.  (Added in kernel 2.6.23.)
-#
-# While this default is built into the Ubuntu kernel, there is no way to
-# restore the kernel default if the value is changed during runtime; for
-# example via package removal (e.g. wine, dosemu).  Therefore, this value
-# is reset to the secure default each time the sysctl values are loaded.
-vm.mmap_min_addr = 65536
 EOF
 
 ######################################
@@ -489,17 +330,16 @@ chroot /mnt apt upgrade -y
 ######################
 #### Set Hostname ####
 ######################
-# real=nitro
 
 cat <<EOF >/mnt/etc/hostname
-nitro
+mcbair
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<\EOF >/mnt/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 nitro
+127.0.1.1 mcbair
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -509,7 +349,7 @@ EOF
 
 echo $UEFI_UUID
 echo $ROOT_UUID
-# echo $SWAP_UUID
+echo $SWAP_UUID
 # echo $HOME_UUID
 
 touch /mnt/etc/fstab
@@ -531,7 +371,7 @@ UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home             
 UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
 
 ### Swap ###
-#UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
+UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
 
 ### Tmp ###
 # tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                   0 0
@@ -553,7 +393,7 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
     export LANG=en_US.UTF-8 &&
     export LC_CTYPE=en_US.UTF-8 &&
     # locale-gen en_US.UTF-8 && \
-    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+    # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
 #dpkg-reconfigure --frontend=noninteractive locales && \
 # update-locale LANG=en_US.UTF-8 && \
 # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
@@ -577,8 +417,8 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 ## Network ##
 #############
 
-chroot /mnt apt install prettyping nftables crda net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
-    firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
+chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
+    firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill firmware-brcm80211 --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
@@ -624,9 +464,8 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 #
-chroot /mnt apt install fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-    debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
-    efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+chroot /mnt apt install duperemove aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
+    debian-keyring git htop efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -641,8 +480,6 @@ zram
 z3fold
 i915.modeset=1
 intel_agp
-#nvidia-drm.modeset=1
-#nvidia-drm
 EOF
 
 # chroot /mnt update-initramfs -c -k all
@@ -671,17 +508,6 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 
 chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi --no-install-recommends -y
 
-##################################
-#### Nvidia Drivers with Cuda ####
-##################################
-
-# chroot /mnt apt build-dep -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
-chroot /mnt apt install -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
-    vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
-    libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
-    libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
-# chroot /mnt apt install nvidia-driver firmware-misc-nonfree libnvidia-fbc1 nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
-
 ###############################
 #### Minimal xorg packages ####
 ###############################
@@ -707,19 +533,6 @@ Section "InputClass"
         Driver          "libinput"
         MatchIsTouchpad "on"
         Option          "Tapping"       "on"
-EndSection
-EOF
-
-mkdir -pv /mnt/etc/X11/xorg.conf.d
-touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-Section "Device"
-    Identifier "Nvidia GTX 1050"
-    Driver "nvidia"
-    BusID "PCI:1:0:0"
-    Option "DPI" "96 x 96"
-    Option "AllowEmptyInitialConfiguration" "Yes"
-    #  Option "UseDisplayDevice" "none"
 EndSection
 EOF
 
@@ -811,10 +624,10 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 # Consult the keyboard(5) manual page.
 
-XKBMODEL="pc105"
-XKBLAYOUT="br"
-XKBVARIANT=""
-XKBOPTIONS="terminate:ctrl_alt_bksp"
+# XKBMODEL="pc105"
+# XKBLAYOUT="us"
+# XKBVARIANT="mac"
+# XKBOPTIONS="terminate:ctrl_alt_bksp"
 EOF
 
 #################
@@ -828,8 +641,8 @@ chroot /mnt echo "America/Sao_Paulo" >/etc/timezone &&
     echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale &&
     export LANGUAGE=en_US.UTF-8 &&
     export LC_ALL=en_US.UTF-8 &&
-    dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
-    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+    # dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
+    # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
 #dpkg-reconfigure --frontend=noninteractive locales && \
 #update-locale LANG=en_US.UTF-8
 #localedef -i en_US -f UTF-8 en_US.UTF-8
@@ -983,7 +796,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 usbcore.autosuspend=-1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=igfx_off nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 
@@ -999,7 +812,7 @@ GRUB_GFXMODE=1920x1080x32
 # modes only.  Entries specified as foreground/background.
 GRUB_COLOR_NORMAL="light-blue/black"
 GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
-GRUB_DISABLE_OS_PROBER=false
+#GRUB_DISABLE_OS_PROBER=false
 EOF
 
 chroot /mnt update-grub
@@ -1010,18 +823,6 @@ rm -rf /mnt/vmlinuz.old
 rm -rf /mnt/vmlinuz
 rm -rf /mnt/initrd.img
 rm -rf /mnt/initrd.img.old
-
-###########################
-#### Fix Dual provider ####
-###########################
-
-touch /mnt/home/juca/.xsessionrc
-cat <<EOF >/mnt/home/juca/.xsessionrc
-xrandr --setprovideroutputsource NVIDIA-G0 modesetting
-EOF
-
-chroot /mnt chmod +x /home/juca/.xsessionrc
-chroot /mnt chown -R juca:juca /home/juca/.xsessionrc
 
 # Add pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
