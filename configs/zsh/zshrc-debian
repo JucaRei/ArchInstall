@@ -1,0 +1,1494 @@
+# =========================== Environment Preparation
+# automatically start tmux
+#if command -v tmux &> /dev/null && \
+#    [[ -o interactive ]] && \
+#    [[ ! "$TERM" =~ screen ]] && \
+#    [[ ! "$TERM" =~ tmux ]] && \
+#    [ -z "$TMUX" ] && \
+#    [ -z "$SSH_TTY" ]; then
+#  exec tmux
+#fi
+
+# =========================== Global Variables
+# set terminal time zone
+export TZ=UTC
+# export TZ=America/Sao_Paulo
+
+# ensure standard PATH locations are all included
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+# binaries compiled by Cargo (Rust)
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# setting GOPATH fo Golang
+export GOPATH="$HOME/.local/share/go"
+
+# specify the SSH agent socket path
+export SSH_AUTH_SOCK="/run/user/$(id -u)/keyring/ssh"
+
+# disable less history
+export LESSHISTFILE='-'
+
+# custom Python settings
+export PYTHONDONTWRITEBYTECODE=1
+[ -f "$HOME/.pythonrc" ] && export PYTHONSTARTUP=~/.pythonrc
+
+# skip the rest for a non-interactive shell
+[[ $- != *i* ]] && return
+
+# =========================== Interactive Shell Begin
+# fail-over minimal command prompt
+export PS1='%n@%m:%~%# '
+
+# set the time zone code accoording to the military time zone codes standard
+declare -A MILITARY_TIME_ZONES
+MILITARY_TIME_ZONES=(
+    ['+01']='A' ['+02']='B' ['+03']='C' ['+04']='D' ['+05']='E' ['+06']='F'
+    ['+07']='G' ['+08']='H' ['+09']='I' ['+10']='K' ['+11']='L' ['+12']='M'
+    ['-01']='N' ['-02']='O' ['-03']='P' ['-04']='Q' ['-05']='R' ['-06']='S'
+    ['-07']='T' ['-08']='U' ['-09']='V' ['-10']='W' ['-11']='X' ['-12']='Y'
+    ['+00']='Z'
+)
+TIMEZONE_CODE=$MILITARY_TIME_ZONES[$(date '+%:::z')]
+[ "$TIMEZONE_CODE" = '' ] && TIMEZONE_CODE='J'
+
+# enable 256 color & ture color support
+# commented to use the terminal-provided TERM value
+#export TERM='xterm-256color'
+
+# styled command prompt
+if [[ $UID == 0 || $EUID == 0 ]]; then
+    # blue for root
+    #export PS1='%F{240}[%*] %F{33}%n%F{white}%#%F{240}%m%F{blue}[%~]%F{white}> '
+    export PS1="%F{240}[%D{%H%M:%S}$TIMEZONE_CODE] %F{33}%n%F{white}%#%B%m%b%F{blue}[%~]%F{white}> "
+else
+    # yellow for other users
+    #export PS1='%F{240}[%*] %F{11}%n%F{white}%#%F{240}%m%F{yellow}[%~]%F{white}> '
+    export PS1="%F{240}[%D{%H%M:%S}$TIMEZONE_CODE] %F{11}%n%F{white}%#%B%m%b%F{yellow}[%~]%F{white}> "
+fi
+
+# automatically set default editor
+export EDITOR=$(command -v nvim vim vi helix nano | head -1)
+
+# WSL doesn't work well with BG_NICE
+[ -d '/mnt/c' ] && [[ "$(uname -a)" == *Microsoft* ]] && unsetopt BG_NICE
+
+# =========================== Initialize Antigen and Plugins
+# partially from Skywind3000's zshrc
+# original code: https://github.com/skywind3000/vim/blob/master/etc/zshrc.zsh
+function install_antigen() {
+    # Antigen: https://github.com/zsh-users/antigen
+    ANTIGEN_URL='https://git.io/antigen'
+    ANTIGEN="$HOME/.local/bin/antigen.zsh"
+    ANTIGEN_TEMP='/tmp/antigen.zsh'
+
+    # install antigen.zsh if not exist
+    if [ ! -f "$ANTIGEN" ]; then
+        echo "installing Antigen to $ANTIGEN"
+        [ ! -d "$HOME/.local" ] && mkdir -p "$HOME/.local"
+        [ ! -d "$HOME/.local/bin" ] && mkdir -p "$HOME/.local/bin"
+        [ ! -f "$HOME/.z" ] && touch "$HOME/.z"
+
+        # automatically select an available downloader
+        if command -v curl &>/dev/null; then
+            curl -sSL "$ANTIGEN_URL" -o "$ANTIGEN_TEMP"
+        elif command -v wget &>/dev/null; then
+            wget -q "$ANTIGEN_URL" -O "$ANTIGEN_TEMP"
+        else
+            >&2 echo 'ERROR: Neither cURL nor Wget found'
+            return 1
+        fi
+
+        # if download has failed
+        if [ ! $? -eq 0 ]; then
+            >&2 echo "\nERROR: Failed to download antigen.zsh ($ANTIGEN_URL)"
+            return 1
+        else
+            mv "$ANTIGEN_TEMP" "$ANTIGEN"
+        fi
+    fi
+
+    if [ -f "$ANTIGEN" ] && [ ! -d "$HOME/.antigen" ]; then
+        if ! command -v git &>/dev/null; then
+            >&2 echo 'ERROR: Git not found'
+            return 1
+        fi
+    fi
+}
+install_antigen
+if [ ! $? -eq 0 ]; then
+    >&2 echo 'unable to install Antigen'
+fi
+
+# initialize antigen
+source "$ANTIGEN"
+
+# disable URL formatting
+DISABLE_MAGIC_FUNCTIONS=true
+
+# initialize oh-my-zsh
+antigen use oh-my-zsh
+
+# load zsh bundles/plugins
+# visit https://github.com/unixorn/awesome-zsh-plugins
+#antigen bundle command-not-find
+#antigen bundle rupa/z z.sh
+#antigen bundle svn-fast-info
+#antigen bundle z
+antigen bundle agkozak/zsh-z
+antigen bundle colorize
+antigen bundle extract
+antigen bundle git
+antigen bundle github
+antigen bundle kubectl
+antigen bundle python
+antigen bundle rust
+antigen bundle supercrabtree/k
+antigen bundle zsh-users/zsh-autosuggestions
+antigen bundle zsh-users/zsh-completions
+antigen bundle zsh-users/zsh-syntax-highlighting
+
+# syntax color definition
+ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern)
+
+typeset -A ZSH_HIGHLIGHT_STYLES
+typeset -A ZSH_HIGHLIGHT_PATTERNS
+
+# main
+ZSH_HIGHLIGHT_STYLES[unknown-token]=fg=009
+ZSH_HIGHLIGHT_STYLES[reserved-word]=fg=004,standout
+ZSH_HIGHLIGHT_STYLES[alias]=fg=cyan,bold
+ZSH_HIGHLIGHT_STYLES[suffix-alias]=fg=green,underline
+ZSH_HIGHLIGHT_STYLES[global-alias]=fg=magenta
+ZSH_HIGHLIGHT_STYLES[builtin]=fg=013,bold
+ZSH_HIGHLIGHT_STYLES[function]=fg=012,bold
+ZSH_HIGHLIGHT_STYLES[command]=fg=white,bold
+ZSH_HIGHLIGHT_STYLES[precommand]=fg=white,underline
+ZSH_HIGHLIGHT_STYLES[commandseparator]=fg=blue,bold
+ZSH_HIGHLIGHT_STYLES[hashed-command]=fg=009
+ZSH_HIGHLIGHT_STYLES[autodirectory]=fg=green,underline
+ZSH_HIGHLIGHT_STYLES[path]=fg=214,underline
+#ZSH_HIGHLIGHT_STYLES[path_pathseparator]=
+#ZSH_HIGHLIGHT_STYLES[path_prefix]=
+#ZSH_HIGHLIGHT_STYLES[path_prefix_pathseparator]=
+ZSH_HIGHLIGHT_STYLES[globbing]=fg=063
+ZSH_HIGHLIGHT_STYLES[history-expansion]=fg=white,underline
+#ZSH_HIGHLIGHT_STYLES[command-substitution]=
+#ZSH_HIGHLIGHT_STYLES[command-substitution-unquoted]=
+#ZSH_HIGHLIGHT_STYLES[command-substitution-quoted]=
+ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]=fg=magenta
+#ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-unquoted]=
+#ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter-quoted]=
+#ZSH_HIGHLIGHT_STYLES[process-substitution]=
+ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]=fg=magenta
+#ZSH_HIGHLIGHT_STYLES[arithmetic-expansion]=
+ZSH_HIGHLIGHT_STYLES[single-hyphen-option]=fg=magenta
+ZSH_HIGHLIGHT_STYLES[double-hyphen-option]=fg=magenta
+#ZSH_HIGHLIGHT_STYLES[back-quoted-argument]=
+#ZSH_HIGHLIGHT_STYLES[back-quoted-argument-unclosed]=
+ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]=fg=blue,bold
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]=fg=blue
+#ZSH_HIGHLIGHT_STYLES[single-quoted-argument-unclosed]=
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]=fg=063
+#ZSH_HIGHLIGHT_STYLES[double-quoted-argument-unclosed]=
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]=fg=yellow
+#ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument-unclosed]=
+ZSH_HIGHLIGHT_STYLES[rc-quote]=fg=magenta
+ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]=fg=009
+ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]=fg=009
+ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]=fg=magenta
+#ZSH_HIGHLIGHT_STYLES[assign]=
+ZSH_HIGHLIGHT_STYLES[redirection]=fg=blue,bold
+ZSH_HIGHLIGHT_STYLES[comment]=fg=black,bold
+ZSH_HIGHLIGHT_STYLES[comment]=fg=black,bold
+#ZSH_HIGHLIGHT_STYLES[named-fd]=
+#ZSH_HIGHLIGHT_STYLES[numeric-fd]=
+ZSH_HIGHLIGHT_STYLES[arg0]=fg=green
+#ZSH_HIGHLIGHT_STYLES[default]=
+
+# brackets
+ZSH_HIGHLIGHT_STYLES[bracket-error]=fg=red,bold
+ZSH_HIGHLIGHT_STYLES[bracket-level-1]=fg=yellow,bold
+ZSH_HIGHLIGHT_STYLES[bracket-level-2]=fg=blue,bold
+ZSH_HIGHLIGHT_STYLES[bracket-level-3]=fg=green,bold
+ZSH_HIGHLIGHT_STYLES[bracket-level-4]=fg=magenta,bold
+ZSH_HIGHLIGHT_STYLES[bracket-level-5]=fg=cyan,bold
+ZSH_HIGHLIGHT_STYLES[cursor-matchingbracket]=standout
+
+# pattern
+ZSH_HIGHLIGHT_PATTERNS+=('mkfs' 'fg=red,standout')
+ZSH_HIGHLIGHT_PATTERNS+=('rm -rf' 'fg=red,standout')
+
+# miscellaneous options
+COMPLETION_WAITING_DOTS='true'
+HIST_STAMPS='mm/dd/yyyy'
+
+# load login shell configs
+if [[ -o login ]]; then
+    [ -f "$HOME/.local/etc/login.sh" ] && source "$HOME/.local/etc/login.sh"
+    [ -f "$HOME/.local/etc/login.zsh" ] && source "$HOME/.local/etc/login.zsh"
+fi
+
+# load local configs
+[ -f "$HOME/.local/etc/config.zsh" ] && source "$HOME/.local/etc/config.zsh"
+[ -f "$HOME/.local/etc/local.zsh" ] && source "$HOME/.local/etc/local.zsh"
+
+antigen apply
+
+# initialize compinit for compdef
+autoload -U +X compinit && compinit
+autoload -U +X bashcompinit && bashcompinit
+
+# enable zle vim mode
+#bindkey -v
+
+# enable zle emacs mode
+bindkey -e
+
+# default keymap
+bindkey '\eh' backward-char
+bindkey '\el' forward-char
+bindkey '\ej' down-line-or-search
+bindkey '\ek' up-line-or-search
+bindkey '\eH' backward-word
+bindkey '\eL' forward-word
+bindkey '\eJ' beginning-of-line
+bindkey '\eK' end-of-line
+# bindkey '\eu' undo
+
+# command bindings
+bindkey -s '\e:' 'll\n'
+bindkey -s '\e;' 'l\n'
+bindkey -s '\ee' "$EDITOR\n"
+bindkey -s '\ei' 'clear\n'
+bindkey -s '\eo' 'cd ..\n'
+
+# options
+unsetopt correct_all
+
+setopt BANG_HIST               # treat the '!' character specially during expansion.
+setopt HIST_EXPIRE_DUPS_FIRST  # expire duplicate entries first when trimming history.
+setopt HIST_FIND_NO_DUPS       # do not display a line previously found.
+setopt HIST_IGNORE_ALL_DUPS    # delete old recorded entry if new entry is a duplicate.
+setopt HIST_IGNORE_DUPS        # don't record an entry that was just recorded again.
+setopt HIST_IGNORE_SPACE       # don't record an entry starting with a space.
+setopt HIST_REDUCE_BLANKS      # remove superfluous blanks before recording entry.
+setopt HIST_SAVE_NO_DUPS       # don't write duplicate entries in the history file.
+setopt HIST_VERIFY             # don't execute immediately upon history expansion.
+setopt INC_APPEND_HISTORY      # write to the history file immediately, not when the shell exits.
+setopt SHARE_HISTORY           # share history between all sessions.
+#setopt complete_aliases        # let zsh-completions complete aliases
+
+# other
+setopt auto_param_slash       # add trailing slash to directory names
+setopt auto_remove_slash      # remove trailing slash when appropriate
+setopt combining_chars        # fixes for completion and UTF-8
+setopt complete_in_word       # completion "inside" word
+setopt correct                # correct only commands
+setopt list_types             # show ls -F style marks in file completion
+setopt no_beep                # no beep on zle errors
+setopt no_cdable_vars         # who wants to cd apache?
+setopt no_check_jobs          # don't report on bg processes when exiting
+setopt no_hup                 # and don't kill them
+setopt no_list_beep           # no beep sound when complete list displayed
+setopt prompt_subst           # dynamic prompt changes
+
+# ignore completion
+zstyle ':completion:*:complete:-command-:*:*' ignored-patterns '*.pdf|*.exe|*.dll'
+zstyle ':completion:*:*sh:*:' tag-order files
+
+# Kali Zsh completion styles
+zstyle ':completion:*:*:*:*:*' menu select
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' format 'completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: hit TAB for more, or the character to insert%s
+zstyle ':completion:*' rehash true
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+
+# =========================== Aliases
+# enhance and preserve alias
+alias dw0='watch -n0 -d -c '
+alias dw1='watch -n1 -d -c '
+alias dw='watch -d -c '
+alias sudo='sudo '
+alias doas='doas '
+
+# commands with patched envvars
+alias act='sudo DOCKER_HOST=unix:///run/podman/podman.sock act'
+alias mk='MINIKUBE_IN_STYLE=0 minikube'
+
+# enhanced built-in commands
+#alias clean='truncate --size 0 ~/.zsh_history'
+alias reload='exec /usr/bin/zsh'
+alias sizes='du -sh * | sort -h'
+#alias tree='lsd --icon=never --group-dirs=first --tree'
+
+# abbreviations
+alias abs='realpath -e'
+alias b='bat -pP'
+alias c='clear'
+alias cl='cd && clear'
+alias g="$(command -v rg grep | head -1)"
+alias gi='g -i'
+alias o='gio open'
+
+# file listing
+#alias ls='lsd --icon=never --date="+%d%b%y %H%M:%S" --group-dirs=first --size=short -F'
+#alias ls='exa -lg --group-directories-first --time-style=iso --git'
+alias l='ls -lh'
+alias ll='ls -lah'
+alias k='k -h'
+alias kk='k -ah'
+
+# Git
+alias gdd='git difftool'
+alias gch='git checkout HEAD --'
+alias glgl="git log --graph --abbrev-commit --decorate\
+ --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset)\
+ %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)'"
+alias glgla='glgl --all'
+alias glgls='glgl --stat'
+alias glglsa='glgls --all'
+alias gll='find . -maxdepth 2 -type d -name .git -printf "Pulling: %p\n" -exec\
+ git --git-dir={} --work-tree=$PWD/{}/.. pull \;'
+
+alias t="tree -aC --dirsfirst -I '.git|node_modules|bower_components'"
+alias td="tree -adC --dirsfirst -I '.git|node_modules|bower_components'"
+
+# Rust
+alias cg='cargo'
+alias cgb='cargo build'
+alias cgbr='cgb --release'
+alias cgbg='cargo build --target x86_64-unknown-linux-gnu'
+alias cgbrg='cgbg --release'
+alias cgbm='cargo build --target x86_64-unknown-linux-musl'
+alias cgbrm='cgbm --release'
+alias cgr='cargo run'
+alias cgrr='cgr --release'
+alias cgrg='cargo run --target x86_64-unknown-linux-gnu'
+alias cgrrg='cgrg --release'
+alias cgrm='cargo run --target x86_64-unknown-linux-musl'
+alias cgrrm='cgrm --release'
+alias cgk='cargo check'
+alias cgc='cargo clean'
+alias cgd='cargo doc'
+alias cgn='cargo new'
+alias cgi='cargo init'
+alias cgt='cargo test'
+alias cgbn='cargo bench'
+alias cgu='cargo update'
+alias cgs='cargo search'
+alias cgp='cargo publish'
+alias cgin='cargo install'
+alias cgun='cargo uninstall'
+
+# Python
+alias py="$(command -v bpython btpython python python3 python2 | head -1) -q"
+alias py2='python2 -q'
+alias py3='python3 -q'
+alias pybs='python -qm build -s .'
+alias pybw='python -qm build -w .'
+alias pydbg='py -m pdb -c continue'
+alias pyhttp='py -m http.server'
+alias pyjson='py -m json.tool'
+alias pym='python -qm'
+
+# container CLI tools
+alias ct="sudo $(command -v podman docker nerdctl | head -1)"
+alias ctc='ct ps -a --external'
+alias cti='ct images'
+alias ctp='ct rm $(ct ps -aq --external); ct system prune -af --volumes'
+alias ctt='ct run -it --rm -h=temp --name=temp'
+
+# kubectl shortcuts
+alias kak.='kubectl apply -k .'
+alias kak='kubectl apply -k'
+alias kdj='kubectl describe jobs'
+alias kgj='kubectl get jobs'
+alias kk.='kubectl kustomize .'
+alias kk='kubectl kustomize'
+
+# systemctl shortcuts
+alias sys='systemctl'
+alias start='sudo systemctl start'
+alias stop='sudo systemctl stop'
+alias restart='sudo systemctl restart'
+alias mask='sudo systemctl mask'
+alias unmask='sudo systemctl unmask'
+alias status='systemctl status'
+alias isenabled='systemctl is-enabled'
+alias enables='sudo systemctl enable'
+alias disables='sudo systemctl disable'
+alias daemonreload='sudo systemctl daemon-reload'
+alias running='systemctl list-units --type=service --state=running'
+
+# systemctl user shortcuts
+alias startu='systemctl start --user'
+alias stopu='systemctl stop --user'
+alias restartu='systemctl restart --user'
+alias enablesu='systemctl enable --user'
+alias disablesu='systemctl disable --user'
+
+# shorter systemctl shortcuts
+alias sdr='sudo systemctl daemon-reload'
+alias srn='systemctl list-units --type=service --state=running'
+
+# journalctl shortcuts
+alias jf='sudo journalctl -feu'
+alias jcl='sudo journalctl --rotate && sudo journalctl --vacuum-time=1s'
+
+# colored output
+alias diff='diff --color=auto'
+alias dir='dir --color=auto'
+alias egrep='egrep --color'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='egrep --color'
+alias grep='grep --color=auto'
+alias ip='ip --color=auto'
+#alias ls='ls --color=auto'
+alias vdir='vdir --color=auto'
+
+# verbose output
+alias chgrp='chgrp -v'
+alias chmod='chmod -v'
+alias chown='chown -v'
+alias cp='cp -v'
+alias dhclient='dhclient -v'
+alias ln='ln -v'
+alias mkdir='mkdir -v'
+alias mtr4='mtr -4'
+alias mtr6='mtr -6'
+alias mv='mv -v'
+alias ping4='ping4 -O'
+alias ping6='ping6 -O'
+alias ping='ping -O'
+alias rm='rm -v'
+#alias scp='scp -v'
+#alias sftp='sftp -v'
+#alias ssh='ssh -v'
+
+# editor alias
+alias v="$EDITOR"
+
+# express edit
+alias vi3='v ~/.config/i3/config'
+alias vih='v ~/.zsh_history'
+alias vio='sudo v /etc/hosts'
+alias vir='sudo v /etc/resolv.conf'
+alias vis='v ~/.ssh/config'
+alias vit='v ~/.tmux.conf'
+alias viv='v ~/.config/nvim/init.vim'
+alias viz='v ~/.zshrc'
+
+# vim/nvim only
+alias va='v -p *'
+alias vd='v -d'
+alias vp='v -p'
+alias vs='v -S'
+
+# dpkg shortcuts
+alias dpkg-list-rc='dpkg -l | grep "^rc"'
+alias dpkg-purge-rc='dpkg -l | grep "^rc" | awk "{print \$2}" | sudo xargs dpkg --purge'
+
+# pacman/yay shortcuts
+alias yf='yay -F'
+alias yg='yay -G'
+alias yprune='yay -Rcns $(yay -Qtdq)'
+alias yqe='yay -Qe'
+alias yqi='yay -Qi'
+alias yqkq='yay -Qkq'
+alias yqs='yay -Qs'
+alias yrcns='yay -Rcns'
+alias ys='yay -S'
+alias yscc='yay -Scc'
+alias ysi='yay -Si'
+alias yss='yay -Ss'
+alias ysyu='yay -Syu --sudoloop'
+alias ysyuo="yay -Syu --sudoloop --overwrite '*'"
+
+# =========================== Community Zshrc Functions
+# update the Zshrc and reload Zsh
+function update-zshrc() {
+    curl -LsSf https://k4t.io/z -o ~/.zshrc
+    exec "$SHELL"
+}
+
+# =========================== Networking Functions
+# ipinfo fetches and parses current or specified IP address information
+# version 3.2.0
+function ipinfo() {
+    python3 - $@ << EOF
+import argparse, json, socket, subprocess, sys
+
+parser = argparse.ArgumentParser(prog="ipinfo")
+parser.add_argument("hostname", nargs="?", help="IP address or hostname to lookup, \
+defaults to the current machine's IP address if omitted", default="")
+parser.add_argument("-p", "--provider", choices=["ipinfo", "ifconfig"], \
+help="choose IP lookup service provider", default="ipinfo")
+ip_family_group = parser.add_mutually_exclusive_group()
+ip_family_group.add_argument("-4", action="store_true", help="Force IPv4")
+ip_family_group.add_argument("-6", action="store_true", help="Force IPv6")
+args = parser.parse_args()
+
+try: ip = socket.getaddrinfo(args.hostname, None, socket.AF_INET6 if args.__dict__["6"] is True \
+else socket.AF_INET if args.__dict__["4"] is True else 0)[0][4][0] if args.hostname != '' else ''
+except socket.gaierror: print('Hostname cannot be resolved', file=sys.stderr); sys.exit(1)
+
+PROVIDERS_URL = {"ipinfo": "https://ipinfo.io/{ip}", "ifconfig": "https://ifconfig.co/json?ip={ip}"}
+if ip == '': curl_process = subprocess.run(["/usr/bin/curl", "-sSL", "-6" if args.__dict__["6"] is True \
+else "-4" if args.__dict__["4"] is True else "", PROVIDERS_URL[args.provider].format(ip=ip)], capture_output=True)
+else: curl_process = subprocess.run(["/usr/bin/curl", "-sSL", PROVIDERS_URL[args.provider].format(ip=ip)], capture_output=True)
+if curl_process.returncode != 0: print(f"cURL returned error code {curl_process.returncode}", file=sys.stderr); \
+print(curl_process.stderr.decode().strip(), file=sys.stderr); sys.exit(1)
+
+try: json_result = json.loads(curl_process.stdout.decode())
+except json.decoder.JSONDecodeError:
+    print("Failed to parse server response", file=sys.stderr)
+    print(f"Server response: {curl_process.stdout.decode()}", file=sys.stderr)
+    sys.exit(1)
+
+for key, value in json_result.items():
+    print("{0:15}{1}".format(key.upper(), value))
+EOF
+}
+
+# set new default route
+function defroute() {
+    # check that a destination IP has been provided
+    if [ -z "$1" ]; then
+        >&2 echo 'no destination IP specified'
+        return 1
+    fi
+
+    sudo ip route del default && sudo ip route add default via "$1"
+}
+
+# connect to RDP with xfreerdp and pre-defined settings
+function rdp() {
+    # check that a hostname has been provided
+    if [ -z "$1" ]; then
+        >&2 echo 'no target host specified'
+        return 1
+    fi
+
+    # position $2 is username
+    [ ! -z "$2" ] && username="/u:$2"
+
+    # position $3 is domain
+    [ ! -z "$3" ] && domain="/d:$3"
+
+    # if ncat cannot connect to the port
+    if command -v ncat &>/dev/null \
+        && ! ncat -z "$1" 3389; then
+        >&2 echo 'unable to connect to the remote host'
+        return 1
+    fi
+
+    # launch xfreerdp
+    xfreerdp /dynamic-resolution /bpp:32 /sound /d: +auto-reconnect \
+        /gdi:hw /rfx /rfx-mode:video /v:$1 $username $domain
+}
+
+# display the TLS certificate information for a host
+function tlsinfo() {
+    # check that a hostname has been provided
+    if [ -z "$1" ]; then
+        >&2 echo 'no target host specified'
+        >&2 echo 'usage: tlsinfo [hostname] [port]'
+        return 1
+    fi
+
+    # use 443 as the default port
+    if [ -z "$2" ]; then
+        port='443'
+    else
+        port="$2"
+    fi
+
+    /usr/bin/openssl s_client -showcerts -connect "$1:$port" </dev/null
+}
+
+alias globalip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias sniff="sudo ngrep -d 'en1' -t '^(GET|POST) ' 'tcp and port 80'"
+alias httpdump="sudo tcpdump -i en1 -n -s 0 -w - | grep -a -o -E \"Host\: .*|GET \/.*\""
+
+# =========================== Package Management Functions
+# receive keys from key server and save the keys to /etc/apt/trusted.gpg.d/
+function apt-import-key() {
+    if [ "$#" -ne 2 ] ; then
+        echo 'usage: apt-import-key key_hash [filename]'
+        echo 'e.g., apt-import-key 7EA0A9C3F273FCD8 docker.gpg'
+        return
+    fi
+
+    #keyserver='hkp://keys.gnupg.net'
+    keyserver='keyserver.ubuntu.com'
+    keyfile="/etc/apt/trusted.gpg.d/$2"
+
+    if [ -f "$keyfile" ]; then
+        echo "The target key file ($keyfile) already exists"
+        return 1
+    else
+        # check if public key is already available locally
+        keyexisted='false'
+        gpg --list-public-keys "$1" > /dev/null 2>&1
+        if [ "$?" -eq 0 ]; then
+            keyexisted='true'
+            echo 'Key already exists in the local keyring'
+            echo 'Using the key from the local keyring'
+        # if the key doesn't exist, retrieve the key from the keyserver
+        else
+            echo 'Key does not exist in the local keyring'
+            echo "Retrieving the key from the key server ($keyserver)"
+            gpg --keyserver="$keyserver" --receive-keys "$1"
+            # if the gpg command failed, show a warning and exit
+            if [ "$?" -ne 0 ]; then
+                echo 'Failed to import keys'
+                return 1
+            fi
+        fi
+
+        # export the key to the keyfile
+        echo "Exporting key to file ($keyfile)"
+        gpg --export "$1" | sudo tee "$keyfile" > /dev/null
+
+        # if key didn't exist before import, delete it
+        if [ "$keyexisted" = 'false' ]; then
+            echo "Deleting temporarily imported key $1 from the local keyring"
+            gpg --batch --yes --delete-keys "$1"
+        fi
+    fi
+}
+
+# =========================== File Management Functions
+# get downloads files using available backends
+function get() {
+    [ -z "$1" ] || [ "$1" = '-h' ] || [ "$1" = '--help' ] \
+        && echo 'usage: get target_url [output_filename]' && return 2
+    # assume the protocol to be HTTPS when unspecified
+    if [[ $1 != *':'* ]] && [ ! -f "$1" ]; then url="https://$1"; else url="$1"; fi
+    # use Transmission for torrent downloads
+    if command -v transmission-cli &>/dev/null \
+            && [[ $url =~ ^magnet:\\?xt=urn:btih:.* ]] \
+            || [ -f "$url" ]; then
+        [ -z "$2" ] && transmission-cli -u0 "$url"
+        [ ! -z "$2" ] && transmission-cli -u0 "$url" -w "$2"
+    # use Aria2 for downloading if possible since it's faster
+    elif command -v aria2c &>/dev/null; then
+        [ -z "$2" ] && aria2c \
+            --file-allocation=none --allow-overwrite=true --summary-interval=0 \
+            --seed-time=0 -ctrue -Rtrue -k5M -x10 -s10 -j10 "$url"
+        [ ! -z "$2" ] && aria2c \
+            --file-allocation=none --allow-overwrite=true --summary-interval=0 \
+            --seed-time=0 -ctrue -Rtrue -k5M -x10 -s10 -j10 "$url" -o "$2"
+    # use cURL if Aria2 is not found
+    elif command -v curl &>/dev/null; then
+        [ -z "$2" ] && curl -LO "$url"
+        [ ! -z "$2" ] && curl -L "$url" -o "$2"
+    # use Wget as the last resort
+    elif command -v dpkg &>/dev/null; then
+        [ -z "$2" ] && wget "$url"
+        [ ! -z "$2" ] && wget "$url" -O "$2"
+    else
+        >&2 echo 'None of aria2c, curl, nor wget can be found in PATH'
+        return 1
+    fi
+}
+
+# async copy
+function ac() {
+    unset ACOPY
+    unset AMOVE
+    export ACOPY=("${(@f)$(realpath -e $@)}")
+}
+
+# async move
+function am() {
+    unset ACOPY
+    unset AMOVE
+    export AMOVE=("${(@f)$(realpath -e $@)}")
+}
+
+# async paste
+function ap() {
+    if [ ! -z "$ACOPY" ]; then
+        cp -vr "${ACOPY[@]}" .
+    elif [ ! -z "$AMOVE" ]; then
+        mv -v "${AMOVE[@]}" .
+        unset AMOVE
+    else
+        >&2 echo 'clipboard empty'
+        return 1
+    fi
+}
+
+# create and enter a temporary directory that self-destructs
+function td() {
+    tempdir=$(mktemp -d)
+    zsh -c "cd $tempdir && exec zsh"
+    rm -vrf $tempdir
+}
+
+# archive a file/directory with the highest-possible compression ratio
+function archive() {
+    if [ -z "$1" ]; then
+        >&2 echo 'no file or directory specified'
+        >&2 echo 'usage: archive [PATH]'
+        return 1
+    elif [ ! -f "$1" ] && [ ! -d "$1" ]; then
+        >&2 echo 'file or directory does not exist'
+        >&2 echo 'usage: archive [PATH]'
+        return 1
+    else
+        #-m0=BCJ2 -m1=LZMA:d25 -m2=LZMA:d19 -m3=LZMA:d19 -mb0:1 \
+        7z -t7z -mx=9 -mfb=273 -ms -md=31 -myx=9 -mtm=- -mmt -mmtf -md=1536m \
+            -mmf=bt3 -mmc=10000 -mpb=0 -mlc=0 -m0=LZMA2:27 \
+            a "$(basename -- $1).7z" $1
+            # && rm -rf $1 > /dev/null 2>&1
+    fi
+}
+
+# rename files or directories
+function rn() {
+    if [ -z "$1" ]; then
+        >&2 echo 'no file or directory specified'
+        >&2 echo 'usage: rn [PATH]'
+        return 1
+    fi
+
+    read '?rename to: ' rename
+    mv -v "$1" "$rename"
+}
+
+# download videos concurrently with yt-dlp and Aria2
+function ytdl() {
+    if [ -z "$1" ]; then
+        >&2 echo 'no video URL specified'
+        >&2 echo 'usage: ytdl [URL]'
+        return 1
+    fi
+
+    yt-dlp --external-downloader=aria2c --external-downloader-args '--min-split-size=1M \
+        --max-connection-per-server=16 --max-concurrent-downloads=16 --split=16' "$1"
+}
+
+# =========================== System Administration Functions
+# allow kubecolor to subsitute kubectl while not breaking the completions
+function kubectl() {
+    # -G (NULL_GLOB) indicates that the function is executed by Zsh's autocomplete
+    # autocomplete has: -G, -P; doesn't have -Z, -m
+    if [[ $- == *G* ]] || ! command -v kubecolor &>/dev/null; then
+        command kubectl "$@"
+    else
+        command kubecolor "$@"
+    fi
+}
+
+# split docs in a k8s YAML file into multiple files
+function splityaml() {
+    awk -vout=. -F": " '$0~/^# Source: /{file=out"/"$2; print "Creating "file;
+    system ("mkdir -p $(dirname "file"); echo -n "" > "file)}\
+    $0!~/^#/ && $0!="---"{print $0 >> file}'
+}
+
+# =========================== Media Functions
+# play YouTube video with mpv
+function ytb() {
+    # check that a video ID has been specified
+    if [ -z "$1" ]; then
+        >&2 echo 'no YouTube video ID specified'
+        return 1
+    fi
+
+    # play video with MPV
+    /usr/bin/mpv \
+        --ytdl-format='bestvideo[height<=?1440]+bestaudio' \
+        "https://www.youtube.com/watch?v=$1" \
+        &>/dev/null &!
+}
+
+# play audio with visualizations in MPV
+function mpvspectrum() {
+    # check that an audio file path has been specified
+    if [ -z "$1" ]; then
+        >&2 echo 'no audio file path specified'
+        return 1
+    fi
+
+    # play the audio in new window with visualizations
+    mpv --force-window=yes --quiet --lavfi-complex=\
+"[aid1]asplit[ao][a1];[a1]showwaves=mode=line:colors=white,format=rgb0 [vo]" \
+        "$1" \
+        &>/dev/null &!
+}
+
+# display the metadata of a media file using FFprobe
+function mediainfo() {
+    # check that a media file path has been specified
+    if [ -z "$1" ]; then
+        >&2 echo 'no media file path specified'
+        return 1
+    fi
+
+    ffprobe -v quiet -print_format json -show_format -show_streams -i "$1" | jq
+}
+
+# crop out a section of a media file using FFmpeg
+function snip() {
+    # check that a video ID has been specified
+    if [ "$#" -lt 3 ]; then
+        >&2 echo 'usage: snip [file] [start_time] [end_time] [output_path]'
+        return 1
+    fi
+
+    # set output_path if specified in command
+    # otherwise use "snip.mp4" by default for max compatibility
+    [ ! -z "$4" ] && output_path="$4" || output_path='snip.mp4'
+
+    ffmpeg -y -ss $2 -to $3 -i $1 -codec copy "$output_path"
+}
+
+# compress voice using Codec2 and play/save it
+function voicecomp() {
+    AVAILABLE_RATES=("3200" "2400" "1600" "1400" "1300" "1200" "700C" "450" "450PWB")
+    rate="3200"
+
+    # check if the input file's path is specified
+    [ -z "$1" ] && >&2 echo 'no input file specified' && return 1
+
+    # check if the specified rate is supported
+    if [ ! -z "$2" ]; then
+        if (( $AVAILABLE_RATES[(i)$2] > $#AVAILABLE_RATES )); then
+            >&2 echo "unsupported rate \"$2\""
+            exit 1
+        fi
+        rate="$2"
+    fi
+
+    # if $3 is not specified, play compressed audio with ffplay
+    if [ -z "$3" ]; then
+        ffmpeg -hide_banner -i "$1" -c:a pcm_s16le -ac 1 -ar 8k -f wav - | \
+            c2enc "$rate" - - | \
+            c2dec "$rate" - - | \
+            ffplay -hide_banner -f s16le -ar 8k -autoexit -
+            #ffplay -hide_banner -f s16le -ar 8k -autoexit -nodisp -
+
+    # if $3 is specified, save the compressed audio to $3
+    else
+        ffmpeg -hide_banner -i "$1" -c:a pcm_s16le -ac 1 -ar 8k -f wav - | \
+            c2enc "$rate" - - | \
+            c2dec "$rate" - - | \
+            ffmpeg -hide_banner -y -f s16le -ar 8k -i - "$3"
+    fi
+}
+
+# display an image selected by Zenity using ImageMagick
+function dispimg() {
+    magick display -background white -alpha remove -alpha off $(zenity --file-selection) &!
+}
+
+# =========================== Miscellaneous Functions
+# get the number of stars a GitHub repository has
+# requries curl and jq
+function stars() {
+    if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+        echo 'usage: stars [github_repo_uri]'
+        echo '(with name): stars k4yt3x/video2x'
+        echo '(in a GitHub git repo): stars'
+        return 0
+    fi
+
+    # if repo name is specified through $1
+    if [ ! -z "$1" ]; then
+        repo=$1
+
+    # try to get the github repo name
+    else
+        remote=$(git remote -v)
+        if [ $? != 0 ]; then
+            >&2 echo 'no repository name specified; not in a github git repo'
+            return 1
+        fi
+
+        # try to parse git remote's output and get the repo name
+        if [[ $remote == *'git@github.com'* ]]; then
+            repo=$(echo $remote | head -1 | cut -d ':' -f 2 | awk -F '.git' '{print $1}')
+        elif [[ $remote == *'https://github.com'* ]]; then
+            repo=$(echo $remote | head -1 | awk -F 'github.com/' '{printf $2}' | cut -d ' ' -f 1)
+        else
+            >&2 echo 'not in a GitHub git repository'
+            return 1
+        fi
+    fi
+
+    # query the star count through GitHub API
+    github_api=$(curl -sSL "https://api.github.com/repos/$repo")
+
+    # verify API response
+    if [ $? != 0 ]; then
+        >&2 echo "failed to retrieve results from GitHub\'s API"
+        return 1
+    elif [[ $(echo $github_api | jq -r '.message') == "Not Found" ]]; then
+        >&2 echo 'repo not found'
+        return 1
+    fi
+
+    echo $github_api | jq -r '.stargazers_count'
+}
+
+# OUI lookup using Wireshark's manufacturer database
+function ouilookup() {
+    curl -sSL https://gitlab.com/wireshark/wireshark/-/raw/master/manuf | grep -i $1
+}
+
+## Other functions
+
+# history
+h() {
+  if [ "$#" -eq 0 ]; then
+    history
+  else
+    history 0 | egrep -i --color=auto $@
+  fi
+}
+
+# go up 'n' directories
+up() {
+  for updirs in $(seq ${1:-1}); do
+    cd ..
+  done
+}
+
+# mkdir & cd
+cdir() {
+  if [ ! -d "$@" ]; then
+    mkdir -p "$@"
+  fi
+  cd "$@"
+}
+
+# quickly add and remove '.bak' to files
+bak() {
+  for file in "$@"; do
+    if [[ $file =~ "\.bak$" ]]; then
+      mv -iv "$file" "$(basename ${file} .bak)"
+    else
+      mv -iv "$file" "${file}.bak"
+    fi
+  done
+}
+
+# quickly duplicate things
+dup() {
+  for file in "$@"; do
+    cp -f "$file" "${file}.dup"
+  done
+}
+
+# rename files
+name() {
+  local newname="$1"
+  vared -c -p "rename to: " newname
+  command mv "$1" "$newname"
+}
+
+# simple httpserver
+serve() {
+  local port="3000"
+
+  if [ "$#" -ne 0 ]; then
+    port="$@"
+  fi
+
+  if hash serve-http 2> /dev/null; then
+    serve-http -p $port -public
+  elif hash caddy 2> /dev/null; then
+    caddy file-server -browse -listen :$port
+  else
+    local command=""
+    if [ "$(uname)" = "Darwin" ]; then
+      command="SimpleHTTPServer"
+    else
+      command="http.server"
+    fi
+
+    python -m $command $port
+  fi
+}
+
+# simple find functions
+if hash fd 2> /dev/null; then
+  alias fn="$(which fd) --hidden --follow --exclude .git"
+
+  alias fd="fn --type directory"
+  alias ff="fn --type file"
+# else
+#   fn() { find . -iname "*$@*"         2>/dev/null }
+#   fd() { find . -iname "*$@*" -type d 2>/dev/null }
+#   ff() { find . -iname "*$@*" -type f 2>/dev/null }
+fi
+
+# extract archives
+extract() {
+  if [[ -z "$1" ]]; then
+    echo "extracts files based on extensions"
+  elif [[ -f $1 ]]; then
+    case ${(L)1} in
+      *.tar.bz2) tar -jxvf $1  ;;
+      *.tar.gz)  tar -zxvf $1  ;;
+      *.tar.xz)  tar -xvf $1   ;;
+      *.bz2)     bunzip2 $1    ;;
+      *.gz)      gunzip $1     ;;
+      *.jar)     unzip $1      ;;
+      *.rar)     unrar x $1    ;;
+      *.tar)     tar -xvf $1   ;;
+      *.tbz2)    tar -jxvf $1  ;;
+      *.tgz)     tar -zxvf $1  ;;
+      *.zip)     unzip $1      ;;
+      *.Z)       uncompress $1 ;;
+      *)         echo "unable to extract '$1'"
+    esac
+  else
+    echo "file '$1' does not exist!"
+  fi
+}
+
+# sanitize permissions
+sanitize() {
+  if [ "$#" -eq 0 ]; then
+    local DIR="."
+  else
+    local DIR="$@"
+  fi
+
+  find "$DIR" -type d -print0 | xargs -0 chmod 755
+  find "$DIR" -type f -print0 | xargs -0 chmod 644
+}
+
+# recompile zsh
+zsh-recompile() {
+  autoload -Uz zrecompile
+
+  [ -f ~/.zshrc ] && zrecompile -p ~/.zshrc
+  [ -f ~/.zcompdump ] && zrecompile -p ~/.zcompdump
+
+  for f in ~/.zsh/*.zsh; do
+    zrecompile -p $f
+  done
+}
+
+# load zmv only when needed
+mmv() {
+  autoload -Uz zmv
+  noglob zmv -W $@
+}
+
+# re-run command if failed
+retry() {
+  until $@; do
+    sleep 1
+    echo -e "\n[$(date +'%T')] $(tput setaf 1)retrying:$(tput sgr0) $@\n"
+  done
+}
+
+# re-run command every second
+repeatedly() {
+  while true; do
+    echo -e "[$(date +'%T')] $(tput setaf 1)running:$(tput sgr0) $@\n"
+    $@
+    echo
+    sleep 1
+  done
+}
+
+timer() {
+  if [ "$#" -eq 0 ]; then
+    # count up if no time given
+    stopwatch
+  else
+    # count down if time given
+    local start=$(($(date +%s) + $(seconds $1)));
+
+    while [ "$start" -ge $(date +%s) ]; do
+      echo -ne "$(date -u --date @$(($start - $(date +%s))) +%H:%M:%S)\r";
+      sleep 0.1
+    done
+  fi
+}
+
+stopwatch() {
+  local start=$(date +%s);
+
+  while true; do
+    echo -ne "$(date -u --date @$(($(date +%s) - $start)) +%H:%M:%S)\r";
+    sleep 0.1
+  done
+}
+
+# faster yt-dl --batch-file
+parallel-yt-dlp() {
+  cat "$@" | sort | uniq | parallel -u -j 16 --progress --eta "yt-dlp --newline {}"
+}
+
+# useful if there's a lot of files, but they download slowly
+parallel-wget() {
+  cat "$@" | sort | uniq | parallel -u -j 16 --progress --eta "wget -c {}"
+}
+
+# check if website is up
+is-up() {
+  if curl --silent https://downforeveryoneorjustme.com/"$1" | grep -q "just you"; then
+    echo "$1 is up"
+  else
+    echo "$1 is down"
+  fi
+}
+
+alias is-down="is-up"
+
+# nnn
+n() {
+  export NNN_TMPFILE=${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd
+  export NNN_FCOLORS="0b0304020f0e050740020a08" # man nnn
+  export NNN_COLORS="7"
+
+  nnn "$@"
+
+  if [ -f $NNN_TMPFILE ]; then
+    source $NNN_TMPFILE
+    /bin/rm $NNN_TMPFILE
+  fi
+}
+
+# pretty print CSV
+catcsv() {
+  column -s , -t < "$@" | less -S
+}
+
+# archive stuff by year
+archiveByYear() {
+  if [ "$#" -eq 0 ]; then
+    echo "pass file/folder as argument"
+  else
+    mkdir -p Archive
+    mv "$@" "Archive/$(date +%Y) - $@"
+  fi
+}
+
+# watchexec with nicer format and default options
+watchexec() {
+  cmd="echo \"$(tput setaf 8)[$(date +'%Y-%m-%d %T')]$(tput sgr0) $@\" ; $@ ; echo"
+  /usr/local/bin/watchexec --project-origin . --restart $cmd
+}
+
+## Fzf
+
+# z with fzf
+j() {
+  if [[ -z "$*" ]]; then
+    cd "$(_z -l 2>&1 | sed -n 's/^[ 0-9.,]*//p' | fzf --prompt='jump > ')"
+  else
+    _z "$@"
+  fi
+}
+
+# edit files in editor
+fe() {
+  local preview="bat --style=plain --color=always --theme=base16-256 --line-range=:200 {}"
+
+  fzf --multi --select-1 --exit-0 --query="$1" --prompt="files > " --preview=$preview | tr "\n" "\0" | xargs -0 -o v
+}
+
+# open file
+fo() {
+  open $(fzf --select-1 --exit-0 --query="$1" --prompt="open > ")
+}
+
+# cd to directory
+fcd() {
+  local preview="tree -aC --dirsfirst {}"
+  local dir=""
+
+  if hash fd 2> /dev/null; then
+    dir="$(fd --type d | fzf --select-1 --exit-0 --query="$1" --prompt='dir > ' --preview=$preview)"
+  else
+    dir="$(find ${1:-*} -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf --select-1 --exit-0 --query="$1" --prompt='dir > ' --preview=$preview)"
+  fi
+
+  [ -n "$dir" ] && cd "$dir"
+}
+
+# search through history
+fh() {
+  print -z $(fc -l 1 | fzf --tac --query="$1" --prompt="history > " | sed 's/ *[0-9]* *//')
+}
+
+# kill process
+fkill() {
+  ps -ef | sed 1d | fzf --multi --query="$1" --prompt="kill > " | awk '{ print $2 }' | xargs kill -${1:-9}
+}
+
+# checkout git commit
+fcom() {
+  local commits=$(git log --pretty=format:"%h%x09 %cr%x09 %s" --decorate --reverse)
+  local commit=$(echo "$commits" | fzf --tac --no-sort --exact)
+
+  if [ ! -z $commit ]; then
+    git checkout $(echo "$commit" | cut -d " " -f1)
+  fi
+}
+
+# checkout git branch (including remote)
+fbr() {
+  local branches=$(git branch --all | grep -v HEAD)
+  local branch=$(echo "$branches" | fzf --delimiter $((2 + $(wc -l <<< "$branches"))))
+
+  git checkout $(echo "$branch" | sed "s/.* //" | sed "s#remotes/[^/]*/##")
+}
+
+
+### PATHS
+export PATH="/usr/local/bin:/usr/bin:/bin/:/usr/local/sbin:/usr/sbin:/sbin"
+
+if [ -d $HOME/Documents/Code/Scripts ]; then
+  export PATH="$HOME/Documents/Code/Scripts:$PATH"
+fi
+
+if [ -d $HOME/Documents/Scripts ]; then
+  export PATH="$HOME/Documents/Scripts:$PATH"
+fi
+
+if [ -d $HOME/Documents/Code/Bin ]; then
+  export PATH="$HOME/Documents/Code/Bin:$PATH"
+fi
+
+if [ -d $HOME/Documents/Bin ]; then
+  export PATH="$HOME/Documents/Bin:$PATH"
+fi
+
+# brew coreutils
+if [ -d /usr/local/opt/coreutils/libexec/gnubin ]; then
+  export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+  export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+fi
+
+# go
+if [ -d $HOME/Documents/Code/Go ]; then
+  export GOPATH="$HOME/Documents/Code/Go"
+  export GOBIN="$GOPATH/bin"
+  export PATH="$GOBIN:$PATH"
+fi
+
+# lua
+if [ -d $HOME/.luarocks/bin ]; then
+  export PATH="$HOME/.luarocks/bin:$PATH"
+fi
+
+# haskell
+if [ -d $HOME/.cabal/bin ]; then
+  export PATH="$HOME/.cabal/bin:$PATH"
+fi
+
+# node
+if [ -d $HOME/.nvm ]; then
+  local LATEST_NODE=$(ls ~/.nvm/versions/node/ | sort -V | tail -1)
+  export PATH="$HOME/.nvm/versions/node/$LATEST_NODE/bin:$PATH"
+fi
+
+# rust
+if [ -d $HOME/.cargo ]; then
+  export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# android
+if [ -d $HOME/Library/Android ]; then
+  export ANDROID_HOME=$HOME/Library/Android/sdk
+  export PATH=$PATH:$ANDROID_HOME/tools
+  export PATH=$PATH:$ANDROID_HOME/tools/bin
+  export PATH=$PATH:$ANDROID_HOME/platform-tools
+fi
+
+# nix
+if [ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]; then
+  . $HOME/.nix-profile/etc/profile.d/nix.sh
+fi
+
+# java
+if [ -d /usr/local/opt/openjdk@11/bin ]; then
+  export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
+fi
+
+# clean paths
+typeset -gU path
+
+
+### Plugins
+
+# z for better jumps
+load_z() {
+  if [ ! -f ~/.zsh/plugins/z/z.sh ]; then
+    exit
+  fi
+
+  source ~/.zsh/plugins/z/z.sh
+}
+
+# better pairs
+load_autopair() {
+  if [ ! -f ~/.zsh/plugins/zsh-autopair/autopair.zsh ]; then
+    exit
+  fi
+
+  source ~/.zsh/plugins/zsh-autopair/autopair.zsh
+}
+
+# nvm for node versions
+load_nvm() {
+  if [ ! -f ~/.zsh/plugins/zsh-nvm/zsh-nvm.plugin.zsh ]; then
+    exit
+  fi
+
+  export NVM_NO_USE=true    # don't load node by default - we have quicker PATH hack for that
+  export NVM_LAZY_LOAD=true # don't load nvm if it's not used
+
+  source ~/.zsh/plugins/zsh-nvm/zsh-nvm.plugin.zsh
+}
+
+# live command highlighting like fish, but faster than zsh-syntax-highlight
+load_syntax_highlight() {
+  if [ ! -f ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ]; then
+    exit
+  fi
+
+  source ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+
+  FAST_HIGHLIGHT_STYLES[precommand]='fg=magenta'
+  FAST_HIGHLIGHT_STYLES[commandseparator]='fg=yellow'
+  FAST_HIGHLIGHT_STYLES[path]='fg=default'
+  FAST_HIGHLIGHT_STYLES[path-to-dir]='fg=default'
+  FAST_HIGHLIGHT_STYLES[single-hyphen-option]='fg=yellow'
+  FAST_HIGHLIGHT_STYLES[double-hyphen-option]='fg=yellow'
+  FAST_HIGHLIGHT_STYLES[back-quoted-argument]='fg=magenta'
+  FAST_HIGHLIGHT_STYLES[single-quoted-argument]='fg=red'
+  FAST_HIGHLIGHT_STYLES[double-quoted-argument]='fg=red'
+  FAST_HIGHLIGHT_STYLES[variable]='fg=red'
+  FAST_HIGHLIGHT_STYLES[global-alias]='fg=magenta'
+
+  FAST_HIGHLIGHT[no_check_paths]=1
+  FAST_HIGHLIGHT[use_brackets]=1
+  FAST_HIGHLIGHT[use_async]=1
+}
+
+# gitstatus
+load_gitstatus() {
+  if [ !-f ~/.zsh/plugins/gitstatus/gitstatus.plugin.zsh ]; then
+    exit
+  fi
+
+  source ~/.zsh/plugins/gitstatus/gitstatus.plugin.zsh
+  gitstatus_stop "GITSTATUS" && gitstatus_start -s -1 -u -1 -c -1 -d -1 -t 16 "GITSTATUS"
+
+  setup_git_prompt_status
+}
+
+# "plugin manager"
+zsh_plugins_install() {
+  mkdir -p ~/.zsh/plugins/
+  pushd ~/.zsh/plugins/ > /dev/null
+
+  git clone -b zsh-flock git://github.com/mafredri/z
+  git clone git://github.com/chriskempson/base16-shell
+  git clone git://github.com/hlissner/zsh-autopair
+  git clone git://github.com/lukechilds/zsh-nvm
+  git clone git://github.com/romkatv/gitstatus
+  git clone git://github.com/zdharma-continuum/fast-syntax-highlighting
+  git clone https://github.com/romkatv/zsh-defer
+
+  popd > /dev/null
+}
+
+zsh_plugins_update() {
+  pushd ~/.zsh/plugins/ > /dev/null
+
+  for d in *; do
+    pushd "$d" > /dev/null
+    git pull
+    popd > /dev/null
+  done
+
+  popd > /dev/null
+}
+
+# (deferred) loading
+load_z # I often want to jump somewhere immediately when opening a shell
+zsh-defer -t 0.5 load_autopair
+zsh-defer -t 0.5 load_syntax_highlight
+zsh-defer -t 1.0 load_gitstatus
+zsh-defer -t 1.0 load_nvm
+
+
+### Prompt
+
+if [ "$(uname)" = "Darwin" ]; then
+  PROMPTCOLOR=blue
+else
+  PROMPTCOLOR=magenta
+fi
+
+if [ "$(whoami)" = "root" ]; then
+  PROMPTCOLOR=red
+fi
+
+prompt_pwd() {
+  print -n "%{$fg[$PROMPTCOLOR]%}"
+  print -n "%50<...<%3~"
+}
+
+prompt_arrow() {
+  # first space here is non-breaking, so we can search for it with tmux easily
+  print "%{$reset_color%} > "
+}
+
+ZSH_MAIN_PROMPT="$(prompt_arrow)"
+
+git_prompt_status() {
+  gitstatus_query -d $PWD "GITSTATUS"
+
+  if [ -z $VCS_STATUS_LOCAL_BRANCH ]; then
+    PROMPT='$(prompt_pwd)$ZSH_MAIN_PROMPT'
+    zle && zle reset-prompt
+    return
+  fi
+
+  if [ $VCS_STATUS_HAS_STAGED = 0 ] && [ $VCS_STATUS_HAS_UNSTAGED = 0 ] && [ $VCS_STATUS_HAS_CONFLICTED = 0 ] && [ $VCS_STATUS_HAS_UNTRACKED = 0 ]; then
+    branch_color="%{$fg[green]%}"
+  else
+    branch_color="%{$fg[red]%}"
+  fi
+
+  git_branch=" $VCS_STATUS_LOCAL_BRANCH"
+
+  PROMPT='$(prompt_pwd)$branch_color$git_branch$ZSH_MAIN_PROMPT'
+  zle && zle reset-prompt
+}
+
+setup_git_prompt_status() {
+  git_prompt_status
+
+  add-zsh-hook precmd  git_prompt_status
+  add-zsh-hook preexec git_prompt_status
+}
+
+# single-quote comments are important here!
+PROMPT='$(prompt_pwd)$ZSH_MAIN_PROMPT'
+PROMPT2='%{$fg[yellow]%}%_%{$reset_color%} > '
+SPROMPT="correct "%R" to "%r' ? ([Y]es/[N]o/[E]dit/[A]bort) '
