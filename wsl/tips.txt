@@ -1,0 +1,7 @@
+# get device from windows to use on wsl
+Get-WmiObject Win32_diskdrive | Select Caption,DeviceID,InterfaceType,Size
+Get-WmiObject Win32_diskdrive | Select Caption,DeviceID,InterfaceType,Size | Where-Object {$_.InterfaceType -eq "USB"}
+
+
+# Get PHYSICALDRIVE? of device
+sudo dd if=path/to/my/file.iso of=\\.\PHYSICALDRIVE5 status=progress

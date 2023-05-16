@@ -166,8 +166,8 @@ deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 #######################
 
 ##Debian Testing
-#deb http://deb.debian.org/debian/ testing main
-#deb-src http://deb.debian.org/debian/ testing main
+#deb http://deb.debian.org/debian/ testing main contrib non-free
+#deb-src http://deb.debian.org/debian/ testing main contrib non-free
 
 
 ##Debian Unstable
