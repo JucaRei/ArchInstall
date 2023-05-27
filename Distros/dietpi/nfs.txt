@@ -1,0 +1,7 @@
+### 2 TB drive
+/mnt/HD/HD_a2/Transmission/complete
+/home/juca/bigdrive
+
+## Old harddrive
+/mnt/HD/HD_b2/
+/home/juca/olddrive

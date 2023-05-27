@@ -1,4 +1,3 @@
-
 # /etc/systemd/journald.conf
 # #Storage=auto
 # Storage=volatile
@@ -40,8 +39,6 @@ sgdisk -t 2:ef00 /dev/sda
 sgdisk -t 3:8300 /dev/sda
 sgdisk -p /dev/sda
 
-
-
 #####################################
 ##########  FileSystem  #############
 #####################################
@@ -51,9 +48,9 @@ sgdisk -p /dev/sda
 #######################
 
 mkfs.vfat -F32 /dev/sda2 -n "EFI"
-mkfs.ext4 -O "^has_journal" /dev/sda3 -L "Linux" -F 
-# mkfs.f2fs -l "Linux" -O extra_attr,inode_checksum,sb_checksum,compression /dev/sda3 -f 
-# mkfs.f2fs -l "Linux" -O inode_checksum,sb_checksum,compression /dev/sda3 -f 
+mkfs.ext4 -O "^has_journal" /dev/sda3 -L "Linux" -F
+# mkfs.f2fs -l "Linux" -O extra_attr,inode_checksum,sb_checksum,compression /dev/sda3 -f
+# mkfs.f2fs -l "Linux" -O inode_checksum,sb_checksum,compression /dev/sda3 -f
 
 # add the kernel parameter rootflags=atgc
 # remove the atgc mount option from the fstab
@@ -139,12 +136,11 @@ HEREDOC
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
 # && echo >> /mnt/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
 
-######################################################## 
+########################################################
 #### Mount points for chroot, just like arch-chroot ####
 ########################################################
 
 # genfstab -U /mnt >>/mnt/etc/fstab
-
 
 for dir in dev proc sys run; do
         mount --rbind /$dir /mnt/$dir
@@ -319,16 +315,15 @@ ff02::1     ip6-allnodes
 ff02::2     ip6-allrouters
 EOF
 
-
 #########################
 #### Setting Locales ####
 #########################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        dpkg-reconfigure -f noninteractive locales && \
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+        dpkg-reconfigure -f noninteractive tzdata &&
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+        dpkg-reconfigure -f noninteractive locales &&
         echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
 
 chroot /mnt apt update
@@ -342,7 +337,7 @@ chroot /mnt apt update
 #############
 
 chroot /mnt apt install nftables net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
-firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
+        firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
@@ -380,11 +375,11 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 ###############
 
 chroot /mnt apt install firmware-brcm80211 fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
-efibootmgr grub-pc grub-efi-amd64-bin os-prober usbtop wget unzip curl sysfsutils chrony bluez-firmware firmware-linux firmware-b43legacy-installer firmware-b43-installer --no-install-recommends -y
+        debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+        efibootmgr grub-pc grub-efi-amd64-bin os-prober usbtop wget unzip curl sysfsutils chrony bluez-firmware firmware-linux firmware-b43legacy-installer firmware-b43-installer --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
-cat << EOF > /mnt/etc/initramfs-tools/modules
+cat <<EOF >/mnt/etc/initramfs-tools/modules
 crc32c-intel
 ahci
 lz4hc
@@ -424,11 +419,10 @@ chroot /mnt apt install xorg xinput intel-media-va-driver-non-free vainfo intel-
 
 # chroot /mnt apt build-dep -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 chroot /mnt apt install -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
-vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
-libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
-libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
+        vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
+        libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
+        libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
 # chroot /mnt apt install nvidia-driver firmware-misc-nonfree libnvidia-fbc1 nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
-
 
 ###########################
 #### Some XORG configs ####
@@ -454,7 +448,7 @@ EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 #Section "Device"
 #    Identifier "Nvidia GTX 1050"
 #    Driver "nvidia"
@@ -508,9 +502,8 @@ EOF
 #################################
 
 chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset ansible libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs zsync --no-install-recommends -y
-
+        dnsmasq ipset ansible libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+        bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs zsync --no-install-recommends -y
 
 ###########################
 #### Setup resolv.conf ####
@@ -528,7 +521,7 @@ EOF
 
 mkdir -pv /mnt/etc/default/
 touch /mnt/etc/default/keyboard
-cat << EOF > /mnt/etc/default/keyboard
+cat <<EOF >/mnt/etc/default/keyboard
 # KEYBOARD CONFIGURATION FILE
 
 # Consult the keyboard(5) manual page.
@@ -543,12 +536,12 @@ EOF
 #### Locales ####
 #################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale && \
-        dpkg-reconfigure -f noninteractive locales && \
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+        dpkg-reconfigure -f noninteractive tzdata &&
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+        echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale &&
+        dpkg-reconfigure -f noninteractive locales &&
         echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
 
 chroot /mnt update
@@ -595,7 +588,7 @@ chroot /mnt usermod -aG sudo juca
 #### NetworkManager config as default instead of dhcpd5 ####
 ############################################################
 
-cat << EOF > /mnt/etc/NetworkManager/NetworkManager.conf
+cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 plugins=ifupdown,keyfile
 
@@ -684,7 +677,7 @@ rm -rf /mnt/initrd.img.old
 ###########################
 
 touch /mnt/home/juca/.xsessionrc
-cat << EOF > /mnt/home/juca/.xsessionrc
+cat <<EOF >/mnt/home/juca/.xsessionrc
 xrandr --setprovideroutputsource 1 0
 EOF
 
