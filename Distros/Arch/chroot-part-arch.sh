@@ -10,6 +10,12 @@ sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 4/g' /etc/pacman.conf
 
+cat <<\ EOF >> /etc/pacman.conf
+
+[liquorix]
+Server = https://liquorix.net/archlinux/$repo/$arch
+
+EOF
 # Get Best Mirrors
 reflector --protocol https --country "Brazil" --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
 
@@ -62,6 +68,9 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/sda4 /mnt/boot/efi
 
 # Base packages LTS kernel
 pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi openssh
+
+# Base packages Liquorix Kernel
+pacstrap /mnt base base-devel linux-lqx linux-lqx-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi
 
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab

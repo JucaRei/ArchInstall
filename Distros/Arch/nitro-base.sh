@@ -37,8 +37,9 @@ pacman -Syyw
 # pacman -Syyw
 
 # Add Chaotic repo
-pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
-pacman-key --lsign-key FBA220DFC880C036
+pacman-key --init
+pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+pacman-key --lsign-key 3056513887B78AEB
 pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
 
 # Add Liquorix
@@ -53,10 +54,17 @@ cat <<\EOF >>/etc/pacman.conf
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
 
+[liquorix]
+Server = https://liquorix.net/archlinux/$repo/$arch
+
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
 
 EOF
+
+# Liquorix Key-ID 
+# pacman-key --recv-keys 9AE4078033F8024D
+# sudo pacman-key --lsign-key 9AE4078033F8024D
 
 sed -i -e '$a [andontie-aur]' /etc/pacman.conf
 sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
@@ -78,7 +86,7 @@ EOF
 # You can add xorg to the installation packages, I usually add it at the DE or WM install script
 # You can remove the tlp package if you are installing on a desktop or vm
 # not working correctely - pipewire pipewire-alsa pipewire-pulse pipewire-jack
-pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fd fzf ripgrep htop btop networkmanager-iwd iwd samba opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+pacman -Sy grub grub-btrfs efibootmgr chrony preload irqbalance ananicy-cpp bat exa fd fzf ripgrep htop btop networkmanager iwd samba network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils openssh rsync firewalld flatpak nss-mdns os-prober ntfs-3g
 
 # Virt-manager & lxd
 pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
@@ -130,7 +138,7 @@ sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_
 # sudo sed -i 's/GRUB_COLOR_NORMAL="light-blue/black"/GRUB_COLOR_NORMAL="red/black"/g'
 # sudo sed -i 's/#GRUB_COLOR_HIGHLIGHT="light-cyan/blue"/GRUB_COLOR_HIGHLIGHT="yellow/black"/g'
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
-grub-install --target=x86_64-efi --bootloader-id=Grubarch --efi-directory=/boot/efi --no-nvram --removable --recheck
+grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --no-nvram --removable --recheck
 # grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable --recheck --no-rs-codes --modules="btrfs zstd part_gpt part_msdos"
 grub-mkconfig -o /boot/grub/grub.cfg
 

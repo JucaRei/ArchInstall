@@ -5,7 +5,7 @@ xbps-install -Su xbps --y
 
 # BR repo
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
+# repository=https://voidlinux.com.br/repo/current
 repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
@@ -17,13 +17,13 @@ repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+# repository=https://voidlinux.com.br/repo/current/multilib/nonfree
 repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
+# repository=https://voidlinux.com.br/repo/current/multilib
 repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
@@ -31,9 +31,9 @@ EOF
 vpm sync
 
 # GlibC
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
+# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
 # MUSL
-# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20221001.tar.xz
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20221001.tar.xz
 
 xbps-install -Su xbps xz --yes
 
@@ -42,69 +42,18 @@ xbps-install -Su xbps xz --yes
 
 # xbps-install -Sy wget vsv xz vpm neovim git --yes
 
-sgdisk -Z /dev/vda
-parted -s -a optimal /dev/vda mklabel gpt
-sgdisk -n 0:0:200MiB /dev/vda
-sgdisk -n 0:0:0 /dev/vda
-sgdisk -t 1:ef00 /dev/vda
-sgdisk -t 2:8300 /dev/vda
-sgdisk -c 1:VoidGrub /dev/vda
-sgdisk -c 2:Voidlinux /dev/vda
-sgdisk -p /dev/vda
-mkfs.vfat -F32 /dev/vda1 -n "VoidEFI"
-mkfs.btrfs /dev/vda2 -f -L "VoidRoot"
 
 set -e
-
 # GLIBC
-XBPS_ARCH="x86_64"
+# XBPS_ARCH="x86_64"
 # MUSL
-# XBPS_ARCH="x86_64-musl"
-BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
-# Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/vda2 /mnt
-
-#Cria os subvolumes
-
-btrfs su cr /mnt/@
-btrfs su cr /mnt/@home
-btrfs su cr /mnt/@snapshots
-btrfs su cr /mnt/@var_log
-btrfs su cr /mnt/@var_cache_xbps
-btrfs su cr /mnt/@tmp
-btrfs su cr /mnt/@swap
-
-# Remove a partição
-umount -v /mnt
-
-# mount home subvolume separated home
-# mount -o $BTRFS_OPTS /dev/sdb7 /mnt
-# btrfs su cr /mnt/@home
-# umount -v /mnt
-
-# Monta com os valores selecionados
-# Lembre-se de mudar os valores de sdX
-
-mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
-mkdir -pv /mnt/boot/efi
-mkdir -pv /mnt/home
-mkdir -pv /mnt/.snapshots
-mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/tmp
-mkdir -pv /mnt/var/cache/xbps
-# mount -o $BTRFS_OPTS,subvol=@home /dev/sdb7 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@tmp /dev/vda2 /mnt/var/tmp
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda2 /mnt/var/cache/xbps
-mount -t vfat -o rw,defaults,noatime,nodiratime /dev/vda1 /mnt/boot/efi
+XBPS_ARCH="x86_64-musl"
 
 # Descompacta e copia para /mnt o tarball
 # GLIBC
-tar xvf ./void-x86_64-*.tar.xz -C /mnt
-# Musl
 # tar xvf ./void-x86_64-*.tar.xz -C /mnt
+# Musl
+tar xvf ./void-x86_64-*.tar.xz -C /mnt
 sync
 
 # Monta chroot
@@ -156,13 +105,13 @@ EOF
 
 # Early micro code
 cat <<EOF >/mnt/etc/dracut.conf.d/intel_ucode.conf
-#early_microcode=yes
+early_microcode=yes
 EOF
 
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-swap.conf
-vm.vfs_cache_pressure=500
-vm.swappiness=100
+vm.vfs_cache_pressure=300
+vm.swappiness=75
 vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
@@ -230,45 +179,53 @@ cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 EOF
 
 # Repositorios mais rapidos GLIBC
-cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
-repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-EOF
-
-# Repositorios mais rapidos MUSL
 # cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl
+# repository=https://voidlinux.com.br/repo/current
+# repository=http://void.chililinux.com/voidlinux/current
+# repository=https://mirrors.servercentral.com/voidlinux/current
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
+# repository=https://voidlinux.com.br/repo/current/nonfree
+# repository=http://void.chililinux.com/voidlinux/current/nonfree
+# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
+# repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+# repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+# repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
+# repository=https://voidlinux.com.br/repo/current/multilib
+# repository=http://void.chililinux.com/voidlinux/current/multilib
+# repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+# EOF
+
+# Repositorios mais rapidos MUSL
+# cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
+repository=https://voidlinux.com.br/repo/current/musl
+repository=http://void.chililinux.com/voidlinux/current/musl
+repository=https://mirrors.servercentral.com/voidlinux/current/musl
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
+repository=https://voidlinux.com.br/repo/current/musl/nonfree
+repository=http://void.chililinux.com/voidlinux/current/musl/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+repository=https://voidlinux.com.br/repo/current/musl/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/musl/multilib/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
+# EOF
+
+# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
+repository=https://voidlinux.com.br/repo/current/musl/multilib
+repository=http://void.chililinux.com/voidlinux/current/musl/multilib
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
 # EOF
 
 # Ignorar alguns pacotes
@@ -277,8 +234,6 @@ ignorepkg=linux
 ignorepkg=linux-headers
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
-ignorepkg=linux
-ignorepkg=linux-headers
 ignorepkg=xfsprogs
 ignorepkg=wpa_supplicant
 ignorepkg=xf86-input-wacon
@@ -316,10 +271,12 @@ EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-echo $UEFI_UUID
-echo $ROOT_UUID
+# UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
+# echo $UEFI_UUID
+# echo $ROOT_UUID
+
+BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,autodefrag,discard=async"
 
 cat <<EOF >/mnt/etc/fstab
 #
@@ -328,19 +285,26 @@ cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # ROOTFS
-UUID=$ROOT_UUID /               btrfs $BTRFS_OPTS,subvol=@               0 0
-UUID=$ROOT_UUID /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
-UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
-UUID=$ROOT_UUID /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
-UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
+# UUID=$ROOT_UUID /               btrfs $BTRFS_OPTS,subvol=@               0 0
+# UUID=$ROOT_UUID /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
+# UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
+# UUID=$ROOT_UUID /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
+# UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
+
+LABEL="Voidlinux" /               btrfs $BTRFS_OPTS,subvol=@               0 0
+LABEL="Voidlinux" /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
+LABEL="Voidlinux" /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
+LABEL="Voidlinux" /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
+LABEL="Voidlinux" /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
+
 
 #HOME_FS
 # UUID=$HOME_UUID /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
-UUID=$ROOT_UUID /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
+LABEL="Voidlinux" /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
 
 # EFI
 # UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
-UUID=$UEFI_UUID /boot/efi vfat noatime,nodiratime,defaults 0 2
+LABEL="GRUB" /boot/efi vfat noatime,nodiratime,defaults 0 2
 
 tmpfs /tmp tmpfs noatime,nosuid,nodev,mode=1777 0 0
 EOF
