@@ -396,16 +396,16 @@ chroot /mnt xbps-install -S socklog-void --yes
 chroot /mnt xbps-install -S irqbalance earlyoom powertop --yes
 
 cat <<\EOF >> /mnt/etc/rc.local
-echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
-echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
-echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
-echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
-echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
-echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
 EOF
 
 # NFS
-chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp nix --yes
+chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp --yes
 
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
@@ -477,8 +477,8 @@ EOF
 
 touch /mnt/etc/rc.local
 cat <<EOF >>/mnt/etc/rc.local
-#PowerTop
-powertop --auto-tune
+##PowerTop
+#powertop --auto-tune
 
 EOF
 
@@ -559,7 +559,7 @@ chroot /mnt ln -srvf /etc/sv/earlyoom /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
+#chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
