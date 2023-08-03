@@ -32,9 +32,9 @@ parted -s -a optimal /dev/sda mklabel gpt
 # sgdisk -d 1 /dev/vda
 
 # Create new partition
-sgdisk -n 0:0:100MiB /dev/sda
-sgdisk -n 0:0:5GiB /dev/sda
-sgdisk -n 0:0:0 /dev/sda
+#sgdisk -n 0:0:100MiB /dev/sda
+#sgdisk -n 0:0:5GiB /dev/sda
+#sgdisk -n 0:0:0 /dev/sda
 
 # Change the name of partition
 sgdisk -c 1:VoidBoot /dev/sda
