@@ -67,7 +67,7 @@ set -e
 XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS /dev/sda3 /mnt
 # mount -o $BTRFS_OPTS /dev/vda3 /mnt
 
 #Cria os subvolumes
