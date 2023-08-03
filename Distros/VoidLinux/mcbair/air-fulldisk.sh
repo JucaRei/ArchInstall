@@ -405,7 +405,7 @@ echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
 EOF
 
 # NFS
-chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp --yes
+chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp nix --yes
 
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
@@ -559,6 +559,7 @@ chroot /mnt ln -srvf /etc/sv/earlyoom /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/tlp /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
