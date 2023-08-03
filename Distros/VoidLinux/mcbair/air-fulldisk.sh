@@ -751,7 +751,6 @@ cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 EOF
 
 
-chroot /mnt xbps-reconfigure -fa
 
 # brightness
 git clone https://github.com/madand/runit-services
@@ -787,5 +786,9 @@ cat <<EOF > /mnt/etc/sv/ananicy/finish
 exec /sbin/sysctl -e kernel.sched_autogroup_enabled=1
 EOF
 chroot /mnt ln -sfv /etc/sv/ananicy /var/service
+
+git clone --depth=1 https://github.com/JucaRei/my-nixfiles /mnt/home/juca/Zero/nix-config
+
+chroot /mnt xbps-reconfigure -fa
 
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
