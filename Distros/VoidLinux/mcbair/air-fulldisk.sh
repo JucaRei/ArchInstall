@@ -338,7 +338,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
-chroot /mnt $XBPS_ARCH xbps-install base-system openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
+chroot /mnt $XBPS_ARCH xbps-install base-system base-devel openssh linux-lts linux-lts-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 
@@ -350,7 +350,7 @@ chroot /mnt xbps-remove base-voidstrap --yes
 chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
 
 # Some firmwares and utils
-chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors --yes
+chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors xdg-user-dirs xdg-utils --yes
 chroot /mnt xbps-install -S light kbdlight powertop xev earlyoom bash-completion neovim  xtools  alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi dialog git wget curl nano elogind vsv vpm chrony lua bluez bluez-alsa sof-firmware xdg-desktop-portal-lxqt xdg-utils --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb dbus-elogind dbus-elogind-libs dbus-elogind-x11 polkit xdg-user-dirs
 #chroot /mnt xbps-remove -oORvy sudo
@@ -475,6 +475,15 @@ Section "Device"
 EndSection
 EOF
 
+cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+net.ipv4.ping_group_range=0 $MAX_GID
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
+# Intel Graphics
+dev.i915.perf_stream_paranoid=0
+EOF
+
 touch /mnt/etc/rc.local
 cat <<EOF >>/mnt/etc/rc.local
 ##PowerTop
@@ -559,6 +568,7 @@ chroot /mnt ln -srvf /etc/sv/earlyoom /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/tlp /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/sshd /etc/runit/runsvdir/default/
 #chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
 
 # NFS
@@ -701,7 +711,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default==0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable b43.allhwsupport=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold net.ifnames=0"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold net.ifnames=0"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
