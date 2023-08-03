@@ -701,7 +701,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default==0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default==0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable b43.allhwsupport=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold net.ifnames=0"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
@@ -753,42 +753,42 @@ EOF
 
 
 # brightness
-git clone https://github.com/madand/runit-services
-cd runit-services
-mv backlight /mnt/etc/sv/
-chroot /mnt ln -svrf /etc/sv/backlight /var/service/
-cd ..
+# git clone https://github.com/madand/runit-services
+# cd runit-services
+# mv backlight /mnt/etc/sv/
+# chroot /mnt ln -svrf /etc/sv/backlight /var/service/
+# cd ..
 
 # PSD
-git clone https://github.com/graysky2/profile-sync-daemon
-mv profile-sync-daemon /mnt/home/juca/psd
-chroot /mnt make /home/juca/psd
-chroot /mnt make install /home/juca/psd
-chroot /mnt rm -rf /usr/lib/systemd/
+# git clone https://github.com/graysky2/profile-sync-daemon
+# mv profile-sync-daemon /mnt/home/juca/psd
+# chroot /mnt make /home/juca/psd/
+# chroot /mnt make install /home/juca/psd/
+# chroot /mnt rm -rf /usr/lib/systemd/
 
-git clone https://github.com/madand/runit-services
-mv runit-services/psd /mnt/etc/sv
-chroot /mnt ln -svrf /etc/sv/psd /var/service 
+# git clone https://github.com/madand/runit-services
+# mv runit-services/psd /mnt/etc/sv
+# chroot /mnt ln -svrf /etc/sv/psd /var/service 
 
-git clone https://github.com/Nefelim4ag/Ananicy.git
-mv Ananicy /mnt/home/juca/Ananicy 
-chroot /mnt make install /home/juca/Ananicy 
-chroot /mnt rm -rf /lib/systemd
-chroot /mnt mkdir /etc/sv/ananicy 
-touch /mnt/etc/sv/ananicy/run
-touch /mnt/etc/sv/ananicy/finish
-cat <<EOF > /mnt/etc/sv/ananicy/run
-#!/bin/sh
-exec /usr/bin/ananicy start
-EOF
-cat <<EOF > /mnt/etc/sv/ananicy/finish
-#!/bin/sh
-exec /sbin/sysctl -e kernel.sched_autogroup_enabled=1
-EOF
-chroot /mnt ln -sfv /etc/sv/ananicy /var/service
+# git clone https://github.com/Nefelim4ag/Ananicy.git
+# mv Ananicy /mnt/home/juca/Ananicy 
+# chroot /mnt make install /home/juca/Ananicy 
+# chroot /mnt rm -rf /lib/systemd
+# chroot /mnt mkdir /etc/sv/ananicy 
+# touch /mnt/etc/sv/ananicy/run
+# touch /mnt/etc/sv/ananicy/finish
+# cat <<EOF > /mnt/etc/sv/ananicy/run
+### /bin/sh
+# exec /usr/bin/ananicy start
+# EOF
+#cat <<EOF > /mnt/etc/sv/ananicy/finish
+### /bin/sh
+#exec /sbin/sysctl -e kernel.sched_autogroup_enabled=1
+#EOF
+#chroot /mnt ln -sfv /etc/sv/ananicy /var/service
 
-git clone --depth=1 https://github.com/JucaRei/my-nixfiles /mnt/home/juca/Zero/nix-config
+#git clone --depth=1 https://github.com/JucaRei/my-nixfiles /mnt/home/juca/Zero/nix-config
 
-chroot /mnt xbps-reconfigure -fa
+#chroot /mnt xbps-reconfigure -fa
 
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
