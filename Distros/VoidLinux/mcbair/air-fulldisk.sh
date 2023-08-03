@@ -43,9 +43,9 @@ sgdisk -c 3:Voidlinux /dev/sda
 
 # Change Types
 sgdisk --list-types
-sgdisk -t 1:ef00 /dev/vda
-sgdisk -t 2:8200 /dev/vda
-sgdisk -t 3:8300 /dev/vda
+sgdisk -t 1:ef00 /dev/sda
+sgdisk -t 2:8200 /dev/sda
+sgdisk -t 3:8300 /dev/sda
 
 # Zap entire device
 # sgdisk -Z /dev/vda
