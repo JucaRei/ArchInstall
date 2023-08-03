@@ -4,31 +4,62 @@ PKG_PATH="current/glibc-2.32_2.x86_64.xbps"
 SPEED_LIMIT="1048576"
 # https://docs.voidlinux.org/xbps/repositories/mirrors/index.html
 MIRRORLIST="\
-https://alpha.de.repo.voidlinux.org/			T1 EU: Finland
+https://alpha.de.repo.voidlinux.org/				T1 EU: Finland
 https://mirrors.servercentral.com/voidlinux/		T1 USA: Chicago
-https://alpha.us.repo.voidlinux.org/			T1 USA: Kansas City
-https://mirror.ps.kz/voidlinux/				T2 Asia: Almaty, KZ
-https://mirrors.bfsu.edu.cn/voidlinux/			T2 Asia: China
-https://mirrors.cnnic.cn/voidlinux/			T2 Asia: China
+https://alpha.us.repo.voidlinux.org/				T1 USA: Kansas City
+https://mirror.ps.kz/voidlinux/						T2 Asia: Almaty, KZ
+https://mirrors.bfsu.edu.cn/voidlinux/				T2 Asia: China
+https://mirrors.cnnic.cn/voidlinux/					T2 Asia: China
 https://mirrors.tuna.tsinghua.edu.cn/voidlinux/		T2 Asia: China
-https://mirror.sjtu.edu.cn/voidlinux/			T2 Asia: China
-https://mirror.maakpain.kro.kr/void/			T2 Asia: Seoul, SK
-https://void.webconverger.org/				T2 Asia: Singapore
-https://mirror.aarnet.edu.au/pub/voidlinux/		T2 AU: Canberra
-https://ftp.swin.edu.au/voidlinux/			T2 AU: Melbourne
-https://void.cijber.net/				T2 EU: Amsterdam, NL
-https://mirror.easylee.nl/voidlinux/			T2 EU: Amsterdam, NL
-http://ftp.dk.xemacs.org/voidlinux/			T2 EU: Denmark
-https://mirrors.dotsrc.org/voidlinux/			T2 EU: Denmark
+https://mirror.sjtu.edu.cn/voidlinux/				T2 Asia: China
+https://mirror.maakpain.kro.kr/void/				T2 Asia: Seoul, SK
+https://void.webconverger.org/						T2 Asia: Singapore
+https://mirror.aarnet.edu.au/pub/voidlinux/			T2 AU: Canberra
+https://ftp.swin.edu.au/voidlinux/					T2 AU: Melbourne
+https://void.cijber.net/							T2 EU: Amsterdam, NL
+https://mirror.easylee.nl/voidlinux/				T2 EU: Amsterdam, NL
+http://ftp.dk.xemacs.org/voidlinux/					T2 EU: Denmark
+https://mirrors.dotsrc.org/voidlinux/				T2 EU: Denmark
 https://quantum-mirror.hu/mirrors/pub/voidlinux/	T2 EU: Hungary
-https://voidlinux.qontinuum.space:4443/			T2 EU: Monaco
-http://ftp.debian.ru/mirrors/voidlinux/			T2 EU: Russia
-https://mirror.yandex.ru/mirrors/voidlinux/		T2 EU: Russia
+https://voidlinux.qontinuum.space:4443/				T2 EU: Monaco
+http://ftp.debian.ru/mirrors/voidlinux/				T2 EU: Russia
+https://mirror.yandex.ru/mirrors/voidlinux/			T2 EU: Russia
 https://cdimage.debian.org/mirror/voidlinux/		T2 EU: Sweden
-https://ftp.acc.umu.se/mirror/voidlinux/		T2 EU: Sweden
-https://ftp.lysator.liu.se/pub/voidlinux/		T2 EU: Sweden
-https://ftp.sunet.se/mirror/voidlinux/			T2 EU: Sweden
-https://mirror.clarkson.edu/voidlinux/			T2 USA: New York"
+https://ftp.acc.umu.se/mirror/voidlinux/			T2 EU: Sweden
+https://ftp.lysator.liu.se/pub/voidlinux/			T2 EU: Sweden
+https://ftp.sunet.se/mirror/voidlinux/				T2 EU: Sweden
+https://mirror.clarkson.edu/voidlinux/				T2 USA: New York
+https://repo-fastly.voidlinux.org/		        			| Fastly 
+https://repo-fi.voidlinux.org/			       				| Helsinki
+https://repo-de.voidlinux.org/			       				| Frankfurt
+https://mirrors.servercentral.com/voidlinux/				| Chicago
+https://mirror.ps.kz/voidlinux/		          				| Almaty
+https://mirror.nju.edu.cn/voidlinux/	          			| China
+https://mirrors.bfsu.edu.cn/voidlinux/ 		        		| Beijing
+https://mirrors.cnnic.cn/voidlinux/         	    		| Beijing
+https://mirrors.tuna.tsinghua.edu.cn/voidlinux/     		| Beijing
+https://mirror.sjtu.edu.cn/voidlinux/           			| Shanghai
+https://void.webconverger.org/          					| Singapore      
+http://ftp.dk.xemacs.org/voidlinux/			       			| Denmark   
+https://mirrors.dotsrc.org/voidlinux/		        		| Denmark 
+https://ftp.cc.uoc.gr/mirrors/linux/voidlinux/			    | Greece                
+https://quantum-mirror.hu/mirrors/pub/voidlinux/		    | Hungary               
+https://voidlinux.mirror.garr.it/		        			| Italy
+https://void.cijber.net/       	 							| Amsterdam,
+https://void.sakamoto.pl/        							| Warsaw
+http://ftp.debian.ru/mirrors/voidlinux/        				| Russia
+https://mirror.yandex.ru/mirrors/voidlinux/        			| Russia 
+https://ftp.lysator.liu.se/pub/voidlinux/        			| Sweden 
+https://mirror.accum.se/mirror/voidlinux/        			| Sweden 
+https://mirror.puzzle.ch/voidlinux/        					| Bern
+https://mirror.vofr.net/voidlinux/						    | California
+https://mirror2.sandyriver.net/pub/voidlinux/			    | Kentucky
+https://mirror.clarkson.edu/voidlinux/ 						| New York
+https://mirror.aarnet.edu.au/pub/voidlinux/			        | Canberra
+https://ftp.swin.edu.au/voidlinux/			       			| Melbourne
+https://voidlinux.com.br/repo/				 				| Ouro Preto
+http://void.chililinux.com/voidlinux/				 		| Pimenta Bueno"
+
 
 show_usage() {
 	: "${progname:="${0##*/}"}"

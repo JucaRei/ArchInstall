@@ -3,7 +3,8 @@
 
 # pkg=current/xbps-0.59.1_6.x86_64.xbps
 pkg=current/xbps-0.59.1_7.x86_64.xbps
-file="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-results"
+#file="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-results"
+file="${./mirrors-test}/${0##*/}-results"
 
 mirrormsg() { printf '%s\n' "getting mirrors from void-docs..."; }
 
