@@ -187,8 +187,8 @@ cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=nvidia
 ignorepkg=xf86-video-nouveau
-#ignorepkg=linux
-#ignorepkg=linux-headers
+ignorepkg=linux
+ignorepkg=linux-headers
 ignorepkg=nvi
 #ignorepkg=dhcpcd
 #ignorepkg=openssh
@@ -448,7 +448,7 @@ Section "InputClass"
         Identifier              "system-keyboard"
         MatchIsKeyboard         "on"
         Option "XkbLayout"      "us"
-        # Option "XkbModel"     "pc105"
+        # Option "XkbModel"     "pc104"
         Option "XkbVariant"     "mac"
         Option "Backspace"      "guess"
 EndSection
@@ -539,7 +539,7 @@ HandleLidSwitchDocked=ignore
 #BroadcastPowerOffInterrupts=yes
 #AllowSuspendInterrupts=no
 #BroadcastSuspendInterrupts=yes
-HandleNvidiaSleep=ignore
+#HandleNvidiaSleep=ignore
 #SuspendState=mem standby freeze
 #SuspendMode=
 #HibernateState=disk
