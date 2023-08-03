@@ -121,10 +121,6 @@ cp -v /etc/resolv.conf /mnt/etc/
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
 cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
-# Disable watchdog
-install iTCO_wdt /bin/true
-install iTCO_vendor_support /bin/true
-
 # Disable nouveau
 blacklist nouveau
 EOF
@@ -138,7 +134,7 @@ hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
 add_drivers+=" btrfs i915 crc32c-intel z3fold "
 force_drivers+=" z3fold "
-omit_dracutmodules+=" i18n nvidia luks rpmversion lvm fstab-sys lunmask fstab-sys securityfs img-lib biosdevname caps crypt crypt-gpg dmraid dmsquash-live mdraid "
+omit_dracutmodules+=" i18n nvidia luks rpmversion fstab-sys lunmask fstab-sys securityfs biosdevname caps dmraid dmsquash-live mdraid "
 show_modules="yes"
 nofscks="yes"
 no_host_only_commandline="yes"
@@ -194,14 +190,14 @@ ignorepkg=xf86-video-nouveau
 #ignorepkg=linux
 #ignorepkg=linux-headers
 ignorepkg=nvi
-ignorepkg=dhcpcd
+#ignorepkg=dhcpcd
 #ignorepkg=openssh
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
 ignorepkg=xf86-video-nouveau
 ignorepkg=xf86-video-vmware
 ignorepkg=xf86-video-fbdev
-ignorepkg=zd1211-firmware
+#ignorepkg=zd1211-firmware
 ignorepkg=xf86-video-vesa
 ignorepkg=mobile-broadband-provider-info
 ignorepkg=os-prober
@@ -310,7 +306,7 @@ HARDWARECLOCK="localtime"
 #TIMEZONE="America/Sao_Paulo"
 
 # Keymap to load, see loadkeys(8).
-KEYMAP="us-acentos"
+#KEYMAP="us-acentos"
 
 # Console font to load, see setfont(8).
 #FONT="lat9w-16"
@@ -342,7 +338,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
-chroot /mnt $XBPS_ARCH xbps-install base-system openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
+chroot /mnt $XBPS_ARCH xbps-install base-system openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call_dkms acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 
@@ -355,7 +351,7 @@ chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
 
 # Some firmwares and utils
 chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors --yes
-chroot /mnt xbps-install -S light kbdlight powertop xev earlyoom bash-completion dropbear neovim  xtools  alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi dialog git wget curl nano elogind vsv vpm chrony lua bluez bluez-alsa sof-firmware xdg-desktop-portal-lxqt xdg-utils --yes
+chroot /mnt xbps-install -S light kbdlight powertop xev earlyoom bash-completion neovim  xtools  alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi dialog git wget curl nano elogind vsv vpm chrony lua bluez bluez-alsa sof-firmware xdg-desktop-portal-lxqt xdg-utils --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb dbus-elogind dbus-elogind-libs dbus-elogind-x11 polkit xdg-user-dirs
 #chroot /mnt xbps-remove -oORvy sudo
 
@@ -480,7 +476,7 @@ EndSection
 EOF
 
 touch /mnt/etc/rc.local
-cat <<EOF >/mnt/etc/rc.local
+cat <<EOF >>/mnt/etc/rc.local
 #PowerTop
 powertop --auto-tune
 
@@ -550,7 +546,7 @@ chroot /mnt ln -sv /etc/sv/acpid /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-# chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
+chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/dropbear /etc/runit/runsvdir/default/
 chroot /mnt ln -sv /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -750,11 +746,11 @@ chroot /mnt xbps-reconfigure -fa
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+#options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 
-sudo xbps-reconfigure -fa
+chroot /mnt xbps-reconfigure -fa
 
 # brightness
 git clone https://github.com/madand/runit-services
@@ -766,8 +762,8 @@ cd ..
 # PSD
 git clone https://github.com/graysky2/profile-sync-daemon
 mv profile-sync-daemon /mnt/home/juca/psd
-chroot /mnt make /mnt/home/juca/psd
-chroot /mnt make install /mnt/home/juca/psd
+chroot /mnt make /home/juca/psd
+chroot /mnt make install /home/juca/psd
 chroot /mnt rm -rf /usr/lib/systemd/
 
 git clone https://github.com/madand/runit-services
@@ -776,10 +772,11 @@ chroot /mnt ln -svrf /etc/sv/psd /var/service
 
 git clone https://github.com/Nefelim4ag/Ananicy.git
 mv Ananicy /mnt/home/juca/Ananicy 
-chroot /mnt make install /mnt/home/juca/Ananicy 
+chroot /mnt make install /home/juca/Ananicy 
 chroot /mnt rm -rf /lib/systemd
 chroot /mnt mkdir /etc/sv/ananicy 
 touch /mnt/etc/sv/ananicy/run
+touch /mnt/etc/sv/ananicy/finish
 cat <<EOF > /mnt/etc/sv/ananicy/run
 #!/bin/sh
 exec /usr/bin/ananicy start
