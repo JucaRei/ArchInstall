@@ -19,10 +19,10 @@ xbps-install -Su xbps xz --yes
 #####################################
 
 # Zap entire device
-sgdisk -Z /dev/vda
+#sgdisk -Z /dev/vda
 
 # -s script call | -a optimal
-parted -s -a optimal /dev/sda mklabel gpt
+#parted -s -a optimal /dev/sda mklabel gpt
 # parted -s /dev/vda set 1 esp on
 
 # Print partition table
