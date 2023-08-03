@@ -195,9 +195,16 @@ ignorepkg=xf86-video-nouveau
 #ignorepkg=linux-headers
 ignorepkg=nvi
 ignorepkg=dhcpcd
-ignorepkg=openssh
+#ignorepkg=openssh
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
+ignorepkg=xf86-video-nouveau
+ignorepkg=xf86-video-vmware
+ignorepkg=xf86-video-fbdev
+ignorepkg=zd1211-firmware
+ignorepkg=xf86-video-vesa
+ignorepkg=mobile-broadband-provider-info
+ignorepkg=os-prober
 EOF
 
 # Hostname
@@ -252,7 +259,7 @@ UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=
 UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                                                                                0 0
-tmpfs /tmp tmpfs noatime,mode=1777                                                                                                              0 0
+tmpfs /tmp tmpfs noatime,nosuid,mode=1777                                                                                                       0 0
 EOF
 
 # Set user permition
@@ -334,7 +341,8 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
+# chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
+chroot /mnt $XBPS_ARCH xbps-install base-system openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 
@@ -342,7 +350,8 @@ chroot /mnt xbps-remove base-voidstrap --yes
 # chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit os-prober acl-progs btrfs-progs --yes
 
 # Gummiboot #
-chroot /mnt xbps-install -S gummiboot --yes
+#chroot /mnt xbps-install -S gummiboot --yes
+chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
 
 # Some firmwares and utils
 chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors --yes
@@ -388,8 +397,19 @@ chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
 
+chroot /mnt xbps-install -S irqbalance earlyoom powertop --yes
+
+cat <<\EOF >> /mnt/etc/rc.local
+echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
+echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
+EOF
+
 # NFS
-chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
+chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp --yes
 
 # Set zsh as default
 chroot /mnt chsh -s /usr/bin/zsh root
@@ -402,6 +422,10 @@ chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xb
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog juca
+
+cat << EOF > /mnt/etc/default/earlyoom
+EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'"
+EOF
 
 # Gerar initcpio
 chroot /mnt xbps-reconfigure -fa
@@ -443,6 +467,15 @@ Section "InputClass"
         Identifier      "Keyboard Defaults"
         MatchIsKeyboard "yes"
         Option          "XkbOptions"    "terminate:crtl_alt_bksp"
+EndSection
+EOF
+
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
+Section "Device"
+        Identifier      "Intel Graphics"
+        Driver          "Intel"
+        Option          "AccelMethod"           "sna"
+        Option          "TearFree"              "True"
 EndSection
 EOF
 
@@ -525,6 +558,11 @@ chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/irqbalance /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/earlyoom /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/tlp /etc/runit/runsvdir/default/
 
 # NFS
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
@@ -648,13 +686,47 @@ EOF
 
 # chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
 # chroot /mnt bash -c 'echo "options root=/dev/vda3 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.15**'
-chroot /mnt bash -c 'echo "options root=/dev/sda3 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-**'
+#chroot /mnt bash -c 'echo "options root=/dev/sda3 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=Darwin acpi_mask_gpe=0x06 init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-**'
 
 # Grub
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id="Void"
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot --no-nvram --removable --recheck
 # chroot /mnt update-grub
+
+cat <<EOF >/mnt/etc/default/grub
+#
+# Configuration file for GRUB.
+#
+GRUB_DEFAULT=0
+#GRUB_HIDDEN_TIMEOUT=0
+#GRUB_HIDDEN_TIMEOUT_QUIET=false
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="Void Linux"
+
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default==0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+
+GRUB_CMDLINE_LINUX=""
+GRUB_PRELOAD_MODULES="part_gpt part_msdos"
+GRUB_TIMEOUT_STYLE=menu
+GRUB_GFXMODE=auto
+GRUB_GFXPAYLOAD_LINUX=keep
+
+#GRUB_TERMINAL_INPUT="console"
+# Uncomment to disable graphical terminal
+#GRUB_TERMINAL_OUTPUT=console
+#GRUB_BACKGROUND=/home/bastilla.jpg
+#GRUB_GFXMODE=1920x1080x32,1366x768x32,auto
+#GRUB_DISABLE_LINUX_UUID=true
+#GRUB_DISABLE_RECOVERY=true
+# Uncomment and set to the desired menu colors.  Used by normal and wallpaper
+# modes only.  Entries specified as foreground/background.
+GRUB_COLOR_NORMAL="red/black"
+GRUB_COLOR_HIGHLIGHT="yellow/black"
+GRUB_DISABLE_OS_PROBER=false
+EOF
+
+chroot /mnt update-grub
 
 chroot /mnt xbps-reconfigure -fa
 
@@ -680,5 +752,42 @@ touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
+
+
+sudo xbps-reconfigure -fa
+
+# brightness
+git clone https://github.com/madand/runit-services
+cd runit-services
+mv backlight /mnt/etc/sv/
+chroot /mnt ln -svrf /etc/sv/backlight /var/service/
+cd ..
+
+# PSD
+git clone https://github.com/graysky2/profile-sync-daemon
+mv profile-sync-daemon /mnt/home/juca/psd
+chroot /mnt make /mnt/home/juca/psd
+chroot /mnt make install /mnt/home/juca/psd
+chroot /mnt rm -rf /usr/lib/systemd/
+
+git clone https://github.com/madand/runit-services
+mv runit-services/psd /mnt/etc/sv
+chroot /mnt ln -svrf /etc/sv/psd /var/service 
+
+git clone https://github.com/Nefelim4ag/Ananicy.git
+mv Ananicy /mnt/home/juca/Ananicy 
+chroot /mnt make install /mnt/home/juca/Ananicy 
+chroot /mnt rm -rf /lib/systemd
+chroot /mnt mkdir /etc/sv/ananicy 
+touch /mnt/etc/sv/ananicy/run
+cat <<EOF > /mnt/etc/sv/ananicy/run
+#!/bin/sh
+exec /usr/bin/ananicy start
+EOF
+cat <<EOF > /mnt/etc/sv/ananicy/finish
+#!/bin/sh
+exec /sbin/sysctl -e kernel.sched_autogroup_enabled=1
+EOF
+chroot /mnt ln -sfv /etc/sv/ananicy /var/service
 
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
