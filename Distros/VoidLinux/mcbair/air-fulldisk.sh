@@ -10,7 +10,7 @@
 ### x86_64 GLIBC
 wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz
 ### x86_64 MUSL
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
+#wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
 
 xbps-install -Su xbps xz --yes
 
