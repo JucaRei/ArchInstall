@@ -6,6 +6,49 @@ apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 #### Umount drive, if it's mounted ####
 umount -R /dev/nvme0n1
 
+#### Add faster repo's ####
+CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
+cat >/etc/apt/sources.list <<HEREDOC
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
+
+#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
+#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
+
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+
+#######################
+### Debian unstable ###
+#######################
+
+##Debian Testing
+#deb http://deb.debian.org/debian/ testing main
+#deb-src http://deb.debian.org/debian/ testing main
+
+
+##Debian Unstable
+#deb http://deb.debian.org/debian/ unstable main
+##Debian Experimental
+#deb http://deb.debian.org/debian/ experimental main
+
+###################
+### Tor com apt ###
+###################
+
+#deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
+#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch main
+
+#deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
+#deb-src tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
+
+#deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
+#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
+HEREDOC
+
 #####################################
 ####Gptfdisk Partitioning example####
 #####################################
@@ -87,7 +130,7 @@ mount -t vfat -o noatime,nodiratime /dev/nvme0n1p5 /mnt/boot/efi
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bookwarn contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
