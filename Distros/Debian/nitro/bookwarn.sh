@@ -4,7 +4,7 @@
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
-umount -R /dev/sda
+umount -R /dev/nvme0n1
 
 #####################################
 ####Gptfdisk Partitioning example####
@@ -14,15 +14,15 @@ umount -R /dev/sda
 #### real hardware ####
 #######################
 
-sgdisk -Z /dev/sda5
-sgdisk -Z /dev/sda6
-parted -s -a optimal /dev/sda5 mklabel gpt
-parted -s -a optimal /dev/sda6 mklabel gpt
-sgdisk -c 5:Grub /dev/sda
-sgdisk -c 6:Debian /dev/sda
-sgdisk -t 5:ef00 /dev/sda
-sgdisk -t 6:8300 /dev/sda
-sgdisk -p /dev/sda
+sgdisk -Z /dev/nvme0n1p5
+sgdisk -Z /dev/nvme0n1p7
+parted -s -a optimal /dev/nvme0n1p5 mklabel gpt
+parted -s -a optimal /dev/nvme0n1p7 mklabel gpt
+sgdisk -c 5:Grub /dev/nvme0n1
+sgdisk -c 7:Debian /dev/nvme0n1
+sgdisk -t 5:ef00 /dev/nvme0n1
+sgdisk -t 7:8300 /dev/nvme0n1
+sgdisk -p /dev/nvme0n1
 
 #####################################
 ##########  FileSystem  #############
@@ -32,8 +32,8 @@ sgdisk -p /dev/sda
 #### real hardware ####
 #######################
 
-mkfs.vfat -F32 /dev/sda5 -n "GRUB"
-mkfs.btrfs /dev/sda6 -f -L "Debian"
+mkfs.vfat -F32 /dev/nvme0n1p5 -n "GRUB"
+mkfs.btrfs /dev/nvme0n1p7 -f -L "Debian"
 
 ###############################
 #### Enviroments variables ####
@@ -43,11 +43,12 @@ set -e
 Debian_ARCH="amd64"
 
 ## btrfs options ##
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
+BTRFS_NORMAL="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+UEFI_UUID=$(blkid -s UUID -o value /dev/nvme0n1p5)
+ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p7)
 
 ## fstab virtual hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
@@ -60,7 +61,7 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
 #######################
 #### real hardware ####
 #######################
-mount -o $BTRFS_OPTS /dev/sda6 /mnt
+mount -o $BTRFS_OPTS /dev/nvme0n1p7 /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
@@ -69,18 +70,18 @@ btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/nvme0n1p7 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/apt
 ## Mount btrfs subvolumes ##
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda6 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/sda5 /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/nvme0n1p7 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/nvme0n1p7 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/nvme0n1p7 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/nvme0n1p7 /mnt/var/cache/apt
+mount -t vfat -o noatime,nodiratime /dev/nvme0n1p5 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -582,7 +583,7 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 ###############
 #
 chroot /mnt apt install fwupdate fwupd duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-    debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+    debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
     efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
@@ -709,7 +710,6 @@ cat <<EOF >/mnt/etc/rc.local
 #PowerTop
 powertop --auto-tune
 EOF
-
 #################################
 #### Infrastructure packages ####
 #################################
@@ -718,7 +718,7 @@ EOF
 chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommends -y
 #Virt-Manager
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+dnsmasq ipset libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 #Podman 
 chroot /mnt apt install podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname distrobox --no-install-recommends -y
