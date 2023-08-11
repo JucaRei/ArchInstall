@@ -446,7 +446,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 #############
 
 chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba-client nfs-common smbclient cifs-utils avahi-daemon \
-fwupd firmware-linux-free network-manager iwd rfkill --no-install-recommends -y
+fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
