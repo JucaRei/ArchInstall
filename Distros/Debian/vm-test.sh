@@ -12,8 +12,8 @@ cat >/etc/apt/sources.list <<HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
 
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
+deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
 deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
@@ -26,8 +26,8 @@ deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 #######################
 
 ##Debian Testing
-#deb http://deb.debian.org/debian/ testing main
-#deb-src http://deb.debian.org/debian/ testing main
+deb http://deb.debian.org/debian/ testing main
+deb-src http://deb.debian.org/debian/ testing main
 
 
 ##Debian Unstable
@@ -157,8 +157,8 @@ cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
 
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
+deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
 deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
 deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
@@ -171,8 +171,8 @@ deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 #######################
 
 ##Debian Testing
-#deb http://deb.debian.org/debian/ testing main
-#deb-src http://deb.debian.org/debian/ testing main
+deb http://deb.debian.org/debian/ testing main
+deb-src http://deb.debian.org/debian/ testing main
 
 
 ##Debian Unstable
@@ -193,6 +193,8 @@ deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 #deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
 #deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
 HEREDOC
+
+chroot /mnt apt update
 
 ## Disable verification ##
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
