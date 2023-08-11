@@ -578,7 +578,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 ## Network ##
 #############
 
-chroot /mnt apt install prettyping nftables crda net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
+chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-fuse gvfs-backends samba-client nfs-common smbclient cifs-utils avahi-daemon \
     firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill rtkit --no-install-recommends -y
 
 # ssh
@@ -744,6 +744,70 @@ Section "Device"
 EndSection
 EOF
 
+######################
+#### Samba Config ####
+######################
+mkdir -pv /mnt/etc/samba
+touch /mnt/etc/samba/smb.conf
+cat <<\EOF >> /mnt/etc/samba/smb.conf
+[global]
+   workgroup = WORKGROUP
+   dns proxy = no
+   log file = /var/log/samba/%m.log
+   max log size = 1000
+   client min protocol = NT1
+   #lanman auth = yes
+   #ntlm auth = yes
+   server role = standalone server
+   passdb backend = tdbsam
+   #obey pam restrictions = yes
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = *New*UNIX*password* %n\n *ReType*new*UNIX*password* %n\n *passwd:*all*authentication*tokens*updated*successfully*
+   pam password change = yes
+   map to guest = Bad Password
+   usershare allow guests = yes
+   name resolve order = lmhosts bcast host wins
+   security = user
+   guest account = nobody
+   usershare path = /var/lib/samba/usershare
+   usershare max shares = 100
+   #usershare owner only = yes
+   force create mode = 0070
+   force directory mode = 0070
+   
+   ### follow symlinks
+   follow symlinks = yes
+   wide links = yes
+   unix extensions = no
+
+   ### Enable server-side copy for macOS clients
+   fruit:copyfile = yes
+
+[homes]
+   comment = Home Directories
+   browseable = no
+   read only = yes
+   create mask = 0700
+   directory mask = 0700
+   valid users = %S
+
+
+[Printers]
+  ## Disable
+  load printers = no
+  printing = bsd
+  printcap name = /dev/null
+  disable spoolss = yes
+  show add printer wizard = no
+
+[Extensions]
+  comment = Private
+  path = /mnt/data
+  read only = no
+  veto files = /*.exe/*.com/*.dll/*.bat/*.vbs/*.tmp/*.git/
+
+EOF
 #########################
 #### Config Powertop ####
 #########################
@@ -1024,6 +1088,10 @@ EOF
 
 chroot /mnt chmod +x /home/juca/.xsessionrc
 chroot /mnt chown -R juca:juca /home/juca/.xsessionrc
+
+source ../desktops/kde.sh
+
+printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
 
 # Add pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"

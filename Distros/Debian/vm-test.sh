@@ -98,7 +98,7 @@ set -e
 Debian_ARCH="amd64"
 
 ## btrfs options ##
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:5,space_cache=v2,commit=120,discard=async"
 
 ## fstab virtual hardware ## 
 UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
@@ -138,7 +138,7 @@ mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bookwarn contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 
 ########################
@@ -447,7 +447,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 ## Network ##
 #############
 
-chroot /mnt apt install prettyping nftables crda net-tools arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
+chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba-client nfs-common smbclient cifs-utils avahi-daemon \
 firmware-realtek firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
@@ -482,18 +482,26 @@ EOF
 # chroot /mnt apt install bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
 ## Pipewire 
-chroot /mnt apt install pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
+# chroot /mnt apt install pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
 
 ## Config pipewire
-touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
-cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
+# touch /mnt/etc/pipewire/media-session.d/with-pulseaudio
+# cp /mnt/usr/share/doc/pipewire/examples/systemd/user/pipewire-pulse.* /mnt/etc/systemd/user/
+
+###############
+#### Audio ####
+###############
+
+## Pulseaudio
+chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
+
 
 ###############
 #### Utils ####
 ###############
 
 chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libncursesw5-dev libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
 efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
@@ -611,7 +619,7 @@ EOF
 touch /mnt/etc/rc.local
 cat <<EOF >/mnt/etc/rc.local
 #PowerTop
-powertop --auto-tune
+#powertop --auto-tune
 EOF
 
 #################################
@@ -619,7 +627,7 @@ EOF
 #################################
 
 chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset ansible libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+dnsmasq ipset ansible libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
 
 #################################
@@ -770,11 +778,11 @@ chroot /mnt systemctl enable fstrim.timer
 
 
 ## Audio
-# chroot /mnt systemctl enable --user pulseaudio.service
-chroot /mnt systemctl --user enable pipewire pipewire-pulse
+chroot /mnt systemctl enable --user pulseaudio.service
+#chroot /mnt systemctl --user enable pipewire pipewire-pulse
 # chroot /mnt systemctl --user daemon-reload
 # chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
-chroot /mnt systemctl --user mask pulseaudio
+#chroot /mnt systemctl --user mask pulseaudio
 
 
 # Allow run as root
@@ -849,6 +857,76 @@ rm -rf /mnt/vmlinuz.old
 rm -rf /mnt/vmlinuz
 rm -rf /mnt/initrd.img
 rm -rf /mnt/initrd.img.old
+
+######################
+#### Samba Config ####
+######################
+mkdir -pv /mnt/etc/samba
+touch /mnt/etc/samba/smb.conf
+cat <<\EOF >> /mnt/etc/samba/smb.conf
+[global]
+   workgroup = WORKGROUP
+   dns proxy = no
+   log file = /var/log/samba/%m.log
+   max log size = 1000
+   client min protocol = NT1
+   #lanman auth = yes
+   #ntlm auth = yes
+   server role = standalone server
+   passdb backend = tdbsam
+   #obey pam restrictions = yes
+   unix password sync = yes
+   passwd program = /usr/bin/passwd %u
+   passwd chat = *New*UNIX*password* %n\n *ReType*new*UNIX*password* %n\n *passwd:*all*authentication*tokens*updated*successfully*
+   pam password change = yes
+   map to guest = Bad Password
+   usershare allow guests = yes
+   name resolve order = lmhosts bcast host wins
+   security = user
+   guest account = nobody
+   usershare path = /var/lib/samba/usershare
+   usershare max shares = 100
+   #usershare owner only = yes
+   force create mode = 0070
+   force directory mode = 0070
+   
+   ### follow symlinks
+   follow symlinks = yes
+   wide links = yes
+   unix extensions = no
+
+   ### Enable server-side copy for macOS clients
+   fruit:copyfile = yes
+
+[homes]
+   comment = Home Directories
+   browseable = no
+   read only = yes
+   create mask = 0700
+   directory mask = 0700
+   valid users = %S
+
+
+[Printers]
+  ## Disable
+  load printers = no
+  printing = bsd
+  printcap name = /dev/null
+  disable spoolss = yes
+  show add printer wizard = no
+
+[Extensions]
+  comment = Private
+  path = /mnt/data
+  read only = no
+  veto files = /*.exe/*.com/*.dll/*.bat/*.vbs/*.tmp/*.git/
+
+EOF
+
+source ./desktops/kde.sh
+
+printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
+
 
 ## ADD pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
