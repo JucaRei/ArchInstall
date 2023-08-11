@@ -385,7 +385,7 @@ echo $ROOT_UUID
 
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
-# <file system> <dir> <type> <options> <dump> <pass>
+# <file system>   <dir>           <type> <options>                                  <dump> <pass>
 
 ### ROOTFS ###
 UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
@@ -397,13 +397,13 @@ UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt    
 UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
 
 ### EFI ###
-UUID=$UEFI_UUID   /boot       vfat noatime,nodiratime,umask=0077        0 2
+UUID=$UEFI_UUID   /boot           vfat noatime,nodiratime,umask=0077                    0 2
 
 ### Swap ###
 #UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
 
 ### Tmp ###
-tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                  0 0
+tmpfs             /tmp            tmpfs noatime,mode=1777,nosuid,nodev                  0 0
 EOF
 
 #########################
