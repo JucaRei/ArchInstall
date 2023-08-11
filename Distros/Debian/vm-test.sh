@@ -411,7 +411,6 @@ EOF
 #########################
 
 chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        localedef -i en_US -f UTF-8 en_US.UTF-8 && \
         dpkg-reconfigure -f noninteractive tzdata && \
         sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
         sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
@@ -421,9 +420,14 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
         export LC_CTYPE=en_US.UTF-8 && \
         export LC_ALL=en_US.UTF-8 && \
         export LANG=en_US.UTF-8 && \
-        export LANGUAGE=en_US.UTF-8
+        export LANGUAGE=en_US.UTF-8 && \
+        localedef -i en_US -f UTF-8 en_US.UTF-8
 
 chroot /mnt apt update
+
+cat << EOF > /mnt/etc/environment
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+EOF
 
 #####################################
 #### Install additional packages ####
@@ -627,7 +631,7 @@ bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-rec
 #################################
 
 chroot /mnt apt install plymouth plymouth-themes --no-install-recommends -y
-chroot /mnt plymouth-set-default-theme -R solar
+#chroot /mnt plymouth-set-default-theme -R solar
 
 mkdir -pv /mnt/etc/plymouth
 touch /mnt/etc/plymouth/plymouth.conf
@@ -922,8 +926,8 @@ EOF
 
 source ./desktops/kde.sh
 
-chroot /mnt update
-chroot /mnt upgrade -y
+chroot /mnt apt update
+chroot /mnt apt upgrade -y
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
 
