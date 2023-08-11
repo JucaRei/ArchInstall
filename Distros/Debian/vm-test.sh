@@ -397,7 +397,7 @@ UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt    
 UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
 
 ### EFI ###
-UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
+UUID=$UEFI_UUID   /boot       vfat noatime,nodiratime,umask=0077        0 2
 
 ### Swap ###
 #UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
