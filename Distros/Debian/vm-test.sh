@@ -149,7 +149,7 @@ rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-cat >/etc/apt/sources.list <<HEREDOC
+cat >/mnt/etc/apt/sources.list <<HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 
