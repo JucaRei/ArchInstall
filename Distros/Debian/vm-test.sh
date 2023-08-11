@@ -72,8 +72,8 @@ sgdisk -c 1:GRUB /dev/vda
 sgdisk -c 2:Debian /dev/vda
 
 ## Change Types
-sgdisk -t 1:ef00 /dev/sda #
-sgdisk -t 2:8300 /dev/sda #
+sgdisk -t 1:ef00 /dev/vda #
+sgdisk -t 2:8300 /dev/vda #
 
 ## Print drives partitions 
 sgdisk -p /dev/vda
