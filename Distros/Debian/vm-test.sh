@@ -9,17 +9,17 @@ umount -R /dev/vda
 #### Add faster repo's ####
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/etc/apt/sources.list <<HEREDOC
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 
-deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+deb https://security.debian.org/debian-security $CODENAME-security main non-free-firmware 
+deb-src https://security.debian.org/debian-security $CODENAME-security main non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
 
 #######################
 ### Debian unstable ###
@@ -149,22 +149,18 @@ rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
-####################
-### Debian repos ###
-####################
+cat >/etc/apt/sources.list <<HEREDOC
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
+deb https://security.debian.org/debian-security $CODENAME-security main non-free-firmware 
+deb-src https://security.debian.org/debian-security $CODENAME-security main non-free-firmware
 
-deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
 
 #######################
 ### Debian unstable ###
@@ -228,7 +224,7 @@ cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
 EOF
 
 cat << EOF >/mnt/etc/modprobe.d/alsa-base.conf
-options snd-hda-intel dmic_detect=0
+#options snd-hda-intel dmic_detect=0
 EOF 
 
 touch /mnt/etc/modprobe.d/blacklist-nouveau.conf
@@ -450,7 +446,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 #############
 
 chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba-client nfs-common smbclient cifs-utils avahi-daemon \
-fwupd firmware-linux-nonfree firmware-linux-free network-manager iwd rfkill --no-install-recommends -y
+fwupd firmware-linux-free network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
