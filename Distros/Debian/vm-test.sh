@@ -411,23 +411,17 @@ EOF
 #########################
 
 chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
+        localedef -i en_US -f UTF-8 en_US.UTF-8 && \
         dpkg-reconfigure -f noninteractive tzdata && \
         sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
         sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
         echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
-        # export LC_ALL=C && \
-        export LANGUAGE=en_US.UTF-8 && \
+        dpkg-reconfigure --frontend=noninteractive locales && \
+        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf && \
+        export LC_CTYPE=en_US.UTF-8 && \
         export LC_ALL=en_US.UTF-8 && \
         export LANG=en_US.UTF-8 && \
-        export LC_CTYPE=en_US.UTF-8 && \
-        # locale-gen en_US.UTF-8 && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-        #localectl set-locale LANG="en_US.UTF-8"
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8
+        export LANGUAGE=en_US.UTF-8
 
 chroot /mnt apt update
 
@@ -675,13 +669,18 @@ EOF
 #### Locales ####
 #################
 
-chroot /mnt echo "America/Sao_Paulo" >/etc/timezone && \
-        #dpkg-reconfigure -f noninteractive tzdata && \
-        #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale && \
-        export LANGUAGE=en_US.UTF-8 && \
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
+        localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+        dpkg-reconfigure -f noninteractive tzdata && \
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
+        dpkg-reconfigure --frontend=noninteractive locales && \
+        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf && \
+        export LC_CTYPE=en_US.UTF-8 && \
         export LC_ALL=en_US.UTF-8 && \
+        export LANG=en_US.UTF-8 && \
+        export LANGUAGE=en_US.UTF-8 && \
         dpkg-reconfigure --frontend noninteractive keyboard-configuration && \
         echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
         #dpkg-reconfigure --frontend=noninteractive locales && \
