@@ -121,7 +121,7 @@ btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 # Make directories for mount ##
 mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
-mkdir -pv /mnt/boot/efi
+mkdir -pv /mnt/boot
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
@@ -131,7 +131,7 @@ mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/vda2 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
+mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot
 
 
 ####################################################
@@ -223,9 +223,9 @@ cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
 #options iwlwifi enable_ini=N
 EOF
 
-cat << EOF >/mnt/etc/modprobe.d/alsa-base.conf
+#cat << EOF >/mnt/etc/modprobe.d/alsa-base.conf
 #options snd-hda-intel dmic_detect=0
-EOF 
+#EOF 
 
 touch /mnt/etc/modprobe.d/blacklist-nouveau.conf
 cat <<EOF | tee /mnt/etc/modprobe.d/blacklist-nouveau.conf
@@ -814,7 +814,7 @@ chroot /mnt update-initramfs -c -k all
 #### Install grub ####
 ######################
 
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --no-nvram --removable --recheck
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot --no-nvram --removable --recheck
 
 #####################
 #### Config Grub ####
