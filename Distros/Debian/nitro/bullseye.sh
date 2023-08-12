@@ -215,8 +215,6 @@ cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 install iTCO_wdt /bin/true
 install iTCO_vendor_support /bin/true
 
-# Disable nouveau
-blacklist nouveau
 
 # This file lists those modules which we don't want to be loaded by
 # alias expansion, usually so some other driver will be loaded for the
@@ -641,8 +639,8 @@ zram
 z3fold
 i915.modeset=1
 intel_agp
-#nvidia-drm.modeset=1
-#nvidia-drm
+nvidia-drm.modeset=1
+nvidia-drm
 EOF
 
 # chroot /mnt update-initramfs -c -k all
@@ -719,6 +717,7 @@ Section "Device"
     BusID "PCI:1:0:0"
     Option "DPI" "96 x 96"
     Option "AllowEmptyInitialConfiguration" "Yes"
+    Option      "AccelMethod"    "none"
     #  Option "UseDisplayDevice" "none"
 EndSection
 EOF

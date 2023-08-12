@@ -213,9 +213,6 @@ cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 install iTCO_wdt /bin/true
 install iTCO_vendor_support /bin/true
 
-# Disable nouveau
-blacklist nouveau
-
 # This file lists those modules which we don't want to be loaded by
 # alias expansion, usually so some other driver will be loaded for the
 # device instead.
@@ -565,6 +562,7 @@ chroot /mnt apt update
 #### Install additional packages ####
 #####################################
 
+chroot /mnt dpkg --add-architecture i386
 chroot /mnt apt update
 chroot /mnt apt upgrade -y
 
@@ -642,8 +640,8 @@ zram
 z3fold
 i915.modeset=1
 intel_agp
-#nvidia-drm.modeset=1
-#nvidia-drm
+nvidia-drm.modeset=1
+nvidia-drm
 EOF
 
 # chroot /mnt update-initramfs -c -k all
@@ -714,12 +712,13 @@ mkdir -pv /mnt/etc/X11/xorg.conf.d
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 Section "Device"
-    Identifier "Nvidia GTX 1050"
-    Driver "nvidia"
-    BusID "PCI:1:0:0"
-    Option "DPI" "96 x 96"
-    Option "AllowEmptyInitialConfiguration" "Yes"
-    #  Option "UseDisplayDevice" "none"
+    Identifier  "Nvidia GTX 1050"
+    Driver      "nvidia"
+    BusID       "PCI:1:0:0"
+    Option      "DPI" "96 x 96"
+    Option      "AllowEmptyInitialConfiguration" "Yes"
+    Option      "AccelMethod"                    "none"
+    #Option     "UseDisplayDevice"               "none"
 EndSection
 EOF
 
