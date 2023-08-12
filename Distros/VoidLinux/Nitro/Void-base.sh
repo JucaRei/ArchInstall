@@ -47,13 +47,13 @@ xbps-install -Su xbps xz --yes
 #### Setup Partitions ####
 ##########################
 
-sgdisk -t 4:ef00 /dev/sda
-sgdisk -c 4:VoidGrub /dev/sda
-sgdisk -t 5:8300 /dev/sda
-sgdisk -c 5:Voidlinux /dev/sda
-sgdisk -p /dev/sda
-mkfs.vfat -F32 /dev/sda4 -n "VoidEFI"
-mkfs.btrfs /dev/sda5 -f -L "VoidRoot"
+sgdisk -t 5:ef00 /dev/nvme0n1
+sgdisk -c 5:VoidGrub /dev/nvme0n1
+sgdisk -t 7:8300 /dev/nvme0n1
+sgdisk -c 7:Voidlinux /dev/nvme0n1
+sgdisk -p /dev/nvme0n1
+mkfs.vfat -F32 /dev/nvme0n1p5 -n "VoidEFI"
+mkfs.btrfs /dev/nvme0n1p7 -f -L "VoidRoot"
 
 ####################
 #### Some Env's ####
@@ -781,7 +781,7 @@ cat <<EOF >/mnt/etc/sv/zramen/conf
 export ZRAM_COMP_ALGORITHM='zstd'
 #export ZRAM_PRIORITY=32767
 export ZRAM_SIZE=100
-#export ZRAM_STREAMS=1
+export ZRAM_STREAMS=8
 EOF
 
 
@@ -832,7 +832,7 @@ EOF
 
 chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /var/service/
-# chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
@@ -1138,7 +1138,7 @@ chroot /mnt chown -R juca:juca /home/juca/Documents/workspace/configs/void-packa
 
 git clone --depth=1 https://github.com/madand/runit-services Services
 mv Services /mnt/home/juca/
-chroot /mnt chown -R juca:juca /home/juca/Services
+chroot /mnt chown -R juca:juca /home/juca
 
 
 
@@ -1205,7 +1205,7 @@ EOF
 
 # xinput xload xlsatoms xlsclients
 
-# chroot /mnt xbps-install -Sy gnome tilix python3 python3-pip sushi python3-psutil nautilus-python --yes
+chroot /mnt xbps-install -Sy gnome tilix python3 python3-pip sushi python3-psutil nautilus-python --yes
 
 #  cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 
@@ -1243,19 +1243,19 @@ EOF
 ############# XFCE4 ###############
 ###################################
 
-chroot /mnt cat <<EOF > /etc/xbps.d/90-xfce-ignore.conf
-ignorepkg=ristretto
-ignorepkg=mousepad
-ignorepkg=xfce4-terminal
-ignorepkg=parole
-EOF
+# chroot /mnt cat <<EOF > /etc/xbps.d/90-xfce-ignore.conf
+# ignorepkg=ristretto
+# ignorepkg=mousepad
+# ignorepkg=xfce4-terminal
+# ignorepkg=parole
+# EOF
 
 # chroot /mnt vpm i xfce4 xfce4-datetime-plugin xfce4-docklike-plugin network-manager-applet blueman xfce4-fsguard-plugin xfce4-weather-plugin xfce4-systemload-plugin xfce4-pulseaudio-plugin xfce4-panel-appmenu xfce4-places-plugin xfce4-genmon-plugin xfce4-i3-workspaces-plugin xfce4-mpc-plugin lightdm light-locker thunar-archive-plugin thunar-media-tags-plugin gnome-icon-theme-xfce pavucontrol -y
 
 ### KDE
 
-cat <<EOF >/mnt/etc/xbps.d/90-kde-ignore.conf
-ignorepkg=plasma-thunderbolt
-EOF
+# cat <<EOF >/mnt/etc/xbps.d/90-kde-ignore.conf
+# ignorepkg=plasma-thunderbolt
+# EOF
 
 # chroot /mnt vpm i kde5 kde5-baseapps firefox sddm sddm-kcm

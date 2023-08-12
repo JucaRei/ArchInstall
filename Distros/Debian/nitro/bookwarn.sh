@@ -147,29 +147,29 @@ cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ### Debian repos ###
 ####################
 
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
+#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 
 #######################
 ### Debian unstable ###
 #######################
 
 ##Debian Testing
-deb http://deb.debian.org/debian/ testing main contrib non-free
-deb-src http://deb.debian.org/debian/ testing main contrib non-free
+deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
 
 
 ##Debian Unstable
-deb http://deb.debian.org/debian/ unstable main contrib non-free-firmware
+deb http://deb.debian.org/debian/ unstable main contrib non-free non-free-firmware
 ##Debian Experimental
 #deb http://deb.debian.org/debian/ experimental main
 
@@ -674,11 +674,16 @@ chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gs
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-chroot /mnt apt install nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
-    vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
-    libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
-    libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree -y
-# chroot /mnt apt install nvidia-driver firmware-misc-nonfree libnvidia-fbc1 nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
+# chroot /mnt apt install nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
+#     vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
+#     libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
+    # libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree -y
+
+chroot /mnt apt install -y nvidia-driver firmware-misc-nonfree bumblebee-nvidia primus primus-libs:i386 mesa-utils
+chroot /mnt wget https://sourceforge.net/projects/virtualgl/files/3.1/virtualgl_3.1_amd64.deb -P /tmp/
+chroot /mnt dpkg -i /tmp/virtualgl_*.deb
+chroot /mnt apt -f install /tmp/virtualgl_*.deb
+chroot /mnt ln -svrf /opt/VirtualGL/bin/glxspheres64 /usr/local/bin/
 
 ###############################
 #### Minimal xorg packages ####
@@ -922,7 +927,7 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm,bumblebee juca
 chroot /mnt usermod -aG sudo juca
 
 # AppArmor podman fix
