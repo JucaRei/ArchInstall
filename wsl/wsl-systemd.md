@@ -8,6 +8,7 @@ Add the following:
 ```systemd
 [boot]
 systemd=true
+command="mount --make-shared /"  # podman
 command="service docker start" 
 
 [automount]

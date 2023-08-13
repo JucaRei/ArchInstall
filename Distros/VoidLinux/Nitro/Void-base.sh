@@ -3,29 +3,33 @@
 ########################
 #### Fastest repo's ####
 ########################
-
+# Repositorios mais rapidos
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
+#repository=https://mirror.clarkson.edu/voidlinux
+#repository=http://ftp.dk.xemacs.org/voidlinux
+#repository=http://ftp.debian.ru/mirrors/voidlinux
 repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
+#repository=https://mirror.clarkson.edu/voidlinux/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
 repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+#repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
 repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
+#repository=https://mirror.clarkson.edu/voidlinux/multilib
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib
 repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
 EOF
 
 vpm sync
@@ -34,10 +38,10 @@ vpm sync
 #### Download tarball ####
 ##########################
 
-# GlibC
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
-# MUSL
-# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20221001.tar.xz
+### x86_64 GLIBC
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz
+### x86_64 MUSL
+#wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
 
 xbps-install -Su xbps xz --yes
 
@@ -46,7 +50,7 @@ xbps-install -Su xbps xz --yes
 ##########################
 #### Setup Partitions ####
 ##########################
-
+umount -R /mnt
 sgdisk -t 5:ef00 /dev/nvme0n1
 sgdisk -c 5:VoidGrub /dev/nvme0n1
 sgdisk -t 7:8300 /dev/nvme0n1
@@ -66,7 +70,7 @@ XBPS_ARCH="x86_64"
 # XBPS_ARCH="x86_64-musl"
 BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS /dev/nvme0n1p7 /mnt
 
 ##########################
 #### BTRFS SUBVOLUMES ####
@@ -91,7 +95,7 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
+mount -o $BTRFS_OPTS,subvol=@ /dev/nvme0n1p7 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
@@ -99,12 +103,12 @@ mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/xbps
 # mount -o $BTRFS_OPTS,subvol=@home /dev/sda7 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@tmp /dev/sda5 /mnt/var/tmp
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda5 /mnt/var/cache/xbps
-mount -t vfat -o rw,defaults,noatime,nodiratime /dev/sda4 /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home /dev/nvme0n1p7 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/nvme0n1p7 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/nvme0n1p7 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@tmp /dev/nvme0n1p7 /mnt/var/tmp
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/nvme0n1p7 /mnt/var/cache/xbps
+mount -t vfat -o rw,defaults,noatime,nodiratime /dev/nvme0n1p5 /mnt/boot/efi
 
 ####################################
 #### Decompress tarball to /mnt ####
@@ -270,29 +274,33 @@ EOF
 ############################################
 #### FASTEST GLIBC repo's for my region ####
 ############################################
-
+# Repositorios mais rapidos
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current
+#repository=https://mirror.clarkson.edu/voidlinux
+#repository=http://ftp.dk.xemacs.org/voidlinux
+#repository=http://ftp.debian.ru/mirrors/voidlinux
 repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
+#repository=https://mirror.clarkson.edu/voidlinux/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
 repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+#repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
 repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
+#repository=https://mirror.clarkson.edu/voidlinux/multilib
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib
 repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
 EOF
 
 ###########################################
@@ -320,12 +328,10 @@ EOF
 ##############################
 
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
-ignorepkg=linux
-ignorepkg=linux-headers
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
-ignorepkg=linux
-ignorepkg=linux-headers
+#ignorepkg=linux
+#ignorepkg=linux-headers
 ignorepkg=xfsprogs
 ignorepkg=wpa_supplicant
 ignorepkg=xf86-input-wacon
@@ -380,9 +386,9 @@ EOF
 #### FSTAB ####
 ###############
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda4)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
-# HOME_UUID=$(blkid -s UUID -o value /dev/sda7)
+UEFI_UUID=$(blkid -s UUID -o value /dev/nvme0n1p5)
+ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p7)
+# HOME_UUID=$(blkid -s UUID -o value /dev/nvme0n1p7)
 echo $UEFI_UUID
 echo $ROOT_UUID
 # echo $HOME_UUID
@@ -648,7 +654,7 @@ EOF
 ##############################################
 
 # chroot /mnt xbps-install -S nvidia nvidia-libs-32bit bumblebee bbswitch mesa --yes
-chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-525.89.02_1 nvidia-libs-32bit-525.89.02_1 nvidia-gtklibs-32bit mesa-vaapi nvidia-container-toolkit intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
+chroot /mnt xbps-install -S nvidia nvtop nvidia-libs-535.86.05_1 nvidia-libs-32bit-535.86.05_1 nvidia-gtklibs-32bit mesa-vaapi nvidia-container-toolkit intel-media-driver mesa-vulkan-intel vulkan-loader mesa-dri --yes # nvidia
 chroot /mnt xbps-install -S mesa-intel-dri libva-glx libva-utils libva-intel-driver mesa-vulkan-intel --yes # intel
 
 # chroot /mnt dracut --force --kver 5.10.162_1
