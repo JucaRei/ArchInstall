@@ -843,6 +843,38 @@ GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 #GRUB_DISABLE_OS_PROBER=false
 EOF
 
+# MakeSwap
+touch /swap/swapfile
+chmod 600 /swap/swapfile
+chattr +C /swap/swapfile
+lsattr /swap/swapfile
+dd if=/dev/zero of=/swap/swapfile bs=1M count=6144 status=progress
+mkswap /swap/swapfile
+swapon /swap/swapfile
+
+# # Add to fstab
+#echo " " >> /mnt/etc/fstab
+#echo "# Swap" >> /etc/fstab
+#SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
+#mount -o defaults,noatime,subvol=@swap ${DRIVE}2 /mnt/swap
+#echo "UUID=$SWAP_UUID /swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
+#echo "/swapfile      none     swap      sw  0 0" >> /etc/fstab
+
+### Resume from Swap
+mkdir -pv /mnt/tmp
+cd /mnt/tmp
+wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+./btrfs_map_physical /mnt/swap/swapfile >btrfs_map_physical.txt
+filefrag -v /swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/mnt/tmp/resume.txt
+set -e
+RESUME_OFFSET=$(cat /mnt/tmp/resume.txt)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
+export ROOT_UUID
+export RESUME_OFFSET
+sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /mnt/etc/default/grub
+
+
 chroot /mnt update-grub
 
 chroot /mnt update-initramfs -c -k all
