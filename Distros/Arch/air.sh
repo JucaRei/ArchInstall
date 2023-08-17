@@ -155,13 +155,14 @@ tmpfs /tmp tmpfs noatime,mode=1777 0 0
 EOF
 
 chroot /mnt pacman -Syyy
-chroot /mnt pacman -S efibootmgr chrony preload irqbalance ananicy-cpp bat exa fzf ripgrep htop btop networkmanager-iwd opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils dropbear rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+chroot /mnt pacman -S efibootmgr chrony irqbalance htop networkmanager-iwd opendoas network-manager-applet dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion exfat-utils rsync firewalld flatpak sof-firmware nss-mdns os-prober ntfs-3g
+# ananicy-cpp preload
 
 # Virt-manager & lxd
 chroot /mnt pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
 
 # apci & tlp
-chroot /mnt pacman -S acpi acpi_call-lts acpid tlp
+chroot /mnt pacman -S acpi acpi_call-dkms acpid tlp
 
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
@@ -181,8 +182,8 @@ chroot /mnt systemctl enable bluetooth
 chroot /mnt systemctl enable iwd
 # chroot /mnt systemctl enable dropbear
 chroot /mnt systemctl enable irqbalance
-chroot /mnt systemctl enable preload
-chroot /mnt systemctl enable ananicy-cpp
+# chroot /mnt systemctl enable preload
+# chroot /mnt systemctl enable ananicy-cpp
 chroot /mnt systemctl enable smbd
 chroot /mnt systemctl enable nmbd
 chroot /mnt systemctl enable chronyd
