@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DRIVE="/dev/sda"
+DRIVE="/dev/vda"
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
@@ -32,7 +32,7 @@ CODENAME=bookwarn # or CODENAME=bullseye
 # #deb http://deb.debian.org/debian/ testing main
 # #deb-src http://deb.debian.org/debian/ testing main
 
-
+Wildflower
 # ##Debian Unstable
 # #deb http://deb.debian.org/debian/ unstable main
 # ##Debian Experimental
@@ -82,7 +82,7 @@ sgdisk -n 0:0:0 ${DRIVE}
 sgdisk -t 1:ef00 ${DRIVE}
 sgdisk -t 2:8300 ${DRIVE}
 sgdisk -c 1:"EFI System Partition" ${DRIVE}
-sgdisk -c 2:"" ${DRIVE}
+sgdisk -c 2:"MXLinux" ${DRIVE}
 sgdisk -p ${DRIVE}
 
 
@@ -98,15 +98,15 @@ sgdisk -p ${DRIVE}
 # swapon /dev/sda4
 # mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
 
-mkfs.vfat -F32 ${DRIVE}1 -n "Grub"
-mkfs.btrfs ${DRIVE}2 -f -L "LinuxRoot"
+mkfs.vfat -F32 ${DRIVE}1 -n "MXgrub"
+mkfs.btrfs ${DRIVE}2 -f -L "MXroot"
 
 ###############################
 #### Enviroments variables ####
 ###############################
 
 set -e
-Debian_ARCH="amd64"
+MXlinux_ARCH="amd64"
 
 ## btrfs options ##
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
@@ -134,7 +134,7 @@ btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_apt
 btrfs su cr /mnt/@swap
-umount -v /mnt
+umount -vR /mnt
 ## Make directories for mount ##
 mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}2 /mnt
 mkdir -pv /mnt/boot/efi
@@ -149,23 +149,27 @@ mount -o $BTRFS_OPTS,subvol=@snapshots ${DRIVE}2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log ${DRIVE}2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_apt ${DRIVE}2 /mnt/var/cache/apt
 mount -o $BTRFS_OPTS,subvol=@swap ${DRIVE}2 /mnt/swap
-mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi
+mount -t vfat -o noatime,nodiratime ${DRIVE}1 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookwarn /mnt "http://debian.c3sl.ufpr.br/debian/ bookwarn contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm main non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
+mx23-archive-keyring
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
 ########################
 #### Fastest Repo's ####
 ########################
 
+cp -rf /etc/apt/trusted.gpg.d /mnt/etc/apt/ 
+cp -rf /etc/apt/apt.conf.d /mnt/etc/apt/ 
+
 rm /mnt/etc/apt/sources.list
-touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
+touch /mnt/etc/apt/sources.list.d/{debian.list,mxlinux.list,various.list}
 
 CODENAME=bookwarn # or CODENAME=bullseye
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
@@ -174,17 +178,25 @@ cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ### Debian repos ###
 ####################
 
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
+# Debian Stable.
+deb http://deb.debian.org/debian bookwarn main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookwarn-security main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian bookwarn main contrib non-free non-free-firmware 
+
+#bullseye backports
+#deb http://deb.debian.org/debian bullseye-backports main contrib non-free
+
+#deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
+#deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
 
 #deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
 #deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+#deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
+#deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+#deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
+#deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 
 #######################
 ### Debian unstable ###
