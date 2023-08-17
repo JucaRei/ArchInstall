@@ -123,9 +123,9 @@ sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /mnt/etc/pacman.conf
 
 # Add Chaotic repo
 chroot /mnt pacman-key --init
-chroot /mnt pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
-chroot /mnt pacman-key --lsign-key FBA220DFC880C036
-chroot /mnt pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
+#chroot /mnt pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+#chroot /mnt pacman-key --lsign-key FBA220DFC880C036
+#chroot /mnt pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
 
 # Add Liquorix
 chroot /mnt pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
@@ -138,13 +138,15 @@ pacman-key --populate
 
 cat <<\EOF >>/mnt/etc/pacman.conf
 
-[chaotic-aur]
-Include = /etc/pacman.d/chaotic-mirrorlist
+# [chaotic-aur]
+# Include = /etc/pacman.d/chaotic-mirrorlist
 
 EOF
 
-sed -i -e '$a [andontie-aur]' /mnt/etc/pacman.conf
-sed -i -e '$a Server = https://aur.andontie.net/$arch' /mnt/etc/pacman.conf
+# sed -i -e '$a [andontie-aur]' /mnt/etc/pacman.conf
+# sed -i -e '$a Server = https://aur.andontie.net/$arch' /mnt/etc/pacman.conf
+
+chroot /mnt pacman -Syu
 
 mkdir -p /mnt/media
 
