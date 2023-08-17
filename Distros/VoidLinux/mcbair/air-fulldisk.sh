@@ -1,5 +1,41 @@
 #!/bin/bash
 
+########################
+#### Fastest repo's ####
+########################
+# Repositorios mais rapidos
+cat <<EOF >/etc/xbps.d/00-repository-main.conf
+#repository=https://mirror.clarkson.edu/voidlinux
+#repository=http://ftp.dk.xemacs.org/voidlinux
+#repository=http://ftp.debian.ru/mirrors/voidlinux
+repository=http://void.chililinux.com/voidlinux/current
+EOF
+
+cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
+#repository=https://mirror.clarkson.edu/voidlinux/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
+EOF
+
+cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
+#repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+EOF
+
+cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
+#repository=https://mirror.clarkson.edu/voidlinux/multilib
+#repository=http://ftp.dk.xemacs.org/voidlinux/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+EOF
+
+vpm sync
+
+DRIVE="/dev/sda"
+
 # Instalando pela wifi
 
 # cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant-<wlan-interface>.conf
@@ -8,9 +44,9 @@
 # ip link set up <interface>
 
 ### x86_64 GLIBC
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz
+#wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz
 ### x86_64 MUSL
-#wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
 
 xbps-install -Su xbps xz --yes
 
@@ -19,33 +55,32 @@ xbps-install -Su xbps xz --yes
 #####################################
 
 # Zap entire device
-#sgdisk -Z /dev/vda
+sgdisk -Z ${DRIVE}
 
 # -s script call | -a optimal
-#parted -s -a optimal /dev/sda mklabel gpt
-# parted -s /dev/vda set 1 esp on
+# parted -s -a optimal ${DRIVE} mklabel gpt
+# parted -s ${DRIVE} set 1 esp on
 
 # Print partition table
-# sgdisk -p /dev/vda
+sgdisk -p ${DRIVE}
 
 # Delete partition
 # sgdisk -d 1 /dev/vda
 
 # Create new partition
-#sgdisk -n 0:0:100MiB /dev/sda
-#sgdisk -n 0:0:5GiB /dev/sda
-#sgdisk -n 0:0:0 /dev/sda
+sgdisk -n 0:0:512MiB ${DRIVE}
+sgdisk -n 0:0:0 ${DRIVE}
 
 # Change the name of partition
-sgdisk -c 1:VoidBoot /dev/sda
-sgdisk -c 2:Swap /dev/sda
-sgdisk -c 3:Voidlinux /dev/sda
+sgdisk -c 1:VoidBoot ${DRIVE}
+# sgdisk -c 2:Swap /dev/sda
+sgdisk -c 2:Voidlinux ${DRIVE}
 
 # Change Types
-sgdisk --list-types
+# sgdisk --list-types
 sgdisk -t 1:ef00 /dev/sda
-sgdisk -t 2:8200 /dev/sda
-sgdisk -t 3:8300 /dev/sda
+# sgdisk -t 2:8200 /dev/sda
+sgdisk -t 2:8300 /dev/sda
 
 # Zap entire device
 # sgdisk -Z /dev/vda
@@ -54,20 +89,20 @@ sgdisk -t 3:8300 /dev/sda
 ##########  FileSystem  #############
 #####################################
 
-#mkfs.vfat -F32 /dev/sda1 -n "EFI"
+mkfs.vfat -F32 ${DRIVE}1 -n "EFI"
 # mkfs.vfat -F32 /dev/vda1 -n "EFI"
 # mkswap /dev/vda2
-mkswap /dev/sda2
-swapon /dev/sda2
+# mkswap /dev/sda2
+# swapon /dev/sda2
 # mkfs.btrfs /dev/sda4 -f -L "Voidlinux"
-mkfs.btrfs /dev/sda3 -f -L "Voidlinux"
+mkfs.btrfs ${DRIVE}2 -f -L "Voidlinux"
 
 ## Volumes Vda apenas para testes em vm
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/sda3 /mnt
+mount -o $BTRFS_OPTS ${DRIVE}2 /mnt
 # mount -o $BTRFS_OPTS /dev/vda3 /mnt
 
 #Cria os subvolumes
@@ -75,7 +110,7 @@ btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
-# btrfs su cr /mnt/@swap
+btrfs su cr /mnt/@swap
 btrfs su cr /mnt/@var_cache_xbps
 umount -v /mnt
 
@@ -84,7 +119,7 @@ umount -v /mnt
 
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/vda3 /mnt
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda3 /mnt
+mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}2 /mnt
 mkdir -pv /mnt/boot # somente este se for por gummiboot
 # mkdir -pv /mnt/boot/grub
 mkdir -pv /mnt/home
@@ -93,16 +128,16 @@ mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/swap
 mkdir -pv /mnt/var/cache/xbps
 
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda3 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home ${DRIVE}2 /mnt/home
 # mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda3 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@snapshots ${DRIVE}2 /mnt/.snapshots
 # mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda3 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda3 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_log ${DRIVE}2 /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda3 /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda3 /mnt/var/cache/xbps
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps ${DRIVE}2 /mnt/var/cache/xbps
 # mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda3 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/ #grub
+mount -t vfat -o defaults,noatime,nodiratime ${DRIVE}1 /mnt/boot/ #grub
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/   # Gummiboot
 # mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot
 
@@ -158,27 +193,27 @@ cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
 #repository=http://ftp.dk.xemacs.org/voidlinux
 #repository=http://ftp.debian.ru/mirrors/voidlinux
-repository=http://void.chililinux.com/voidlinux/current
+repository=http://void.chililinux.com/voidlinux/current/musl
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/musl/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/musl/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/musl/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
 EOF
 
@@ -221,15 +256,15 @@ EOF
 UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/sda4)
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda2)
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda2)
 # SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/vda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda3)
+ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
 # HOME_UUID=$(blkid -s UUID -o value /dev/sda5)
 
 echo $UEFI_UUID
 echo $ROOT_UUID
-echo $SWAP_UUID
+# echo $SWAP_UUID
 # echo $HOME_UUID
 
 cat <<EOF >/mnt/etc/fstab
@@ -252,7 +287,7 @@ UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home               
 UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
 
 # Swap
-UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
+# UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                                                                                0 0
 tmpfs /tmp tmpfs noatime,nosuid,mode=1777                                                                                                       0 0
@@ -346,8 +381,8 @@ chroot /mnt xbps-remove base-voidstrap --yes
 # chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit os-prober acl-progs btrfs-progs --yes
 
 # Gummiboot #
-#chroot /mnt xbps-install -S gummiboot --yes
-chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
+chroot /mnt xbps-install -S gummiboot --yes
+# chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
 
 # Some firmwares and utils
 chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors xdg-user-dirs xdg-utils --yes
@@ -419,7 +454,7 @@ chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog juca
 
-cat << EOF > /mnt/etc/default/earlyoom
+cat <<\EOF > /mnt/etc/default/earlyoom
 EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'"
 EOF
 
@@ -448,7 +483,7 @@ Section "InputClass"
         Identifier              "system-keyboard"
         MatchIsKeyboard         "on"
         Option "XkbLayout"      "us"
-        # Option "XkbModel"     "pc104"
+        Option "XkbModel"       "pc105"
         Option "XkbVariant"     "mac"
         Option "Backspace"      "guess"
 EndSection
@@ -589,6 +624,11 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 
 # Config zsh
 
+#Install Gummiboot
+mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
+chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+chroot /mnt gummiboot install
+
 # alias dissh="export DISPLAY=:0.0"
 # alias bquit="bspc quit"
 
@@ -701,39 +741,39 @@ EOF
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot --no-nvram --removable --recheck
 # chroot /mnt update-grub
 
-cat <<EOF >/mnt/etc/default/grub
-#
-# Configuration file for GRUB.
-#
-GRUB_DEFAULT=0
-#GRUB_HIDDEN_TIMEOUT=0
-#GRUB_HIDDEN_TIMEOUT_QUIET=false
-GRUB_TIMEOUT=5
-GRUB_DISTRIBUTOR="Void Linux"
+# cat <<EOF >/mnt/etc/default/grub
+# #
+# # Configuration file for GRUB.
+# #
+# GRUB_DEFAULT=0
+# #GRUB_HIDDEN_TIMEOUT=0
+# #GRUB_HIDDEN_TIMEOUT_QUIET=false
+# GRUB_TIMEOUT=5
+# GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold net.ifnames=0"
+# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold net.ifnames=0"
 
-GRUB_CMDLINE_LINUX=""
-GRUB_PRELOAD_MODULES="part_gpt part_msdos"
-GRUB_TIMEOUT_STYLE=menu
-GRUB_GFXMODE=auto
-GRUB_GFXPAYLOAD_LINUX=keep
+# GRUB_CMDLINE_LINUX=""
+# GRUB_PRELOAD_MODULES="part_gpt part_msdos"
+# GRUB_TIMEOUT_STYLE=menu
+# GRUB_GFXMODE=auto
+# GRUB_GFXPAYLOAD_LINUX=keep
 
-#GRUB_TERMINAL_INPUT="console"
-# Uncomment to disable graphical terminal
-#GRUB_TERMINAL_OUTPUT=console
-#GRUB_BACKGROUND=/home/bastilla.jpg
-#GRUB_GFXMODE=1920x1080x32,1366x768x32,auto
-#GRUB_DISABLE_LINUX_UUID=true
-#GRUB_DISABLE_RECOVERY=true
-# Uncomment and set to the desired menu colors.  Used by normal and wallpaper
-# modes only.  Entries specified as foreground/background.
-GRUB_COLOR_NORMAL="red/black"
-GRUB_COLOR_HIGHLIGHT="yellow/black"
-GRUB_DISABLE_OS_PROBER=false
-EOF
+# #GRUB_TERMINAL_INPUT="console"
+# # Uncomment to disable graphical terminal
+# #GRUB_TERMINAL_OUTPUT=console
+# #GRUB_BACKGROUND=/home/bastilla.jpg
+# #GRUB_GFXMODE=1920x1080x32,1366x768x32,auto
+# #GRUB_DISABLE_LINUX_UUID=true
+# #GRUB_DISABLE_RECOVERY=true
+# # Uncomment and set to the desired menu colors.  Used by normal and wallpaper
+# # modes only.  Entries specified as foreground/background.
+# GRUB_COLOR_NORMAL="red/black"
+# GRUB_COLOR_HIGHLIGHT="yellow/black"
+# GRUB_DISABLE_OS_PROBER=false
+# EOF
 
-chroot /mnt update-grub
+# chroot /mnt update-grub
 
 chroot /mnt xbps-reconfigure -fa
 
@@ -800,5 +840,8 @@ EOF
 #git clone --depth=1 https://github.com/JucaRei/my-nixfiles /mnt/home/juca/Zero/nix-config
 
 #chroot /mnt xbps-reconfigure -fa
+
+# chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
+
 
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
