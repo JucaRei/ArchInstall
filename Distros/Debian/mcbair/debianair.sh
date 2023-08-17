@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DRIVE="/dev/sda"
+
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
@@ -60,15 +62,28 @@ apt update
 #### real hardware ####
 #######################
 
-sgdisk -Z /dev/sda4
-sgdisk -Z /dev/sda5
-parted -s -a optimal /dev/sda4 mklabel gpt
-parted -s -a optimal /dev/sda5 mklabel gpt
-sgdisk -c 4:SWAP /dev/sda
-sgdisk -c 5:Debian /dev/sda
-sgdisk -t 4:8200 /dev/sda
-sgdisk -t 5:8300 /dev/sda
-sgdisk -p /dev/sda
+### with mac partitioned
+# sgdisk -Z ${DRIVE}4
+# sgdisk -Z ${DRIVE}5
+# parted -s -a optimal ${DRIVE}4 mklabel gpt
+# parted -s -a optimal ${DRIVE}5 mklabel gpt
+# sgdisk -c 4:SWAP ${DRIVE}
+# sgdisk -c 5:Debian ${DRIVE}
+# sgdisk -t 4:8200 ${DRIVE}
+# sgdisk -t 5:8300 ${DRIVE}
+# sgdisk -p ${DRIVE}
+
+## Full drive
+sgdisk -Z ${DRIVE}
+parted -s -a optimal ${DRIVE} mklabel gpt
+sgdisk -n 0:0:512MiB ${DRIVE}
+sgdisk -n 0:0:0 ${DRIVE}
+sgdisk -t 1:ef00 ${DRIVE}
+sgdisk -t 2:8300 ${DRIVE}
+sgdisk -c 1:EFI ${DRIVE}
+sgdisk -c 2:Debian ${DRIVE}
+sgdisk -p ${DRIVE}
+
 
 #####################################
 ##########  FileSystem  #############
@@ -78,9 +93,12 @@ sgdisk -p /dev/sda
 #### real hardware ####
 #######################
 
-mkswap /dev/sda4 -L "LinuxSwap"
-swapon /dev/sda4
-mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
+# mkswap /dev/sda4 -L "LinuxSwap"
+# swapon /dev/sda4
+# mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
+
+mkfs.vfat -F32 ${DRIVE}1 -n "Grub"
+mkfs.btrfs ${DRIVE}2 -f -L "DebianRoot"
 
 ###############################
 #### Enviroments variables ####
@@ -90,12 +108,12 @@ set -e
 Debian_ARCH="amd64"
 
 ## btrfs options ##
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
+UEFI_UUID=$(blkid -s UUID -o value ${DRIVE}1)
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
+ROOT_UUID=$(blkid -s UUID -o value ${DRIVE}2)
 
 ## fstab virtual hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
@@ -108,32 +126,35 @@ ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 #######################
 #### real hardware ####
 #######################
-mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS ${DRIVE}2 /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_apt
+btrfs su cr /mnt/@swap
 umount -v /mnt
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
+mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}2 /mnt
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/cache/apt
+mkdir -pv /mnt/swap
 ## Mount btrfs subvolumes ##
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda5 /mnt/var/cache/apt
+mount -o $BTRFS_OPTS,subvol=@home ${DRIVE}2 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots ${DRIVE}2 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log ${DRIVE}2 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_apt ${DRIVE}2 /mnt/var/cache/apt
+mount -o $BTRFS_OPTS,subvol=@swap ${DRIVE}2 /mnt/swap
 mount -t vfat -o noatime,nodiratime /dev/sda1 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -332,14 +353,14 @@ chroot /mnt apt upgrade -y
 ######################
 
 cat <<EOF >/mnt/etc/hostname
-mcbair
+air
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<\EOF >/mnt/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 mcbair
+127.0.1.1 air
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -349,7 +370,7 @@ EOF
 
 echo $UEFI_UUID
 echo $ROOT_UUID
-echo $SWAP_UUID
+# echo $SWAP_UUID
 # echo $HOME_UUID
 
 touch /mnt/etc/fstab
@@ -357,21 +378,27 @@ cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 ### ROOTFS ###
-UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
+# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+# UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+# UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
+LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
+# UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
+LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
 
 ### HOME_FS ###
 # UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
-UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
+LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
 
 ### EFI ###
 # UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
-UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
+LABEL="EFI"       /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
 
 ### Swap ###
-UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
+# UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
+LABEL="Debian"     none            swap defaults,noatime      
+/swap/swapfile     none            swap sw                                               0 0
 
 ### Tmp ###
 # tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                   0 0
@@ -465,7 +492,7 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 ###############
 #
 chroot /mnt apt install duperemove aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-    debian-keyring git htop efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+    debian-keyring git htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -571,7 +598,8 @@ EOF
 #################################
 
 #Python, snap and flatpak
-chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommends -y
+# chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommends -y
+chroot /mnt apt install snapd flatpak --no-install-recommends -y
 #Virt-Manager
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
@@ -624,9 +652,9 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 # Consult the keyboard(5) manual page.
 
-# XKBMODEL="pc105"
-# XKBLAYOUT="us"
-# XKBVARIANT="mac"
+XKBMODEL="pc105"
+XKBLAYOUT="us"
+XKBVARIANT="mac"
 # XKBOPTIONS="terminate:ctrl_alt_bksp"
 EOF
 
@@ -796,7 +824,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=25 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 

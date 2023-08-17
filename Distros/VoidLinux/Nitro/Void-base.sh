@@ -226,28 +226,28 @@ mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # MatchIsTouchpad "on"
-        # Driver "libinput"
-        # Option "Tapping" "on"
+   # Identifier "SynPS/2 Synaptics TouchPad"
+   # Identifier "SynPS/2 Synaptics TouchPad"
+   # MatchIsTouchpad "on"
+   # Driver "libinput"
+   # Option "Tapping" "on"
 
-        Identifier      "touchpad"
-        Driver          "libinput"
-        MatchIsTouchpad "on"
-        Option          "Tapping"       "on"
+   Identifier      "touchpad"
+   Driver          "libinput"
+   MatchIsTouchpad "on"
+   Option          "Tapping"       "on"
 EndSection
 EOF
 
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 Section "Device"
-    Identifier "Nvidia GTX 1050"
-    Driver "nvidia"
-    BusID "PCI:1:0:0"
-    Option "DPI" "96 x 96"
-    Option "AllowEmptyInitialConfiguration" "Yes"
-    #  Option "UseDisplayDevice" "none"
+   Identifier "Nvidia GTX 1050"
+   Driver "nvidia"
+   BusID "PCI:1:0:0"
+   Option "DPI" "96 x 96"
+   Option "AllowEmptyInitialConfiguration" "Yes"
+   #  Option "UseDisplayDevice" "none"
 EndSection
 EOF
 
@@ -263,11 +263,11 @@ Section "Device"
 #   Option "SwapbuffersWait" "True"
 #   Option "DRI" "3"
 
-    Identifier  "Intel Graphics"
-    Driver      "modesetting"
-    Option      "TearFree"       "True"
-    Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "3"
+   Identifier  "Intel Graphics"
+   Driver      "modesetting"
+   Option      "TearFree"       "True"
+   Option      "AccelMethod"    "glamor"
+   Option      "DRI"            "3"
 EndSection
 EOF
 
@@ -787,6 +787,7 @@ cat <<EOF >/mnt/etc/sv/zramen/conf
 export ZRAM_COMP_ALGORITHM='zstd'
 #export ZRAM_PRIORITY=32767
 export ZRAM_SIZE=100
+export ZRAM_MAX_SIZE=16384
 export ZRAM_STREAMS=8
 EOF
 
@@ -989,11 +990,11 @@ cat <<\EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
-    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+   if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
          action.id == "org.freedesktop.udisks2.filesystem-mount") &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
+      subject.isInGroup("wheel")) {
+      return polkit.Result.YES;
+   }
 });
 EOF
 
@@ -1009,8 +1010,8 @@ EOF
 
 cat <<EOF >/mnt/etc/udev/rules.d/90-backlight.rules
 SUBSYSTEM=="backlight", ACTION=="add", \
-  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
-  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
 EOF
 # Not asking for password
 mkdir -pv /mnt/etc/polkit-1/rules.d
@@ -1018,11 +1019,11 @@ cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
-    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+   if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
          action.id == "org.freedesktop.udisks2.filesystem-mount") &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
+      subject.isInGroup("wheel")) {
+      return polkit.Result.YES;
+   }
 });
 EOF
 
