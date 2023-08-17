@@ -75,6 +75,7 @@ pacstrap /mnt base base-devel linux-lqx linux-lqx-headers linux-firmware archlin
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab
 
+
 # =======================================================================================================================================================
 
 #####################
