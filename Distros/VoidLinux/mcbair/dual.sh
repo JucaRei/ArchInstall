@@ -4,35 +4,35 @@
 #### Fastest repo's ####
 ########################
 # Repositorios mais rapidos
-cat <<EOF >/etc/xbps.d/00-repository-main.conf
+cat <<EOF >>/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
 #repository=http://ftp.dk.xemacs.org/voidlinux
 #repository=http://ftp.debian.ru/mirrors/voidlinux
-repository=http://void.chililinux.com/voidlinux/current
-repository=https://repo-fastly.voidlinux.org/voidlinux/current
+#repository=http://void.chililinux.com/voidlinux/current
+#repository=https://repo-fastly.voidlinux.org/voidlinux/current
 EOF
 
-cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
+cat <<EOF >>/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
+#repository=http://void.chililinux.com/voidlinux/current/nonfree
+#repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
 EOF
 
-cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
+cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib/nonfree
+#repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+#repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
 EOF
 
-cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
+cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib
+#repository=http://void.chililinux.com/voidlinux/current/multilib
+#repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
 EOF
 
@@ -195,36 +195,36 @@ add_drivers+=" bcm5974 "
 EOF
 
 # Repositorios mais rapidos
-cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
+cat <<EOF >>/mnt/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
 #repository=http://ftp.dk.xemacs.org/voidlinux
 #repository=http://ftp.debian.ru/mirrors/voidlinux
-repository=http://void.chililinux.com/voidlinux/current
+#repository=http://void.chililinux.com/voidlinux/current
 EOF
 
-cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
+cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
+#repository=http://void.chililinux.com/voidlinux/current/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
 EOF
 
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+#repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
 EOF
 
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
+cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
+#repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
 EOF
         
 # Ignorar alguns pacotes
-cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
+cat <<EOF >>/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=nvidia
 ignorepkg=xf86-video-nouveau
