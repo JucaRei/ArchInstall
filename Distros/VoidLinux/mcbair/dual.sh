@@ -1,4 +1,4 @@
-#!/bin/bash
+https://repo-default.voidlinux.org bin/bash
 
 ########################
 #### Fastest repo's ####
@@ -10,6 +10,7 @@ cat <<EOF >>/etc/xbps.d/00-repository-main.conf
 #repository=http://ftp.debian.ru/mirrors/voidlinux
 #repository=http://void.chililinux.com/voidlinux/current
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current
+repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-nonfree.conf
@@ -18,6 +19,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-nonfree.conf
 #repository=http://void.chililinux.com/voidlinux/current/nonfree
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
+repository=repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
@@ -26,6 +28,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
@@ -34,6 +37,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
 #repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
 vpm sync
@@ -200,13 +204,14 @@ cat <<EOF >>/mnt/etc/xbps.d/00-repository-main.conf
 #repository=http://ftp.dk.xemacs.org/voidlinux
 #repository=http://ftp.debian.ru/mirrors/voidlinux
 #repository=http://void.chililinux.com/voidlinux/current
+repository=repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
 #repository=http://void.chililinux.com/voidlinux/current/nonfree
-#repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
@@ -214,6 +219,7 @@ cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
 #repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
@@ -221,6 +227,7 @@ cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
 #repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
         
 # Ignorar alguns pacotes
