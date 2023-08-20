@@ -19,7 +19,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-nonfree.conf
 #repository=http://void.chililinux.com/voidlinux/current/nonfree
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
-repository=repository=https://mirrors.servercentral.com/voidlinux/current
+#repository=repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
@@ -28,7 +28,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+#repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
@@ -37,7 +37,7 @@ cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
 #repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+#repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
 vpm sync
@@ -211,7 +211,7 @@ cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
 #repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+#repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
@@ -219,7 +219,7 @@ cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
 #repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+#repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
@@ -227,7 +227,7 @@ cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
 #repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+#repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
         
 # Ignorar alguns pacotes
@@ -384,7 +384,7 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-# chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
+# chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode void-repo-debug void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
 chroot /mnt $XBPS_ARCH xbps-install base-system base-devel openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
