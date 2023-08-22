@@ -57,3 +57,18 @@ doas ln -sfv /etc/sv/ananicy /var/service
 # /usr/share/plymouth/plymouthd.defaults
 
 #usr/share/sddm/scripts/Xsetup
+
+
+vpm i lxqt kvantum sddm sddm-kcm --yes
+
+cat <<EOF >/etc/xbps.d/90-lxqt-ignore.conf
+ignorepkg=lxqt-sudo
+ignorepkg=qterminal
+ignorepkg=wayland
+ignore=pkg=xorg-server-xwayland
+ignore=pkg=kwayland
+ignore=pkg=kwayland-devel
+ignore=pkg=kwayland-server
+EOF
+
+vpm i xorg-minimal xhost xorg-server-xdmx mesa-dri libva-intel-driver mesa-vulkan-intel vulkan-loader xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes

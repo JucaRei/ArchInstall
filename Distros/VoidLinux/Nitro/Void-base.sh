@@ -1028,7 +1028,7 @@ polkit.addRule(function(action, subject) {
 EOF
 
 touch /mnt/etc/rc.local
-cat << EOF >>/mnt/etc/rc.local
+cat << EOF >>/etc/rc.local
 # Podman fix
 mount --make-rshared /
 

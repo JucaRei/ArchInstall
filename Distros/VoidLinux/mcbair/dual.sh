@@ -1,4 +1,4 @@
-https://repo-default.voidlinux.org bin/bash
+#!/bin/sh
 
 ########################
 #### Fastest repo's ####
@@ -8,35 +8,35 @@ cat <<EOF >>/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
 #repository=http://ftp.dk.xemacs.org/voidlinux
 #repository=http://ftp.debian.ru/mirrors/voidlinux
-#repository=http://void.chililinux.com/voidlinux/current
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current
+repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-#repository=http://void.chililinux.com/voidlinux/current/nonfree
-#repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/nonfree
+#repository=https://repo-fastly.voidlinux.org/voidlinux/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
 repository=repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-#repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/etc/xbps.d/10-repository-multilib.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-#repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=https://repo-fastly.voidlinux.org/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
@@ -80,10 +80,10 @@ sgdisk -p ${DRIVE}
 #sgdisk -n 0:0:0 ${DRIVE}
 
 # Change the name of partition
-sgdisk -c 1:"EFI Partition System" ${DRIVE}
-sgdisk -c 2:"Swap Linux" ${DRIVE}
-sgdisk -c 3:"Voidlinux root system" ${DRIVE}
-sgdisk -c 4:"MacOS High Sierra" ${DRIVE}
+# sgdisk -c 1:"EFI Partition System" ${DRIVE}
+# sgdisk -c 2:"Swap Linux" ${DRIVE}
+# sgdisk -c 3:"Voidlinux System" ${DRIVE}
+# sgdisk -c 4:"MacOS High Sierra" ${DRIVE}
 # sgdisk -c 2:Swap /dev/sda
 
 # Change Types
@@ -99,18 +99,19 @@ sgdisk -c 4:"MacOS High Sierra" ${DRIVE}
 ##########  FileSystem  #############
 #####################################
 
-mkfs.vfat -F32 ${DRIVE}1 -n "EFI"
+# mkfs.vfat -F32 ${DRIVE}1 -n "EFI"
 # mkfs.vfat -F32 /dev/vda1 -n "EFI"
 # mkswap /dev/vda2
 #mkswap ${DRIVE}2
 swapon ${DRIVE}2
 # mkfs.btrfs /dev/sda4 -f -L "Voidlinux"
-mkfs.btrfs ${DRIVE}3 -f -L "Voidlinux"
+mkfs.btrfs ${DRIVE}3 -f -L "VOIDroot"
 
 ## Volumes Vda apenas para testes em vm
 set -e
 XBPS_ARCH="x86_64"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
+BTRFS_SYS="noatime,ssd,compress-force=zstd:5,space_cache=v2,commit=120,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS ${DRIVE}3 /mnt
 # mount -o $BTRFS_OPTS /dev/vda3 /mnt
@@ -129,7 +130,7 @@ umount -v /mnt
 
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/vda3 /mnt
-mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}3 /mnt
+mount -o $BTRFS_SYS,subvol=@ ${DRIVE}3 /mnt
 mkdir -pv /mnt/boot # somente este se for por gummiboot
 mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
@@ -159,6 +160,20 @@ for dir in dev proc sys run; do
         mount --rbind /$dir /mnt/$dir
         mount --make-rslave /mnt/$dir
 done
+
+cat <<EOF >/mnt/etc/resolv.conf
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 1.1.1.1
+EOF
+
+#####################################################################################
+#### Copy the RSA keys from the installation medium to the target root directory ####
+#####################################################################################
+
+mkdir -pv /mnt/var/db/xbps/keys
+cp /var/db/xbps/keys/* /mnt/var/db/xbps/keys/
+
 
 # copia o arquivo de resolv para o /mnt
 #cp -v /etc/resolv.conf /mnt/etc/
@@ -201,30 +216,30 @@ EOF
 # Repositorios mais rapidos
 cat <<EOF >>/mnt/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
-
+repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-#repository=http://void.chililinux.com/voidlinux/current/nonfree
+repository=http://void.chililinux.com/voidlinux/current/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-#repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-#repository=http://void.chililinux.com/voidlinux/current/multilib
 #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
         
@@ -233,11 +248,11 @@ cat <<EOF >>/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux-firmware-amd
 ignorepkg=nvidia
 ignorepkg=xf86-video-nouveau
-#ignorepkg=linux
-#ignorepkg=linux-headers
+ignorepkg=linux
+ignorepkg=linux-headers
 ignorepkg=nvi
-#ignorepkg=dhcpcd
-#ignorepkg=openssh
+ignorepkg=dhcpcd
+ignorepkg=openssh
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
 ignorepkg=xf86-video-nouveau
@@ -247,6 +262,18 @@ ignorepkg=xf86-video-fbdev
 ignorepkg=xf86-video-vesa
 ignorepkg=mobile-broadband-provider-info
 ignorepkg=os-prober
+EOF
+
+
+### LXQT only X11 ###
+cat <<EOF >/mnt/etc/xbps.d/90-lxqt-ignore.conf
+ignorepkg=lxqt-sudo
+ignorepkg=qterminal
+ignorepkg=wayland
+ignore=pkg=xorg-server-xwayland
+# ignore=pkg=kwayland
+# ignore=pkg=kwayland-devel
+# ignore=pkg=kwayland-server
 EOF
 
 # Hostname
@@ -295,7 +322,7 @@ UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps     
 UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
 
 # EFI
-UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
+UUID=$UEFI_UUID /boot/efi vfat defaults,noatime,nodiratime  0 2
 
 # Swap
 UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
@@ -381,10 +408,11 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
+chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode void-repo-debug void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
-chroot /mnt $XBPS_ARCH xbps-install base-system base-devel openssh linux linux-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd --yes
+chroot /mnt $XBPS_ARCH xbps-install base-system base-devel dropbear linux-lts linux-lts-headers sudo opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd --yes
 # chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
 chroot /mnt xbps-remove base-voidstrap --yes
 
@@ -393,11 +421,12 @@ chroot /mnt xbps-remove base-voidstrap --yes
 
 # Gummiboot #
 #chroot /mnt xbps-install -S gummiboot --yes
-chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr --yes
+chroot /mnt xbps-install -S grub-x86_64-efi grub-customizer efibootmgr acl-progs btrfs-progs  --yes
+chroot /mnt xbps-install -S void-repo-debug void-repo-multilib void-repo-multilib-nonfree void-repo-nonfree --yes
 
 # Some firmwares and utils
 chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk acl-progs ntfs-3g mtools sysfsutils base-devel util-linux lm_sensors xdg-user-dirs xdg-utils --yes
-chroot /mnt xbps-install -S light kbdlight powertop xev earlyoom bash-completion neovim  xtools  alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi dialog git wget curl nano elogind vsv vpm chrony lua bluez bluez-alsa sof-firmware xdg-desktop-portal-lxqt xdg-utils --yes
+chroot /mnt xbps-install -S light kbdlight powertop xev earlyoom bash-completion neovim  xtools  alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio netcat lsscsi dialog git wget curl nano elogind vsv vpm chrony lua bluez bluez-alsa sof-firmware xdg-desktop-portal xdg-utils --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb dbus-elogind dbus-elogind-libs dbus-elogind-x11 polkit xdg-user-dirs
 #chroot /mnt xbps-remove -oORvy sudo
 
@@ -441,13 +470,34 @@ chroot /mnt xbps-install -S socklog-void --yes
 
 chroot /mnt xbps-install -S irqbalance earlyoom powertop --yes
 
-cat <<\EOF >> /mnt/etc/rc.local
+# Dev virt
+chroot /mnt xbps-install -S podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+
+chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
+chroot /mnt ln -srvf /etc/sv/podman /var/service
+chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
+chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
+
+
+touch /mnt/etc/rc.local
+cat <<\EOF >/etc/rc.local
+# Podman fix
+mount --make-rshared /
+
+# Powertop
+powertop --auto-tune
+
 #echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
 #echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
 #echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
 #echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
 #echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
 #echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
+
+# Dual GPU
+#/home/juca/.envs/dual.sh
+
+exit 0
 EOF
 
 # NFS
@@ -530,70 +580,64 @@ cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 dev.i915.perf_stream_paranoid=0
 EOF
 
-touch /mnt/etc/rc.local
-cat <<EOF >>/mnt/etc/rc.local
-##PowerTop
-#powertop --auto-tune
 
-EOF
+# mkdir -pv /mnt/etc/elogind
+# cat <<EOF >/mnt/etc/elogind/logind.conf
+# #  This file is part of elogind.
+# #
+# #  elogind is free software; you can redistribute it and/or modify it
+# #  under the terms of the GNU Lesser General Public License as published by
+# #  the Free Software Foundation; either version 2.1 of the License, or
+# #  (at your option) any later version.
+# #
+# # Entries in this file show the compile time defaults.
+# # You can change settings by editing this file.
+# # Defaults can be restored by simply deleting this file.
+# #
+# # See logind.conf(5) for details.
 
-mkdir -pv /mnt/etc/elogind
-cat <<EOF >/mnt/etc/elogind/logind.conf
-#  This file is part of elogind.
-#
-#  elogind is free software; you can redistribute it and/or modify it
-#  under the terms of the GNU Lesser General Public License as published by
-#  the Free Software Foundation; either version 2.1 of the License, or
-#  (at your option) any later version.
-#
-# Entries in this file show the compile time defaults.
-# You can change settings by editing this file.
-# Defaults can be restored by simply deleting this file.
-#
-# See logind.conf(5) for details.
+# [Login]
+# #KillUserProcesses=no
+# #KillOnlyUsers=
+# #KillExcludeUsers=root
+# #InhibitDelayMaxSec=5
+# # HandlePowerKey=ignore
+# HandleSuspendKey=ignore
+# HandleHibernateKey=ignore
+# HandleLidSwitch=ignore
+# HandleLidSwitchExternalPower=ignore
+# HandleLidSwitchDocked=ignore
+# #PowerKeyIgnoreInhibited=no
+# #SuspendKeyIgnoreInhibited=no
+# #HibernateKeyIgnoreInhibited=no
+# #LidSwitchIgnoreInhibited=yes
+# #HoldoffTimeoutSec=30s
+# #IdleAction=ignore
+# #IdleActionSec=30min
+# #RuntimeDirectorySize=10%
+# #RuntimeDirectoryInodes=400k
+# #RemoveIPC=yes
+# #InhibitorsMax=8192
+# #SessionsMax=8192
 
-[Login]
-#KillUserProcesses=no
-#KillOnlyUsers=
-#KillExcludeUsers=root
-#InhibitDelayMaxSec=5
-HandlePowerKey=ignore
-HandleSuspendKey=ignore
-HandleHibernateKey=ignore
-HandleLidSwitch=ignore
-HandleLidSwitchExternalPower=ignore
-HandleLidSwitchDocked=ignore
-#PowerKeyIgnoreInhibited=no
-#SuspendKeyIgnoreInhibited=no
-#HibernateKeyIgnoreInhibited=no
-#LidSwitchIgnoreInhibited=yes
-#HoldoffTimeoutSec=30s
-#IdleAction=ignore
-#IdleActionSec=30min
-#RuntimeDirectorySize=10%
-#RuntimeDirectoryInodes=400k
-#RemoveIPC=yes
-#InhibitorsMax=8192
-#SessionsMax=8192
-
-[Sleep]
-#AllowSuspend=yes
-#AllowHibernation=yes
-#AllowSuspendThenHibernate=yes
-#AllowHybridSleep=yes
-#AllowPowerOffInterrupts=no
-#BroadcastPowerOffInterrupts=yes
-#AllowSuspendInterrupts=no
-#BroadcastSuspendInterrupts=yes
-#HandleNvidiaSleep=ignore
-#SuspendState=mem standby freeze
-#SuspendMode=
-#HibernateState=disk
-#HibernateMode=platform shutdown
-#HybridSleepState=disk
-#HybridSleepMode=suspend platform shutdown
-#HibernateDelaySec=10800
-EOF
+# [Sleep]
+# #AllowSuspend=yes
+# #AllowHibernation=yes
+# #AllowSuspendThenHibernate=yes
+# #AllowHybridSleep=yes
+# #AllowPowerOffInterrupts=no
+# #BroadcastPowerOffInterrupts=yes
+# #AllowSuspendInterrupts=no
+# #BroadcastSuspendInterrupts=yes
+# #HandleNvidiaSleep=ignore
+# #SuspendState=mem standby freeze
+# #SuspendMode=
+# #HibernateState=disk
+# #HibernateMode=platform shutdown
+# #HybridSleepState=disk
+# #HybridSleepMode=suspend platform shutdown
+# #HibernateDelaySec=10800
+# EOF
 
 #Runit por default
 # chroot /mnt ln -sv /etc/sv/dhcpcd /etc/runit/runsvdir/default/
@@ -614,7 +658,7 @@ chroot /mnt ln -srvf /etc/sv/earlyoom /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/preload /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/sshd /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
 #chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
 
 # NFS
@@ -749,7 +793,7 @@ EOF
 # Grub
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id="Void"
-# chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot --no-nvram --removable --recheck
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="VOIDroot" --efi-directory=/boot/efi --no-nvram --removable --recheck
 # chroot /mnt update-grub
 
 cat <<EOF >/mnt/etc/default/grub
@@ -762,7 +806,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0  udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
@@ -786,6 +830,19 @@ EOF
 
 chroot /mnt update-grub
 
+##Fix distrobox
+touch /mnt/home/juca/.xprofile
+cat <<\EOF > /mnt/home/juca/.xprofile
+#!/bin/sh
+
+### Distrobox
+# xhost +si:localuser:$USER
+xhost +si:localuser:juca
+EOF
+
+chroot /mnt chmod +x /home/juca/.xprofile
+chroot /mnt chown -R juca:juca /home/juca/.xprofile
+
 chroot /mnt xbps-reconfigure -fa
 
 # cd ~/Downloads
@@ -808,7 +865,7 @@ chroot /mnt xbps-reconfigure -fa
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-#options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 
@@ -856,3 +913,5 @@ EOF
 
 
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
+
+### interface name: wlp2s0b1 

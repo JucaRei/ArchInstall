@@ -82,7 +82,7 @@ sgdisk -n 0:0:0 ${DRIVE}
 sgdisk -t 1:ef00 ${DRIVE}
 sgdisk -t 2:8300 ${DRIVE}
 sgdisk -c 1:"EFI System Partition" ${DRIVE}
-sgdisk -c 2:"" ${DRIVE}
+sgdisk -c 2:"Debian Filesystem" ${DRIVE}
 sgdisk -p ${DRIVE}
 
 
