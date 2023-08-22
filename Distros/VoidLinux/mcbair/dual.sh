@@ -269,8 +269,8 @@ EOF
 cat <<EOF >/mnt/etc/xbps.d/90-lxqt-ignore.conf
 ignorepkg=lxqt-sudo
 ignorepkg=qterminal
-ignorepkg=wayland
-ignore=pkg=xorg-server-xwayland
+# ignorepkg=wayland
+# ignore=pkg=xorg-server-xwayland
 # ignore=pkg=kwayland
 # ignore=pkg=kwayland-devel
 # ignore=pkg=kwayland-server
@@ -445,10 +445,28 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
-cat <<EOF >>/mnt/etc/rc.local
+cat <<\EOF >>/mnt/etc/rc.local
 modprobe -r usbmouse
 modprobe -r bcm5974
 modprobe bcm5974
+
+# Podman fix
+mount --make-rshared /
+
+# Powertop
+powertop --auto-tune
+
+#echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
+#echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
+
+# Dual GPU
+#/home/juca/.envs/dual.sh
+
+exit 0
 EOF
 
 # Install Nvidia video drivers
@@ -476,29 +494,6 @@ chroot /mnt xbps-install -S podman podman-compose binfmt-support containers.imag
 chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
 chroot /mnt ln -srvf /etc/sv/podman /var/service
 chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
-chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
-
-
-touch /mnt/etc/rc.local
-cat <<\EOF >/etc/rc.local
-# Podman fix
-mount --make-rshared /
-
-# Powertop
-powertop --auto-tune
-
-#echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
-#echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
-#echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
-#echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
-#echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
-#echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
-
-# Dual GPU
-#/home/juca/.envs/dual.sh
-
-exit 0
-EOF
 
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount thermald preload tlp --yes
@@ -514,6 +509,8 @@ chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xb
 # chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 # chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog juca
+chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
+
 
 cat <<\EOF > /mnt/etc/default/earlyoom
 EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'"
@@ -826,6 +823,17 @@ GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_COLOR_NORMAL="red/black"
 GRUB_COLOR_HIGHLIGHT="yellow/black"
 #GRUB_DISABLE_OS_PROBER=false
+EOF
+
+cat << EOF >>/mnt/etc/grub.d/custom_40
+
+menuentry "Reboot" {
+reboot
+}
+
+menuentry "Poweroff" {
+halt
+}
 EOF
 
 chroot /mnt update-grub
