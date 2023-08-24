@@ -32,7 +32,6 @@ CODENAME=bookwarn # or CODENAME=bullseye
 # #deb http://deb.debian.org/debian/ testing main
 # #deb-src http://deb.debian.org/debian/ testing main
 
-
 # ##Debian Unstable
 # #deb http://deb.debian.org/debian/ unstable main
 # ##Debian Experimental
@@ -84,7 +83,6 @@ sgdisk -t 2:8300 ${DRIVE}
 sgdisk -c 1:"EFI System Partition" ${DRIVE}
 sgdisk -c 2:"Debian Filesystem" ${DRIVE}
 sgdisk -p ${DRIVE}
-
 
 #####################################
 ##########  FileSystem  #############
@@ -424,14 +422,13 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
     export LC_CTYPE=en_US.UTF-8 &&
     # locale-gen en_US.UTF-8 && \
     # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-#dpkg-reconfigure --frontend=noninteractive locales && \
-# update-locale LANG=en_US.UTF-8 && \
-# localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-#localectl set-locale LANG="en_US.UTF-8"
-# update-locale LANG=en_US.UTF-8 && \
-# localedef -i en_US -f UTF-8 en_US.UTF-8
-
-chroot /mnt apt update
+    #dpkg-reconfigure --frontend=noninteractive locales && \
+    # update-locale LANG=en_US.UTF-8 && \
+    # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+    #localectl set-locale LANG="en_US.UTF-8"
+    # update-locale LANG=en_US.UTF-8 && \
+    # localedef -i en_US -f UTF-8 en_US.UTF-8
+    chroot /mnt apt update
 
 #####################################
 #### Install additional packages ####
@@ -605,9 +602,9 @@ EOF
 chroot /mnt apt install snapd flatpak --no-install-recommends -y
 #Virt-Manager
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
-#Podman 
+    dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+    bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+#Podman
 chroot /mnt apt install podman buildah crun fuse-overlayfs slirp4netns containers-storage lrzip nftables tini dumb-init golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
 #Ansible
 chroot /mnt apt install ansible --no-install-recommends -y
@@ -674,19 +671,18 @@ chroot /mnt echo "America/Sao_Paulo" >/etc/timezone &&
     export LC_ALL=en_US.UTF-8 &&
     # dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
     # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-#dpkg-reconfigure --frontend=noninteractive locales && \
-#update-locale LANG=en_US.UTF-8
-#localedef -i en_US -f UTF-8 en_US.UTF-8
+    #dpkg-reconfigure --frontend=noninteractive locales && \
+    #update-locale LANG=en_US.UTF-8
+    #localedef -i en_US -f UTF-8 en_US.UTF-8
 
-# setxkbmap -model pc105 -layout br -variant abnt2 &
-# dpkg-reconfigure keyboard-configuration
-# udevadm trigger --subsystem-match=input --action=change
+    # setxkbmap -model pc105 -layout br -variant abnt2 &
+    # dpkg-reconfigure keyboard-configuration
+    # udevadm trigger --subsystem-match=input --action=change
 
-#############################
-#### Set bash as default ####
-#############################
-
-chroot /mnt chsh -s /usr/bin/bash root
+    #############################
+    #### Set bash as default ####
+    #############################
+    chroot /mnt chsh -s /usr/bin/bash root
 
 ##############
 #### sudo ####
@@ -847,13 +843,13 @@ GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 EOF
 
 # MakeSwap
-touch /swap/swapfile
-chmod 600 /swap/swapfile
-chattr +C /swap/swapfile
-lsattr /swap/swapfile
-dd if=/dev/zero of=/swap/swapfile bs=1M count=6144 status=progress
-mkswap /swap/swapfile
-swapon /swap/swapfile
+touch /mnt/swap/swapfile
+chroot /mnt chmod 600 /swap/swapfile
+chroot /mnt chattr +C /swap/swapfile
+chroot /mnt lsattr /swap/swapfile
+dd if=/dev/zero of=/mnt/swap/swapfile bs=1M count=6144 status=progress
+mkswap /mnt/swap/swapfile
+swapon /mnt/swap/swapfile
 
 # # Add to fstab
 #echo " " >> /mnt/etc/fstab
@@ -869,14 +865,13 @@ cd /mnt/tmp
 wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
 gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
 ./btrfs_map_physical /mnt/swap/swapfile >btrfs_map_physical.txt
-filefrag -v /swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/mnt/tmp/resume.txt
+filefrag -v /mnt/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/mnt/tmp/resume.txt
 set -e
 RESUME_OFFSET=$(cat /mnt/tmp/resume.txt)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda2)
+ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 export ROOT_UUID
 export RESUME_OFFSET
 sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /mnt/etc/default/grub
-
 
 chroot /mnt update-grub
 

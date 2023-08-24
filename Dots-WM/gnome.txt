@@ -1,0 +1,10 @@
+### gnome shell apps
+Space Bar
+Removable Drive Menu
+GSConnect
+Volume OSD Always
+Recent Items
+Keep awake!
+PRIME GPU Profile Selector
+Glasa
+Applications Overview Tooltip

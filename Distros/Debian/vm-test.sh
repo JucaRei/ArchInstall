@@ -75,9 +75,8 @@ sgdisk -c 2:Debian /dev/vda
 sgdisk -t 1:ef00 /dev/vda #
 sgdisk -t 2:8300 /dev/vda #
 
-## Print drives partitions 
+## Print drives partitions
 sgdisk -p /dev/vda
-
 
 #####################################
 ##########  FileSystem  #############
@@ -98,9 +97,9 @@ set -e
 Debian_ARCH="amd64"
 
 ## btrfs options ##
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:5,space_cache=v2,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
 
-## fstab virtual hardware ## 
+## fstab virtual hardware ##
 UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 
@@ -121,7 +120,7 @@ btrfs su cr /mnt/@var_cache_apt
 umount -v /mnt
 # Make directories for mount ##
 mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
-mkdir -pv /mnt/boot
+mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
@@ -133,12 +132,11 @@ mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/vda2 /mnt/var/cache/apt
 mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot
 
-
 ####################################################
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bookwarn contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 
 ########################
@@ -149,7 +147,7 @@ rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-cat >/mnt/etc/apt/sources.list <<HEREDOC
+cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
 
@@ -196,7 +194,7 @@ chroot /mnt apt update
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
 # && echo >> /mnt/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
 
-######################################################## 
+########################################################
 #### Mount points for chroot, just like arch-chroot ####
 ########################################################
 
@@ -225,7 +223,7 @@ EOF
 
 #cat << EOF >/mnt/etc/modprobe.d/alsa-base.conf
 #options snd-hda-intel dmic_detect=0
-#EOF 
+#EOF
 
 touch /mnt/etc/modprobe.d/blacklist-nouveau.conf
 cat <<EOF | tee /mnt/etc/modprobe.d/blacklist-nouveau.conf
@@ -256,7 +254,7 @@ cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
 EOF
 
 touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
+cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
 ## Disable nouveau on earlyboot ##
 #options nouveau modeset=0
 EOF
@@ -410,22 +408,19 @@ EOF
 #### Setting Locales ####
 #########################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
-        dpkg-reconfigure --frontend=noninteractive locales && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf && \
-        export LC_CTYPE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        export LANG=en_US.UTF-8 && \
-        export LANGUAGE=en_US.UTF-8 && \
-        localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+        dpkg-reconfigure -f noninteractive tzdata &&
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+        echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
+        # export LC_ALL=C && \
+        export LANGUAGE=en_US.UTF-8 &&
+        export LC_ALL=en_US.UTF-8 &&
+        export LANG=en_US.UTF-8 &&
+        export LC_CTYPE=en_US.UTF-8 &&
+        chroot /mnt apt update
 
-chroot /mnt apt update
-
-cat << EOF > /mnt/etc/environment
+cat <<EOF >/mnt/etc/environment
 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 EOF
 
@@ -444,7 +439,7 @@ chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -
 #############
 
 chroot /mnt apt install prettyping nftables net-tools arp-scan gvfs gvfs-backends samba-client nfs-common smbclient cifs-utils avahi-daemon \
-fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill --no-install-recommends -y
+        fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
 chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
@@ -477,7 +472,7 @@ EOF
 ## Pulseaudio
 # chroot /mnt apt install bluetooth rfkill bluez bluez-tools pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
-## Pipewire 
+## Pipewire
 # chroot /mnt apt install pipewire bluez bluez-tools gstreamer1.0-pipewire libspa-0.2-bluetooth libspa-0.2-jack pipewire-audio-client-libraries -y
 
 ## Config pipewire
@@ -491,17 +486,16 @@ EOF
 ## Pulseaudio
 chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
-
 ###############
 #### Utils ####
 ###############
 
 chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
-efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+        debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+        efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
-cat << EOF > /mnt/etc/initramfs-tools/modules
+cat <<EOF >/mnt/etc/initramfs-tools/modules
 crc32c-intel
 btrfs
 ahci
@@ -577,7 +571,7 @@ EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 #Section "Device"
 #    Identifier "Nvidia GTX 1050"
 #    Driver "nvidia"
@@ -623,8 +617,8 @@ EOF
 #################################
 
 chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset ansible libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
+        dnsmasq ipset ansible libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+        bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
 
 #################################
 #### Plymouth animation boot ####
@@ -658,7 +652,7 @@ EOF
 
 mkdir -pv /mnt/etc/default/
 touch /mnt/etc/default/keyboard
-cat << EOF > /mnt/etc/default/keyboard
+cat <<EOF >/mnt/etc/default/keyboard
 # KEYBOARD CONFIGURATION FILE
 
 # Consult the keyboard(5) manual page.
@@ -673,23 +667,23 @@ EOF
 #### Locales ####
 #################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
-        dpkg-reconfigure --frontend=noninteractive locales && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf && \
-        export LC_CTYPE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        export LANG=en_US.UTF-8 && \
-        export LANGUAGE=en_US.UTF-8 && \
-        dpkg-reconfigure --frontend noninteractive keyboard-configuration && \
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+        localedef -i en_US -f UTF-8 en_US.UTF-8 &&
+        dpkg-reconfigure -f noninteractive tzdata &&
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+        echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
+        dpkg-reconfigure --frontend=noninteractive locales &&
+        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf &&
+        export LC_CTYPE=en_US.UTF-8 &&
+        export LC_ALL=en_US.UTF-8 &&
+        export LANG=en_US.UTF-8 &&
+        export LANGUAGE=en_US.UTF-8 &&
+        dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
         echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        #update-locale LANG=en_US.UTF-8
-        #localedef -i en_US -f UTF-8 en_US.UTF-8
+#dpkg-reconfigure --frontend=noninteractive locales && \
+#update-locale LANG=en_US.UTF-8
+#localedef -i en_US -f UTF-8 en_US.UTF-8
 
 # setxkbmap -model pc105 -layout br -variant abnt2 &
 # dpkg-reconfigure keyboard-configuration
@@ -734,7 +728,7 @@ chroot /mnt usermod -aG sudo juca
 #### NetworkManager config as default instead of dhcpd5 ####
 ############################################################
 
-cat << EOF > /mnt/etc/NetworkManager/NetworkManager.conf
+cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 plugins=ifupdown,keyfile
 
@@ -744,7 +738,7 @@ EOF
 
 touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-cat << EOF > /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 #!/bin/sh
 
 # Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
@@ -777,14 +771,12 @@ chroot /mnt systemctl enable ssh.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 
-
 ## Audio
 chroot /mnt systemctl enable --user pulseaudio.service
 #chroot /mnt systemctl --user enable pipewire pipewire-pulse
 # chroot /mnt systemctl --user daemon-reload
 # chroot /mnt systemctl --user --now disable pulseaudio.service pulseaudio.socket
 #chroot /mnt systemctl --user mask pulseaudio
-
 
 # Allow run as root
 # sed -i -e 's/ConditionUser=!root/#ConditionUser=!root/' /mnt/usr/lib/systemd/user/pipewire.socket
@@ -796,11 +788,10 @@ chroot /mnt systemctl enable --user pulseaudio.service
 ## Pulseaudio
 # chroot /mnt systemctl --user enable pulseaudio
 
-
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
 # sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<\EOF >>/mnt/etc/chrony.conf 
+cat <<\EOF >>/mnt/etc/chrony.conf
 server time.windows.com iburst prefer
 EOF
 
@@ -817,7 +808,7 @@ chroot /mnt update-initramfs -c -k all
 #### Install grub ####
 ######################
 
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot --no-nvram --removable --recheck
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --no-nvram --removable --recheck
 
 #####################
 #### Config Grub ####
@@ -831,7 +822,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
-# GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+# GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISTRIBUTOR="Debian"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
@@ -864,7 +855,7 @@ rm -rf /mnt/initrd.img.old
 ######################
 mkdir -pv /mnt/etc/samba
 touch /mnt/etc/samba/smb.conf
-cat <<\EOF >> /mnt/etc/samba/smb.conf
+cat <<\EOF >>/mnt/etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
@@ -930,7 +921,6 @@ chroot /mnt apt update
 chroot /mnt apt upgrade -y
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
-
 
 ## ADD pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
