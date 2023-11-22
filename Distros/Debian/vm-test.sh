@@ -8,30 +8,34 @@ umount -R /dev/vda
 
 #### Add faster repo's ####
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-cat >/etc/apt/sources.list <<HEREDOC
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
+cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
+####################
+### Debian repos ###
+####################
 
-deb https://security.debian.org/debian-security $CODENAME-security main non-free-firmware 
-deb-src https://security.debian.org/debian-security $CODENAME-security main non-free-firmware
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
+#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 
 #######################
 ### Debian unstable ###
 #######################
 
 ##Debian Testing
-deb http://deb.debian.org/debian/ testing main
-deb-src http://deb.debian.org/debian/ testing main
+deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
 
 
 ##Debian Unstable
-#deb http://deb.debian.org/debian/ unstable main
+deb http://deb.debian.org/debian/ unstable main contrib non-free non-free-firmware
 ##Debian Experimental
 #deb http://deb.debian.org/debian/ experimental main
 
@@ -48,7 +52,6 @@ deb-src http://deb.debian.org/debian/ testing main
 #deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
 #deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
 HEREDOC
-
 #### update fastest repo's
 apt update
 
@@ -136,7 +139,7 @@ mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 
 ########################
@@ -148,29 +151,33 @@ touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free-firmware
+####################
+### Debian repos ###
+####################
 
-deb https://security.debian.org/debian-security $CODENAME-security main non-free-firmware 
-deb-src https://security.debian.org/debian-security $CODENAME-security main non-free-firmware
+deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free-firmware
+#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free-firmware
+deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+
+deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 
 #######################
 ### Debian unstable ###
 #######################
 
 ##Debian Testing
-deb http://deb.debian.org/debian/ testing main
-deb-src http://deb.debian.org/debian/ testing main
+deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
 
 
 ##Debian Unstable
-#deb http://deb.debian.org/debian/ unstable main
+deb http://deb.debian.org/debian/ unstable main contrib non-free non-free-firmware
 ##Debian Experimental
 #deb http://deb.debian.org/debian/ experimental main
 
@@ -238,7 +245,7 @@ mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 ## Early module for bbswitch dual graphics ##
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 touch /mnt/etc/modprobe.d/i915.conf
@@ -490,8 +497,12 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 
-chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
-        debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions \
+        rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 \
+        linux-headers-amd64 fonts-firacode \
+        debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev \
+        xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev \
+        zlib1g-dev libbz2-dev build-essential htop \
         efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
@@ -512,7 +523,8 @@ EOF
 #### Tools ####
 ###############
 
-chroot /mnt apt install colord bash-completion bzip2 man-db gdisk mtools p7zip neofetch fzf duf bat unattended-upgrades --no-install-recommends -y
+chroot /mnt apt install colord bash-completion bzip2 man-db gdisk mtools \
+        p7zip neofetch fzf duf bat unattended-upgrades --no-install-recommends -y
 
 #############################
 #### Optimizations Tools ####
@@ -536,7 +548,7 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-#chroot /mnt apt install -t bullseye-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
+#chroot /mnt apt install -t bookworm-backports nvidia-driver firmware-misc-nonfree nvidia-settings vulkan-tools libvulkan-dev nvidia-vulkan-icd \
 #vulkan-validationlayers vulkan-validationlayers-dev fizmo-sdl2 libsdl2-2.0-0 libsdl2-dev libsdl2-gfx-1.0-0 libsdl2-gfx-dev libsdl2-image-2.0-0 \
 #libsdl2-mixer-2.0-0 libsdl2-net-2.0-0 mesa-utils nvidia-kernel-source inxi nvidia-driver nvidia-smi nvidia-settings nvidia-xconfig nvidia-persistenced \
 #libnvcuvid1 libnvidia-encode1 firmware-misc-nonfree --no-install-recommends -y
@@ -545,7 +557,9 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 #### Minimal xorg packages ####
 ###############################
 
-chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
+chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev \
+        xserver-xorg-input-libinput xserver-xorg-input-kbd x11-xserver-utils \
+        x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
 
 ###########################
 #### Some XORG configs ####
@@ -616,8 +630,10 @@ EOF
 #### Infrastructure packages ####
 #################################
 
-chroot /mnt apt install python3 python3-pip snapd slirp4netns flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-        dnsmasq ipset ansible libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+chroot /mnt apt install python3 python3-pip snapd slirp4netns \
+        flatpak spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
+        dnsmasq ipset ansible libguestfs0 virt-viewer qemu-system \
+        qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
         bridge-utils libvirt-daemon-system uidmap podman fuse-overlayfs --no-install-recommends -y
 
 #################################
@@ -881,7 +897,7 @@ cat <<\EOF >>/mnt/etc/samba/smb.conf
    #usershare owner only = yes
    force create mode = 0070
    force directory mode = 0070
-   
+
    ### follow symlinks
    follow symlinks = yes
    wide links = yes
@@ -915,7 +931,7 @@ cat <<\EOF >>/mnt/etc/samba/smb.conf
 
 EOF
 
-source ./desktops/kde.sh
+# source ./desktops/kde.sh
 
 chroot /mnt apt update
 chroot /mnt apt upgrade -y
