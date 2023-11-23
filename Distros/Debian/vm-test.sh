@@ -133,7 +133,7 @@ mount -o $BTRFS_OPTS,subvol=@home /dev/vda2 /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/vda2 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot
+mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -402,7 +402,7 @@ UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt    
 UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
 
 ### EFI ###
-UUID=$UEFI_UUID   /boot           vfat noatime,nodiratime,umask=0077                    0 2
+UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077                    0 2
 
 ### Swap ###
 #UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
