@@ -147,7 +147,7 @@ debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-
 ########################
 
 rm /mnt/etc/apt/sources.list
-touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
+touch /mnt/etc/apt/sources.list.d/{debian.list,bullseye-security.list,various.list}
 
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
@@ -155,6 +155,7 @@ cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ### Debian repos ###
 ####################
 
+<<<<<<< Updated upstream
 deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 
@@ -166,14 +167,32 @@ deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free n
 
 deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+=======
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+
+deb http://deb.debian.org/debian-security/ bookworm-security main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian-security/ bookworm-security main contrib non-free non-free-firmware
+
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+
+deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+>>>>>>> Stashed changes
 
 #######################
 ### Debian unstable ###
 #######################
 
 ##Debian Testing
+<<<<<<< Updated upstream
 deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
 deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+=======
+#deb http://deb.debian.org/debian/ testing main
+#deb-src http://deb.debian.org/debian/ testing main
+>>>>>>> Stashed changes
 
 
 ##Debian Unstable
@@ -193,6 +212,11 @@ deb http://deb.debian.org/debian/ unstable main contrib non-free non-free-firmwa
 
 #deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
 #deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
+HEREDOC
+
+cat >bullseye-security.list << HEREDOC
+deb http://security.debian.org/debian-security bullseye-security main contrib
+deb-src http://security.debian.org/debian-security bullseye-security main contrib
 HEREDOC
 
 chroot /mnt apt update
@@ -497,18 +521,31 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 
+<<<<<<< Updated upstream
 chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions \
         rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 \
         linux-headers-amd64 fonts-firacode \
         debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev \
         xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev \
         zlib1g-dev libbz2-dev build-essential htop \
+=======
+linux-image-5.10.0-25-amd64
+linux-headers-5.10.0-25-amd64
+
+# chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-amd64 linux-headers-amd64 fonts-firacode \
+#         debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+#         efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
+
+chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-5.10.0-25-amd64 linux-headers-amd64 fonts-firacode \
+        debian-keyring make libssl-dev libreadline-dev libffi-dev liblzma-dev xz-utils llvm git gnupg lolcat libsqlite3-dev libxml2-dev libxmlsec1-dev zlib1g-dev libbz2-dev build-essential htop \
+>>>>>>> Stashed changes
         efibootmgr grub-efi-amd64 os-prober wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
 crc32c-intel
 btrfs
+wl
 ahci
 lz4hc
 lz4hc_compress

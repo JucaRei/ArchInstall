@@ -58,7 +58,7 @@ btrfs su cr /mnt/@swap
 umount -vR /mnt
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,commit=120,discard=async"
 
 ## Mount partitions (Nitro)
 mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}2 /mnt
@@ -129,7 +129,7 @@ sed -i '/\[community\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 
 # Add Chaotic repo
-pacman-key --init --noconfirm
+pacman-key --init
 #pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
 #pacman-key --lsign-key FBA220DFC880C036
 #pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
@@ -137,7 +137,7 @@ pacman-key --init --noconfirm
 # Add Liquorix
 pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
 pacman-key --lsign-key 9AE4078033F8024D
-pacman-key --populate --noconfirm
+pacman-key --populate
 
 # Add Andontie Repo
 #pacman-key --recv-key B545E9B7CD906FE3
@@ -169,13 +169,14 @@ pacman -S efibootmgr grub chrony irqbalance htop networkmanager opendoas network
 # ananicy-cpp preload grub-btrfs
 
 # Virt-manager & lxd
-pacman -S lxd distrobuilder virt-manager virt-viewer qemu qemu-arch-extra bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
+pacman -S lxd distrobuilder virt-manager virt-viewer qemu bridge-utils dnsmasq vde2 ebtables openbsd-netcat vde2 edk2-ovmf iptables-nft ipset libguestfs
 
 # apci & tlp
 pacman -S acpi acpi_call-dkms acpid tlp
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Grub
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+# sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active zswap.enabled=0 init_on_alloc=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 sed -i 's/GRUB_COLOR_NORMAL="light-blue/black"/GRUB_COLOR_NORMAL="red/black"/g' /etc/default/grub
 sed -i 's/#GRUB_COLOR_HIGHLIGHT="light-cyan/blue"/GRUB_COLOR_HIGHLIGHT="yellow/black"/g' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
@@ -357,40 +358,63 @@ cat <<\EOF >/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 
+# ZRAM
+
+cat <<\EOF> /etc/modules-load.d/zram.conf
+zram
+EOF
+
+cat <<\EOF> /etc/udev/rules.d/99-zram.rules
+ACTION=="add", KERNEL=="zram0", ATTR{comp_algorithm}="zstd", ATTR{disksize}="4G", RUN="/usr/bin/mkswap -U clear /dev/%k", TAG+="systemd"
+EOF
+
+cat <<\EOF >> /etc/fstab
+/dev/zram0 none swap defaults,pri=100 0 0
+EOF
+
+cat <<\EOF > /etc/sysctl.d/99-vm-zram-parameters.conf
+vm.swappiness = 180
+vm.watermark_boost_factor = 0
+vm.watermark_scale_factor = 125
+vm.page-cluster = 0
+EOF
+
 # MakeSwap
-touch /swap/swapfile
-chmod 600 /swap/swapfile
-chattr +C /swap/swapfile
-lsattr /swap/swapfile
-dd if=/dev/zero of=/swap/swapfile bs=1M count=6144 status=progress
-mkswap /swap/swapfile
-swapon /swap/swapfile
+# touch /swap/swapfile
+# chmod 600 /swap/swapfile
+# chattr +C /swap/swapfile
+# lsattr /swap/swapfile
+# dd if=/dev/zero of=/swap/swapfile bs=1M count=6144 status=progress
+# mkswap /swap/swapfile
+# swapon /swap/swapfile
 
 # # Add to fstab
-echo " " >> /etc/fstab
-echo "# Swap" >> /etc/fstab
-SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
-mount -o defaults,noatime,subvol=@swap ${DRIVE}2 /mnt/swap
-echo "UUID=$SWAP_UUID /swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
-echo "/swapfile      none     swap      sw  0 0" >> /etc/fstab
+# echo " " >> /etc/fstab
+# echo "# Swap" >> /etc/fstab
+# SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
+# mount -o defaults,noatime,subvol=@swap ${DRIVE}2 /mnt/swap
+# echo "UUID=$SWAP_UUID /swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
+# echo "/swapfile      none     swap      sw  0 0" >> /etc/fstab
 
 ### Resume from Swap
-mkdir -pv /tmp
-cd /tmp
-wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
-gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
-./btrfs_map_physical /swap/swapfile >btrfs_map_physical.txt
-filefrag -v /swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/tmp/resume.txt
-set -e
-RESUME_OFFSET=$(cat /tmp/resume.txt)
-ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-export ROOT_UUID
-export RESUME_OFFSET
-sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
+# mkdir -pv /tmp
+# cd /tmp
+# wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+# gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+# ./btrfs_map_physical /swap/swapfile >btrfs_map_physical.txt
+# filefrag -v /swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/tmp/resume.txt
+# set -e
+# RESUME_OFFSET=$(cat /tmp/resume.txt)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
+# export ROOT_UUID
+# export RESUME_OFFSET
+# sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
 # Mkinitcpio
 sed -i 's/MODULES=()/MODULES=(btrfs crc32c-intel)/g' /etc/mkinitcpio.conf
 sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs)/g' /etc/mkinitcpio.conf
+
+
 # sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs systemd)/g' /etc/mkinitcpio.conf
 # sed -i 's/#COMPRESSION="xz"/COMPRESSION="xz"/g' /etc/mkinitcpio.conf
 

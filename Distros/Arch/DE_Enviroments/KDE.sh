@@ -10,13 +10,13 @@ sudo firewall-cmd --reload
 reflector -c Brazil -a 12 --sort rate --save /etc/pacman.d/mirrorlist
 sudo pacman -Syy
 
-cd /tmp
-git clone https://aur.archlinux.org/pikaur.git
-cd pikaur/
-makepkg -si --noconfirm
-cd ..
-rm -rf pikaur/
-cd
+# cd /tmp
+# git clone https://aur.archlinux.org/pikaur.git
+# cd pikaur/
+# makepkg -si --noconfirm
+# cd ..
+# rm -rf pikaur/
+# cd
 
 # pikaur -S --noconfirm system76-power
 # sudo systemctl enable --now system76-power
@@ -72,7 +72,7 @@ EOF
 # EOF
 
 # Xorg Packages
-pikaur -S xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font  
+pikaur -S xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font
 
 #Plasma
 pikaur -S sddm kio zramd kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow kdialog plasma5-applets-eventcalendar wget curl snapd smb4k partitionmanager zramd firefox-esr pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin

@@ -13,3 +13,6 @@ sh <(curl -L https://nixos.org/nix/install) --no-daemon
 echo ". $HOME/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
 . /home/juca/.nix-profile/etc/profile.d/nix.sh
 nix develop --extra-experimental-features "nix-command flakes"
+
+
+ssh-keygen -o -a 150 -t ed25519 -C "$(whoami)@gitkeys-$(date -I)"

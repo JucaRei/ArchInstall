@@ -25,7 +25,7 @@ makepkg -si --noconfirm
 # sudo snap install beekeeper-studio postbird
 
 # LXDE
-sudo pikaur -S xorg lightdm lightdm-slick-greeter lightdm-gtk-greeter-settings xfce4 xfce4-goodies vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook firefox-esr visual-studio-code-bin
+pikaur -S xorg lightdm lightdm-slick-greeter lightdm-gtk-greeter-settings xfce4 xfce4-goodies vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook firefox visual-studio-code-bin
 # sudo cp /etc/x11/xinit/xinitrc ~/.xinitrc
 
 #Enable LXDE
