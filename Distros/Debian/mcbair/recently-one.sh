@@ -164,7 +164,7 @@ debootstrap --verbose --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certific
 rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/{debian.list,bullseye-security.list,various.list}
 
-CODENAME=bookwarm # or CODENAME=bullseye
+CODENAME=bookworm # or CODENAME=bullseye
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ####################
@@ -264,14 +264,15 @@ EOF
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-swap.conf
 vm.vfs_cache_pressure=40
-vm.swappiness=10
+# vm.swappiness=10
+vm.swappiness=20
 vm.dirty_bytes" = 335544320
-# vm.dirty_background_ratio=1
+vm.dirty_background_ratio=1
 vm.dirty_background_bytes" = 167772160
-# vm.dirty_ratio=50
+vm.dirty_ratio=50
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
@@ -387,11 +388,11 @@ BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard
 
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
-# <file system> <dir> <type> <options> <dump> <pass>
+# <file system>     <dir>           <type> <options>                                <dump> <pass>
 
 ### ROOTFS ###
-# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS2,subvol=@                         0 0
-LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                         0 0
+# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS2,subvol=@                        0 0
+LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                        0 0
 # UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 # UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
@@ -400,21 +401,21 @@ LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log        
 LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
 
 ### HOME_FS ###
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                     0 0
-LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                     0 0
+# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                      0 0
+LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                      0 0
 
 ### EFI ###
 # UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
-LABEL="EFI"       /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
+LABEL="EFI"       /boot/efi       vfat noatime,nodiratime,umask=0077                      0 2
 
 ### Swap ###
 # UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
-LABEL="SWAP"     none            swap defaults,noatime                                 0 0
-# /swap/swapfile     none            swap sw                                               0 0
+LABEL="SWAP"     none            swap defaults,noatime                                   0 0
+# /swap/swapfile     none            swap sw                                             0 0
 
 ### Tmp ###
-# tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                   0 0
-tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                  0 0
+# tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                    0 0
+tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                   0 0
 EOF
 
 #########################
@@ -526,7 +527,8 @@ EOF
 #### Tools ####
 ###############
 
-chroot /mnt apt install colord bash-completion bzip2 gdisk mtools p7zip duf bat unattended-upgrades --no-install-recommends -y
+# chroot /mnt apt install colord bash-completion bzip2 gdisk mtools p7zip duf bat unattended-upgrades --no-install-recommends -y
+chroot /mnt apt install bash-completion bzip2 gdisk mtools p7zip unattended-upgrades --no-install-recommends -y
 
 #############################
 #### Optimizations Tools ####
@@ -590,7 +592,7 @@ Section "Device"
     Driver      "modesetting"
     Option      "TearFree"       "True"
     Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "3"
+    Option      "DRI"            "2"
 EndSection
 EOF
 
@@ -639,7 +641,7 @@ cat <<EOF >/mnt/etc/plymouth/plymouth.conf
 # Administrator customizations go in this file
 [Daemon]
 Theme=solar
-ShowDelay=2
+ShowDelay=0
 EOF
 
 ###########################
@@ -834,7 +836,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 

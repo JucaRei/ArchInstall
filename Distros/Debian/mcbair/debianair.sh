@@ -10,7 +10,7 @@ umount -R /dev/sda
 
 #### Add faster repo's ####
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-CODENAME=bookwarn # or CODENAME=bullseye
+CODENAME=bookworm # or CODENAME=bullseye
 # cat >/etc/apt/sources.list <<HEREDOC
 # deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 # deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
@@ -258,17 +258,21 @@ EOF
 
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-swap.conf
-vm.vfs_cache_pressure=500
-vm.swappiness=100
+# vm.vfs_cache_pressure=500
+vm.vfs_cache_pressure=40
+# vm.swappiness=100
+vm.swappiness=20 #10
 vm.dirty_background_ratio=1
+vm.dirty_bytes" = 335544320
+vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -398,7 +402,7 @@ LABEL="EFI System Partition"       /boot/efi       vfat noatime,nodiratime,umask
 
 ### Swap ###
 # UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
-LABEL="Debian"     none            swap defaults,noatime      
+LABEL="Debian"     none            swap defaults,noatime
 /swap/swapfile     none            swap sw                                               0 0
 
 ### Tmp ###
