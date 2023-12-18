@@ -214,7 +214,7 @@ HEREDOC
 cat <<\EOF > /mnt/etc/apt/sources.list.d/bullseye-security.list
 deb http://security.debian.org/debian-security bullseye-security main contrib
 deb-src http://security.debian.org/debian-security bullseye-security main contrib
-HEREDOC
+EOF
 
 
 ## Disable verification ##
@@ -276,7 +276,7 @@ cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -460,7 +460,7 @@ chroot /mnt apt install nftables net-tools wireless-regdb arp-scan gvfs gvfs-bac
     firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill firmware-brcm80211 --no-install-recommends -y
 
 # ssh
-chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
+# chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
 
 ########################################################
 #### Config iwd as backend instead of wpasupplicant ####
@@ -612,13 +612,13 @@ EOF
 
 #Python, snap and flatpak
 # chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommends -y
-chroot /mnt apt install snapd flatpak --no-install-recommends -y
+# chroot /mnt apt install snapd flatpak --no-install-recommends -y
 #Virt-Manager
 # chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 #     dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 #     bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 #Podman
-chroot /mnt apt install podman buildah crun fuse-overlayfs slirp4netns containers-storage lrzip nftables tini dumb-init golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
+# chroot /mnt apt install podman buildah crun fuse-overlayfs slirp4netns containers-storage lrzip nftables tini dumb-init golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
 #Ansible
 # chroot /mnt apt install ansible --no-install-recommends -y
 
@@ -769,7 +769,7 @@ EOF
 ## Network
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
-chroot /mnt systemctl enable ssh.service
+# chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service

@@ -62,9 +62,11 @@ mkfs.btrfs /dev/sda5 -f -L "Voidlinux"
 ## Volumes Vda apenas para testes em vm
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
+BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
 mount -o $BTRFS_OPTS /dev/sda5 /mnt
+mount -o $BTRFS_OPTS2 /dev/sda5 /mnt
 # mount -o $BTRFS_OPTS /dev/vda3 /mnt
 
 #Cria os subvolumes
@@ -82,24 +84,24 @@ umount -v /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 # mount -o $BTRFS_OPTS,subvol=@ /dev/vda3 /mnt
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda5 /mnt
-mkdir -pv /mnt/boot # somente este se for por gummiboot
-# mkdir -pv /mnt/boot/grub
+# mkdir -pv /mnt/boot # somente este se for por gummiboot
+mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
 mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/swap
+# mkdir -pv /mnt/var/swap
 mkdir -pv /mnt/var/cache/xbps
 
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda5 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/Voidlinux /mnt/home
 # mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda5 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Voidlinux /mnt/.snapshots
 # mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda3 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda5 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/disk/by-label/Voidlinux /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda3 /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/sda5 /mnt/var/cache/xbps
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/disk/by-label/Voidlinux /mnt/var/cache/xbps
 # mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda3 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/ #grub
+mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi #grub
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/   # Gummiboot
 # mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot
 
@@ -208,18 +210,18 @@ EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
+# UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/sda4)
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
 # SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/vda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/sda5)
 # HOME_UUID=$(blkid -s UUID -o value /dev/sda5)
 
-echo $UEFI_UUID
-echo $ROOT_UUID
-echo $SWAP_UUID
+# echo $UEFI_UUID
+# echo $ROOT_UUID
+# echo $SWAP_UUID
 # echo $HOME_UUID
 
 cat <<EOF >/mnt/etc/fstab
@@ -229,23 +231,23 @@ cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # ROOTFS
-UUID=$ROOT_UUID /               btrfs rw,$BTRFS_OPTS,subvol=@                    0 0
-UUID=$ROOT_UUID /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots           0 0
-UUID=$ROOT_UUID /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log             0 0
-UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps      0 0
+LABEL="Voidlinux" /               btrfs  rw,$BTRFS_OPTS,subvol=@                    0 0
+LABEL="Voidlinux" /.snapshots     btrfs  rw,$BTRFS_OPTS,subvol=@snapshots           0 0
+LABEL="Voidlinux" /var/log        btrfs  rw,$BTRFS_OPTS,subvol=@var_log             0 0
+LABEL="Voidlinux" /var/cache/xbps btrfs  rw,$BTRFS_OPTS,subvol=@var_cache_xbps      0 0
 
 #HOME_FS
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home              0 0
-UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
+# UUID=$HOME_UUID /home           btrfs  rw,$BTRFS_OPTS,subvol=@home                0 0
+LABEL="Voidlinux" /home           btrfs  rw,$BTRFS_OPTS,subvol=@home                0 0
 
 # EFI
-UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
+LABEL="EFI"      /boot/efi        vfat  rw,noatime,nodiratime                       0 2
 
 # Swap
-UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
+LABEL="SWAP"     none              swap  defaults,noatime                           0 0
 
-# tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                                                                                0 0
-tmpfs /tmp tmpfs noatime,mode=1777                                                                                                              0 0
+# tmpfs         /tmp               tmpfs defaults,nosuid,nodev,noatime              0 0
+tmpfs           /tmp               tmpfs noatime,nosuid,nodev,mode=1777             0 0
 EOF
 
 # Set user permition
