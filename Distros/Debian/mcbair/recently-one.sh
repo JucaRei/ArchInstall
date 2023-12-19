@@ -590,9 +590,12 @@ Section "Device"
 
     Identifier  "Intel Graphics"
     Driver      "modesetting"
-    Option      "TearFree"       "True"
-    Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "2"
+    Option      "TearFree"         "True"
+    # Option      "AccelMethod"    "glamor"
+    Option      "AccelMethod"      "sna"
+    Option      "SwapBuffersWait"  "true"
+    Option      "Backlight"        "intel_backlight"
+    Option      "DRI"              "2"
 EndSection
 EOF
 
@@ -712,6 +715,8 @@ chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm juca
 chroot /mnt usermod -aG sudo juca
+
+# juca ALL=(ALL) NOPASSWD: /usr/bin/tee /sys/class/backlight/intel_backlight/brightness
 
 # AppArmor podman fix
 
@@ -894,7 +899,11 @@ EOF
 
 touch /mnt/etc/udev/rules.d/backlight.rules
 cat <<\EOF > /mnt/etc/udev/rules.d/backlight.rules
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
+# ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chgrp video /sys/class/leds/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
 EOF
 
 touch /mnt/etc/udev/rules.d/81-backlight.rules
