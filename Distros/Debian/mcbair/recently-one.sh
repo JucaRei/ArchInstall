@@ -892,6 +892,17 @@ cat <<\EOF > /mnt/etc/udev/rules.d/70-persistent-net.rules
 SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="e8:4e:06:2e:27:e2" , ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
 EOF
 
+touch /mnt/etc/udev/rules.d/backlight.rules
+cat <<\EOF > /mnt/etc/udev/rules.d/backlight.rules
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
+EOF
+
+touch /mnt/etc/udev/rules.d/81-backlight.rules
+cat <<\EOF > /mnt/etc/udev/rules.d/81-backlight.rules
+# Set backlight level to 8
+SUBSYSTEM=="backlight", ACTION=="add", KERNEL=="acpi_video0", ATTR{brightness}="8"
+EOF
+
 chroot /mnt update-grub
 
 chroot /mnt update-initramfs -c -k all
