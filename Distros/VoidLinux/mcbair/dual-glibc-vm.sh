@@ -483,8 +483,8 @@ chroot /mnt xbps-install -S nfs-utils sv-netmount thermald tlp --yes
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input juca
-# chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input,tty juca
+chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 # chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
 chroot /mnt usermod -a -G socklog juca
 chroot /mnt usermod --add-subuids 100000-165535 --add-subgids 100000-165535 juca
