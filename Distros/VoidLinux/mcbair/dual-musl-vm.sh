@@ -42,7 +42,7 @@ EOF
 
 vpm sync
 
-DRIVE="/dev/sda"
+DRIVE="/dev/vda"
 
 # Instalando pela wifi
 
@@ -51,10 +51,9 @@ DRIVE="/dev/sda"
 # sv restart dhcpcd
 # ip link set up <interface>
 
-### x86_64 GLIBC
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20230628.tar.xz
 ### x86_64 MUSL
-#wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20230628.tar.xz
+
 
 xbps-install -Su xbps xz --yes
 
@@ -63,7 +62,7 @@ xbps-install -Su xbps xz --yes
 #####################################
 
 # Zap entire device
-#sgdisk -Z ${DRIVE}
+sgdisk -Z ${DRIVE}
 
 # -s script call | -a optimal
 #parted -s -a optimal ${DRIVE} mklabel gpt
@@ -76,21 +75,22 @@ sgdisk -p ${DRIVE}
 # sgdisk -d 1 /dev/vda
 
 # Create new partition
-#sgdisk -n 0:0:512MiB ${DRIVE}
-#sgdisk -n 0:0:0 ${DRIVE}
+sgdisk -n 0:0:512MiB ${DRIVE}
+sgdisk -n 0:0:4GiB ${DRIVE}
+sgdisk -n 0:0:0 ${DRIVE}
 
 # Change the name of partition
-# sgdisk -c 1:"EFI Partition System" ${DRIVE}
-# sgdisk -c 2:"Swap Linux" ${DRIVE}
-# sgdisk -c 3:"Voidlinux System" ${DRIVE}
+sgdisk -c 1:"EFI Partition System" ${DRIVE}
+sgdisk -c 2:"Swap Linux" ${DRIVE}
+sgdisk -c 3:"Voidlinux System" ${DRIVE}
 # sgdisk -c 4:"MacOS High Sierra" ${DRIVE}
 # sgdisk -c 2:Swap /dev/sda
 
 # Change Types
 # sgdisk --list-types
-# sgdisk -t 1:ef00 /dev/sda
-# sgdisk -t 2:8200 /dev/sda
-# sgdisk -t 2:8300 /dev/sda
+sgdisk -t 1:ef00 /dev/sda
+sgdisk -t 2:8200 /dev/sda
+sgdisk -t 2:8300 /dev/sda
 
 # Zap entire device
 # sgdisk -Z /dev/vda
@@ -99,13 +99,12 @@ sgdisk -p ${DRIVE}
 ##########  FileSystem  #############
 #####################################
 
-# mkfs.vfat -F32 ${DRIVE}1 -n "EFI"
-# mkfs.vfat -F32 /dev/vda1 -n "EFI"
-# mkswap /dev/vda2
-#mkswap ${DRIVE}2
-swapon ${DRIVE}2
-# mkfs.btrfs /dev/sda4 -f -L "Voidlinux"
+mkfs.vfat -F32 ${DRIVE}1 -n "EFI"
+mkswap ${DRIVE}2 -L "SWAP"
 mkfs.btrfs ${DRIVE}3 -f -L "Voidlinux"
+swapon /dev/disk/by-label/SWAP
+# mkswap /dev/vda2
+# mkfs.btrfs /dev/sda4 -f -L "Voidlinux"
 
 ## Volumes Vda apenas para testes em vm
 set -e
@@ -139,16 +138,16 @@ mkdir -pv /mnt/var/log
 mkdir -pv /mnt/var/swap
 mkdir -pv /mnt/var/cache/xbps
 
-mount -o $BTRFS_OPTS,subvol=@home ${DRIVE}3 /mnt/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/Voidlinux /mnt/home
 # mount -o $BTRFS_OPTS,subvol=@home /dev/vda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots ${DRIVE}3 /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Voidlinux /mnt/.snapshots
 # mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda3 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log ${DRIVE}3 /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_log /dev/disk/by-label/Voidlinux /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda3 /mnt/var/log
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/vda2 /mnt/var/swap
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps ${DRIVE}3 /mnt/var/cache/xbps
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/disk/by-label/Voidlinux /mnt/var/cache/xbps
 # mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda3 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime ${DRIVE}1 /mnt/boot/efi #grub
+mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi #grub
 # mount -t vfat -o defaults,noatime,nodiratime /dev/sda1 /mnt/boot/   # Gummiboot
 # mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot
 
@@ -191,7 +190,8 @@ cat <<EOF >/mnt/etc/dracut.conf.d/00-dracut.conf
 hostonly="yes"
 hostonly_cmdline=no
 dracutmodules+=" dash kernel-modules rootfs-block btrfs udev-rules resume usrmount base fs-lib shutdown "
-add_drivers+=" btrfs i915 crc32c-intel z3fold "
+# add_drivers+=" btrfs i915 crc32c-intel z3fold "
+add_drivers+=" btrfs crc32c-intel z3fold "
 force_drivers+=" z3fold "
 omit_dracutmodules+=" i18n nvidia luks rpmversion fstab-sys lunmask fstab-sys securityfs biosdevname caps dmraid dmsquash-live mdraid "
 show_modules="yes"
@@ -202,44 +202,66 @@ EOF
 
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-sysctl.conf
-vm.vfs_cache_pressure=500
-vm.swappiness=100
+vm.vfs_cache_pressure=40
+# vm.swappiness=100
+vm.dirty_bytes" = 335544320
+vm.dirty_background_bytes" = 167772160
+vm.swappiness=20
 vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/10-touchpad.conf
-add_drivers+=" bcm5974 "
+# add_drivers+=" bcm5974 "
 EOF
 
 # Repositorios mais rapidos
+### GLIB-C ###
+
+# cat <<EOF >>/mnt/etc/xbps.d/00-repository-main.conf
+# #repository=https://mirror.clarkson.edu/voidlinux
+# repository=http://void.chililinux.com/voidlinux/current
+# repository=https://mirrors.servercentral.com/voidlinux/current
+# EOF
+
+# cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
+# #repository=https://mirror.clarkson.edu/voidlinux/nonfree
+# #repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
+# repository=http://void.chililinux.com/voidlinux/current/nonfree
+# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+# EOF
+
+# cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+# #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
+# #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
+# #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
+# repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
+# repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+# EOF
+
+# cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
+# #repository=https://mirror.clarkson.edu/voidlinux/multilib
+# #repository=http://ftp.dk.xemacs.org/voidlinux/multilib
+# #repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
+# repository=http://void.chililinux.com/voidlinux/current/multilib
+# repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+# EOF
+
+### MUSL
+
+
 cat <<EOF >>/mnt/etc/xbps.d/00-repository-main.conf
 #repository=https://mirror.clarkson.edu/voidlinux
-repository=http://void.chililinux.com/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
-EOF
-
-cat <<EOF >>/mnt/etc/xbps.d/10-repository-nonfree.conf
-#repository=https://mirror.clarkson.edu/voidlinux/nonfree
-#repository=http://ftp.dk.xemacs.org/voidlinux/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+# repository=http://void.chililinux.com/voidlinux/current
+repository=https://mirrors.servercentral.com/voidlinux/current/musl
 EOF
 
 cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
 #repository=https://mirror.clarkson.edu/voidlinux/multilib/nonfree
 #repository=http://ftp.dk.xemacs.org/voidlinux/multilib/nonfree
-#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-EOF
-
-cat <<EOF >>/mnt/etc/xbps.d/10-repository-multilib.conf
-#repository=https://mirror.clarkson.edu/voidlinux/multilib
-#repository=http://ftp.dk.xemacs.org/voidlinux/multilib
-#repository=http://ftp.debian.ru/mirrors/voidlinux/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-repository=repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+#repository=http://ftp.debian.ru/mirrors/voidlinux/current/musl/multilib/nonfree
+# repository=http://void.chililinux.com/voidlinux/current/musl/multilib/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
 EOF
 
 # Ignorar alguns pacotes
@@ -276,26 +298,28 @@ EOF
 
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-air
+vm
 EOF
+# air
 
 # Hosts
 
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 ::1 localhost
-127.0.1.1 air.localdomain air
+127.0.1.1 air.localdomain vm
 EOF
+# 127.0.1.1 air.localdomain air
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
+# UEFI_UUID=$(blkid -s UUID -o value /dev/sda1)
 # UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/sda4)
 # SWAP_UUID=$(blkid -s UUID -o value /dev/sda2)
-SWAP_UUID=$(blkid -s UUID -o value /dev/sda2)
+# SWAP_UUID=$(blkid -s UUID -o value /dev/sda2)
 # ROOT_UUID=$(blkid -s UUID -o value /dev/vda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda3)
+# ROOT_UUID=$(blkid -s UUID -o value /dev/sda3)
 # HOME_UUID=$(blkid -s UUID -o value /dev/sda5)
 
 echo $UEFI_UUID
@@ -310,20 +334,20 @@ cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # ROOTFS
-UUID=$ROOT_UUID /               btrfs rw,$BTRFS_OPTS,subvol=@                    0 0
-UUID=$ROOT_UUID /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots           0 0
-UUID=$ROOT_UUID /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log             0 0
-UUID=$ROOT_UUID /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps      0 0
+LABEL="Voidlinux" /               btrfs rw,$BTRFS_OPTS,subvol=@                    0 0
+LABEL="Voidlinux" /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots           0 0
+LABEL="Voidlinux" /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log             0 0
+LABEL="Voidlinux" /var/cache/xbps btrfs rw,$BTRFS_OPTS,subvol=@var_cache_xbps      0 0
 
 #HOME_FS
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home              0 0
-UUID=$ROOT_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
+# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
+LABEL="Voidlinux" /home           btrfs rw,$BTRFS_OPTS,subvol=@home                0 0
 
 # EFI
-UUID=$UEFI_UUID /boot/efi vfat defaults,noatime,nodiratime  0 2
+LABEL="EFI" /boot/efi vfat defaults,noatime,nodiratime  0 2
 
 # Swap
-UUID=$SWAP_UUID none swap defaults,noatime                                                                                                      0 0
+LABEL="SWAP" none swap defaults,noatime                                                                                                      0 0
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime                                                                                                0 0
 tmpfs /tmp tmpfs noatime,nosuid,mode=1777                                                                                                       0 0
@@ -400,36 +424,41 @@ EOF
 chroot /mnt ln -sfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
 #Locales
-chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt xbps-reconfigure -f glibc-locales
+# chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
+# chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
+# chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
-# chroot /mnt $XBPS_ARCH xbps-install -y base-system base-devel linux-firmware intel-ucode void-repo-debug void-repo-nonfree void-repo-multilib void-repo-multilib-nonfree linux-firmware-network acl-progs light kbdlight powertop arp-scan xev earlyoom opendoas base-devel zstd bash-completion minised nocache parallel util-linux bcache-tools necho starship linux-lts linux-lts-headers efivar dropbear neovim base-devel gummiboot ripgrep dust exa zoxide fzf xtools lm_sensors inxi lshw intel-ucode zsh alsa-utils vim git wget curl efibootmgr btrfs-progs nano ntfs-3g mtools dosfstools sysfsutils htop elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils --yes
-# chroot /mnt $XBPS_ARCH xbps-install base-minimal linux linux-headers opendoas ncurses efibootmgr libgcc efivar bash zsh grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute wifi-firmware file iputils iw zstd --yes
-chroot /mnt $XBPS_ARCH xbps-install base-system base-devel linux-lts linux-lts-headers opendoas ncurses efibootmgr libgcc efivar bash grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd dropbear --yes
-# chroot /mnt $XBPS_ARCH xbps-install base-system linux-firmware intel-ucode linux-firmware-network linux5.15 linux5.15-headers efivar efibootmgr opendoas linux-firmware intel-ucode linux-firmware-network acl-progs ntfs-3g mtools sysfsutils base-devel util-linux gummiboot lm_sensors bash zsh man-pages btrfs-progs e2fsprogs dosfstools dash pciutils usbutils kbd ethtool kmod acpid eudev iproute2 traceroute iputils iw zstd --yes
+
+# chroot /mnt $XBPS_ARCH xbps-install base-system base-devel linux-lts linux-lts-headers opendoas ncurses efibootmgr libgcc efivar bash grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware intel-ucode pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd dropbear--yes
+
+chroot /mnt $XBPS_ARCH xbps-install base-system base-devel linux5.10 linux5.10-headers void-repo-nonfree opendoas ncurses libgcc efivar bash grep tar less man-pages mdocml btrfs-progs e2fsprogs dosfstools dash procps-ng linux-firmware  pciutils usbutils kbd ethtool kmod acpi acpi_call-dkms acpid eudev iproute2 traceroute file iputils iw zstd dropbear --yes
+
 chroot /mnt xbps-remove base-voidstrap --yes
 
 # Grub #
 # chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit os-prober acl-progs btrfs-progs --yes
 
+
 # Gummiboot #
 #chroot /mnt xbps-install -S gummiboot --yes
 chroot /mnt xbps-install -S grub-x86_64-efi acl-progs btrfs-progs --yes
-chroot /mnt xbps-install -S void-repo-debug void-repo-multilib void-repo-multilib-nonfree void-repo-nonfree --yes
-
+chroot /mnt xbps-install -S void-repo-debug void-repo-nonfree --yes
+# void-repo-multilib void-repo-multilib-nonfree
 # Some firmwares and utils
-chroot /mnt xbps-install -S linux-firmware intel-ucode dracut dracut-uefi gptfdisk ntfs-3g mtools sysfsutils util-linux lm_sensors xdg-user-dirs xdg-utils --yes
-chroot /mnt xbps-install -S light kbdlight powertop bash-completion xtools alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio lsscsi dialog git curl nano elogind vsv vpm chrony bluez bluez-alsa sof-firmware xdg-desktop-portal --yes
+chroot /mnt xbps-install -S linux-firmware dracut dracut-uefi gptfdisk mtools sysfsutils util-linux lm_sensors xdg-user-dirs xdg-utils --yes
+chroot /mnt xbps-install -S brillo powertop bash-completion xtools alsa-utils alsa-firmware alsa-plugins-ffmpeg alsa-plugins-jack alsa-plugins-samplerate alsa-plugins-speex alsa-plugins-pulseaudio lsscsi dialog git curl nano vsv vpm chrony bluez bluez-alsa xdg-desktop-portal --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb dbus-elogind dbus-elogind-libs dbus-elogind-x11 polkit xdg-user-dirs
 #chroot /mnt xbps-remove -oORvy sudo
 
+
+chroot /mnt xbps-install -Sy elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 --yes
+
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg mesa-vulkan-intel vulkan-loader fuse-exfat --yes
+chroot /mnt xbps-install -Sy xorg-minimal xorg-server xorgproto libXpm xorg-apps xorg-fonts xorg-input-drivers libva-intel-driver mesa-dri mesa-vulkan-intel vulkan-loader --yes
 
 # NetworkManager e iNet Wireless Daemon
 chroot /mnt xbps-install -S NetworkManager iwd --yes
@@ -437,7 +466,7 @@ chroot /mnt xbps-install -S NetworkManager iwd --yes
 # Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
 mkdir -pv /mnt/etc/NetworkManager/conf.d/
 touch /mnt/etc/NetworkManager/conf.d/wifi_backend.conf
-cat <<EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<\EOF >>/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
 [device]
 wifi.backend=iwd
 wifi.iwd.autoconnect=yes
@@ -479,7 +508,7 @@ EOF
 # chroot /mnt xbps-install -S mons --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+chroot /mnt xbps-install -S gvfs gvfs-smb gvfs-mtp gvfs-afc avahi avahi-discover udisks2 samba --yes
 
 # PACKAGES FOR SYSTEM LOGGING
 chroot /mnt xbps-install -S socklog-void --yes
@@ -487,17 +516,19 @@ chroot /mnt xbps-install -S socklog-void --yes
 chroot /mnt xbps-install -S irqbalance earlyoom powertop --yes
 
 # Dev virt
-chroot /mnt xbps-install -S podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
+chroot /mnt xbps-install -S nix -y
+# chroot /mnt xbps-install -S podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
-chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
-chroot /mnt ln -srvf /etc/sv/podman /var/service
-chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
+chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
+# chroot /mnt ln -srvf /etc/sv/podman /var/service
+# chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
 
 # NFS
 chroot /mnt xbps-install -S nfs-utils sv-netmount thermald tlp --yes
 
 # Set zsh as default
-chroot /mnt chsh -s /usr/bin/zsh root
+# chroot /mnt chsh -s /usr/bin/zsh root
 
 # Define user and root password
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
@@ -518,7 +549,7 @@ chroot /mnt xbps-reconfigure -fa
 
 # Touchpad
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+cat <<\EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # Identifier "SynPS/2 Synaptics TouchPad"
@@ -533,9 +564,9 @@ section "InputClass"
 EndSection
 EOF
 
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/00-keyboard.conf
+cat <<\EOF >/mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 Section "InputClass"
-        Identifier              "system-keyboard"
+        # Identifier              "system-keyboard"
         MatchIsKeyboard         "on"
         Option "XkbLayout"      "us"
         Option "XkbModel"       "pc105"
@@ -544,7 +575,7 @@ Section "InputClass"
 EndSection
 EOF
 
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/99-killx.conf
+cat <<\EOF >/mnt/etc/X11/xorg.conf.d/99-killx.conf
 Section "ServerFlags"
         Option  "DontZap"       "false"
 EndSection
@@ -556,20 +587,22 @@ Section "InputClass"
 EndSection
 EOF
 
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
-Section "Device"
-        Identifier      "Intel Graphics"
-        Driver          "Intel"
-        Option          "AccelMethod"           "sna"
-        Option          "TearFree"              "True"
-EndSection
-EOF
+# cat <<\EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
+# Section "Device"
+#         Identifier      "Intel Graphics"
+#         # Driver          "Modesetting"
+#         Driver          "Intel"
+#         Option          "AccelMethod"           "sna"
+#         Option          "TearFree"              "True"
+#         Option          "DRI"                   "2"
+# EndSection
+# EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -638,7 +671,7 @@ chroot /mnt ln -svrf /etc/sv/acpid /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -svrf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-chroot /mnt ln -svrf /etc/sv/tlp /etc/runit/runsvdir/default/
+# chroot /mnt ln -svrf /etc/sv/tlp /etc/runit/runsvdir/default/
 chroot /mnt ln -svrf /etc/sv/dropbear /etc/runit/runsvdir/default/
 chroot /mnt ln -svrf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
@@ -679,7 +712,7 @@ chroot /mnt ln -sv /etc/sv/iwd /etc/runit/runsvdir/default/
 # alias dissh="export DISPLAY=:0.0"
 # alias bquit="bspc quit"
 
-cat <<EOF >/mnt/etc/samba/smb.conf
+cat <<\EOF >/mnt/etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
@@ -757,7 +790,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /mnt/etc/polkit-1/rules.d
-cat <<EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<\EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -786,7 +819,7 @@ EOF
 chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Voidlinux" --efi-directory=/boot/efi --no-nvram --removable --recheck
 # chroot /mnt update-grub
 
-cat <<EOF >/mnt/etc/default/grub
+cat <<\EOF >/mnt/etc/default/grub
 #
 # Configuration file for GRUB.
 #
@@ -796,7 +829,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet hid_apple.swap_opt_cmd=1 loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet hid_apple.swap_opt_cmd=1 loglevel=0 console=tty2 udev.log_level=0 vt.global_cursor_default=0 mitigations=off nowatchdog intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=on intel_iommu=igfx_off no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
@@ -818,7 +851,7 @@ GRUB_COLOR_HIGHLIGHT="yellow/black"
 #GRUB_DISABLE_OS_PROBER=false
 EOF
 
-cat <<EOF >>/mnt/etc/grub.d/custom_40
+cat <<\EOF >>/mnt/etc/grub.d/custom_40
 
 menuentry "Reboot" {
 reboot
@@ -832,17 +865,18 @@ EOF
 chroot /mnt update-grub
 
 ##Fix distrobox
-touch /mnt/home/juca/.xprofile
-cat <<\EOF >/mnt/home/juca/.xprofile
+# touch /mnt/home/juca/.xprofile
+# cat <<\EOF >/mnt/home/juca/.xprofile
 #!/bin/sh
 
 ### Distrobox
 # xhost +si:localuser:$USER
-xhost +si:localuser:juca
-EOF
 
-chroot /mnt chmod +x /home/juca/.xprofile
-chroot /mnt chown -R juca:juca /home/juca/.xprofile
+# xhost +si:localuser:juca
+# EOF
+
+# chroot /mnt chmod +x /home/juca/.xprofile
+# chroot /mnt chown -R juca:juca /home/juca/.xprofile
 
 chroot /mnt xbps-reconfigure -fa
 
@@ -865,7 +899,7 @@ chroot /mnt xbps-reconfigure -fa
 
 # Boot Faster with intel
 touch /mnt/etc/modprobe.d/i915.conf
-cat <<EOF >/mnt/etc/modprobe.d/i915.conf
+cat <<\EOF >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
@@ -910,6 +944,26 @@ EOF
 
 # chroot /mnt bash -c 'echo "options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 gpt acpi_osi=! acpi_osi=Darwin acpi_mask_gpe=0x06 nomodeset init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug  net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10**'
 
+vpm i lightdm lightdm-gtk3-greeter  -y
+# repository=https://repo-fastly.voidlinux.org/voidlinux/current/musl
+
+# ln -svrf /etc/sv/lightdm /var/service
+
 printf "\e[1;32mInstallation finished! Review your configuration, umount -a and reboot.\e[0m"
 
 ### interface name: wlp2s0b1
+
+# nix upgrade-nix --profile ~juca/.local/state/nix/profiles/profile
+# sudo nix-channel --remove nixpkgs
+# nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+# sudo useradd -c "Nix build user $USER" \
+#   -d /var/empty -g nixbld -G nixbld \
+#   -M -N -r -s "$(which nologin)" \
+#   nixbld_$USER
+# nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+# nix-channel --update
+
+# nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+# nix-channel --update; nix-env --install --attr nixpkgs.nix nixpkgs.cacert
+# nix-env --set-flag priority 10 nix-2.18.1 nss-cacert-3.95
+# home-manager switch -b backup --impure --flake .#juca@vm --extra-experimental-features 'nix-command flake ca-derivations auto-allocate-uids cgroups'

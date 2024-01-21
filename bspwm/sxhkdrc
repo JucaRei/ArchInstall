@@ -1,0 +1,140 @@
+XF86AudioLowerVolume
+  pactl -- set-sink-volume 0 -2%
+
+XF86AudioMicMute
+  pactl set-source-mute 1 toggle
+
+XF86AudioMute
+  pactl list sinks | grep -q Mute:.no && pactl set-sink-mute 0 1 || pactl set-sink-mute 0 0
+
+XF86AudioNext
+  playerctl next
+
+XF86AudioPause
+  playerctl pause
+
+XF86AudioPlay
+  playerctl play
+
+XF86AudioPrev
+  playerctl previous
+
+XF86AudioRaiseVolume
+  pactl -- set-sink-volume 0 +2%
+
+XF86KbdBrightnessDown
+  /nix/store/sn457vw2qj98076an78g01y9ii4bjqd0-kbdlight-1.3/bin/kdblight down 2
+
+XF86KbdBrightnessUp
+  /nix/store/sn457vw2qj98076an78g01y9ii4bjqd0-kbdlight-1.3/bin/kdblight up 2
+
+XF86MonBrightnessDown
+  /nix/store/2bfa6d6fnf5hjp7cvmhif6004hgwy65x-brillo-1.4.12/bin/brillo -U 2
+
+XF86MonBrightnessUp
+  /nix/store/2bfa6d6fnf5hjp7cvmhif6004hgwy65x-brillo-1.4.12/bin/brillo -A 2
+
+alt + Tab
+  bash ~/.config/rofi/window-switcher/window-switcher.sh
+
+alt + super +  {Left,Down,Up,Right}
+  bspc node -z {left -20 0 || bspc node -z right -20 0, \
+              bottom 0 20 || bspc node -z top 0 20,\
+              top 0 -20 || bspc node -z bottom 0 -20,\
+              right 20 0 || bspc node -z left 20 0}
+
+
+super + @space
+  rofi -show drun -show-icons
+
+super + Escape
+  pkill -USR1 -x sxhkd
+
+super + Return
+  alacritty
+
+super + alt + {q,r}
+  bscp {quit,wm -r}
+
+super + b
+  thorium
+
+super + bracket{left,right}
+  bspc desktop -f {prev,next}.local
+
+super + ctrl + shift + space
+  bspc query -N -d | xargs -I id -n 1 bspc node id -p cancel
+
+super + ctrl + space
+  bspc node -p cancel
+
+super + ctrl + {1-9}
+  bspc node -o 0.{1-9}
+
+super + ctrl + {h,j,k,l}
+  bspc node -p {west,south,north,east}
+
+super + ctrl + {m,x,y,z}
+  bspc node -g {marked,locked,sticky,private}
+
+super + e
+  nautilus
+
+super + g
+  bspc node -s biggest.window
+
+super + m
+  bspc desktop -l next
+
+super + q
+  bspc node -{c,k}
+
+super + shift + a
+  $HOME/Pictures/Screenshots --area-cb
+
+super + shift + e
+  $HOME/Pictures/Screenshots - -area
+
+super + shift + f
+  $HOME/Pictures/Screenshots --full-cb
+
+super + shift + p
+  $HOME/Pictures/Screenshots --full
+
+super + shift + {Left,Right}
+  bspc node -d {prev,next}.local --follow
+
+super + y
+  bspc node newest.marked.local -n newest.!automatic.local
+
+super + {Left,Right}
+  bspc desktop -f {prev,next}.local
+
+super + {_,shift + }c
+  bspc node -f {next,prev}.local.!hidden.window
+
+super + {_,shift + }{h,j,k,l}
+  bspc node -{f,s} {west,south,north,east}
+
+super + {_,shift +}{1-9,0}
+  bspc {desktop -f,node -d} '{1-9,10}'
+
+super + {_,shift +}{Left,Right,Up,Down}
+  bspc node -{f,s} {west,east,north,south}
+
+super + {grave,Tab}
+  bspc {node,desktop} -f last
+
+super + {o,i}
+  bspc wm -h off;
+ bspc node {older,newer} -f;
+ bspc wm -h on
+
+super + {p,b,comma,period}
+  bspc node -f @{parent,brother,first,second}
+
+super + {t,h,f}
+  bspc node -t '~{tiled,floating,fullscreen}'
+
+~button3
+  xqp 0 $(xdo id -N Bspwm -n root) && jgmenu_run
