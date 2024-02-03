@@ -13,3 +13,5 @@ mkpart primary xfs 2 100%
 print
 quit
 END
+
+0;

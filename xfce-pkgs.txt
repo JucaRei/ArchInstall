@@ -89,3 +89,5 @@
 [-] xfce4-whiskermenu-plugin-dbg-2.7.3_1   Alternate menu for Xfce4 (debug files)
 [-] xfce4-xkb-plugin-dbg-0.8.3_1           Plugin to switch keyboard layouts for the Xfce4 panel (debug files)
 [vpm]  [xbps-query -v -Rs xfce4] return code: 0 
+
+octicons icon product
