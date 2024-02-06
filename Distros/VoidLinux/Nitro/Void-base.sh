@@ -646,7 +646,7 @@ EOF
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 ##############################################
@@ -811,7 +811,7 @@ EOF
 # chroot /mnt btrfs property set /var/swap/swapfile compression ""
 # chroot /mnt chmod 600 /var/swap/swapfile
 # chroot /mnt dd if=/dev/zero of=/var/swap/swapfile bs=1M count=8192 status=progress
-# 
+#
 # chroot /mnt mkswap /var/swap/swapfile
 # chroot /mnt chmod u=rw,go= /var/swap/swapfile # Set the permissions for the swapfile (only readable and writable by root)
 # chroot /mnt swapon -va /var/swap/swapfile
@@ -858,7 +858,7 @@ chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
 
-# podman # 
+# podman #
 chroot /mnt ln -srvf /etc/sv/binfmt-support /var/service
 chroot /mnt ln -srvf /etc/sv/podman /var/service
 chroot /mnt ln -srvf /etc/sv/podman-docker /var/service
@@ -1057,16 +1057,16 @@ cat <<\EOF >> /mnt/home/juca/.envs/dual.sh
 # ### Dual graphics
 # # eDP1 - Lap Screen  |  HDMI-1-0 External monitor
 # # Lightdm etc
-# 
+#
 # #xrandr --setprovideroffloadsink NVIDIA-G0 Intel &
 # xrandr --setprovideroffloadsink NVIDIA-G0 modesetting &
 # numlockx on &
-# 
+#
 # XCOM0="$(xrandr -q | grep 'HDMI-1-0 connected')"
 # # XCOM1=$(xrandr --output eDP1 --primary --auto --output HDMI-1-0 --auto --left-of eDP1)
 # XCOM1="$(xrandr --output eDP-1 --primary --mode 1920x1080 --pos 1920x0 --rotate normal --output HDMI-1-0 --mode 1920x1080 --pos 0x0 --rotate normal)"
 # XCOM2="$(xrandr --output eDP1 --primary --auto)"
-# 
+#
 # #if the external monitor is connected, then we tell XRANDR to set up an extended desktop
 # if [ -n "$XCOM0" ] || [ ! "$XCOM0" = "" ]; then
 #   echo $XCOM1
@@ -1161,7 +1161,7 @@ printf "\e[1;32mInstallation base finished! Umount -a and reboot.\e[0m"
 # ignorepkg=xfce4-terminal
 # ignorepkg=parole
 # EOF
-# 
+#
 
 ###########################
 #### Fix Dual provider ####

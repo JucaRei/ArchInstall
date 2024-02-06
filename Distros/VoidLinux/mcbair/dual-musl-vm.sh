@@ -966,4 +966,4 @@ printf "\e[1;32mInstallation finished! Review your configuration, umount -a and 
 # nix-channel --add https://nixos.org/channels/nixpkgs-unstable
 # nix-channel --update; nix-env --install --attr nixpkgs.nix nixpkgs.cacert
 # nix-env --set-flag priority 10 nix-2.18.1 nss-cacert-3.95
-# home-manager switch -b backup --impure --flake .#juca@vm --extra-experimental-features 'nix-command flake ca-derivations auto-allocate-uids cgroups'
+# home-manager switch -b backup --impure --flake .#juca@vm --extra-experimental-features 'nix-command flakes ca-derivations auto-allocate-uids cgroups'

@@ -33,40 +33,40 @@ sed -i '/\[extra\]/a SigLevel\ =\ PackageRequired' /etc/pacman.conf
 pacman -Syyw
 
 # Add Chaotic repo
-pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
-pacman-key --lsign-key FBA220DFC880C036
-pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
+# pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+# pacman-key --lsign-key FBA220DFC880C036
+# pacman -U 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst' --noconfirm
 
 # Add Liquorix
-pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
-pacman-key --lsign-key 9AE4078033F8024D
+# pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys 9AE4078033F8024D
+# pacman-key --lsign-key 9AE4078033F8024D
 
 # Add Andontie Repo
-pacman-key --recv-key B545E9B7CD906FE3
-pacman-key --lsign-key B545E9B7CD906FE3
+# pacman-key --recv-key B545E9B7CD906FE3
+# pacman-key --lsign-key B545E9B7CD906FE3
 
-cat <<\EOF >>/etc/pacman.conf
+# cat <<\EOF >>/etc/pacman.conf
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
 
-[chaotic-aur]
-Include = /etc/pacman.d/chaotic-mirrorlist
+# [chaotic-aur]
+# Include = /etc/pacman.d/chaotic-mirrorlist
 
-EOF
+# EOF
 
-sed -i -e '$a [andontie-aur]' /etc/pacman.conf
-sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
+# sed -i -e '$a [andontie-aur]' /etc/pacman.conf
+# sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
 
 pacman -Sy
 
 # OLDMAC INSTALL BASE
 pacman -S archlinux-keyring
 pacman -Syyy
-pacman -S grub grub-btrfs efibootmgr exfat-utils intel-ucode networkmanager networkmanager-iwd iwd wireless_tools dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
-# pacman -S grub grub-btrfs efibootmgr exfat-utils intel-ucode networkmanager network-manager-applet wireless_tools dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
+pacman -S grub os-prober exfat-utils intel-ucode networkmanager iwd wireless_tools dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion ntfs-3g firewalld rsync acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
+# pacman -S grub grub-btrfs efibootmgr exfat-utils intel-ucode networkmanager network-manager-applet wireless_tools dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils xdg-utils xdg-user-dirs bash-completion ntfs-3g firewalld rsync acpi acpi_call sof-firmware acpid gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns grub-btrfs efibootmgr
 
 # apci & tlp
-pacman -S acpi acpi_call-lts acpid acpilight --noconfirm
+pacman -S acpi acpi_call-lts --noconfirm
 
 #Open-Source Drivers (Oldpc)
 # pacman -S xf86-video-nouveau
@@ -163,10 +163,11 @@ mkinitcpio -P linux-lts
 # echo "/swapfile      none     swap      defaults  0 0" >> /etc/fstab
 
 # Grub
-grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot --no-nvram --removable --recheck
-grub-mkconfig -o /boot/grub/grub.cfg
-sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg
+# grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot --no-nvram --removable --recheck
+grub-install --target=i386-pc /dev/sda --recheck
+# grub-mkconfig -o /boot/grub/grub.cfg
+# sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+# grub-mkconfig -o /boot/grub/grub.cfg
 
 # Systemd-Boot
 # bootctl --path=/boot install
@@ -178,10 +179,28 @@ grub-mkconfig -o /boot/grub/grub.cfg
 # linux   /vmlinuz-linux-lts
 # initrd  /intel-ucode.img
 # initrd  /initramfs-linux-lts.img
-# options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
+# options root=/dev/sda2 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=linux acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
 # EOF
 # options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce  vt.global_cursor_default=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
 
 paccache -rk0
 
+su juca
+cd ~
+git clone --depth=1 https://aur.archlinux.org/yay-bin.git
+cd yay-bin
+makepkg -si --noconfirm
+
+yay -S nvidia-340xx-lts-dkms nvidia-340xx-utils lib32-nvidia-340xx-utils lightdm lightdm-slick-greeter
+
+
+# chip-id: 10de:0407 class-ID: 0300
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
+
+# /etc/udev/rules.d/backlight.rules
+# ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
+
+
+# /etc/udev/rules.d/81-backlight.rules
+# Set backlight level to 8
+# SUBSYSTEM=="backlight", ACTION=="add", KERNEL=="acpi_video0", ATTR{brightness}="8"

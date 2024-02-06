@@ -536,16 +536,16 @@ Section "InputClass"
 EndSection
 EOF
 
-cat <<\EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
-Section "Device"
-        Identifier      "Intel Graphics"
-        # Driver          "Modesetting"
-        Driver          "Intel"
-        Option          "AccelMethod"           "sna"
-        Option          "TearFree"              "True"
-        Option          "DRI"                   "2"
-EndSection
-EOF
+# cat <<\EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
+# Section "Device"
+#         Identifier      "Intel Graphics"
+#         # Driver          "Modesetting"
+#         Driver          "Intel"
+#         Option          "AccelMethod"           "sna"
+#         Option          "TearFree"              "True"
+#         Option          "DRI"                   "2"
+# EndSection
+# EOF
 
 cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
@@ -910,5 +910,8 @@ printf "\e[1;32mInstallation finished! Review your configuration, umount -a and 
 #   -d /var/empty -g nixbld -G nixbld \
 #   -M -N -r -s "$(which nologin)" \
 #   nixbld_$USER
+
 # nix-channel --add https://nixos.org/channels/nixpkgs-unstable
-# nix-channel --update
+# nix-channel --update; nix-env --install --attr nixpkgs.nix nixpkgs.cacert
+# nix-env --set-flag priority 10 nix-2.18.1 nss-cacert-3.95
+# home-manager switch -b backup --impure --flake .#juca@vm --extra-experimental-features 'nix-command flakes ca-derivations auto-allocate-uids cgroups'

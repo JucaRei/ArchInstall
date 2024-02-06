@@ -102,6 +102,8 @@ umount -v /mnt
 set -e
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,commit=120,autodefrag,discard=async"
 
+parted -s /dev/sda mklabel msdos
+
 ## Mount partitions (Oldmac)
 mount -o $BTRFS_OPTS,subvol=@ /dev/sda4 /mnt
 mkdir -pv /mnt/{home,.snapshots,boot/grub,var/log,var/tmp,var/cache,var/lib/pacman}
