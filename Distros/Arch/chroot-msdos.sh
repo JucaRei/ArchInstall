@@ -23,20 +23,23 @@ pacman -Syyy
 
 # =======================================================================================================================================================
 
+# DRIVE="/dev/sda"
+DRIVE="/dev/vda"
+
 #####################
 ###### OldMac #######
 #####################
 
-parted -s /dev/sda mklabel msdos
-sgdisk -n 0:0:-4GiB ${DRIVE}
-# parted -s /dev/sda mkpart primary ext4 1M 100%
-parted -s /dev/sda set 1 boot on
+parted -s ${DRIVE} mklabel msdos
+# sgdisk -n 0:0:-4GiB ${DRIVE}
+# parted -s ${DRIVE} mkpart primary ext4 1M 100%
+parted -s ${DRIVE} set 1 boot on
 
-mkfs.btrfs /dev/sda1 -f -L "Archlinux"
-mkswap /dev/sda1 -L "SWAP"
-swapon /dev/disk/by-label/SWAP
+mkfs.btrfs ${DRIVE} -f -L "Archlinux"
+# mkswap ${DRIVE}1 -L "SWAP"
+# swapon /dev/disk/by-label/SWAP
 
-# HD="/dev/sda"
+# HD="${DRIVE}"
 # BOOT_SIZE=200
 # SWAP_SIZE=2000
 
@@ -84,6 +87,7 @@ btrfs su cr /mnt/@
 btrfs su cr /mnt/@pacman
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
+btrfs su cr /mnt/@srv
 btrfs su cr /mnt/@swap
 btrfs su cr /mnt/@tmp
 btrfs su cr /mnt/@cache
@@ -105,6 +109,7 @@ mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/Archlinux /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Archlinux /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log /dev/disk/by-label/Archlinux /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/Archlinux /mnt/var/cache
+mount -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Archlinux /mnt/
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/disk/by-label/Archlinux /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol=@swap /dev/disk/by-label/Archlinux /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol=@pacman /dev/disk/by-label/Archlinux /mnt/var/lib/pacman
