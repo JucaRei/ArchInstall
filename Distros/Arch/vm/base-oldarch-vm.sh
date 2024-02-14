@@ -200,7 +200,7 @@ EOF
 
 pacman -Rns linux linux-lts --noconfirm
 
-pacman -Sy grub grub-btrfs efibootmgr chrony  irqbalance networkmanager iwd samba dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion  firewalld nss-mdns  ntfs-3g --noconfirm
+pacman -Sy grub grub-btrfs efibootmgr chrony  irqbalance networkmanager iwd samba dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion  firewalld nss-mdns doas ntfs-3g --noconfirm
 # preload ananicy-cpp exfat-utils
 # apci & tlp
 pacman -S acpi acpi_call-lts tlp --noconfirm
@@ -234,16 +234,18 @@ grub-mkconfig -o /boot/grub/grub.cfg
 set -e
 USER=juca
 
-useradd -m $USER
-echo $USER:200291 | chpasswd
+chsh -s /bin/zsh root
+
+# useradd -m $USER
 useradd -m -g users -G wheel -s /bin/zsh $USER
+useradd -m -g users -G wheel -s /bin/bash $USER
+echo $USER:200291 | chpasswd
 sed -i 's/# %wheel ALL=(ALL) NOPASSWD/%wheel ALL=(ALL) NOPASSWD/g' /etc/sudoers
 # usermod -aG wheel $USER
 
 echo "$USER ALL=(ALL) ALL" >>/etc/sudoers.d/$USER
 echo "$USER ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/$USER
 
-chsh -s /bin/zsh root
 
 systemctl enable NetworkManager
 systemctl enable bluetooth
@@ -405,9 +407,34 @@ EOF
 
 chown -c root:root /etc/doas.conf
 
-sed -i 's/MODULES=()/MODULES=(btrfs crc32c-intel nvidia)/g' /etc/mkinitcpio.conf
-sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
-sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
+# - Preventing snapshot slowdowns
+echo 'PRUNENAMES = ".snapshots"' >> /etc/updatedb.conf
+
+# Optimize Makepkg
+# sed -i 's/^CFLAGS/CFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf
+# sed -i 's/^CXXFLAGS/CXXFLAGS="${CFLAGS}"/' /etc/makepkg.conf
+# sed -i 's/^#RUSTFLAGS/RUSTFLAGS="-C opt-level=2 -C target-cpu=native"/' /etc/makepkg.conf
+# sed -i 's/^#BUILDDIR/BUILDDIR=\/tmp\/makepkg makepkg/' /etc/makepkg.conf
+# sed -i 's/^#MAKEFLAGS/MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN) --quiet"/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSGZ/COMPRESSGZ=(pigz -c -f -n)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSBZ2/COMPRESSBZ2=(pbzip2 -c -f)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSXZ/COMPRESSXZ=(xz -T "$(getconf _NPROCESSORS_ONLN)" -c -z --best -)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSZST/COMPRESSZST=(zstd -c -z -q --ultra -T0 -22 -)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSLZ/COMPRESSLZ=(lzip -c -f)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSLRZ/COMPRESSLRZ=(lrzip -9 -q)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSLZO/COMPRESSLZO=(lzop -q --best)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSZ/COMPRESSZ=(compress -c -f)/' /etc/makepkg.conf
+# sed -i 's/^COMPRESSLZ4/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
+
+
+# sed -i 's/MODULES=()/MODULES=(btrfs crc32c-intel nvidia)/g' /etc/mkinitcpio.conf
+sed -i 's/MODULES=()/MODULES=(btrfs crc32c-intel)/g' /etc/mkinitcpio.conf
+sed -i 's/BINARIES=()/BINARIES=("\/usr\/bin\/btrfs")/' /etc/mkinitcpio.conf
+# sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs grub-btrfs-overlayfs)/g' /etc/mkinitcpio.conf
+sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt resume btrfs filesystems keyboard fsck resume btrfs grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+# sed -i 's/#COMPRESSION="zstd"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
+sed -i 's/#COMPRESSION="lz4"/COMPRESSION="lz4"/' /etc/mkinitcpio.conf
+sed -i 's/#COMPRESSION_OPTIONS=()/COMPRESSION_OPTIONS=(-9)/' /etc/mkinitcpio.conf
 mkinitcpio -P linux-lts
 
 paccache -rk0
@@ -435,14 +462,16 @@ cd /mnt
 
 cat <<- EOF > /mnt/user.sh
 yay -S --noconfirm bullet-train-oh-my-zsh-theme-git
-    # discord \
-    # discord-canary \
-    consolas-font \
-    # google-chrome \
-    # mirage \
-    # i3-gaps \
-    # rofi \
-    oh-my-zsh-git \
+   consolas-font \
+   ananicy-cpp \
+   preload \
+   # discord \
+   # discord-canary \
+   # google-chrome \
+   # mirage \
+   # i3-gaps \
+   # rofi \
+   oh-my-zsh-git \
    #  lib32-nvidia-340xx-utils \
    #  nvidia-340xx-lts-dkms \
    #  nvidia-340xx-utils \
@@ -468,7 +497,7 @@ cd /tmp
 wget -c https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
 gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
 ./btrfs_map_physical /var/swap/swapfile >btrfs_map_physical.txt
-filefrag -v /swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/tmp/resume.txt
+filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' >/tmp/resume.txt
 set -e
 RESUME_OFFSET=$(cat /tmp/resume.txt)
 ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
