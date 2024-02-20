@@ -33,7 +33,8 @@ reflector -l 3 --sort rate --save /etc/pacman.d/mirrorlist
 
 pacman -S --noconfirm --needed --noprogressbar --quiet awk
 
-DRIVE="/dev/vda"
+# DRIVE="/dev/vda"
+DRIVE="/dev/sda"
 UEFI=false
 
 if [ $UEFI == false ]
@@ -107,6 +108,7 @@ chmod 600 /mnt/var/swap/swapfile
 chattr +C /mnt/var/swap/swapfile
 lsattr /mnt/var/swap/swapfile
 dd if=/dev/zero of=/mnt/var/swap/swapfile bs=1M count=6144 status=progress
+# dd if=/dev/zero of=/mnt/var/swap/swapfile bs=1M count=12288 status=progress
 mkswap /mnt/var/swap/swapfile
 swapon /mnt/var/swap/swapfile
 
@@ -195,10 +197,10 @@ mkdir -pv /media/$USER
 cat <<EOF >>/etc/fstab
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
-tmpfs /tmp tmpfs noatime,size=5G,mode=1777 0 0
+tmpfs /tmp tmpfs noatime,size=7G,mode=1777 0 0
 EOF
 
-pacman -Rns linux linux-lts --noconfirm
+pacman -Rns linux linux-headers --noconfirm
 
 pacman -Sy grub grub-btrfs efibootmgr chrony  irqbalance networkmanager iwd samba dialog avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils pulseaudio-bluetooth pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack alsa-utils bash-completion  firewalld nss-mdns doas ntfs-3g --noconfirm
 # preload ananicy-cpp exfat-utils
@@ -271,7 +273,7 @@ USER=juca
 touch /etc/rc.local
 cat <<EOF >/etc/rc.local
 # PowerTop
-powertop --auto-tune
+# powertop --auto-tune
 
 # Preload
 preload
@@ -441,7 +443,7 @@ paccache -rk0
 
 cd /tmp
 git clone https://aur.archlinux.org/package-query.git
-chown -R $USER:$USER package-query
+chown -R $USER package-query
 cd package-query
 pacman -S yajl go --noconfirm
 sudo -u $USER makepkg
@@ -475,11 +477,11 @@ yay -S --noconfirm bullet-train-oh-my-zsh-theme-git
    #  lib32-nvidia-340xx-utils \
    #  nvidia-340xx-lts-dkms \
    #  nvidia-340xx-utils \
-    # ttf-google-fonts-git \
-    # ttf-symbola \
-    # google-chrome \
-    # visual-studio-code-bin \
-    # polybar \
+   # ttf-google-fonts-git \
+   # ttf-symbola \
+   # google-chrome \
+   # visual-studio-code-bin \
+   # polybar \
 # git clone --bare https://github.com/buttars/.dotfiles $HOME/.dotfiles
 # alias dotfiles="/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME"
 # dotfiles config --local status.showUntrackedFiles no
@@ -507,3 +509,5 @@ export RESUME_OFFSET
 sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=LABEL=Archlinux resume_offset=$RESUME_OFFSET"'"/g' /etc/default/grub
 
 # UUID=8097fba0-2b1a-443c-952d-3dd3d2d9b49a
+
+# curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install

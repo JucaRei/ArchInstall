@@ -284,7 +284,7 @@ mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 ## Early module for bbswitch dual graphics ##
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 touch /mnt/etc/modprobe.d/i915.conf
@@ -779,7 +779,7 @@ cat <<\EOF >> /mnt/etc/samba/smb.conf
    #usershare owner only = yes
    force create mode = 0070
    force directory mode = 0070
-   
+
    ### follow symlinks
    follow symlinks = yes
    wide links = yes
@@ -831,7 +831,7 @@ chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommend
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
-#Podman 
+#Podman
 chroot /mnt apt install podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname distrobox --no-install-recommends -y
 # Nix
 #chroot /mnt apt install nix-setup-systemd -y
