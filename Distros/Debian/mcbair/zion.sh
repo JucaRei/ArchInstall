@@ -553,7 +553,7 @@ ahci
 lz4hc
 lz4hc_compress
 zstd
-zram
+# zram
 z3fold
 EOF
 
@@ -991,3 +991,6 @@ printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
 
 ## ADD pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
+
+269568
+UUID=1c19ddbc-662f-4c6d-ab4a-acc868fb3d37

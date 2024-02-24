@@ -2,7 +2,7 @@
 
 
 #### Update and install needed packages ####
-apt update && apt install debootstrap btrfs-progs lsb-release wget -y
+apt update && apt install debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 #### Umount drive, if it's mounted ####
 
@@ -105,7 +105,7 @@ Debian_ARCH="amd64"
 
 ## btrfs options ##
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
-BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
+# BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
 
 ## fstab real hardware ##
 # UEFI_UUID=$(blkid -s UUID -o value ${DRIVE}1)
@@ -123,28 +123,24 @@ BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard
 #######################
 #### real hardware ####
 #######################
-mount -t btrfs -o $BTRFS_OPTS2 /dev/disk/by-label/Debian /mnt
+mount -t btrfs -o $BTRFS_OPTS /dev/disk/by-label/Debian /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
-btrfs su cr /mnt/@var_log
-btrfs su cr /mnt/@var_cache_apt
-# btrfs su cr /mnt/@swapa
+btrfs su cr /mnt/@log
+btrfs su cr /mnt/@cache
+btrfs su cr /mnt/@swap
 umount -v /mnt
 ## Make directories for mount ##
-mount -t btrfs -o $BTRFS_OPTS2,subvol=@ /dev/disk/by-label/Debian /mnt
-mkdir -pv /mnt/boot/efi
-mkdir -pv /mnt/home
-mkdir -pv /mnt/.snapshots
-mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/cache/apt
+mount -t btrfs -o $BTRFS_OPTS,subvol=@ /dev/disk/by-label/Debian /mnt
+mkdir -pv /mnt/{boot/efi,home,.snapshots,var/{log,cache,swap}}
 # mkdir -pv /mnt/swap
 ## Mount btrfs subvolumes ##
-mount -t btrfs -o $BTRFS_OPTS2,subvol=@home /dev/disk/by-label/Debian /mnt/home
+mount -t btrfs -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/Debian /mnt/home
 mount -t btrfs -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Debian /mnt/.snapshots
-mount -t btrfs -o $BTRFS_OPTS,subvol=@var_log /dev/disk/by-label/Debian /mnt/var/log
-mount -t btrfs -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/disk/by-label/Debian /mnt/var/cache/apt
-# mount -o $BTRFS_OPTS,subvol=@swap /dev/disk/by-label/SWAP /mnt/swap
+mount -t btrfs -o $BTRFS_OPTS,subvol=@log /dev/disk/by-label/Debian /mnt/var/log
+mount -t btrfs -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/Debian /mnt/var/cache
+mount -t btrfs -o noatime,nodiratime,subvol=@swap /dev/disk/by-label/Debian /mnt/var/swap
 mount -t vfat -o noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi
 
 ####################################################
@@ -153,7 +149,7 @@ mount -t vfat -o noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
 # debootstrap --variant= --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
-debootstrap --verbose --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+debootstrap --verbose --include=apt,aptitude,dbus-broker,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -362,14 +358,14 @@ chroot /mnt apt upgrade -y
 ######################
 
 cat <<EOF >/mnt/etc/hostname
-zion
+anubis
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<\EOF >/mnt/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 zion
+127.0.1.1 anubis
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -704,7 +700,7 @@ chroot /mnt chsh -s /usr/bin/bash root
 #### sudo ####
 ##############
 
-chroot /mnt apt install sudo -y
+chroot /mnt apt install sudo rtkit chrony -y
 
 ##############################
 #### User's and passwords ####
