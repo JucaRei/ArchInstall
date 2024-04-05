@@ -27,6 +27,23 @@ pacman-key --populate
 
 pacman -Syyy
 
+# kernel-lts
+
+# [kernel-lts]
+# Server = https://repo.m2x.dev/current/$repo/$arch
+
+# pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-key 76C6E477042BFE985CC220BD9C08A255442FAFF0
+# sudo pacman-key --lsign 76C6E477042BFE985CC220BD9C08A255442FAFF0
+
+# chaotic
+
+pacman-key --keyserver hkps://keyserver.ubuntu.com --recv-keys FBA220DFC880C036
+pacman-key --lsign-key FBA220DFC880C036
+pacman-key --populate
+
+pacman -Syyy
+
+
 # =======================================================================================================================================================
 
 umount -R /mnt
@@ -55,10 +72,10 @@ btrfs su cr /mnt/@home
 
 # btrfs su cr /mnt/@swap
 
-umount -v /
+umount -Rv /
 
 set -e
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
 
 ## Mount partitions (Nitro)
 mount -o $BTRFS_OPTS,subvol=@ ${DRIVE}2 /mnt
@@ -73,7 +90,7 @@ mount -o $BTRFS_OPTS,subvol=@snapshots ${DRIVE}2 /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@var_log ${DRIVE}2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@cache ${DRIVE}2 /mnt/var/cache
 mount -o $BTRFS_OPTS,subvol=@tmp ${DRIVE}2 /mnt/var/tmp
-mount -o $BTRFS_OPTS,subvol=@swap ${DRIVE}2 /mnt/swap
+# mount -o $BTRFS_OPTS,subvol=@swap ${DRIVE}2 /mnt/swap
 mount -t vfat -o defaults,noatime,nodiratime ${DRIVE}1 /mnt/boot/efi
 
 
@@ -81,7 +98,9 @@ mount -t vfat -o defaults,noatime,nodiratime ${DRIVE}1 /mnt/boot/efi
 # pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi openssh
 
 # Base packages Liquorix Kernel
-pacstrap /mnt base base-devel linux-lqx linux-lqx-headers linux-firmware archlinux-keyring man-db perl sysfsutils python python-pip git man-pages dropbear git nano neovim intel-ucode fzf duf reflector mtools ansible dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi
+pacstrap /mnt base base-devel linux-lts54  linux-lts54-headers linux-firmware archlinux-keyring man-db perl sysfsutils python git man-pages dropbear git nano intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi
+
+pacstrap /mnt base base-devel linux linux-firmware archlinux-keyring man-db perl sysfsutils python git man-pages dropbear git nano intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib nfs-utils --ignore vi
 
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab

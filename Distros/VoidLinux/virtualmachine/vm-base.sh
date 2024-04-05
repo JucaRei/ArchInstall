@@ -6,25 +6,21 @@ xbps-install -Su xbps --y
 # BR repo
 cat <<EOF >/etc/xbps.d/00-repository-main.conf
 # repository=https://voidlinux.com.br/repo/current
-repository=http://void.chililinux.com/voidlinux/current
 repository=https://mirrors.servercentral.com/voidlinux/current
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
 repository=https://voidlinux.com.br/repo/current/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
 # repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
 EOF
 
 cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
 # repository=https://voidlinux.com.br/repo/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
 repository=https://mirrors.servercentral.com/voidlinux/current/multilib
 EOF
 
@@ -32,8 +28,9 @@ vpm sync
 
 # GlibC
 # wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20240314.tar.xz
 # MUSL
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20221001.tar.xz
+# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20240314.tar.xz
 
 xbps-install -Su xbps xz --yes
 
@@ -45,9 +42,9 @@ xbps-install -Su xbps xz --yes
 
 set -e
 # GLIBC
-# XBPS_ARCH="x86_64"
+XBPS_ARCH="x86_64"
 # MUSL
-XBPS_ARCH="x86_64-musl"
+# XBPS_ARCH="x86_64-musl"
 
 # Descompacta e copia para /mnt o tarball
 # GLIBC
@@ -179,53 +176,45 @@ cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 EOF
 
 # Repositorios mais rapidos GLIBC
-# cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# repository=https://voidlinux.com.br/repo/current
-# repository=http://void.chililinux.com/voidlinux/current
-# repository=https://mirrors.servercentral.com/voidlinux/current
-# EOF
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
+repository=https://repo-fastly.voidlinux.org/voidlinux/current
+repository=https://mirrors.servercentral.com/voidlinux/current
+EOF
 
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://voidlinux.com.br/repo/current/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-# EOF
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
+repository=https://voidlinux.com.br/repo/current/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+EOF
 
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-# repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-# repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-# EOF
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
+repository=https://voidlinux.com.br/repo/current/multilib/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+EOF
 
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-# repository=https://voidlinux.com.br/repo/current/multilib
-# repository=http://void.chililinux.com/voidlinux/current/multilib
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-# EOF
+cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
+repository=https://voidlinux.com.br/repo/current/multilib
+repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+EOF
 
 # Repositorios mais rapidos MUSL
 # cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://voidlinux.com.br/repo/current/musl
-repository=http://void.chililinux.com/voidlinux/current/musl
-repository=https://mirrors.servercentral.com/voidlinux/current/musl
+# repository=https://voidlinux.com.br/repo/current/musl
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/musl/nonfree
-repository=http://void.chililinux.com/voidlinux/current/musl/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
+# repository=https://voidlinux.com.br/repo/current/musl/nonfree
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/musl/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/musl/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
+# repository=https://voidlinux.com.br/repo/current/musl/multilib/nonfree
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
 # EOF
 
 # cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/musl/multilib
-repository=http://void.chililinux.com/voidlinux/current/musl/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
+# repository=https://voidlinux.com.br/repo/current/musl/multilib
+# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
 # EOF
 
 # Ignorar alguns pacotes
@@ -404,7 +393,7 @@ chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils elogind --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc rng-tools dracut dracut-uefi vsv vpm vpsm vpnd util-linux bash linux linux-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk lm_sensors pciutils usbutils kbd zstd iputils neovim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc rng-tools dracut dracut-uefi vsv vpm vpsm vpnd util-linux bash linux linux-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk lm_sensors pciutils usbutils kbd zstd iputils neofvim nano mtools ntfs-3g --yes
 chroot /mnt vpm up
 # chroot /mnt vpm up
 
@@ -508,7 +497,7 @@ EOF
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 # Install Nvidia video drivers
@@ -547,7 +536,7 @@ chroot /mnt xbps-install -S socklog-void --yes
 # chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
 
 # NFS
-chroot /mnt xbps-install -S nfs-utils sv-netmount --yes
+chroot /mnt xbps-install -S nix nfs-utils sv-netmount --yes
 
 # Plymouth
 # chroot /mnt xbps-install -S plymouth plymouth-data --yes
@@ -693,6 +682,9 @@ chroot /mnt ln -sv /etc/sv/nanoklogd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/rpcbind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/statd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/netmount /etc/runit/runsvdir/default/
+
+# Nix
+chroot /mnt ln -srvf /etc/sv/nix-daemon /etc/runit/runsvdir/default/
 
 #Samba
 chroot /mnt ln -srvf /etc/sv/smbd /etc/runit/runsvdir/default/

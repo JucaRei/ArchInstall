@@ -1,14 +1,16 @@
 #!/bin/sh
 
+DRIVE="/dev/sda"
 
 #### Update and install needed packages ####
-apt update && apt install debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
+apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
+umount -R /dev/sda
 
 #### Add faster repo's ####
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-# CODENAME=bookwarn # or CODENAME=bullseye
+CODENAME=bullseye # or CODENAME=bullseye
 # cat >/etc/apt/sources.list <<HEREDOC
 # deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 # deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
@@ -60,27 +62,32 @@ apt update
 #### real hardware ####
 #######################
 
-### with mac partitioned
-# sgdisk -Z ${DRIVE}4
-# sgdisk -Z ${DRIVE}5
-# parted -s -a optimal ${DRIVE}4 mklabel gpt
-# parted -s -a optimal ${DRIVE}5 mklabel gpt
-# sgdisk -c 4:SWAP ${DRIVE}
-# sgdisk -c 5:Debian ${DRIVE}
-# sgdisk -t 4:8200 ${DRIVE}
-# sgdisk -t 5:8300 ${DRIVE}
-# sgdisk -p ${DRIVE}
+#!/bin/sh
 
-## Full drive
-# sgdisk -Z ${DRIVE}
-# parted -s -a optimal ${DRIVE} mklabel gpt
-# sgdisk -n 0:0:512MiB ${DRIVE}
-# sgdisk -n 0:0:0 ${DRIVE}
-# sgdisk -t 1:ef00 ${DRIVE}
-# sgdisk -t 2:8300 ${DRIVE}
-# sgdisk -c 1:"EFI System Partition" ${DRIVE}
-# sgdisk -c 2:"Debian Filesystem" ${DRIVE}
-# sgdisk -p ${DRIVE}
+DRIVE="/dev/sda"
+
+sgdisk -Z $DRIVE
+# parted $DRIVE mklabel gpt
+# parted $DRIVE mkpart primary 2048s 100%
+parted --script --fix --align optimal $DRIVE mklabel gpt
+parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
+parted --script $DRIVE -- set 1 boot on
+
+# parted --script --align optimal -- $DRIVE mkpart primary 600MB 100%
+# parted --script --align optimal --fix -- $DRIVE mkpart primary linux-swap -2GiB -1s
+parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -6GiB
+parted --script --align optimal --fix -- $DRIVE mkpart primary -6GiB 100%
+
+# parted --script align-check 1 $DRIVE
+
+sgdisk -c 1:"EFI FileSystem partition" ${DRIVE}
+sgdisk -c 2:"Debian FileSystem" ${DRIVE}
+sgdisk -c 3:"Debian Swap" ${DRIVE}
+sgdisk -p ${DRIVE}
+
+BOOT_PARTITION="${DRIVE}1"
+ROOT_PARTITION="${DRIVE}2"
+SWAP_PARTITION="${DRIVE}3"
 
 #####################################
 ##########  FileSystem  #############
@@ -91,10 +98,13 @@ apt update
 #######################
 
 # mkswap /dev/sda4 -L "LinuxSwap"
+# swapon /dev/sda4
 # mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
 
-# swapon /dev/disk/by-label/SWAP
-# mkfs.btrfs /dev/sda5 -f -L "Debian"
+mkfs.vfat -F32 $BOOT_PARTITION -n "EFI"
+mkfs.btrfs $ROOT_PARTITION -f -L "Debian"
+mkswap /dev/sda3 -L "SWAP"
+swapon /dev/disk/by-label/SWAP
 
 ###############################
 #### Enviroments variables ####
@@ -105,16 +115,12 @@ Debian_ARCH="amd64"
 
 ## btrfs options ##
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
-# BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
 
 ## fstab real hardware ##
-# UEFI_UUID=$(blkid -s UUID -o value ${DRIVE}1)
-# SWAP_UUID=$(blkid -s UUID -o value /dev/sda4)
-# ROOT_UUID=$(blkid -s UUID -o value ${DRIVE}2)
+UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
+SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 
-## fstab virtual hardware ##
-# UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
-# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 
 ###########################################
 #### Mount and create Btrfs Subvolumes ####
@@ -123,33 +129,38 @@ BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard
 #######################
 #### real hardware ####
 #######################
-mount -t btrfs -o $BTRFS_OPTS /dev/disk/by-label/Debian /mnt
+mount -o $BTRFS_OPTS $ROOT_PARTITION /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@log
-btrfs su cr /mnt/@cache
-btrfs su cr /mnt/@swap
+btrfs su cr /mnt/@apt
+btrfs su cr /mnt/@tmp
 umount -v /mnt
 ## Make directories for mount ##
-mount -t btrfs -o $BTRFS_OPTS,subvol=@ /dev/disk/by-label/Debian /mnt
-mkdir -pv /mnt/{boot/efi,home,.snapshots,var/{log,cache,swap}}
-# mkdir -pv /mnt/swap
+mount -o $BTRFS_OPTS,subvol=@ $ROOT_PARTITION /mnt
+mkdir -pv /mnt/boot
+mkdir -pv /mnt/boot/efi
+mkdir -pv /mnt/home
+mkdir -pv /mnt/.snapshots
+mkdir -pv /mnt/var/log
+mkdir -pv /mnt/var/tmp
+mkdir -pv /mnt/var/cache/apt
+
 ## Mount btrfs subvolumes ##
-mount -t btrfs -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/Debian /mnt/home
-mount -t btrfs -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/Debian /mnt/.snapshots
-mount -t btrfs -o $BTRFS_OPTS,subvol=@log /dev/disk/by-label/Debian /mnt/var/log
-mount -t btrfs -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/Debian /mnt/var/cache
-mount -t btrfs -o noatime,nodiratime,subvol=@swap /dev/disk/by-label/Debian /mnt/var/swap
-mount -t vfat -o noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@home $ROOT_PARTITION /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_PARTITION /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@log $ROOT_PARTITION /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@tmp $ROOT_PARTITION /mnt/var/tmp
+mount -o $BTRFS_OPTS,subvol=@apt $ROOT_PARTITION /mnt/var/cache/apt
+mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
-# debootstrap --variant= --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
-debootstrap --verbose --include=apt,aptitude,dbus-broker,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -158,26 +169,29 @@ debootstrap --verbose --include=apt,aptitude,dbus-broker,apt-utils,extrepo,cpio,
 ########################
 
 rm /mnt/etc/apt/sources.list
-touch /mnt/etc/apt/sources.list.d/{debian.list,bullseye-security.list,various.list,buillseye-security.list}
+touch /mnt/etc/apt/sources.list.d/debian.list
+touch /mnt/etc/apt/sources.list.d/various.list
+# touch /mnt/etc/apt/sources.list.d/bullseye-security.list
 
-CODENAME=bookworm # or CODENAME=bullseye
+CODENAME=bullseye # or CODENAME=bullseye
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ####################
 ### Debian repos ###
 ####################
 
-deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye main contrib non-free
 
-deb http://deb.debian.org/debian-security/ bookworm-security main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian-security/ bookworm-security main contrib non-free non-free-firmware
+#deb https://security.debian.org/debian-security bullseye-security main contrib non-free
+#deb-src https://security.debian.org/debian-security bullseye-security main contrib non-free
 
-deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye-updates main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye-updates main contrib non-free
 
-deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye-backports main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye-backports main contrib non-free
+
 
 #######################
 ### Debian unstable ###
@@ -197,21 +211,42 @@ deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free no
 ### Tor com apt ###
 ###################
 
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch main
+# deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye main
+# deb-src tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye main
 
-#deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-#deb-src tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
+# deb tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/
+# debian-security bullseye-security main
+# deb-src tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/
+# debian-security bullseye-security main
 
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
+# deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye-updates main
+# deb-src tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye-updates main
+
 HEREDOC
 
-cat <<\EOF > /mnt/etc/apt/sources.list.d/bullseye-security.list
-deb http://security.debian.org/debian-security bullseye-security main contrib
-deb-src http://security.debian.org/debian-security bullseye-security main contrib
-EOF
+cat >/mnt/etc/apt/sources.list.d/buster-backports.list <<HEREDOC
+deb http://deb.debian.org/debian buster-backports main contrib non-free
+deb-src http://deb.debian.org/debian buster-backports main contrib non-free
+HEREDOC
 
+# cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
+# deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+# deb http://deb.debian.org/debian bullseye-proposed-updates main contrib non-free
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/bullseye-backports.list <<HEREDOC
+# deb http://deb.debian.org/debian bullseye-backports main contrib non-free
+# deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
+# deb http://security.debian.org/ bullseye-security main contrib non-free non-free-firmware
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/bullseye-backports.list <<HEREDOC
+# deb http://deb.debian.org/debian bullseye-backports main contrib non-free-firmware
+# deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free-firmware
+# HEREDOC
 
 ## Disable verification ##
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
@@ -259,11 +294,12 @@ EOF
 
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/00-swap.conf
+# vm.vfs_cache_pressure=500
 vm.vfs_cache_pressure=40
-# vm.swappiness=10
-vm.swappiness=20
-vm.dirty_bytes" = 335544320
+# vm.swappiness=100
+vm.swappiness=20 #10
 vm.dirty_background_ratio=1
+vm.dirty_bytes" = 335544320
 vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
@@ -375,43 +411,43 @@ EOF
 
 echo $UEFI_UUID
 echo $ROOT_UUID
-# echo $SWAP_UUID
+echo $SWAP_UUID
 # echo $HOME_UUID
-
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
-BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
-
 
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
-# <file system>     <dir>           <type> <options>                                <dump> <pass>
+# <file system> <dir> <type> <options> <dump> <pass>
 
 ### ROOTFS ###
-# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS2,subvol=@                        0 0
-LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                        0 0
+# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
 # UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-# UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-# UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
-LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
+# UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS,subvol=@tmp                      0 0
+# UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
+LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
 
 ### HOME_FS ###
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                      0 0
-LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS2,subvol=@home                      0 0
+# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
+LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
 
 ### EFI ###
-# UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
+# UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro                            0 2
 LABEL="EFI"       /boot/efi       vfat noatime,nodiratime,umask=0077                      0 2
 
 ### Swap ###
-# UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
-LABEL="SWAP"     none            swap defaults,noatime                                   0 0
-# /swap/swapfile     none            swap sw                                             0 0
+# UUID=$SWAP_UUID  none            swap defaults,noatime                                  0 0
+LABEL="SWAP"       none            swap defaults,noatime                                  0 0
+
+#Swapfile
+# LABEL="Debian"     none            swap defaults,noatime
+# /swap/swapfile     none            swap sw                                              0 0
 
 ### Tmp ###
-# tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                    0 0
-tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                   0 0
+# tmpfs         /tmp               tmpfs defaults,nosuid,nodev,noatime                    0 0
+tmpfs           /tmp               tmpfs noatime,mode=1777,nosuid,nodev                   0 0
 EOF
 
 #########################
@@ -419,28 +455,33 @@ EOF
 #########################
 
 chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
-    dpkg-reconfigure -f noninteractive tzdata &&
-    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
-    sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
-    echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
-    # export LC_ALL=C && \
-    # export LANGUAGE=en_US.UTF-8 &&
-    # export LC_ALL=en_US.UTF-8 &&
-    # export LANG=en_US.UTF-8 &&
-    # export LC_CTYPE=en_US.UTF-8 &&
-    # locale-gen en_US.UTF-8 && \
-    # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-    #dpkg-reconfigure --frontend=noninteractive locales && \
-    # update-locale LANG=en_US.UTF-8 && \
-    # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-    #localectl set-locale LANG="en_US.UTF-8"
-    # update-locale LANG=en_US.UTF-8 && \
-    # localedef -i en_US -f UTF-8 en_US.UTF-8
-    chroot /mnt apt update
+        dpkg-reconfigure -f noninteractive tzdata &&
+        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+        echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
+        # export LC_ALL=C && \
+        export LANGUAGE=en_US.UTF-8 &&
+        export LC_ALL=en_US.UTF-8 &&
+        export LANG=en_US.UTF-8 &&
+        export LC_CTYPE=en_US.UTF-8 &&
+        chroot /mnt apt update
+
+cat <<EOF >/mnt/etc/environment
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+EOF
 
 #####################################
 #### Install additional packages ####
 #####################################
+
+#####################################
+#### Install additional packages ####
+#####################################
+
+# kernel
+# chroot /mnt aptitude install linux-image-5.10.0-25-amd64-unsigned linux-headers-5.10.0-25-amd64 -f -y
+
+# wget -c http://security.debian.org/debian-security/pool/updates/main/l/linux/linux-headers-5.10.0-27-amd64_5.10.205-2_amd64.deb
 
 ##############
 ## AppArmor ##
@@ -452,11 +493,12 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
 ## Network ##
 #############
 
-chroot /mnt apt install nftables net-tools wireless-regdb arp-scan gvfs gvfs-backends samba nfs-common smbclient cifs-utils avahi-daemon \
-    firmware-linux-nonfree firmware-linux-free firmware-iwlwifi network-manager iwd rfkill firmware-brcm80211 --no-install-recommends -y
+chroot /mnt apt install nftables samba-client smbclient cifs-utils avahi-daemon \
+        fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill --no-install-recommends -y
 
 # ssh
-# chroot /mnt apt install openssh-client openssh-server --no-install-recommends -y
+chroot /mnt apt install dropbear --no-install-recommends -y
+
 
 ########################################################
 #### Config iwd as backend instead of wpasupplicant ####
@@ -484,7 +526,7 @@ EOF
 ###############
 
 ## Pulseaudio
-chroot /mnt apt install alsa-utils bluetooth rtkit rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
+chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol --no-install-recommends -y
 
 ## Pipewire
 # chroot /mnt apt purge pipewire* pipewire-bin -y
@@ -499,22 +541,20 @@ chroot /mnt apt install alsa-utils bluetooth rtkit rfkill bluez bluez-tools puls
 #### Utils ####
 ###############
 #
-chroot /mnt aptitude install duperemove aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils linux-image-5.10.0-27-amd64 linux-headers-5.10.0-27-amd64 \
-    debian-keyring git htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony -f -y
+chroot /mnt apt install aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils fonts-firacode \
+    debian-keyring htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
 crc32c-intel
 btrfs
-#drm
+wl
 ahci
 lz4hc
 lz4hc_compress
 zstd
 zram
 z3fold
-i915.modeset=1
-intel_agp
 EOF
 
 # chroot /mnt update-initramfs -c -k all
@@ -523,8 +563,7 @@ EOF
 #### Tools ####
 ###############
 
-# chroot /mnt apt install colord bash-completion bzip2 gdisk mtools p7zip duf bat unattended-upgrades --no-install-recommends -y
-chroot /mnt apt install bash-completion bzip2 gdisk mtools p7zip unattended-upgrades --no-install-recommends -y
+chroot /mnt apt install man-db gdisk mtools p7zip unattended-upgrades --no-install-recommends -y
 
 #############################
 #### Optimizations Tools ####
@@ -542,7 +581,7 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 #### intel Hardware Acceleration ####
 #####################################
 
-chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi lm-sensors gstreamer1.0-gl mesa-vulkan-drivers --no-install-recommends -y
+chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi --no-install-recommends -y
 
 ###############################
 #### Minimal xorg packages ####
@@ -586,12 +625,9 @@ Section "Device"
 
     Identifier  "Intel Graphics"
     Driver      "modesetting"
-    Option      "TearFree"         "True"
+    Option      "TearFree"       "True"
     # Option      "AccelMethod"    "glamor"
-    Option      "AccelMethod"      "sna"
-    Option      "SwapBuffersWait"  "true"
-    Option      "Backlight"        "intel_backlight"
-    Option      "DRI"              "2"
+    Option      "DRI"            "2"
 EndSection
 EOF
 
@@ -614,8 +650,8 @@ EOF
 # chroot /mnt apt install snapd flatpak --no-install-recommends -y
 #Virt-Manager
 # chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-#     dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-#     bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+    # dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+    # bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 #Podman
 # chroot /mnt apt install podman buildah crun fuse-overlayfs slirp4netns containers-storage lrzip nftables tini dumb-init golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
 #Ansible
@@ -625,7 +661,7 @@ EOF
 #### BTRFS Backup tools ####
 ############################
 
-chroot /mnt apt install snapper snapper-gui --no-install-recommends -y
+# chroot /mnt apt install snapper snapper-gui --no-install-recommends -y
 
 #################################
 #### Plymouth animation boot ####
@@ -674,33 +710,16 @@ EOF
 #### Locales ####
 #################
 
-# chroot /mnt echo "America/Sao_Paulo" >/etc/timezone &&
-    #dpkg-reconfigure -f noninteractive tzdata && \
-    #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-    # echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale &&
-    # export LANGUAGE=en_US.UTF-8 &&
-    # export LC_ALL=en_US.UTF-8 &&
-    # dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
-    # echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-    #dpkg-reconfigure --frontend=noninteractive locales && \
-    #update-locale LANG=en_US.UTF-8
-    #localedef -i en_US -f UTF-8 en_US.UTF-8
-
-    # setxkbmap -model pc105 -layout br -variant abnt2 &
-    # dpkg-reconfigure keyboard-configuration
-    # udevadm trigger --subsystem-match=input --action=change
-
     #############################
     #### Set bash as default ####
     #############################
-chroot /mnt chsh -s /usr/bin/bash root
+    chroot /mnt chsh -s /usr/bin/bash root
 
 ##############
 #### sudo ####
 ##############
 
-chroot /mnt apt install sudo rtkit chrony -y
+chroot /mnt apt install sudo -y
 
 ##############################
 #### User's and passwords ####
@@ -709,10 +728,9 @@ chroot /mnt apt install sudo rtkit chrony -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
+# chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm juca
 chroot /mnt usermod -aG sudo juca
-
-# juca ALL=(ALL) NOPASSWD: /usr/bin/tee /sys/class/backlight/intel_backlight/brightness
 
 # AppArmor podman fix
 
@@ -737,6 +755,11 @@ plugins=ifupdown,keyfile
 
 [ifupdown]
 managed=true
+EOF
+
+cat <<EOF >/mnt/etc/NetworkManager/conf.d/disable-wifi-rand-mac.conf
+[device]
+wifi.scan-rand-mac-address=no
 EOF
 
 touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
@@ -770,10 +793,11 @@ EOF
 ## Network
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
-# chroot /mnt systemctl enable ssh.service
+chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
+chroot /mnt systemctl enable dropbear.service
 chroot /mnt systemctl enable fstrim.timer
 
 ## Audio
@@ -837,7 +861,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on intel_iommu=igfx_off i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 
@@ -886,27 +910,6 @@ EOF
 # export ROOT_UUID
 # export RESUME_OFFSET
 # sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="'"resume=UUID=$ROOT_UUID resume_offset=$RESUME_OFFSET"'"/g' /mnt/etc/default/grub
-
-mkdir -pv /mnt/etc/udev/rules.d/
-touch /mnt/etc/udev/rules.d/70-persistent-net.rules
-cat <<\EOF > /mnt/etc/udev/rules.d/70-persistent-net.rules
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="e8:4e:06:2e:27:e2" , ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="wlan*", NAME="wlan0"
-EOF
-
-touch /mnt/etc/udev/rules.d/backlight.rules
-cat <<\EOF > /mnt/etc/udev/rules.d/backlight.rules
-# ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness"
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
-ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chgrp video /sys/class/leds/%k/brightness"
-ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
-EOF
-
-touch /mnt/etc/udev/rules.d/81-backlight.rules
-cat <<\EOF > /mnt/etc/udev/rules.d/81-backlight.rules
-# Set backlight level to 8
-SUBSYSTEM=="backlight", ACTION=="add", KERNEL=="acpi_video0", ATTR{brightness}="8"
-EOF
 
 chroot /mnt update-grub
 
