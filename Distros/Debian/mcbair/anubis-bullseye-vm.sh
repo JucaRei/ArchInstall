@@ -1,16 +1,16 @@
 #!/bin/sh
 
-DRIVE="/dev/sda"
+DRIVE="/dev/vda"
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
-umount -R /dev/sda
+umount -R $DRIVE
 
 #### Add faster repo's ####
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
-CODENAME=bookworm # or CODENAME=bullseye
+CODENAME=bullseye # or CODENAME=bullseye
 # cat >/etc/apt/sources.list <<HEREDOC
 # deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
 # deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
@@ -64,7 +64,6 @@ apt update
 
 #!/bin/sh
 
-DRIVE="/dev/sda"
 
 sgdisk -Z $DRIVE
 # parted $DRIVE mklabel gpt
@@ -76,7 +75,7 @@ parted --script $DRIVE -- set 1 boot on
 # parted --script --align optimal -- $DRIVE mkpart primary 600MB 100%
 # parted --script --align optimal --fix -- $DRIVE mkpart primary linux-swap -2GiB -1s
 parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -6GiB
-parted --script --align optimal --fix -- $DRIVE mkpart primary -6GiB 100%
+parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
 
 # parted --script align-check 1 $DRIVE
 
@@ -160,7 +159,7 @@ mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 ####################################################
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
-debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -171,26 +170,27 @@ debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron
 rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/debian.list
 touch /mnt/etc/apt/sources.list.d/various.list
-touch /mnt/etc/apt/sources.list.d/bullseye-security.list
+# touch /mnt/etc/apt/sources.list.d/bullseye-security.list
 
-CODENAME=bookworm # or CODENAME=bullseye
+CODENAME=bullseye # or CODENAME=bullseye
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ####################
 ### Debian repos ###
 ####################
 
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye main contrib non-free
 
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+#deb https://security.debian.org/debian-security bullseye-security main contrib non-free
+#deb-src https://security.debian.org/debian-security bullseye-security main contrib non-free
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye-updates main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye-updates main contrib non-free
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+deb https://deb.debian.org/debian/ bullseye-backports main contrib non-free
+deb-src https://deb.debian.org/debian/ bullseye-backports main contrib non-free
+
 
 #######################
 ### Debian unstable ###
@@ -210,34 +210,42 @@ deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
 ### Tor com apt ###
 ###################
 
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch main
+# deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye main
+# deb-src tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye main
 
-#deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-#deb-src tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
+# deb tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/
+# debian-security bullseye-security main
+# deb-src tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/
+# debian-security bullseye-security main
 
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
+# deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye-updates main
+# deb-src tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian bullseye-updates main
+
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
-deb http://security.debian.org/debian-security bullseye-security main contrib non-free
-deb http://deb.debian.org/debian bullseye-proposed-updates main contrib non-free
+cat >/mnt/etc/apt/sources.list.d/buster-backports.list <<HEREDOC
+deb http://deb.debian.org/debian buster-backports main contrib non-free
+deb-src http://deb.debian.org/debian buster-backports main contrib non-free
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/bullseye-backports.list <<HEREDOC
-deb http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
-HEREDOC
+# cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
+# deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+# deb http://deb.debian.org/debian bullseye-proposed-updates main contrib non-free
+# HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/bookworm-security.list <<HEREDOC
-deb http://security.debian.org/ bookworm-security main contrib non-free non-free-firmware
-HEREDOC
+# cat >/mnt/etc/apt/sources.list.d/bullseye-backports.list <<HEREDOC
+# deb http://deb.debian.org/debian bullseye-backports main contrib non-free
+# deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
+# HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/bookworm-backports.list <<HEREDOC
-deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
-deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
-HEREDOC
+# cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
+# deb http://security.debian.org/ bullseye-security main contrib non-free non-free-firmware
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/bullseye-backports.list <<HEREDOC
+# deb http://deb.debian.org/debian bullseye-backports main contrib non-free-firmware
+# deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free-firmware
+# HEREDOC
 
 ## Disable verification ##
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
@@ -385,14 +393,14 @@ chroot /mnt apt upgrade -y
 ######################
 
 cat <<EOF >/mnt/etc/hostname
-anubis
+scrubber
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<\EOF >/mnt/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 anubis
+127.0.1.1 scrubber
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -532,8 +540,8 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 #
-chroot /mnt apt install aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils fonts-firacode \
-    debian-keyring htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony --no-install-recommends -y
+chroot /mnt apt install aptitude dkms btrfs-compsize pciutils fonts-firacode \
+    debian-keyring htop efibootmgr grub-efi-amd64 wget unzip curl  chrony --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -560,19 +568,13 @@ chroot /mnt apt install man-db gdisk mtools p7zip unattended-upgrades --no-insta
 #### Optimizations Tools ####
 #############################
 
-chroot /mnt apt install earlyoom powertop tlp thermald irqbalance --no-install-recommends -y
+chroot /mnt apt install rtkit earlyoom powertop tlp thermald irqbalance --no-install-recommends -y
 
 ###################
 #### Microcode ####
 ###################
 
 chroot /mnt apt install intel-microcode --no-install-recommends -y
-
-#####################################
-#### intel Hardware Acceleration ####
-#####################################
-
-chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi --no-install-recommends -y
 
 ###############################
 #### Minimal xorg packages ####
@@ -588,18 +590,18 @@ chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
-Section "InputClass"
+# Section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # MatchIsTouchpad "on"
         # Driver "libinput"
         # Option "Tapping" "on"
 
-        Identifier      "touchpad"
-        Driver          "libinput"
-        MatchIsTouchpad "on"
-        Option          "Tapping"       "on"
-EndSection
+        # Identifier      "touchpad"
+        # Driver          "libinput"
+        # MatchIsTouchpad "on"
+        # Option          "Tapping"       "on"
+# EndSection
 EOF
 
 # Fix tearing with intel
@@ -614,12 +616,12 @@ Section "Device"
 #   Option "SwapbuffersWait" "True"
 #   Option "DRI" "3"
 
-    Identifier  "Intel Graphics"
-    Driver      "modesetting"
-    Option      "TearFree"       "True"
+    # Identifier  "Intel Graphics"
+    # Driver      "modesetting"
+    # Option      "TearFree"       "True"
     # Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "2"
-EndSection
+    # Option      "DRI"            "2"
+# EndSection
 EOF
 
 #########################
@@ -629,7 +631,7 @@ EOF
 touch /mnt/etc/rc.local
 cat <<EOF >/mnt/etc/rc.local
 #PowerTop
-powertop --auto-tune
+# powertop --auto-tune
 EOF
 
 #################################
@@ -691,9 +693,9 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 # Consult the keyboard(5) manual page.
 
-XKBMODEL="pc105"
-XKBLAYOUT="us"
-XKBVARIANT="mac"
+# XKBMODEL="pc105"
+# XKBLAYOUT="us"
+# XKBVARIANT="mac"
 # XKBOPTIONS="terminate:ctrl_alt_bksp"
 EOF
 
@@ -701,10 +703,10 @@ EOF
 #### Locales ####
 #################
 
-    #############################
-    #### Set bash as default ####
-    #############################
-    chroot /mnt chsh -s /usr/bin/bash root
+#############################
+#### Set bash as default ####
+#############################
+chroot /mnt chsh -s /usr/bin/bash root
 
 ##############
 #### sudo ####
@@ -719,7 +721,8 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
+# chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm juca
 chroot /mnt usermod -aG sudo juca
 
 # AppArmor podman fix
@@ -783,7 +786,7 @@ EOF
 ## Network
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
-chroot /mnt systemctl enable ssh.service
+# chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
@@ -851,7 +854,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 
