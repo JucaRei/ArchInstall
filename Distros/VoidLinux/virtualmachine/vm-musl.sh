@@ -1,54 +1,69 @@
 #!/bin/bash
 
+disk = "/dev/vda"
+
+sgdisk -Z ${disk}
+parted --script --fix --align optimal ${disk} mklabel gpt
+parted --script --fix --align optimal ${disk} mkpart primary fat32 1MiB 512MiB
+parted --script ${disk} -- set 1 boot on
+parted --script --align optimal --fix -- $disk mkpart primary 512MiB -2GiB
+parted --script --align optimal --fix -- $disk mkpart primary linux-swap -2GiB 100%
+
+sgdisk -c 1:"EFI FileSystem partition" ${disk}
+sgdisk -c 2:"Voidlinux FileSystem" ${disk}
+sgdisk -c 3:"Voidlinux Swap" ${disk}
+sgdisk -t 3:8300 ${disk}
+sgdisk -p ${disk}
+
+BOOT_PARTITION="${disk}1"
+ROOT_PARTITION="${disk}2"
+SWAP_PARTITION="${disk}3"
+
+### Format
+mkfs.vfat -F32 $BOOT_PARTITION -n "EFI"
+mkfs.bcachefs $ROOT_PARTITION -f -L "Voidlinux"
+mkswap $SWAP_PARTITION -L "SWAP"
+swapon /dev/disk/by-label/SWAP
+
+BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
+
+mount -o $BTRFS_OPTS /dev/disk/by-label/Voidlinux /mnt
+btrfs su cr /mnt/@root
+btrfs su cr /mnt/@home
+btrfs su cr /mnt/@snapshots
+btrfs su cr /mnt/@logs
+btrfs su cr /mnt/@xbps
+btrfs su cr /mnt/@tmp
+btrfs su cr /mnt/@swap
+
+umount -Rv /mnt
+
+mount -o $BTRFS_OPTS,subvol="@root" /dev/disk/by-label/Voidlinux /mnt
+mkdir -pv /mnt/{boot/efi,home,.snapshots,var/log,var/tmp,var/cache/xbps,var/swap}
+mount -o $BTRFS_OPTS,subvol="@home" /dev/disk/by-label/Voidlinux /mnt/home
+mount -o $BTRFS_OPTS,subvol="@snapshots" /dev/disk/by-label/Voidlinux /mnt/.snapshots
+# mount -o $BTRFS_OPTS,subvol=@swap /dev/disk/by-label/Voidlinux /mnt/var/swap
+mount -o $BTRFS_OPTS,subvol="@tmp" /dev/disk/by-label/Voidlinux /mnt/var/tmp
+mount -o $BTRFS_OPTS,subvol="@logs" /dev/disk/by-label/Voidlinux /mnt/var/log
+mount -o $BTRFS_OPTS,subvol="@xbps" /dev/disk/by-label/Voidlinux /mnt/var/cache/xbps
+mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/GRUB /mnt/boot/efi
+
+lsblk --output "NAME,SIZE,FSTYPE,FSVER,LABEL,PARTLABEL,UUID,FSAVAIL,FSUSE%,MOUNTPOINTS,DISC-MAX" "$disk"
+
 vpm sync
 xbps-install -Su xbps --y
 
-# BR repo
-# cat <<EOF >/etc/xbps.d/00-repository-main.conf
-# # repository=https://voidlinux.com.br/repo/current
-# repository=https://mirrors.servercentral.com/voidlinux/current
-# EOF
-
-# cat <<EOF >/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://voidlinux.com.br/repo/current/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-# EOF
-
-# cat <<EOF >/etc/xbps.d/10-repository-multilib-nonfree.conf
-# # repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-# EOF
-
-# cat <<EOF >/etc/xbps.d/10-repository-multilib.conf
-# # repository=https://voidlinux.com.br/repo/current/multilib
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-# EOF
-
 vpm sync
+xbps-install -Su xz --yes
 
-# GlibC
-# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20240314.tar.xz
 # MUSL
-# wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20240314.tar.xz
-
-xbps-install -Su xbps xz --yes
-
-# xbps-install -Sy
-# xbps-install -u
-
-# xbps-install -Sy wget vsv xz vpm neovim git --yes
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-musl-ROOTFS-20240314.tar.xz
 
 
 set -e
-# GLIBC
-XBPS_ARCH="x86_64"
 # MUSL
-# XBPS_ARCH="x86_64-musl"
+XBPS_ARCH="x86_64-musl"
 
-# Descompacta e copia para /mnt o tarball
-# GLIBC
-# tar xvf ./void-x86_64-*.tar.xz -C /mnt
 # Musl
 tar xvf ./void-x86_64-*.tar.xz -C /mnt
 sync
@@ -96,7 +111,7 @@ omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys secur
 show_modules="yes"
 # compress="cat";
 nofscks="yes"
-compress="zstd"
+compress="zstd"s
 no_host_only_commandline="yes"
 EOF
 
@@ -130,16 +145,16 @@ mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # MatchIsTouchpad "on"
-        # Driver "libinput"
-        # Option "Tapping" "on"
+   # Identifier "SynPS/2 Synaptics TouchPad"
+   # Identifier "SynPS/2 Synaptics TouchPad"
+   # MatchIsTouchpad "on"
+   # Driver "libinput"
+   # Option "Tapping" "on"
 
-        Identifier      "touchpad"
-        Driver          "libinput"
-        MatchIsTouchpad "on"
-        Option          "Tapping"       "on"
+   Identifier      "touchpad"
+   Driver          "libinput"
+   MatchIsTouchpad "on"
+   Option          "Tapping"       "on"
 EndSection
 EOF
 
@@ -175,47 +190,26 @@ cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 #EndSection
 EOF
 
-# Repositorios mais rapidos GLIBC
+# Repositorios mais rapidos MUSL
 cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://repo-fastly.voidlinux.org/voidlinux/current
-repository=https://mirrors.servercentral.com/voidlinux/current
+repository=https://voidlinux.com.br/repo/current/musl
+repository=https://mirrors.servercentral.com/voidlinux/current/musl
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
+repository=https://voidlinux.com.br/repo/current/musl/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
+repository=https://voidlinux.com.br/repo/current/musl/multilib/nonfree
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
 EOF
 
 cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://voidlinux.com.br/repo/current/multilib
-repository=https://mirrors.servercentral.com/voidlinux/current/multilib
+repository=https://voidlinux.com.br/repo/current/musl/multilib
+repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
 EOF
-
-# Repositorios mais rapidos MUSL
-# cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# repository=https://voidlinux.com.br/repo/current/musl
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://voidlinux.com.br/repo/current/musl/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/nonfree
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-# repository=https://voidlinux.com.br/repo/current/musl/multilib/nonfree
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib/nonfree
-# EOF
-
-# cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-# repository=https://voidlinux.com.br/repo/current/musl/multilib
-# repository=https://mirrors.servercentral.com/voidlinux/current/musl/multilib
-# EOF
 
 # Ignorar alguns pacotes
 cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
@@ -223,29 +217,29 @@ ignorepkg=linux
 ignorepkg=linux-headers
 ignorepkg=linux-firmware-amd
 ignorepkg=xf86-video-nouveau
-ignorepkg=xfsprogs
-ignorepkg=wpa_supplicant
+# ignorepkg=xfsprogs
+# ignorepkg=wpa_supplicant
 ignorepkg=xf86-input-wacon
 ignorepkg=xf86-video-fbdev
-ignorepkg=rtkit
-ignorepkg=dhcpcd
+# ignorepkg=rtkit
+# ignorepkg=dhcpcd
 ignorepkg=nvi
-ignorepkg=openssh
+# ignorepkg=openssh
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-amdgpu
 ignorepkg=xf86-video-ati
 ignorepkg=xf86-video-vmware
 ignorepkg=xf86-video-nouveau
 ignorepkg=zd1211-firmware
-ignorepkg=mobile-broadband-provider-info
+# ignorepkg=mobile-broadband-provider-info
 EOF
 
 # Remove some packages
-chroot /mnt xbps-remove -Rconn openssh dhcpcd hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd mobile-broadband-provider-info nvi openssh rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
+chroot /mnt xbps-remove -Rconn hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd nvi  rtkit xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 # Hostname
 cat <<EOF >/mnt/etc/hostname
-voidvm
+voidvm-musl
 EOF
 
 # Hosts
@@ -253,19 +247,10 @@ EOF
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1       localhost
 ::1             localhost ip6-locahost ip6-loopback
-127.0.1.1       voidvm.localdomain voidvm
+127.0.1.1       voidvm-musl.localdomain voidvm-musl
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 EOF
-
-# fstab
-
-# UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
-# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-# echo $UEFI_UUID
-# echo $ROOT_UUID
-
-BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,autodefrag,discard=async"
 
 cat <<EOF >/mnt/etc/fstab
 #
@@ -276,15 +261,15 @@ cat <<EOF >/mnt/etc/fstab
 # ROOTFS
 # UUID=$ROOT_UUID /               btrfs $BTRFS_OPTS,subvol=@               0 0
 # UUID=$ROOT_UUID /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
-# UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
-# UUID=$ROOT_UUID /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
-# UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
+# UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@logs           0 0
+# UUID=$ROOT_UUID /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp            0 0
+# UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@xbps           0 0
 
 LABEL="Voidlinux" /               btrfs $BTRFS_OPTS,subvol=@               0 0
 LABEL="Voidlinux" /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots      0 0
-LABEL="Voidlinux" /var/log        btrfs $BTRFS_OPTS,subvol=@var_log        0 0
-LABEL="Voidlinux" /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp 0 0
-LABEL="Voidlinux" /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
+LABEL="Voidlinux" /var/log        btrfs $BTRFS_OPTS,subvol=@logs           0 0
+LABEL="Voidlinux" /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp            0 0
+LABEL="Voidlinux" /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@xbps           0 0
 
 
 #HOME_FS
@@ -292,10 +277,10 @@ LABEL="Voidlinux" /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps 0 0
 LABEL="Voidlinux" /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
 
 # EFI
-# UUID=$UEFI_UUID /boot/efi vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
-LABEL="GRUB" /boot/efi vfat noatime,nodiratime,defaults 0 2
+# UUID=$UEFI_UUID /boot/efi      vfat   defaults,noatime,nodiratime        0 2
+LABEL="GRUB"      /boot/efi      vfat   noatime,nodiratime,defaults        0 2
 
-tmpfs /tmp tmpfs noatime,nosuid,nodev,mode=1777 0 0
+tmpfs             /tmp           tmpfs  noatime,nosuid,nodev,mode=1777     0 0
 EOF
 
 # Set user permition
@@ -345,7 +330,7 @@ chroot /mnt chown -c root:root /etc/doas.conf
 
 # RC Conf
 
-cat <<EOF >/mnt/etc/rc.conf
+cat <<\EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
 # Set the host name.
@@ -381,19 +366,19 @@ EOF
 ##    chroot
 
 # chroot /mnt export PS1="(chroot) ${PS1}"
-chroot /mnt ln -sfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+chroot /mnt ln -srfv /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
 #Locales
-chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
-chroot /mnt xbps-reconfigure -f glibc-locales
+# chroot /mnt sed -i 's/^# *\(en_US.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
+# chroot /mnt sed -i 's/^# *\(pt_BR.UTF-8\sUTF-8\)/\1/' /etc/default/libc-locales
+# chroot /mnt xbps-reconfigure -f glibc-locales
 
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-remove -oORvy nvi --yes
 chroot /mnt xbps-install -uy
 # chroot /mnt $XBPS_ARCH xbps-install -Sy void-repo-nonfree base-system base-devel base-files dracut dracut-uefi vsv vpm dash vpsm xbps linux-lts linux-lts-headers linux-firmware opendoas mtools dosfstools sysfsutils elogind --yes
-chroot /mnt $XBPS_ARCH xbps-install base-minimal base-devel libgcc rng-tools dracut dracut-uefi vsv vpm vpsm vpnd util-linux bash linux linux-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute python3 python3-pip git gptfdisk lm_sensors pciutils usbutils kbd zstd iputils neofvim nano mtools ntfs-3g --yes
+chroot /mnt $XBPS_ARCH xbps-install base-minimal linux-base base-devel libgcc rng-tools dracut dracut-uefi vsv vpm vpsm vpnd util-linux bash linux5.10 linux5.10-headers sysfsutils acpid opendoas efivar ncurses grep tar less man-pages mdocml acl-progs dosfstools procps-ng binfmt-support fuse-exfat ethtool eudev iproute2 kmod traceroute gptfdisk lm_sensors pciutils usbutils kbd zstd nano mtools ntfs-3g chrony polkit --yes
 chroot /mnt vpm up
 # chroot /mnt vpm up
 
@@ -407,6 +392,26 @@ chroot /mnt vpm up
 #Audio
 chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-pulseaudio --yes
 
+## Pipewire system-wide
+# chroot /mnt xbps-install -S --yes pipewire alsa-pipewire libspa-bluetooth
+# mkdir -pv /mnt/etc/pipewire/pipewire.conf.d
+# ln -svf /mnt/usr/share/examples/wireplumber/10-wireplumber.conf /mnt/etc/pipewire/pipewire.conf.d/
+# User
+# mkdir -p "${XDG_CONFIG_HOME}/pipewire/pipewire.conf.d"
+# ln -s /usr/share/examples/wireplumber/10-wireplumber.conf "${XDG_CONFIG_HOME}/pipewire/pipewire.conf.d/"
+
+# dbus elogind xdg-desktop-portal-gtk
+
+### Open GL
+# mesa-dri vulkan-loader xorg-minimal xorg-fonts mesa-vaapi mesa-vdpau
+
+### Intel
+# linux-firmware-intel intel-video-accel
+
+### Nvidia
+# nvidia linux-firmware-nvidia nv-codec-headers nvidia-container-toolkit nvidia-dkms nvidia-libs nvidia-libs-32bit nvidia-vaapi-driver nvtop nvidia-gtklibs nvidia-gtklibs-32bit nvidia-docker
+
+
 # Intel micro-code
 # chroot /mnt xbps-install -S intel-ucode --yes
 # chroot /mnt xbps-reconfigure -fa linux
@@ -419,35 +424,36 @@ chroot /mnt xbps-install -S pulseaudio pulseaudio-utils pulsemixer alsa-plugins-
 chroot /mnt xbps-install -S bluez --yes
 
 # Network
-chroot /mnt xbps-install -S NetworkManager NetworkManager-l2tp NetworkManager-openconnect NetworkManager-openvpn NetworkManager-pptp NetworkManager-vpnc iwd netcat nfs-utils network-manager-applet samba arp-scan sv-netmount --yes
+chroot /mnt xbps-install -S NetworkManager NetworkManager-l2tp NetworkManager-openconnect NetworkManager-openvpn NetworkManager-pptp NetworkManager-vpnc iwd netcat nfs-utils samba sv-netmount --yes
 
 # Grub
 # chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober acl-progs btrfs-progs --yes
 # efivar
 
 # Optimization packages
-chroot /mnt xbps-install -Sy irqbalance tlp thermald earlyoom --yes
+chroot /mnt xbps-install -Sy irqbalance thermald earlyoom --yes
 
 # Infrastructure packages
 # chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # utils
-chroot /mnt xbps-install -S bash-completion bat p7zip neofetch bleachbit btop chrony curl wget dialog dropbear duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep st skim socklog-void speedtest-cli starship tumbler udevil usbutils xtools zip --yes
+chroot /mnt xbps-install -S bash-completion p7zip curl wget dialog gvfs-afc gvfs-mtp gvfs-smb libgsf libinput-gestures socklog-void udevil usbutils xtools --yes
 
 # Needed for DE
-# chroot /mnt xbps-install -Sy dbus-elogind dbus-elogind-libs dbus-elogind-x11 mate-polkit fuse-usmb gnome-keyring flatpak dumb_runtime_dir xdg-user-dirs-gtk xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt xbps-install -Sy polkit-elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 fuse-usmb xdg-utils xdg-desktop-portal-gtk --yes
 
 # Utilities
-chroot /mnt xbps-install -Sy util-linux zramen udevil cifs-utils lm_sensors xtools dropbear inxi lshw nano ntfs-3g --yes
+chroot /mnt xbps-install -Sy zramen cifs-utils lm_sensors --yes
 
 # Audio/Video & Others
 # alsa-firmware deadbeef deadbeef-fb deadbeef-waveform-seekbar alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol bluez bluez-alsa sof-firmware
-chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep netcat dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
+# chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep netcat dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
 #chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald lsscsi zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others
-chroot /mnt xbps-install -Sy xorg-minimal libglapi numlockx xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+# chroot /mnt xbps-install -Sy xorg-minimal libglapi numlockx xorg-server-xdmx xrdb xsetroot xprop xrefresh xorg-fonts xdpyinfo xclipboard xcursorgen mkfontdir mkfontscale xcmsdb libXinerama-devel xf86-input-libinput libinput-gestures setxkbmap fuse-exfat fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
+chroot /mnt xbps-install -Sy xorg-minimal numlockx xorg-server xorg-fonts mkfontdir mkfontscale libXinerama-devel xf86-input-libinput setxkbmap fatresize xauth xrandr arandr font-misc-misc terminus-font dejavu-fonts-ttf --yes
 
 # light
 
@@ -506,7 +512,7 @@ EOF
 # chroot /mnt xbps-install -S linux-firmware-intel linux-firmware-nvidia nvidia nvidia-dkms nvidia-gtklibs nvidia-libs nvidia-opencl nv-codec-headers mesa vulkan-loader libva libva-glx libva-utils libva-intel-driver glu mesa-dri mesa-vulkan-intel mesa-intel-dri intel-video-accel mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 
 # chroot /mnt dracut --force --kver 5.10.162_1
-chroot /mnt xbps-reconfigure -fa linux
+chroot /mnt xbps-reconfigure -fa
 # chroot /mnt xbps-install -S bumblebee bbswitch vulkan-loader glu nv-codec-headers mesa-dri mesa-vulkan-intel mesa-intel-dri mesa-vaapi mesa-demos mesa-vdpau vdpauinfo mesa-vulkan-overlay-layer --yes
 # bbswitch
 
@@ -527,10 +533,10 @@ chroot /mnt xbps-reconfigure -fa linux
 # chroot /mnt xbps-install vulkan-loader --yes
 
 #File Management
-chroot /mnt xbps-install -S gvfs gvfs-smb rsync rclone avahi avahi-discover avahi-utils samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
+# chroot /mnt xbps-install -S gvfs gvfs-smb rsync rclone avahi avahi-discover avahi-utils samba tumbler ffmpegthumbnailer libgsf libopenraw --yes
 
 # PACKAGES FOR SYSTEM LOGGING
-chroot /mnt xbps-install -S socklog-void --yes
+# chroot /mnt xbps-install -S socklog-void --yes
 
 # Virt-manager
 # chroot /mnt xbps-install -S apparmor virt-manager virt-manager-tools qemu qemu-ga vde2 bridge-utils dnsmasq ebtables-32bit openbsd-netcat iptables-nft --yes
@@ -564,11 +570,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Void Linux"
-# GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on,igfx_off zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-# GRUB_CMDLINE_LINUX_DEFAULT="quiet vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 gpt udev.log_level=0 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
 GRUB_CMDLINE_LINUX=""
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"
@@ -655,21 +657,22 @@ EOF
 
 #Runit por default
 # chroot /mnt ln -srvf /etc/sv/acpid /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/preload /var/service/
+# chroot /mnt ln -srvf /etc/sv/preload /var/service/
 # chroot /mnt ln -srvf /etc/sv/zramen /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/wpa_supplicant /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/chronyd /etc/runit/runsvdir/default/
 # chroot /mnt ln -sv /etc/sv/scron /etc/runit/runsvdir/default/
-chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
-chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+# chroot /mnt ln -sv /etc/sv/tlp /etc/runit/runsvdir/default/
+# chroot /mnt ln -srvf /etc/sv/dropbear /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/sshd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/thermald /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/NetworkManager /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/dbus /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/polkitd /etc/runit/runsvdir/default/
-# chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
+chroot /mnt ln -srvf /etc/sv/elogind /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/bluetoothd /etc/runit/runsvdir/default/
 chroot /mnt ln -srvf /etc/sv/avahi-daemon /etc/runit/runsvdir/default/
-chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
+# chroot /mnt ln -sfv /etc/sv/bumblebeed /var/service/
 chroot /mnt ln -sfv /etc/sv/irqbalance /var/service/
 
 chroot /mnt ln -srvf /etc/sv/earlyoom /var/service
@@ -767,7 +770,7 @@ cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
 #options nouveau modeset=0
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
@@ -783,7 +786,7 @@ EOF
 # security_driver = "none"
 
 # chroot /mnt xbps-reconfigure -f linux5.4
-chroot /mnt xbps-reconfigure -f linux
+chroot /mnt xbps-reconfigure -fa
 
 # FIX bad font rendering
 chroot /mnt ln -s /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/
