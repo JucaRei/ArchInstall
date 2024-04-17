@@ -1,31 +1,31 @@
 #!/bin/bash
 
-disk = "/dev/vda"
+disk="/dev/vda"
 
-sgdisk -Z ${disk}
-parted --script --fix --align optimal ${disk} mklabel gpt
-parted --script --fix --align optimal ${disk} mkpart primary fat32 1MiB 512MiB
-parted --script ${disk} -- set 1 boot on
+sgdisk -Z $disk
+parted --script --fix --align optimal $disk mklabel gpt
+parted --script --fix --align optimal $disk mkpart primary fat32 1MiB 512MiB
+parted --script $disk -- set 1 boot on
 parted --script --align optimal --fix -- $disk mkpart primary 512MiB -2GiB
 parted --script --align optimal --fix -- $disk mkpart primary linux-swap -2GiB 100%
 
-sgdisk -c 1:"EFI FileSystem partition" ${disk}
-sgdisk -c 2:"Voidlinux FileSystem" ${disk}
-sgdisk -c 3:"Voidlinux Swap" ${disk}
-sgdisk -t 3:8300 ${disk}
-sgdisk -p ${disk}
+sgdisk -c 1:"EFI FileSystem partition" $disk
+sgdisk -c 2:"Voidlinux FileSystem" $disk
+sgdisk -c 3:"Voidlinux Swap" $disk
+sgdisk -t 3:8300 $disk
+sgdisk -p $disk
 
-BOOT_PARTITION="${disk}1"
-ROOT_PARTITION="${disk}2"
-SWAP_PARTITION="${disk}3"
+BOOT_PARTITION="$disk"1
+ROOT_PARTITION="$disk"2
+SWAP_PARTITION="$disk"3
 
 ### Format
-mkfs.vfat -F32 $BOOT_PARTITION -n "EFI"
-mkfs.bcachefs $ROOT_PARTITION -f -L "Voidlinux"
+mkfs.vfat -F 32 $BOOT_PARTITION -n "EFI"
+mkfs.btrfs $ROOT_PARTITION -f -L "Voidlinux"
 mkswap $SWAP_PARTITION -L "SWAP"
 swapon /dev/disk/by-label/SWAP
 
-BTRFS_OPTS="rw,noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
 
 mount -o $BTRFS_OPTS /dev/disk/by-label/Voidlinux /mnt
 btrfs su cr /mnt/@root
@@ -39,14 +39,20 @@ btrfs su cr /mnt/@swap
 umount -Rv /mnt
 
 mount -o $BTRFS_OPTS,subvol="@root" /dev/disk/by-label/Voidlinux /mnt
-mkdir -pv /mnt/{boot/efi,home,.snapshots,var/log,var/tmp,var/cache/xbps,var/swap}
+mkdir -pv /mnt/boot/efi
+mkdir -pv /mnt/home
+mkdir -pv /mnt/.snapshots
+mkdir -pv /mnt/var/log
+mkdir -pv /mnt/var/tmp
+mkdir -pv /mnt/var/cache/xbps
+mkdir -pv /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol="@home" /dev/disk/by-label/Voidlinux /mnt/home
 mount -o $BTRFS_OPTS,subvol="@snapshots" /dev/disk/by-label/Voidlinux /mnt/.snapshots
 # mount -o $BTRFS_OPTS,subvol=@swap /dev/disk/by-label/Voidlinux /mnt/var/swap
 mount -o $BTRFS_OPTS,subvol="@tmp" /dev/disk/by-label/Voidlinux /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol="@logs" /dev/disk/by-label/Voidlinux /mnt/var/log
 mount -o $BTRFS_OPTS,subvol="@xbps" /dev/disk/by-label/Voidlinux /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/GRUB /mnt/boot/efi
+mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/EFI /mnt/boot/efi
 
 lsblk --output "NAME,SIZE,FSTYPE,FSVER,LABEL,PARTLABEL,UUID,FSAVAIL,FSUSE%,MOUNTPOINTS,DISC-MAX" "$disk"
 
@@ -278,7 +284,11 @@ LABEL="Voidlinux" /home           btrfs $BTRFS_OPTS,subvol=@home           0 0
 
 # EFI
 # UUID=$UEFI_UUID /boot/efi      vfat   defaults,noatime,nodiratime        0 2
-LABEL="GRUB"      /boot/efi      vfat   noatime,nodiratime,defaults        0 2
+LABEL="EFI"       /boot/efi      vfat   noatime,nodiratime,defaults        0 2
+
+# SWAP
+# UUID=$UEFI_UUID /boot/efi      vfat   defaults,noatime,nodiratime        0 2
+LABEL="SWAP"      none           swap   defaults,noatime                   0 0
 
 tmpfs             /tmp           tmpfs  noatime,nosuid,nodev,mode=1777     0 0
 EOF
