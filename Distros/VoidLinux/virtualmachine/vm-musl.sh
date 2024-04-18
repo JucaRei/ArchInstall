@@ -199,22 +199,12 @@ EOF
 # Repositorios mais rapidos MUSL
 cat <<\EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://repo-fastly.voidlinux.org/repo/current/musl
-repository=https://repo-default.voidlinux.org/current/current/musl
+repository=https://repo-default.voidlinux.org/current/musl
 EOF
 
 cat <<\EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://repo-fastly.voidlinux.org/repo/current/musl/nonfree
-repository=https://repo-default.voidlinux.org/current/current/musl/nonfree
-EOF
-
-cat <<\EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-repository=https://repo-fastly.voidlinux.org/repo/current/musl/multilib/nonfree
-repository=https://repo-default.voidlinux.org/current/current/musl/multilib/nonfree
-EOF
-
-cat <<\EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-repository=https://repo-fastly.voidlinux.org/repo/current/musl/multilib
-repository=https://repo-default.voidlinux.org/current/current/musl/multilib
+repository=https://repo-default.voidlinux.org/current/musl/nonfree
 EOF
 
 # Ignorar alguns pacotes
@@ -257,6 +247,8 @@ cat <<\EOF >/mnt/etc/hosts
 ff02::1         ip6-allnodes
 ff02::2         ip6-allrouters
 EOF
+
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
 
 cat <<\EOF >/mnt/etc/fstab
 #
@@ -448,7 +440,7 @@ chroot /mnt xbps-install -Sy irqbalance thermald earlyoom --yes
 # chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # utils
-chroot /mnt xbps-install -S bash-completion p7zip curl wget dialog gvfs-afc gvfs-mtp gvfs-smb libgsf  socklog-void udevil usbutils xtools --yes
+chroot /mnt xbps-install -S elogind bash-completion p7zip curl wget dialog gvfs-afc gvfs-mtp gvfs-smb libgsf  socklog-void udevil usbutils xtools --yes
 # libinput-gestures
 
 # Needed for DE
@@ -472,7 +464,7 @@ chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xephyr numlockx xorg-serve
 # Display Manager
 # chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
 
-# xbps-install -S lightdm lightdm-gtk3-greeter
+xbps-install -S lightdm lightdm-gtk3-greeter
 
 # Config Lightdm
 # chroot /mnt touch /etc/lightdm/dual.sh
