@@ -303,8 +303,13 @@ vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
-net.ipv4.ping_group_range=0 $MAX_GID
+cat <<\EOF >/mnt/etc/sysctl.d/99-allow-ping.conf
+# net.ipv4.ping_group_range=0 $MAX_GID
+net.ipv4.ping_group_range=10001 10001
+EOF
+
+cat <<\EOF >/mnt/etc/sysctl.d/00-local-userns.conf
+kernel.unprivileged_userns_clone=1
 EOF
 
 cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
