@@ -839,6 +839,35 @@ chroot /mnt systemctl enable irqbalance.service
 ## Update initramfs
 chroot /mnt update-initramfs -c -k all
 
+############
+### UDEV ###
+############
+cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-backlight.rules
+# Allow video group to control backlight and leds
+SUBSYSTEM=="backlight", ACTION=="add", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+EOF
+
+cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-brightnessctl.rules
+    ACTION=="add", SUBSYSTEM=="backlight", RUN+="bright-helper video g+w /sys/class/backlight/%k/brightness"
+    ACTION=="add", SUBSYSTEM=="leds",      RUN+="bright-helper input g+w /sys/class/leds/%k/brightness"
+EOF
+
+cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-nm-thunderbolt.rules
+# Do not modify this file, it will get overwritten on updates.
+# To override or extend the rules place a file in /etc/udev/rules.d
+    ACTION!="add", GOTO="nm_thunderbolt_end"
+# Load he thunderbolt-net driver if we a device of type thunderbolt_xdomain is added.
+    SUBSYSTEM=="thunderbolt", ENV{DEVTYPE}=="thunderbolt_xdomain", RUN{builtin}+="kmod load thunderbolt-net"
+# For all thunderbolt network devices, we want to enable link-local configuration
+    SUBSYSTEM=="net", ENV{ID_NET_DRIVER}=="thunderbolt-net", ENV{NM_AUTO_DEFAULT_LINK_LOCAL_ONLY}="1"
+    LABEL="nm_thunderbolt_end"
+EOF
+
 ######################
 #### Install grub ####
 ######################
