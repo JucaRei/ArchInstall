@@ -7,10 +7,10 @@ locale-gen
 # echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
-echo "mcbair" >>/etc/hostname
+echo "anubis" >>/etc/hostname
 echo "127.0.0.1 localhost" >>/etc/hosts
 echo "::1       localhost" >>/etc/hosts
-echo "127.0.1.1 mcbair.localdomain mcbair" >>/etc/hosts
+echo "127.0.1.1 anubis.localdomain anubis" >>/etc/hosts
 echo root:200291 | chpasswd
 
 # Enable pacman Color
@@ -44,17 +44,17 @@ pacman-key --lsign-key 9AE4078033F8024D
 pacman-key --recv-key B545E9B7CD906FE3
 pacman-key --lsign-key B545E9B7CD906FE3
 
-cat <<\EOF >>/etc/pacman.conf
+cat <<EOF >>/etc/pacman.conf
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
 
-[chaotic-aur]
-Include = /etc/pacman.d/chaotic-mirrorlist
+# [chaotic-aur]
+# Include = /etc/pacman.d/chaotic-mirrorlist
 
 EOF
 
-sed -i -e '$a [andontie-aur]' /etc/pacman.conf
-sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
+# sed -i -e '$a [andontie-aur]' /etc/pacman.conf
+# sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
 
 pacman -Sy
 
@@ -63,24 +63,51 @@ mkdir -pv /media/juca
 cat <<EOF >>/etc/fstab
 
 # tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
-tmpfs /tmp tmpfs noatime,mode=1777 0 0
+# tmpfs /tmp tmpfs noatime,mode=1777 0 0
+tmpfs           /tmp               tmpfs noatime,mode=1777                  0 0
+
 EOF
 
-# pacman -S archlinux-keyring
-pacman -S efibootmgr opendoas chrony preload irqbalance networkmanager-iwd ananicy-cpp exfat-utils bat exa fzf ripgrep htop btop dropbear bash-completion network-manager-applet wireless_tools wpa_supplicant dialog mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils bash-completion zsh ntfs-3g firewalld rsync sof-firmware gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns
+# pacman -S archlinux-keyring wpa_supplicant dialog preload ananicy-cpp
+pacman -S grub os-prober efibootmgr intel-ucode earlyoom opendoas thermald chrony  irqbalance networkmanager iwd  exfat-utils htop udisks2 dropbear bash-completion wireless_tools mtools dosfstools bluez bluez-utils pulseaudio pulseaudio-bluetooth alsa-utils ntfs-3g firewalld rsync gvfs gvfs-smb nfs-utils inetutils dnsutils nss-mdns avahi tlp breeze-plymouth plymouth powertop
 # xdg-utils xdg-user-dirs
 # apci & tlp
-pacman -S acpi acpi_call-lts acpid acpilight --noconfirm
+pacman -S acpi acpid --noconfirm
+
+# Create config file to make NetworkManager use iwd as the Wi-Fi backend instead of wpa_supplicant
+mkdir -pv /etc/NetworkManager/conf.d/
+touch /etc/NetworkManager/conf.d/wifi_backend.conf
+cat <<EOF >>/etc/NetworkManager/conf.d/wifi_backend.conf
+[device]
+wifi.backend=iwd
+wifi.iwd.autoconnect=yes
+EOF
+
+# Config iwd
+mkdir -pv /etc/iwd
+touch /etc/iwd/main.conf
+cat << EOF > /etc/iwd/main.conf
+[General]
+EnableNetworkConfiguration=true
+
+[Network]
+NameResolvingService=systemd
+RouterPriorityOffset=30
+EOF
+
 
 systemctl enable NetworkManager
 systemctl enable bluetooth
 systemctl enable iwd
 systemctl enable dropbear
+systemctl enable earlyoom
+systemctl enable powertop
+systemctl enable tlp
 systemctl enable irqbalance
-systemctl enable preload
-systemctl enable ananicy-cpp
-systemctl enable smbd
-systemctl enable nmbd
+# systemctl enable preload
+# systemctl enable ananicy-cpp
+# systemctl enable smbd
+# systemctl enable nmbd
 systemctl enable chronyd
 systemctl enable avahi-daemon
 systemctl enable reflector.timer
@@ -95,11 +122,34 @@ usermod -aG wheel juca
 echo "juca ALL=(ALL) ALL" >>/etc/sudoers.d/juca
 echo "juca ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/juca
 
-pacman -Rs linux acpi_call --noconfirm
+# pacman -Rs linux acpi_call --noconfirm
 
-pacman -S acpi_call-lts --noconfirm
+# pacman -S acpi_call-lts --noconfirm
 
-mkinitcpio -P linux-lts
+mkinitcpio -P linux-zen
+
+mkdir -pv /etc/default/
+touch /etc/default/keyboard
+cat <<EOF >/etc/default/keyboard
+# KEYBOARD CONFIGURATION FILE
+
+# Consult the keyboard(5) manual page.
+
+XKBMODEL="pc105"
+XKBLAYOUT="us"
+XKBVARIANT="mac"
+# XKBOPTIONS="terminate:ctrl_alt_bksp"
+EOF
+
+# sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
+# sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""quiet splash applesmc acpi_backlight=vendor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
+sed -i 's/GRUB_COLOR_NORMAL="light-blue/black"/GRUB_COLOR_NORMAL="red/black"/g'
+sed -i 's/#GRUB_COLOR_HIGHLIGHT="light-cyan/blue"/GRUB_COLOR_HIGHLIGHT="yellow/black"/g'
+# sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
+grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --no-nvram --removable --recheck
+# grub-install --target=x86_64-efi --bootloader-id=Arch --efi-directory=/boot/efi --no-nvram --removable --recheck --no-rs-codes --modules="btrfs zstd part_gpt part_msdos"
+grub-mkconfig -o /boot/grub/grub.cfg
 
 # Power top
 touch /etc/rc.local
@@ -170,19 +220,83 @@ cat <<EOF >/etc/samba/smb.conf
    guest ok = no
 EOF
 
+# intel Graphics and acceleration
+# mesa
+pacman -S mesa-amber vulkan-intel
+
+
+# Touchpad tap to click
+mkdir -pv /etc/X11/xorg.conf.d/
+touch /etc/X11/xorg.conf.d/30-touchpad.conf
+cat <<EOF >/etc/X11/xorg.conf.d/30-touchpad.conf
+Section "InputClass"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # MatchIsTouchpad "on"
+        # Driver "libinput"
+        # Option "Tapping" "on"
+
+        Identifier      "touchpad"
+        Driver          "libinput"
+        MatchIsTouchpad "on"
+        Option          "Tapping"       "on"
+EndSection
+EOF
+
+touch /etc/X11/xorg.conf.d/20-modesetting.conf
+cat <<EOF >/etc/X11/xorg.conf.d/20-modesetting.conf
+Section "Device"
+#   Identifier "Intel Graphics 630"
+#   Driver "intel"
+#   Option "AccelMethod" "sna"
+#   Option "TearFree" "True"
+#   Option "Tiling" "True"
+#   Option "SwapbuffersWait" "True"
+#   Option "DRI" "3"
+
+   Identifier  "Intel Graphics"
+   Driver      "modesetting"
+   Option      "TearFree"        "false"
+   Option      "TripleBuffer"    "false"
+   Option      "SwapbuffersWait" "false"
+   # Option      "TearFree"        "True"
+   Option      "AccelMethod"     "uxa"
+   Option      "AccelMethod"     "glamor"
+   Option      "DRI"             "3"
+EndSection
+EOF
+
+touch /etc/X11/xorg.conf.d/20-intel.conf
+cat <<EOF >/etc/X11/xorg.conf.d/20-intel.conf
+# Section "Device"
+#     Identifier          "Intel Graphics"
+#     MatchDriver         "i915"
+#     Driver              "intel"
+#     Option              "DRI"               "3"
+#     Option              "TearFree"          "1"
+# EndSection
+EOF
+
+# Option      "TearFree"        "false"
+# Option      "TripleBuffer"    "false"
+# Option      "SwapbuffersWait" "false"
 ### systemctl
 mkdir -pv /etc/sysctl.d
 touch /etc/sysctl.d/00-sysctl.conf
 cat <<EOF >/etc/sysctl.d/00-sysctl.conf
-vm.vfs_cache_pressure=500
-vm.swappiness=100
+# vm.vfs_cache_pressure=500
+vm.vfs_cache_pressure=40
+# vm.swappiness=100
+vm.swappiness=20 #10
 vm.dirty_background_ratio=1
+vm.dirty_bytes" = 335544320
+vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 dev.i915.perf_stream_paranoid=0
 EOF
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
-cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
+cat <<EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -193,7 +307,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /etc/polkit-1/rules.d
-cat <<\EOF >/etc/polkit-1/rules.d/10-udisks2.rules
+cat <<EOF >/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -205,7 +319,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat <<\EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<EOF >/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -247,8 +361,8 @@ EOF
 chown -c root:root /etc/doas.conf
 
 touch /etc/modprobe.d/i915.conf
-cat <<\EOF >/etc/modprobe.d/i915.conf
-options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
+cat <<EOF >/etc/modprobe.d/i915.conf
+options i915 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 
 # SWAP
@@ -286,17 +400,17 @@ EOF
 # echo "/swapfile      none     swap      defaults  0 0" >> /etc/fstab
 
 # Systemd-Boot
-bootctl --path=/boot install
-echo "default arch.conf" >>/boot/loader/loader.conf
-touch /boot/loader/entries/arch.conf
+# bootctl --path=/boot install
+# echo "default arch.conf" >>/boot/loader/loader.conf
+# touch /boot/loader/entries/arch.conf
 
-cat <<EOF >/boot/loader/entries/arch.conf
-title   Arch Linux
-linux   /vmlinuz-linux-lts
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-lts.img
-options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
-EOF
+# cat <<EOF >/boot/loader/entries/arch.conf
+# title   Arch Linux
+# linux   /vmlinuz-linux-lts
+# initrd  /intel-ucode.img
+# initrd  /initramfs-linux-lts.img
+# options root=/dev/sda4 rootflags=subvol=@ rw quiet loglevel=0 console=tty2 acpi_osi=Darwin acpi_mask_gpe=0x06 udev.log_level=0 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
+# EOF
 # options root=/dev/sda2 rootflags=subvol=@ rw quiet splash loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce  vt.global_cursor_default=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable
 
 # Mkinitcpio
@@ -304,6 +418,6 @@ sudo sed -i 's/MODULES=()/MODULES=(btrfs i915 crc32c-intel)/g' /etc/mkinitcpio.c
 sudo sed -i 's/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck btrfs)/g' /etc/mkinitcpio.conf
 sudo sed -i 's/#COMPRESSION="xz"/COMPRESSION="zstd"/g' /etc/mkinitcpio.conf
 
-mkinitcpio -P linux-lts
+mkinitcpio -P linux-zen
 
 printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"

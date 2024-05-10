@@ -90,7 +90,7 @@ EOF
 # Config iwd
 mkdir -pv /etc/iwd
 touch /etc/iwd/main.conf
-cat <<EOF >main.conf
+cat <<EOF >/etc/iwd/main.conf
 [General]
 EnableNetworkConfiguration=true
 

@@ -3,7 +3,7 @@
 DRIVE="/dev/sda"
 
 #### Update and install needed packages ####
-apt update && apt install debootstrap btrfs-progs lsb-release wget -y
+apt update && apt install debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 #### Umount drive, if it's mounted ####
 umount -R /dev/sda
@@ -160,7 +160,7 @@ mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 ####################################################
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
-debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,opendoas,nano,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,ncurses-base,netbase,procps,systemd,systemd-sysv,dbus-broker,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -189,8 +189,8 @@ deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-
 deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
 deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+# deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+# deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 
 #######################
 ### Debian unstable ###
@@ -239,6 +239,18 @@ deb http://deb.debian.org/debian bookworm-backports main contrib non-free-firmwa
 deb-src http://deb.debian.org/debian bookworm-backports main contrib non-free-firmware
 HEREDOC
 
+cat >/mnt/etc/apt/sources.list.d/buster-backports.list <<HEREDOC
+#
+# Debian backports
+#
+
+# buster-backports
+
+deb http://archive.debian.org/debian buster-backports main contrib non-free
+#deb http://deb.debian.org/debian buster-backports main contrib non-free
+#deb-src http://deb.debian.org/debian buster-backports main contrib non-free
+HEREDOC
+
 ## Disable verification ##
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
 # && echo >> /mnt/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
@@ -273,7 +285,7 @@ EOF
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 ## Boot Faster with intel ##
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+options i915 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 #######################################
@@ -295,11 +307,11 @@ vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -314,7 +326,7 @@ chroot /mnt update-initramfs -c -k all
 #### Set default editor ####
 ############################
 
-chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
+# chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
 
 ######################################
 #### Optimize apt package manager ####
@@ -390,7 +402,7 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 127.0.1.1 anubis
 
@@ -458,7 +470,8 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
         chroot /mnt apt update
 
 cat <<EOF >/mnt/etc/environment
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+LIBVA_DRIVER_NAME=i965
 EOF
 
 #####################################
@@ -471,6 +484,14 @@ EOF
 
 # kernel
 # chroot /mnt aptitude install linux-image-5.10.0-25-amd64-unsigned linux-headers-5.10.0-25-amd64 -f -y
+
+# wget -c http://sft.if.usp.br/debian/pool/main/g/gcc-10/gcc-10-base_10.2.1-6_amd64.deb
+# wget -c http://ftp.br.debian.org/debian/pool/main/g/gcc-10/cpp-10_10.5.0-4_amd64.deb
+# wget -c http://ftp.us.debian.org/debian/pool/main/g/gcc-10/gcc-10_10.2.1-6_amd64.deb
+
+# chroot /mnt apt install -t bullseye-backports linux-image-5.10.0-29-amd64-unsigned linux-headers-5.10.0-29-amd64 -f -y
+
+chroot /mnt apt install -t linux-image-5.10.0-25-amd64 linux-headers-5.10.0-25-amd64 -f -y
 
 # wget -c http://security.debian.org/debian-security/pool/updates/main/l/linux/linux-headers-5.10.0-27-amd64_5.10.205-2_amd64.deb
 
@@ -532,8 +553,8 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 #
-chroot /mnt apt install aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils fonts-firacode \
-    debian-keyring htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony --no-install-recommends -y
+chroot /mnt apt install aptitude rsyslog manpages acpi acpid dkms btrfs-compsize \
+    debian-keyring htop efibootmgr grub-efi-amd64 sysfsutils chrony  udisks2  --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -572,13 +593,14 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 #### intel Hardware Acceleration ####
 #####################################
 
-chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi --no-install-recommends -y
+chroot /mnt apt install i965-va-driver-shaders gstreamer1.0-vaapi --no-install-recommends -y
 
 ###############################
 #### Minimal xorg packages ####
 ###############################
 
-chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
+# chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
+chroot /mnt apt install xserver-xorg-core --no-install-recommends -y
 
 ###########################
 #### Some XORG configs ####
@@ -602,6 +624,8 @@ Section "InputClass"
 EndSection
 EOF
 
+chroot /mnt apt install mesa-va-drivers mesa-vulkan-drivers libegl-mesa0 libgl1-mesa-dri libglapi-mesa libglx-mesa0  mesa-utils --yes
+
 # Fix tearing with intel
 touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
@@ -616,11 +640,28 @@ Section "Device"
 
     Identifier  "Intel Graphics"
     Driver      "modesetting"
-    Option      "TearFree"       "True"
-    # Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "2"
+    Option      "TearFree"        "false"
+    Option      "TripleBuffer"    "false"
+    Option      "SwapbuffersWait" "false"
+    # Option      "TearFree"      "True"
+    # Option      "AccelMethod"     "uxa"
+    Option      "AccelMethod"     "glamor"
+    Option      "DRI"             "3"
 EndSection
 EOF
+
+touch /mnt/etc/X11/xorg.conf.d/20-intel.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
+# Section "Device"
+#     Identifier          "Intel Graphics"
+#     MatchDriver         "i915"
+#     Driver              "intel"
+#     Option              "DRI"               "3"
+#     Option              "TearFree"          "1"
+# EndSection
+EOF
+
+# chroot /mnt apt install xserver-xorg-video-intel -y
 
 #########################
 #### Config Powertop ####
@@ -675,9 +716,9 @@ EOF
 ###########################
 
 cat <<EOF >/mnt/etc/resolv.conf
+nameserver 1.1.1.1
 nameserver 8.8.8.8
 nameserver 8.8.4.4
-nameserver 1.1.1.1
 EOF
 
 ################################
@@ -710,7 +751,7 @@ EOF
 #### sudo ####
 ##############
 
-chroot /mnt apt install sudo -y
+# chroot /mnt apt install sudo -y
 
 ##############################
 #### User's and passwords ####
@@ -719,8 +760,9 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
-chroot /mnt usermod -aG sudo juca
+# chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm juca
+# chroot /mnt usermod -aG sudo juca
 
 # AppArmor podman fix
 
@@ -746,6 +788,36 @@ plugins=ifupdown,keyfile
 [ifupdown]
 managed=true
 EOF
+
+### DOAS
+
+cat <<EOF >/mnt/etc/doas.conf
+# allow user but require password
+permit keepenv :juca
+
+# allow user and dont require a password to execute commands as root
+permit nopass keepenv :juca
+
+# mount drives
+permit nopass :juca cmd mount
+permit nopass :juca cmd umount
+
+# musicpd service start and stop
+#permit nopass :$USER cmd service args musicpd onestart
+#permit nopass :$USER cmd service args musicpd onestop
+
+# pkg update
+#permit nopass :$USER cmd vpm args update
+
+# run personal scripts as root without prompting for a password,
+# requires entering the full path when running with doas
+#permit nopass :$USER cmd /home/username/bin/somescript
+
+# root as root
+#permit nopass keepenv root as root
+EOF
+
+chroot /mnt chown -c root:root /etc/doas.conf
 
 cat <<EOF >/mnt/etc/NetworkManager/conf.d/disable-wifi-rand-mac.conf
 [device]
@@ -776,6 +848,13 @@ elif [ "$(nmcli -g GENERAL.STATE device show eth0)" = "20 (unavailable)" ]; then
 fi
 EOF
 
+chroot /mnt apt install ssh keychain ssh-askpass ufw firewalld rtkit -f -y
+
+
+# sudo firewall-cmd --add-port=1025-65535/tcp --permanent
+# sudo firewall-cmd --add-port=1025-65535/udp --permanent
+# sudo firewall-cmd --reload
+
 #########################
 #### Enable Services ####
 #########################
@@ -787,7 +866,7 @@ chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
-chroot /mnt systemctl enable dropbear.service
+# chroot /mnt systemctl enable dropbear.service
 chroot /mnt systemctl enable fstrim.timer
 
 ## Audio
@@ -816,15 +895,16 @@ chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
 # sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<\EOF >>/mnt/etc/chrony.conf
+cat <<EOF >>/mnt/etc/chrony.conf
 server time.windows.com iburst prefer
 EOF
 
 ## Optimizations ##
 chroot /mnt systemctl enable earlyoom.service
-# chroot /mnt systemctl enable powertop.service
+chroot /mnt systemctl enable powertop.service
 chroot /mnt systemctl enable thermald.service
 chroot /mnt systemctl enable irqbalance.service
+chroot /mnt systemctl --global enable dbus-broker.service
 
 ## Update initramfs
 chroot /mnt update-initramfs -c -k all
@@ -851,7 +931,7 @@ GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash applesmc acpi_backlight=vendor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 intel_pstate=hwp_only security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
 

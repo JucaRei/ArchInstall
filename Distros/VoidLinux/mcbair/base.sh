@@ -350,6 +350,7 @@ permit nopass :juca cmd umount
 # root as root
 #permit nopass keepenv root as root
 EOF
+
 chroot /mnt chown -c root:root /etc/doas.conf
 # chroot /mnt chmod -c 0400 /etc/doas.conf
 

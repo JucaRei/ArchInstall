@@ -160,7 +160,7 @@ mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 ####################################################
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
-debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
+debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,nano,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,dbus-broker,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
 
@@ -225,8 +225,15 @@ deb-src https://deb.debian.org/debian/ bullseye-backports main contrib non-free
 HEREDOC
 
 cat >/mnt/etc/apt/sources.list.d/buster-backports.list <<HEREDOC
-deb http://deb.debian.org/debian buster-backports main contrib non-free
-deb-src http://deb.debian.org/debian buster-backports main contrib non-free
+#
+# Debian backports
+#
+
+# buster-backports
+
+deb http://archive.debian.org/debian buster-backports main contrib non-free
+#deb http://deb.debian.org/debian buster-backports main contrib non-free
+#deb-src http://deb.debian.org/debian buster-backports main contrib non-free
 HEREDOC
 
 # cat >/mnt/etc/apt/sources.list.d/bullseye-security.list <<HEREDOC
@@ -282,7 +289,7 @@ EOF
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 ## Boot Faster with intel ##
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+options i915 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 #######################################
@@ -304,11 +311,11 @@ vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -323,7 +330,7 @@ chroot /mnt update-initramfs -c -k all
 #### Set default editor ####
 ############################
 
-chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
+chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nano 100
 
 ######################################
 #### Optimize apt package manager ####
@@ -399,7 +406,7 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 127.0.1.1 anubis
 
@@ -467,7 +474,8 @@ chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
         chroot /mnt apt update
 
 cat <<EOF >/mnt/etc/environment
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+LIBVA_DRIVER_NAME=i965
 EOF
 
 #####################################
@@ -541,8 +549,8 @@ chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio
 #### Utils ####
 ###############
 #
-chroot /mnt apt install aptitude rsyslog manpages acpid hwinfo lshw dkms btrfs-compsize pciutils fonts-firacode \
-    debian-keyring htop efibootmgr grub-efi-amd64 wget unzip curl sysfsutils chrony --no-install-recommends -y
+chroot /mnt apt install aptitude rsyslog manpages acpi acpid dkms btrfs-compsize \
+    debian-keyring htop efibootmgr grub-efi-amd64 sysfsutils chrony  udisks2  --no-install-recommends -y
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
 cat <<EOF >/mnt/etc/initramfs-tools/modules
@@ -565,11 +573,13 @@ EOF
 
 chroot /mnt apt install man-db gdisk mtools p7zip unattended-upgrades --no-install-recommends -y
 
+chroot /mnt apt install linux-image-5.10.0-28-amd64-unsigned linux-headers-5.10.0-28-amd64 --no-install-recommends -y
+
 #############################
 #### Optimizations Tools ####
 #############################
 
-chroot /mnt apt install earlyoom powertop tlp thermald irqbalance --no-install-recommends -y
+chroot /mnt apt install earlyoom powertop tlp thermald irqbalance preload --no-install-recommends -y
 
 ###################
 #### Microcode ####
@@ -581,7 +591,7 @@ chroot /mnt apt install intel-microcode --no-install-recommends -y
 #### intel Hardware Acceleration ####
 #####################################
 
-chroot /mnt apt install intel-media-va-driver-non-free vainfo intel-gpu-tools gstreamer1.0-vaapi --no-install-recommends -y
+chroot /mnt apt install i965-va-driver-shaders gstreamer1.0-vaapi --no-install-recommends -y
 
 ###############################
 #### Minimal xorg packages ####
@@ -612,22 +622,33 @@ EndSection
 EOF
 
 # Fix tearing with intel
-touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
+touch /mnt/etc/X11/xorg.conf.d/30-modesetting.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-Section "Device"
-#   Identifier "Intel Graphics 630"
-#   Driver "intel"
-#   Option "AccelMethod" "sna"
-#   Option "TearFree" "True"
-#   Option "Tiling" "True"
-#   Option "SwapbuffersWait" "True"
-#   Option "DRI" "3"
+# Section "Device"
+# #   Identifier "Intel Graphics 630"
+# #   Driver "intel"
+# #   Option "AccelMethod" "sna"
+# #   Option "TearFree" "True"
+# #   Option "Tiling" "True"
+# #   Option "SwapbuffersWait" "True"
+# #   Option "DRI" "3"
 
+#     Identifier  "Intel Graphics"
+#     Driver      "modesetting"
+#     Option      "TearFree"       "True"
+#     #Option     "AccelMethod"    "glamor"
+#     #Option     "DRI"            "2"
+
+# EndSection
+EOF
+
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
+Section "OutputClass"
     Identifier  "Intel Graphics"
-    Driver      "modesetting"
-    Option      "TearFree"       "True"
-    # Option      "AccelMethod"    "glamor"
-    Option      "DRI"            "2"
+    MatchDriver "i915"
+    Driver      "intel"
+    Option      "DRI"       "3"
+    Option      "TearFree"  "1"
 EndSection
 EOF
 
@@ -684,9 +705,9 @@ EOF
 ###########################
 
 cat <<EOF >/mnt/etc/resolv.conf
+nameserver 1.1.1.1
 nameserver 8.8.8.8
 nameserver 8.8.4.4
-nameserver 1.1.1.1
 EOF
 
 ################################
