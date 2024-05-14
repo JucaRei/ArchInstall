@@ -617,7 +617,8 @@ Section "InputClass"
         Identifier      "touchpad"
         Driver          "libinput"
         MatchIsTouchpad "on"
-        Option          "Tapping"       "on"
+        Option          "NaturalScrolling"  "true"
+        Option          "Tapping"           "on"
 EndSection
 EOF
 
@@ -651,6 +652,32 @@ Section "OutputClass"
     Option      "TearFree"  "1"
 EndSection
 EOF
+
+
+##############
+### Polkit ###
+##############
+mkdir -pv /mnt/etc/polkit-1/localauthority/50-local.d
+cat <<EOF >/mnt/etc/polkit-1/localauthority/50-local.d/service-auth.pkla
+---
+[Allow USER to start/stop/restart services]
+Identity=unix-user:juca
+Action=org.freedesktop.systemd1.manage-units
+ResultActive=yes
+EOF
+
+### If you are on Arch/Redhat (polkit >= 106), then this would work:
+# /etc/polkit-1/rules.d/service-auth.rules
+# ---
+# polkit.addRule(function(action, subject) {
+#     if (action.id == "org.freedesktop.systemd1.manage-units" &&
+#         subject.user == "yourname") {
+#         return polkit.Result.YES;
+#     } });
+
+# /etc/sudoers.d/sysctl
+# ---
+# youname ALL = NOPASSWD: /bin/systemctl
 
 #########################
 #### Config Powertop ####
@@ -865,12 +892,17 @@ chroot /mnt update-initramfs -c -k all
 ############
 cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-backlight.rules
 # Allow video group to control backlight and leds
-SUBSYSTEM=="backlight", ACTION=="add", \
-  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
-  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
-SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
-  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
-  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+# SUBSYSTEM=="backlight", ACTION=="add", \
+#   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+#   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+# SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
+#   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+#   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chgrp input /sys/class/leds/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
 EOF
 
 cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-brightnessctl.rules
