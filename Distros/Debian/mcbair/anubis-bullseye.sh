@@ -625,32 +625,36 @@ EOF
 # Fix tearing with intel
 touch /mnt/etc/X11/xorg.conf.d/30-modesetting.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-# Section "Device"
-# #   Identifier "Intel Graphics 630"
-# #   Driver "intel"
-# #   Option "AccelMethod" "sna"
-# #   Option "TearFree" "True"
-# #   Option "Tiling" "True"
-# #   Option "SwapbuffersWait" "True"
-# #   Option "DRI" "3"
+Section "Device"
+#   Identifier "Intel Graphics 630"
+#   Driver "intel"
+#   Option "AccelMethod" "sna"
+#   Option "TearFree" "True"
+#   Option "Tiling" "True"
+#   Option "SwapbuffersWait" "True"
+#   Option "DRI" "3"
 
-#     Identifier  "Intel Graphics"
-#     Driver      "modesetting"
-#     Option      "TearFree"       "True"
-#     #Option     "AccelMethod"    "glamor"
-#     #Option     "DRI"            "2"
-
-# EndSection
+    Identifier  "Intel Graphics"
+    Driver      "modesetting"
+    Option      "TearFree"        "true" # "false"
+    Option      "TripleBuffer"    "false"
+    Option      "SwapbuffersWait" "false"
+    Option "TearFree" "True"
+    # Option      "TearFree"      "True"
+    # Option      "AccelMethod"     "uxa"
+    Option      "AccelMethod"     "glamor"
+    Option      "DRI"             "3"
+EndSection
 EOF
 
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-intel.conf
-Section "OutputClass"
-    Identifier  "Intel Graphics"
-    MatchDriver "i915"
-    Driver      "intel"
-    Option      "DRI"       "3"
-    Option      "TearFree"  "1"
-EndSection
+# Section "OutputClass"
+#     Identifier  "Intel Graphics"
+#     MatchDriver "i915"
+#     Driver      "intel"
+#     Option      "DRI"       "3"
+#     Option      "TearFree"  "1"
+# EndSection
 EOF
 
 
