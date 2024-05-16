@@ -892,18 +892,16 @@ chroot /mnt update-initramfs -c -k all
 ############
 cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-backlight.rules
 # Allow video group to control backlight and leds
-# SUBSYSTEM=="backlight", ACTION=="add", \
-#   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
-#   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
-# SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
-#   RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
-#   RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
-
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness"
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
-ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chgrp input /sys/class/leds/%k/brightness"
-ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
-EOF
+# Allow video group to control backlight and leds
+SUBSYSTEM=="backlight", ACTION=="add", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
+  RUN+="/bin/chgrp video /sys/class/leds/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
 
 cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-brightnessctl.rules
     ACTION=="add", SUBSYSTEM=="backlight", RUN+="bright-helper video g+w /sys/class/backlight/%k/brightness"
