@@ -1,31 +1,44 @@
 #!/bin/bash
 
-disk="/dev/vda"
+DRIVE="/dev/vda"
 
-sgdisk -Z $disk
-parted --script --fix --align optimal $disk mklabel gpt
-parted --script --fix --align optimal $disk mkpart primary fat32 1MiB 512MiB
-parted --script $disk -- set 1 boot on
-parted --script --align optimal --fix -- $disk mkpart primary 512MiB -2GiB
-parted --script --align optimal --fix -- $disk mkpart primary linux-swap -2GiB 100%
+sgdisk -Z $DRIVE
+# parted $DRIVE mklabel gpt
+# parted $DRIVE mkpart primary 2048s 100%
+parted --script --fix --align optimal $DRIVE mklabel gpt
+parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
+parted --script $DRIVE -- set 1 boot on
 
-sgdisk -c 1:"EFI FileSystem partition" $disk
-sgdisk -c 2:"Voidlinux FileSystem" $disk
-sgdisk -c 3:"Voidlinux Swap" $disk
-sgdisk -t 3:8300 $disk
-sgdisk -p $disk
+# parted --script --align optimal -- $DRIVE mkpart primary 600MB 100%
+# parted --script --align optimal --fix -- $DRIVE mkpart primary linux-swap -2GiB -1s
+parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -4GiB
+parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
 
-BOOT_PARTITION="$disk"1
-ROOT_PARTITION="$disk"2
-SWAP_PARTITION="$disk"3
+# parted --script align-check 1 $DRIVE
+
+
+sgdisk -c 1:"EFI FileSystem partition" ${DRIVE}
+sgdisk -c 2:"Voidlinux FileSystem" ${DRIVE}
+sgdisk -c 3:"Voidlinux Swap" ${DRIVE}
+sgdisk -p ${DRIVE}
+
+BOOT_PARTITION="${DRIVE}1"
+ROOT_PARTITION="${DRIVE}2"
+SWAP_PARTITION="${DRIVE}3"
 
 ### Format
 mkfs.vfat -F 32 $BOOT_PARTITION -n "EFI"
 mkfs.btrfs $ROOT_PARTITION -f -L "Voidlinux"
+sleep 1
 mkswap $SWAP_PARTITION -L "SWAP"
 swapon /dev/disk/by-label/SWAP
 
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
+
+## fstab real hardware ##
+UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
+SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 
 mount -o $BTRFS_OPTS /dev/disk/by-label/Voidlinux /mnt
 btrfs su cr /mnt/@root
@@ -117,7 +130,7 @@ omit_dracutmodules+=" i18n luks rpmversion lvm fstab-sys lunmask fstab-sys secur
 show_modules="yes"
 # compress="cat";
 nofscks="yes"
-compress="zstd"s
+compress="zstd"
 no_host_only_commandline="yes"
 EOF
 
@@ -149,7 +162,7 @@ EOF
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
-cat <<\EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
    # Identifier "SynPS/2 Synaptics TouchPad"
    # Identifier "SynPS/2 Synaptics TouchPad"
@@ -165,7 +178,7 @@ EndSection
 EOF
 
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat <<\EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
+cat <<EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 #Section "Device"
 #    Identifier "Nvidia GTX 1050"
 #    Driver "nvidia"
@@ -178,7 +191,7 @@ EOF
 
 # Fix tearing with intel
 touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-cat <<\EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 #Section "Device"
 #   Identifier "Intel Graphics 630"
 #   Driver "intel"
@@ -197,18 +210,16 @@ cat <<\EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 EOF
 
 # Repositorios mais rapidos MUSL
-cat <<\EOF >/mnt/etc/xbps.d/00-repository-main.conf
-repository=https://repo-fastly.voidlinux.org/repo/current/musl
+cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
 repository=https://repo-default.voidlinux.org/current/musl
 EOF
 
-cat <<\EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-repository=https://repo-fastly.voidlinux.org/repo/current/musl/nonfree
+cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
 repository=https://repo-default.voidlinux.org/current/musl/nonfree
 EOF
 
 # Ignorar alguns pacotes
-cat <<\EOF >/mnt/etc/xbps.d/99-ignore.conf
+cat <<EOF >/mnt/etc/xbps.d/99-ignore.conf
 ignorepkg=linux
 ignorepkg=linux-headers
 ignorepkg=linux-firmware-amd
@@ -234,13 +245,13 @@ EOF
 chroot /mnt xbps-remove -Rconn hicolor-icon-theme ipw2100-firmware ipw2200-firmware linux-firmware-amd nvi xf86-input-wacom xf86-video-amdgpu xf86-video-ati xf86-video-fbdev xf86-video-nouveau xf86-video-vesa xf86-video-vmware --yes
 
 # Hostname
-cat <<\EOF >/mnt/etc/hostname
+cat <<EOF >/mnt/etc/hostname
 minimech
 EOF
 
 # Hosts
 
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1       localhost
 ::1             localhost ip6-locahost ip6-loopback
 127.0.1.1       minimech.localdomain minimech
@@ -250,7 +261,7 @@ EOF
 
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
 
-cat <<\EOF >/mnt/etc/fstab
+cat <<EOF >/mnt/etc/fstab
 #
 # See fstab(5).
 #
@@ -302,7 +313,7 @@ EOF
 
 
 # Set user permition
-cat <<\EOF >/mnt/etc/doas.conf
+cat <<EOF >/mnt/etc/doas.conf
 # allow user but require password
 permit keepenv :juca
 
@@ -332,7 +343,7 @@ chroot /mnt chown -c root:root /etc/doas.conf
 
 # RC Conf
 
-cat <<\EOF >/mnt/etc/rc.conf
+cat <<EOF >/mnt/etc/rc.conf
 # /etc/rc.conf - system configuration for void
 
 # Set the host name.
@@ -427,7 +438,7 @@ chroot /mnt xbps-install -S pulseaudio alsa-plugins-pulseaudio --yes
 chroot /mnt xbps-install -S bluez --yes
 
 # Network
-chroot /mnt xbps-install -S NetworkManager NetworkManager-l2tp NetworkManager-openconnect NetworkManager-openvpn NetworkManager-pptp NetworkManager-vpnc iwd netcat nfs-utils samba sv-netmount --yes
+chroot /mnt xbps-install -S NetworkManager iwd netcat nfs-utils samba sv-netmount --yes
 
 # Grub
 # chroot /mnt xbps-install -Sy efibootmgr grub-x86_64-efi grub-btrfs grub-btrfs-runit grub-customizer os-prober acl-progs btrfs-progs --yes
@@ -440,11 +451,11 @@ chroot /mnt xbps-install -Sy irqbalance thermald earlyoom --yes
 # chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-user-static qemuconf podman podman-compose binfmt-support containers.image buildah slirp4netns cni-plugins fuse-overlayfs --yes
 
 # utils
-chroot /mnt xbps-install -S elogind bash-completion p7zip curl wget dialog gvfs-afc gvfs-mtp gvfs-smb libgsf  socklog-void udevil usbutils xtools --yes
+chroot /mnt xbps-install -S elogind bash-completion curl wget dialog gvfs-afc gvfs-mtp gvfs-smb libgsf  socklog-void xtools --yes
 # libinput-gestures
 
 # Needed for DE
-chroot /mnt xbps-install -Sy polkit-elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 fuse3 ifuse xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt xbps-install -Sy polkit-elogind dbus-elogind dbus-elogind-libs dbus-elogind-x11 fuse3 ifuse --yes
 
 # Utilities
 chroot /mnt xbps-install -Sy zramen cifs-utils lm_sensors --yes
@@ -464,7 +475,7 @@ chroot /mnt xbps-install -Sy xorg-minimal xorg-server-xephyr numlockx xorg-serve
 # Display Manager
 # chroot /mnt xbps-install -S lightdm light-locker lightdm-gtk3-greeter lightdm-gtk-greeter-settings lightdm-webkit2-greeter colord colord-gtk gnome-color-manager colordiff --yes
 
-xbps-install -S lightdm lightdm-gtk3-greeter
+chroot /mnt xbps-install -S lightdm lightdm-gtk3-greeter
 
 # Config Lightdm
 # chroot /mnt touch /etc/lightdm/dual.sh
@@ -567,7 +578,7 @@ chroot /mnt update-grub
 # ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 # echo $ROOT_UUID
 
-cat <<EOF >/mnt/etc/default/grub
+cat <<EOF >/etc/default/grub
 #
 # Configuration file for GRUB.
 #
@@ -777,7 +788,7 @@ cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
 #options nouveau modeset=0
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-net.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-net.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
@@ -847,7 +858,6 @@ polkit.addRule(function(action, subject) {
         subject.isInGroup("wheel")) {
         return polkit.Result.YES;
     }
-});
 EOF
 
 touch /mnt/etc/rc.local
