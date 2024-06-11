@@ -1046,3 +1046,6 @@ rm -rf /mnt/initrd.img.old
 # --disk path=/var/lib/libvirt/images/nixos.qcow2,size=100 \
 # --console pty,target_type=serial \
 # --cdrom ~/Downloads/nixos-minimal-*-x86_64-linux.iso
+
+### Pacstall
+# sudo bash -c "$(curl -fsSL https://pacstall.dev/q/install || wget -q https://pacstall.dev/q/install -O -)"
