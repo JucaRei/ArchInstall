@@ -2,7 +2,7 @@
 #
 # cotarBitcoin.sh - Verifica a última cotação do Bitcoin
 #
-# Site:       https://4fasters.com.br
+# Site:       https://seusite.com.br
 # Autor:      Reinaldo P jr
 # Manutenção: Reinaldo P jr
 #
