@@ -1,0 +1,7 @@
+smb://10.10.10.200/volume_2/Transmission/Volume_2/Cursos/shell-script-do-basico-ao-profissional/
+smb://10.10.10.1/extermalhd/Cursos/Shell/Curso Intensivo de Shell Script Avançado - Terminal Root/
+/media/Data/Cursos/Programação Shell Script - Automatizando Rotinas no Linux/
+/media/Data/Cursos/Linux/Shell Script para Hacker_ de usuário à Ninja em Shell Script - Udemy/
+/media/Data/Downloads/Programação Shell Script - Automatizando Rotinas no Linux/
+
+/media/BrownHD/Courses/Curso Proxmox - do Zero ao Profissional + Hyper-V Server 2019/

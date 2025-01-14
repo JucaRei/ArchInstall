@@ -1,37 +1,38 @@
 #!/usr/bin/env bash
 #
-# cotar_Bitcoin.sh - Verifica a última cotação do Bitcoin
+# lista_usuarios.sh - Extrai usuários do /etc/passwd
 #
 # Site:       https://siteteste.com.br
 # Autor:      Reinaldo P Jr
 # Manutenção: Reinaldo P Jr
 #
 # ------------------------------------------------------------------------ #
-#  Este programa irá cotar o último valor do Bitcoin com base na API xxxx
+#  Este programa irá extrair usuários do /etc/passwd havendo a possibilidade de colocar
+#  maiúsculo e em ordem alfabética
 #
 #  Exemplos:
-#      $ ./cotarBitcoin.sh -d 1
-#      Neste exemplo o script será executado no modo debug nível 1.
+#      $ ./lista_usuarios.sh -s -m
+#      Neste exemplo ficará em maiúsculo e em ordem alfabética.
 # ------------------------------------------------------------------------ #
 # Histórico:
 #
 #   v1.0 03/10/2018, Juca:
-#       - Início do programa
-#       - Conta com a funcionalidade X
-#   v1.1 10/10/2018, Cleberson:
-#       - Alterado parametro XXXXX
 # ------------------------------------------------------------------------ #
 # Testado em:
 #   bash 4.4.19
-# ------------------------------------------------------------------------ #
-# Agradecimentos:
-#
-# 	Joãozinho - Encontrou um bug na parte de login.
-#	  Mariazinha - Enviou uma sugestão de adicionar o -h.
-# ------------------------------------------------------------------------ #
 
 # ------------------------------- VARIÁVEIS ----------------------------------------- #
 
+USUARIOS="$(cat /etc/passwd | cut -d : -f 1)"
+MENSAGEM_USO="
+  $0 - [OPÇÕES]
+
+  -h - Menu de ajuda
+  -v - Versão
+  -s - Ordernar a saída
+"
+
+VERSAO="v1.0"
 # ------------------------------------------------------------------------ #
 
 # ------------------------------- TESTES ----------------------------------------- #
@@ -44,4 +45,5 @@
 
 # ------------------------------- EXECUÇÃO ----------------------------------------- #
 
+echo "$USUARIOS"
 # ------------------------------------------------------------------------ #
