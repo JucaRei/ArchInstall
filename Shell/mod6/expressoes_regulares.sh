@@ -12,13 +12,25 @@
 echo -e "\033[31;1mcat com pipe e grep:"
 echo "================================="
 cat /etc/passwd | grep "^m" /etc/passwd
+echo ""
 
 echo -e "\033[33;4mSomente com grep:"
 echo "================================="
 grep "^m" /etc/passwd # (faz o mesmo e aloca menos recursos)
-echo "================================="
+echo ""
 grep "^ni" /etc/passwd
+echo ""
 
 echo -e "\033[35;4mTudo que termina com:"
-echo "================================="
 grep "h$" /etc/passwd
+echo ""
+grep "^r.*h$" /etc/passwd # (comece no ^r que tenha qualquer ponto no asterisco .* e termine com h (h$))
+echo ""
+grep "^j.*h$" /etc/passwd # (comece no ^j que tenha qualquer ponto no asterisco .* e termine com h (h$))
+echo ""
+grep "^m[ae]" /etc/passwd # (comece no ^m e que o segundo digito seja a ou e )
+echo ""
+grep "^m[^a]" /etc/passwd # (comece no ^m e que o segundo digito não seja a )
+grep "^m[^e]" /etc/passwd # (comece no ^m e que o segundo digito não seja e )
+echo ""
+grep "^.[a]" /etc/passwd # (tudo que comece com qualquer coisa ^. , mas que o segundo digito seja obrigatoriamente o a )

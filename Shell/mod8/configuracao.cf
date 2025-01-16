@@ -1,0 +1,5 @@
+# 0 desativado, 1 ativado
+USAR_MAIUSCULAS=0
+
+# 0 desativado, 1 ativado
+USAR_CORES=1
