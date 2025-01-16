@@ -16,7 +16,17 @@
 # ------------------------------------------------------------------------ #
 # Histórico:
 #
-#   v1.0 03/10/2018, Juca:
+#   v1.0 xx/xx/xxxx, Juca:
+#     - Adicionado -s, -h & -v
+#   v1.1 xx/xx/xxxx, Juca:
+#     - Trocado IF pelo CASE
+#     - Adicionado basename
+#   v1.2 xx/xx/xxxx, Juca:
+#     - Adicionado -m
+#     - Adicionado 2 flags
+#   v1.3 xx/xx/xxxx, Juca:
+#     - Adicionado while com shift e teste de variável
+#     - Adicionado 2 flags
 # ------------------------------------------------------------------------ #
 # Testado em:
 #   bash 4.4.19
@@ -25,24 +35,37 @@
 
 USUARIOS="$(cat /etc/passwd | cut -d : -f 1)"
 MENSAGEM_USO="
-  $0 - [OPÇÕES]
+  $(basename $0) - [OPÇÕES]
 
     -h - Menu de ajuda
     -v - Versão
     -s - Ordernar a saída
+    -m - Coloca em maiúsculo
 "
 
-VERSAO="v1.0"
-# ------------------------------------------------------------------------ #
-
-# ------------------------------- TESTES ----------------------------------------- #
-
-# ------------------------------------------------------------------------ #
-
-# ------------------------------- FUNÇÕES ----------------------------------------- #
-
+VERSAO="v1.3"
+CHAVE_ORDENA=0
+CHAVE_MAIUSCULO=0
 # ------------------------------------------------------------------------ #
 
 # ------------------------------- EXECUÇÃO ----------------------------------------- #
+
+while test -n "$1"
+do
+  case "$1" in
+    -h) echo "$MENSAGEM_USO" && exit 0               ;;
+    -v) echo "$VERSAO" && exit 0                     ;;
+    -s) CHAVE_ORDENA=1                               ;;
+    -m) CHAVE_MAIUSCULO=1                            ;;
+     *) echo "Opção inválida, valie o -h." && exit 1  ;;
+  esac
+  shift
+done
+
+[ $CHAVE_ORDENA -eq 1 ]    && USUARIOS=$(echo "$USUARIOS" | sort)
+[ $CHAVE_MAIUSCULO -eq 1 ] && USUARIOS=$(echo "$USUARIOS" | tr [a-z] [A-Z])
+
 echo "$USUARIOS"
 # ------------------------------------------------------------------------ #
+
+# bash -x -v ./debug_1.sh

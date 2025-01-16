@@ -895,3 +895,6 @@ printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
 
 ## ADD pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
+
+
+# alias installed-packages="comm -23 <(apt-mark showmanual | sed 's/[: \t].*$//' | sort -u) <( { sed 's/[: \t].*$//' /usr/share/antiX/installed-packages.txt ; dpkg-query -W -f '${Depends}\n' | sed 's/([^)]*)//g; s/ //g; s/,/\n/g' | grep -vF '|' ; } | sort -u)"

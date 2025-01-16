@@ -16,7 +16,13 @@
 # ------------------------------------------------------------------------ #
 # Histórico:
 #
-#   v1.0 03/10/2018, Juca:
+#   v1.0 xx/xx/xxxx, Juca:
+#     - Adicionado -s, -h & -v
+#   v1.1 xx/xx/xxxx, Juca:
+#     - Trocado IF pelo CASE
+#   v1.2 xx/xx/xxxx, Juca:
+#     -
+#     -
 # ------------------------------------------------------------------------ #
 # Testado em:
 #   bash 4.4.19
@@ -25,24 +31,32 @@
 
 USUARIOS="$(cat /etc/passwd | cut -d : -f 1)"
 MENSAGEM_USO="
-  $0 - [OPÇÕES]
+  $(basename $0) - [OPÇÕES]
 
     -h - Menu de ajuda
     -v - Versão
     -s - Ordernar a saída
+    -m - Coloca em maiúsculo
 "
 
-VERSAO="v1.0"
-# ------------------------------------------------------------------------ #
-
-# ------------------------------- TESTES ----------------------------------------- #
-
-# ------------------------------------------------------------------------ #
-
-# ------------------------------- FUNÇÕES ----------------------------------------- #
-
+VERSAO="v1.2"
+CHAVE_ORDENA=0
+CHAVE_MAIUSCULO=0
 # ------------------------------------------------------------------------ #
 
 # ------------------------------- EXECUÇÃO ----------------------------------------- #
-echo "$USUARIOS"
+
+case "$1" in
+  -h) echo "$MENSAGEM_USO" && exit 0 ;;
+  -v) echo "$VERSAO" && exit 0       ;;
+  -s) CHAVE_ORDENA=1                 ;;
+  -m) CHAVE_MAIUSCULO=1              ;;
+   *) echo "$USUARIOS"               ;;
+esac
+
+[ $CHAVE_ORDENA -eq 1 ] && echo "$USUARIOS" | sort
+[ $CHAVE_MAIUSCULO -eq 1 ] && echo "$USUARIOS" | tr [a-z] [A-Z]
 # ------------------------------------------------------------------------ #
+
+# 0 desabilitado, 1 habilitado
+# tr substitui tudo de [a-z] para [A-Z]

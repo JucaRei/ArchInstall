@@ -1,13 +1,13 @@
 podman run -it --hostname podnix --name podnix debian
 alias podnix='podman start -i -a podnix'
-apt update 
+apt update
 apt install git sudo curl xz-utils -y
 sh -c 'echo "root:200291" | chpasswd -c SHA512'
 useradd juca -m -c "Reinaldo P JR" -s /bin/bash
 sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 usermod -aG sudo juca
 su juca
-cd && mkdir Zero && cd Zero 
+cd && mkdir Zero && cd Zero
 git clone --depth=1 https://github.com/JucaRei/nixsys
 sh <(curl -L https://nixos.org/nix/install) --no-daemon
 echo ". $HOME/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
