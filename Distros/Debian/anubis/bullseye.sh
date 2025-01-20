@@ -843,6 +843,8 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet splash net.ifnames=0 biosdevname=0 acpi_backli
 #GRUB_TERMINAL_OUTPUT=console
 #GRUB_BACKGROUND=/usr/share/void-artwork/splash.png
 GRUB_GFXMODE=1366x768x32
+GRUB_DEFAULT=saved
+GRUB_SAVEDEFAULT=true
 #GRUB_DISABLE_LINUX_UUID=true
 #GRUB_DISABLE_RECOVERY=true
 # Uncomment and set to the desired menu colors.  Used by normal and wallpaper
@@ -891,6 +893,20 @@ rm -rf /mnt/vmlinuz.old \
   /mnt/vmlinuz \
   /mnt/initrd.img \
   /mnt/initrd.img.old
+
+#############################
+### Install Latest Kernel ###
+#############################
+
+chroot /mnt apt apt install lsb-release software-properties-common apt-transport-https ca-certificates curl -y
+# chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
+chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
+
+# codename=$(lsb_release -sc) && echo deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | sudo tee /etc/apt/sources.list.d/linux-zabbly.list
+codename=bullseye && echo deb [arch=amd64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | tee /etc/apt/sources.list.d/linux-zabbly.list
+
+chroot /mnt apt update
+chroot /mnt apt install linux-zabbly -y
 
 #######################
 ### Install Lightdm ###
