@@ -10,11 +10,11 @@ mount -t btrfs -o subvol=@var_cache_dnf /dev/vda2 /mnt/var/cache/dnf
 mount -t vfat /dev/vda1 /mnt/boot/efi
 
 for dir in dev proc sys run; do
-        mount --rbind /$dir /mnt/$dir
-        mount --make-rslave /mnt/$dir
+    mount --rbind /$dir /mnt/$dir
+    mount --make-rslave /mnt/$dir
 done
 
-chroot /mnt 
+chroot /mnt
 
 #####################################
 ####Gptfdisk Partitioning example####
@@ -77,10 +77,9 @@ mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
 mount -o $BTRFS_OPTS,subvol=@var_cache_dnf /dev/vda2 /mnt/var/cache/dnf
 mount -t vfat -o noatime,nodiratime /dev/vda1 /mnt/boot/efi
 
-
 yes | dnf --releasever=37 --installroot=/mnt groupinstall core -y
 
-yes | rm /mnt/etc/resolv.conf 
+yes | rm /mnt/etc/resolv.conf
 yes | cp /etc/resolv.conf /mnt/etc/resolv.conf
 
 systemd-firstboot --root=/mnt --timezone=America/Sao_Paulo --hostname=fed-strap --setup-machine-id
@@ -109,23 +108,18 @@ chroot /mnt systemctl enable NetworkManager
 # whiptail or dialog
 # tasksel-data, debconf-i18n
 
-
-# Disable verification 
+# Disable verification
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
 # && echo >> /mnt/etc/apt/apt.conf.d/99verify-peer.conf "Acquire { https::Verify-Peer false }"
 
-
 # Mount points
 for dir in dev proc sys run; do
-        mount --rbind /$dir /mnt/$dir
-        mount --make-rslave /mnt/$dir
+    mount --rbind /$dir /mnt/$dir
+    mount --make-rslave /mnt/$dir
 done
-
-
 
 # copia o arquivo de resolv para o /mnt
 # cp -v /etc/resolv.conf /mnt/etc/
-
 
 #desabilitar algumas coisas
 mkdir -pv /mnt/etc/modprobe.d
@@ -155,7 +149,7 @@ EOF
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 # Boot Faster with intel
@@ -170,7 +164,7 @@ options nvidia_drm modeset=1
 EOF
 
 touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat << EOF > /mnt/etc/modprobe.d/nouveau-kms.conf
+cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
 options nouveau modeset=0
 EOF
 
@@ -309,24 +303,24 @@ EOF
 
 # antix-archive-keyring
 # Locales
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone && \
-        dpkg-reconfigure -f noninteractive tzdata && \
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale && \
-        # export LC_ALL=C && \
-        export LANGUAGE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        export LANG=en_US.UTF-8 && \
-        export LC_CTYPE=en_US.UTF-8 && \
-        # locale-gen en_US.UTF-8 && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8 && \
-        #localectl set-locale LANG="en_US.UTF-8"
-        # update-locale LANG=en_US.UTF-8 && \
-        # localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
+    dpkg-reconfigure -f noninteractive tzdata &&
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
+    sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
+    echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
+    # export LC_ALL=C && \
+    export LANGUAGE=en_US.UTF-8 &&
+    export LC_ALL=en_US.UTF-8 &&
+    export LANG=en_US.UTF-8 &&
+    export LC_CTYPE=en_US.UTF-8 &&
+    # locale-gen en_US.UTF-8 && \
+    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+#dpkg-reconfigure --frontend=noninteractive locales && \
+# update-locale LANG=en_US.UTF-8 && \
+# localedef -i en_US -f UTF-8 en_US.UTF-8 && \
+#localectl set-locale LANG="en_US.UTF-8"
+# update-locale LANG=en_US.UTF-8 && \
+# localedef -i en_US -f UTF-8 en_US.UTF-8
 
 chroot /mnt apt update
 
@@ -375,7 +369,7 @@ chroot /mnt apt install duperemove libvshadow-utils aptitude apt-show-versions r
 # dracut --list-modules --kver 5.10.0-20-amd64
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
-cat << EOF > /mnt/etc/initramfs-tools/modules
+cat <<EOF >/mnt/etc/initramfs-tools/modules
 # List of modules that you want to include in your initramfs.
 # They will be loaded at boot time in the order below.
 #
@@ -491,7 +485,7 @@ chroot /mnt apt install nvidia-driver firmware-misc-nonfree libnvidia-fbc1 nvidi
 
 mkdir -pv /mnt/etc/X11/xorg.conf.d
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat << EOF > /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
+cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 Section "Device"
     Identifier "Nvidia GTX 1050"
     Driver "nvidia"
@@ -548,7 +542,6 @@ Theme=solar
 ShowDelay=5
 EOF
 
-
 # Umount
 # for dir in dev proc sys run; do
 #         umount --rbind /$dir /mnt/$dir
@@ -566,7 +559,7 @@ EOF
 
 mkdir -pv /mnt/etc/default/
 touch /mnt/etc/default/keyboard
-cat << EOF > /mnt/etc/default/keyboard
+cat <<EOF >/mnt/etc/default/keyboard
 # KEYBOARD CONFIGURATION FILE
 
 # Consult the keyboard(5) manual page.
@@ -578,18 +571,18 @@ XKBOPTIONS="terminate:ctrl_alt_bksp"
 EOF
 
 # Locales
-chroot /mnt echo "America/Sao_Paulo" >/etc/timezone && \
-        #dpkg-reconfigure -f noninteractive tzdata && \
-        #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-        #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
-        echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale && \
-        export LANGUAGE=en_US.UTF-8 && \
-        export LC_ALL=en_US.UTF-8 && \
-        dpkg-reconfigure --frontend noninteractive keyboard-configuration && \
-        echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
-        #dpkg-reconfigure --frontend=noninteractive locales && \
-        #update-locale LANG=en_US.UTF-8
-        #localedef -i en_US -f UTF-8 en_US.UTF-8
+chroot /mnt echo "America/Sao_Paulo" >/etc/timezone &&
+    #dpkg-reconfigure -f noninteractive tzdata && \
+    #sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    #sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen && \
+    echo 'LANGUAGE="en_US.UTF-8"' >/etc/default/locale &&
+    export LANGUAGE=en_US.UTF-8 &&
+    export LC_ALL=en_US.UTF-8 &&
+    dpkg-reconfigure --frontend noninteractive keyboard-configuration &&
+    echo 'KEYMAP="br-abnt2"' >/etc/vconsole.conf
+#dpkg-reconfigure --frontend=noninteractive locales && \
+#update-locale LANG=en_US.UTF-8
+#localedef -i en_US -f UTF-8 en_US.UTF-8
 
 # setxkbmap -model pc105 -layout br -variant abnt2 &
 # dpkg-reconfigure keyboard-configuration
@@ -625,9 +618,8 @@ chroot /mnt usermod -aG sudo juca
 # chroot /mnt apparmor_parser -R /etc/apparmor.d/usr.sbin.dnsmasq
 # chroot /mnt apparmor_parser /etc/apparmor.d/usr.sbin.dnsmasq
 
-
 ## NetworkManager config
-cat << EOF > /mnt/etc/NetworkManager/NetworkManager.conf
+cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 plugins=ifupdown,keyfile
 
@@ -637,7 +629,7 @@ EOF
 
 touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-cat << EOF > /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 #!/bin/sh
 
 # Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
@@ -668,14 +660,13 @@ chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 
-
 ## Fix bluetooth
 
 # cat << EOF >> /mnt/etc/pulse/default.pa
 
 # load-module module-bluez5-device
 # load-module module-bluez5-discover
-# EOF 
+# EOF
 
 # Audio
 # chroot /mnt systemctl --user enable pipewire pipewire-pulse
@@ -701,7 +692,7 @@ chroot /mnt systemctl enable fstrim.timer
 # Tune chrony
 touch /mnt/etc/chrony.conf
 # sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<\EOF >>/mnt/etc/chrony.conf 
+cat <<\EOF >>/mnt/etc/chrony.conf
 server time.windows.com iburst prefer
 EOF
 
@@ -725,7 +716,7 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
-# GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+# GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISTRIBUTOR="Debian"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 
@@ -752,7 +743,6 @@ chroot /mnt update-grub
 # chroot /mnt dracut --force --hostonly /boot/initramfs-5.10.0-21-amd64.img 5.10.0-21-amd64
 # chroot /mnt dracut --force --hostonly /boot/initramfs-5.10.0-21-amd64-fallback.img 5.10.0-21-amd64
 
-
 # chroot /mnt dracut --force --hostonly --kver 5.10.0-21-amd64
 
 chroot /mnt update-initramfs -c -k all
@@ -763,7 +753,7 @@ rm -rf /mnt/initrd.img
 rm -rf /mnt/initrd.img.old
 
 touch /mnt/home/juca/.xsessionrc
-cat << EOF > /mnt/home/juca/.xsessionrc
+cat <<EOF >/mnt/home/juca/.xsessionrc
 xrandr --setprovideroutputsource NVIDIA-G0 modesetting
 EOF
 
@@ -794,7 +784,7 @@ chroot /mnt chown -R juca:juca /home/juca/.xsessionrc
 
 # if X Server 'Crashes' while opening electron/chromium based programs or Chromium/Electron based Windows open up as black through prime-run or on nVidia cards then do this:
 # using this flag --use-gl=desktop works
-# hardware acceleration also works this way (electron apps only) 
+# hardware acceleration also works this way (electron apps only)
 
 # cmake -B build \
 #   -DCMAKE_RELEASE_TYPE=Release \
@@ -802,7 +792,6 @@ chroot /mnt chown -R juca:juca /home/juca/.xsessionrc
 #   -S .
 # cmake --build build --target ananicy-cpp
 # sudo cmake --install build --component Runtime
-
 
 # gnome-disk-utilities
 # nosuid,nodev,nofail,x-gvfs-show,auto

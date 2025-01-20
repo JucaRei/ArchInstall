@@ -53,8 +53,12 @@ SWAP_PARTITION="${DRIVE}3"
 mkfs.vfat -F32 $BOOT_PARTITION -n "EFI"
 mkfs.btrfs $ROOT_PARTITION -f -L "Debian"
 mkswap /dev/sda3 -L "SWAP"
-swapon /dev/disk/by-label/SWAP
 
+sleep 3
+echo "Turning SWAP on."
+swapon /dev/disk/by-label/SWAP
+echo "Swap Enabled."
+sleep 3
 ###############################
 #### Enviroments variables ####
 ###############################
@@ -64,6 +68,7 @@ Debian_ARCH="amd64"
 
 ## btrfs options ##
 BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
+BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:3,acl,space_cache=v2,commit=60,discard=async"
 
 ## fstab real hardware ##
 UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
@@ -83,7 +88,7 @@ btrfs su cr /mnt/@apt
 btrfs su cr /mnt/@tmp
 umount -v /mnt
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ $ROOT_PARTITION /mnt
+mount -o $BTRFS_OPTS2,subvol=@ $ROOT_PARTITION /mnt
 mkdir -pv /mnt/boot
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
@@ -95,7 +100,7 @@ mkdir -pv /mnt/var/cache/apt
 mount -o $BTRFS_OPTS,subvol=@home $ROOT_PARTITION /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_PARTITION /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@log $ROOT_PARTITION /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@tmp $ROOT_PARTITION /mnt/var/tmp
+mount -o $BTRFS_OPTS2,subvol=@tmp $ROOT_PARTITION /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol=@apt $ROOT_PARTITION /mnt/var/cache/apt
 mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot
 
@@ -330,7 +335,7 @@ touch /mnt/etc/hosts
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 # 127.0.1.1 anubis
-127.0.0.2 anubis
+# 127.0.0.2 anubis
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -350,12 +355,12 @@ cat <<EOF >/mnt/etc/fstab
 
 ### ROOTFS ###
 # UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                         0 0
 # UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 # UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
 LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
-LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS,subvol=@tmp                      0 0
+LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS2,subvol=@tmp                      0 0
 # UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
 LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
 
@@ -414,14 +419,14 @@ chroot /mnt aptitude install linux-image-5.10.0-32-amd64 linux-headers-5.10.0-32
 ## Network ##
 #############
 
-chroot /mnt apt install nftables fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill --no-install-recommends -y
+chroot /mnt apt install nftables fwupd firmware-linux-free firmware-linux-nonfree network-manager iwd rfkill firmware-iwlwifi firmware-brcm80211 net-tools --no-install-recommends -y
 
 # ssh
 # chroot /mnt apt install dropbear --no-install-recommends -y
 
-########################################################
+#######################################################
 #### Config iwd as backend instead of wpasupplicant ####
-########################################################
+#######################################################
 
 cat <<EOF >/mnt/etc/NetworkManager/conf.d/iwd.conf
 [device]
@@ -599,6 +604,7 @@ ResultActive=yes
 EOF
 
 ### If you are on Arch/Redhat (polkit >= 106), then this would work:
+mkdir -pv /mnt/etc/polkit-1/rules.d
 cat >/mnt/etc/polkit-1/rules.d/service-auth.rules <<HEREDOC
 ---
 polkit.addRule(function(action, subject) {
@@ -608,7 +614,7 @@ polkit.addRule(function(action, subject) {
     } });
 HEREDOC
 
-cat >/mnt/sudoers.d/sysctl <<HEREDOC
+cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
 juca ALL = NOPASSWD: /bin/systemctl
 HEREDOC
 
@@ -727,7 +733,7 @@ EOF
 ## Network
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
-chroot /mnt systemctl enable ssh.service
+# chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
@@ -759,10 +765,10 @@ chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
-sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-# cat <<EOF >>/mnt/etc/chrony.conf
-# server time.windows.com iburst prefer
-# EOF
+# sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
+cat <<EOF >>/mnt/etc/chrony.conf
+server time.windows.com iburst prefer
+EOF
 
 ## Optimizations ##
 chroot /mnt systemctl enable earlyoom.service
@@ -776,7 +782,8 @@ chroot /mnt update-initramfs -c -k all
 ############
 ### UDEV ###
 ############
-cat <<EOF >/mnt/usr/lib/udev/rules.d/90-backlight.rules
+mkdir -pv /mnt/usr/lib/udev/rules.d
+cat >/mnt/usr/lib/udev/rules.d/90-backlight.rules <<HEREDOC
 # Allow video group to control backlight and leds
 # Allow video group to control backlight and leds
 SUBSYSTEM=="backlight", ACTION=="add", \
@@ -788,13 +795,14 @@ SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
 SUBSYSTEM=="leds", ACTION=="add", KERNEL=="*::kbd_backlight", \
   RUN+="/bin/chgrp video /sys/class/leds/%k/brightness", \
   RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"
+HEREDOC
 
-cat <<\EOF >/mnt/usr/lib/udev/rules.d/90-brightnessctl.rules
-    ACTION=="add", SUBSYSTEM=="backlight", RUN+="bright-helper video g+w /sys/class/backlight/%k/brightness"
-    ACTION=="add", SUBSYSTEM=="leds",      RUN+="bright-helper input g+w /sys/class/leds/%k/brightness"
-EOF
+cat >/mnt/usr/lib/udev/rules.d/90-brightnessctl.rules <<HEREDOC
+  ACTION=="add", SUBSYSTEM=="backlight", RUN+="bright-helper video g+w /sys/class/backlight/%k/brightness"
+  ACTION=="add", SUBSYSTEM=="leds",      RUN+="bright-helper input g+w /sys/class/leds/%k/brightness"
+HEREDOC
 
-cat <<EOF >/mnt/usr/lib/udev/rules.d/90-nm-thunderbolt.rules
+cat >/mnt/usr/lib/udev/rules.d/90-nm-thunderbolt.rules <<RULES
 # Do not modify this file, it will get overwritten on updates.
 # To override or extend the rules place a file in /etc/udev/rules.d
     ACTION!="add", GOTO="nm_thunderbolt_end"
@@ -803,7 +811,7 @@ cat <<EOF >/mnt/usr/lib/udev/rules.d/90-nm-thunderbolt.rules
 # For all thunderbolt network devices, we want to enable link-local configuration
     SUBSYSTEM=="net", ENV{ID_NET_DRIVER}=="thunderbolt-net", ENV{NM_AUTO_DEFAULT_LINK_LOCAL_ONLY}="1"
     LABEL="nm_thunderbolt_end"
-EOF
+RULES
 
 ######################
 #### Install grub ####
@@ -815,7 +823,7 @@ chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-dire
 #### Config Grub ####
 #####################
 
-cat <<EOF >/mnt/etc/default/grub
+cat >/mnt/etc/default/grub <<GRUB
 #
 # Configuration file for GRUB.
 #
@@ -826,9 +834,9 @@ GRUB_TIMEOUT=2
 # GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISTRIBUTOR="Debian"
 
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash applesmc acpi_backlight=vendor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash net.ifnames=0 biosdevname=0 acpi_backlight=vendor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 intel_iommu=on i915.modeset=1 zswap.enabled=1 zswap.compressor=lzo zswap.max_pool_percent=20 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # Block nouveau driver = rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1
-
+# applesmc
 # Uncomment to use basic console
 #GRUB_TERMINAL_INPUT="console"
 # Uncomment to disable graphical terminal
@@ -842,7 +850,7 @@ GRUB_GFXMODE=1366x768x32
 GRUB_COLOR_NORMAL="light-blue/black"
 GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 GRUB_DISABLE_OS_PROBER=true
-EOF
+GRUB
 
 # MakeSwap
 # touch /mnt/swap/swapfile
@@ -879,11 +887,34 @@ chroot /mnt update-grub
 
 chroot /mnt update-initramfs -c -k all
 
-rm -rf /mnt/vmlinuz.old
-rm -rf /mnt/vmlinuz
-rm -rf /mnt/initrd.img
-rm -rf /mnt/initrd.img.old
+rm -rf /mnt/vmlinuz.old \
+  /mnt/vmlinuz \
+  /mnt/initrd.img \
+  /mnt/initrd.img.old
 
+#######################
+### Install Lightdm ###
+#######################
+
+cat >/mnt/home/juca/install-nix.sh <<NIX
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
+  sh -s -- install
+NIX
+
+chroot /mnt chmod +x /mnt/home/juca/install-nix.sh
+chroot /mnt chown -R juca /mnt/home/juca/install-nix.sh
+
+echo "Installing LightDM"
+echo "================="
+chroot /mnt apt install lightdm lightdm-settings lightdm-gtk-greeter
+sleep 5
+echo "LightDM installed!"
+
+sed -i # greeter-session = Session to load for greeter
+sed -i -e 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-greeter/' /mnt/etc/lightdm/lightdm.conf
+sed -i -e 's/#greeter-hide-users=false/greeter-hide-users=false/' /mnt/etc/lightdm/lightdm.conf
+sed -i -e 's/#greeter-allow-guest=true/greeter-allow-guest=false/' /mnt/etc/lightdm/lightdm.conf
+sed -i -e 's/#user-session=default/#user-session=none+bspwm/' /mnt/etc/lightdm/lightdm.conf
 # cmake -B build \
 #   -DCMAKE_RELEASE_TYPE=Release \
 #   -D[ENABLE_SYSTEMD=on] -D[USE_BPF_PROC_IMPL=on] [STATIC=on] \
@@ -908,3 +939,6 @@ rm -rf /mnt/initrd.img.old
 
 ### Pacstall
 # sudo bash -c "$(curl -fsSL https://pacstall.dev/q/install || wget -q https://pacstall.dev/q/install -O -)"
+
+# curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix |
+#   sh -s -- install

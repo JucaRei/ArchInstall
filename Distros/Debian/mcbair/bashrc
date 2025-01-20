@@ -15,7 +15,7 @@ alias sharecenter="volume1 && volume2"
 alias dietpi="ssh dietpi@192.168.1.200"
 alias dietroot="ssh root@192.168.1.200"
 
-# Echo Path 
+# Echo Path
 alias ep="echo ${PATH} | sed -e $'s/:/\\\n/g'"
 
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
@@ -215,7 +215,6 @@ if [[ $iatest > 0 ]]; then bind "set bell-style visible"; fi
 if [[ $iatest > 0 ]]; then bind 'set show-all-if-ambiguous on'; fi
 bind 'TAB:menu-complete'
 
-
 # To see if a command is aliased, a file, or a built-in command
 alias checkcommand="type -t"
 
@@ -246,10 +245,10 @@ alias 755='chmod -R 755'
 alias 777='chmod -R 777'
 
 # Changing "ls" to "exa"
-alias ls='exa -lha --color=always --group-directories-first' # my preferred listing
-alias la='exa -a --color=always --group-directories-first'  # all files and dirs
-alias ll='exa -l --color=always --group-directories-first'  # long format
-alias lt='exa -aT --color=always --group-directories-first' # tree listing
+alias ls='exa -lha --color=always --group-directories-first'  # my preferred listing
+alias la='exa -a --color=always --group-directories-first'    # all files and dirs
+alias ll='exa -l --color=always --group-directories-first'    # long format
+alias lt='exa -aT --color=always --group-directories-first'   # tree listing
 alias lz='exa -lSrh --color=always --group-directories-first' # sort by size
 alias l.='exa -a | egrep "^\."'
 
@@ -280,7 +279,7 @@ alias rmy="yes | rm -rf"
 #keyboard
 alias give-me-abnt-br="doas localectl set-x11-keymap br"
 alias give-me-qwerty-us="doas localectl set-x11-keymap us"
-alias df='df -Th'    # human-readable sizes
+alias df='df -Th' # human-readable sizes
 
 # ps
 alias psa="ps auxf"
@@ -352,12 +351,12 @@ shopt -s checkwinsize
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${void_chroot:-}" ] && [ -r /etc/void_chroot ]; then
-    void_chroot=$(cat /etc/void_chroot)
+  void_chroot=$(cat /etc/void_chroot)
 fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+xterm-color | *-256color) color_prompt=yes ;;
 esac
 
 ### CHANGE TITLE OF TERMINALS
@@ -394,41 +393,40 @@ fi
 force_color_prompt=yes
 
 if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
+  if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with Ecma-48
+    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=yes
+  else
+    color_prompt=
+  fi
 fi
 
 if [ "$color_prompt" = yes ]; then
-    PS1='${void_chroot:+($void_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+  PS1='${void_chroot:+($void_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 else
-    PS1='${void_chroot:+($void_chroot)}\u@\h:\w\$ '
+  PS1='${void_chroot:+($void_chroot)}\u@\h:\w\$ '
 fi
 unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${void_chroot:+($void_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
+xterm* | rxvt*)
+  PS1="\[\e]0;${void_chroot:+($void_chroot)}\u@\h: \w\a\]$PS1"
+  ;;
+*) ;;
 esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias dir='dir --color=auto'
-    alias vdir='vdir --color=auto'
+  test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+  alias dir='dir --color=auto'
+  alias vdir='vdir --color=auto'
 
-    #alias grep='grep --color=auto'
-    #alias fgrep='fgrep --color=auto'
-    #alias egrep='egrep --color=auto'
+  #alias grep='grep --color=auto'
+  #alias fgrep='fgrep --color=auto'
+  #alias egrep='egrep --color=auto'
 fi
 
 # colored GCC warnings and errors
@@ -445,7 +443,7 @@ fi
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+  . ~/.bash_aliases
 fi
 
 ### ARCHIVE EXTRACTION
@@ -474,58 +472,55 @@ ex() {
   fi
 }
 
-pwdtail ()
-{
-	pwd|awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
+pwdtail() {
+  pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
 # Show the current distribution
-distribution ()
-{
-	local dtype
-	# Assume unknown
-	dtype="unknown"
-	
-	# First test against Fedora / RHEL / CentOS / generic Redhat derivative
-	if [ -r /etc/rc.d/init.d/functions ]; then
-		source /etc/rc.d/init.d/functions
-		[ zz`type -t passed 2>/dev/null` == "zzfunction" ] && dtype="redhat"
-	
-	# Then test against SUSE (must be after Redhat,
-	# I've seen rc.status on Ubuntu I think? TODO: Recheck that)
-	elif [ -r /etc/rc.status ]; then
-		source /etc/rc.status
-		[ zz`type -t rc_reset 2>/dev/null` == "zzfunction" ] && dtype="suse"
-	
-	# Then test against Gentoo
-	elif [ -r /etc/init.d/functions.sh ]; then
-		source /etc/init.d/functions.sh
-		[ zz`type -t ebegin 2>/dev/null` == "zzfunction" ] && dtype="gentoo"
-	
-	# For Mandriva we currently just test if /etc/mandriva-release exists
-	# and isn't empty (TODO: Find a better way :)
-	elif [ -s /etc/mandriva-release ]; then
-		dtype="mandriva"
+distribution() {
+  local dtype
+  # Assume unknown
+  dtype="unknown"
 
-	# For Slackware we currently just test if /etc/slackware-version exists
-	elif [ -s /etc/slackware-version ]; then
-		dtype="slackware"
+  # First test against Fedora / RHEL / CentOS / generic Redhat derivative
+  if [ -r /etc/rc.d/init.d/functions ]; then
+    source /etc/rc.d/init.d/functions
+    [ zz$(type -t passed 2>/dev/null) == "zzfunction" ] && dtype="redhat"
 
-	fi
-	echo $dtype
+  # Then test against SUSE (must be after Redhat,
+  # I've seen rc.status on Ubuntu I think? TODO: Recheck that)
+  elif [ -r /etc/rc.status ]; then
+    source /etc/rc.status
+    [ zz$(type -t rc_reset 2>/dev/null) == "zzfunction" ] && dtype="suse"
+
+  # Then test against Gentoo
+  elif [ -r /etc/init.d/functions.sh ]; then
+    source /etc/init.d/functions.sh
+    [ zz$(type -t ebegin 2>/dev/null) == "zzfunction" ] && dtype="gentoo"
+
+  # For Mandriva we currently just test if /etc/mandriva-release exists
+  # and isn't empty (TODO: Find a better way :)
+  elif [ -s /etc/mandriva-release ]; then
+    dtype="mandriva"
+
+  # For Slackware we currently just test if /etc/slackware-version exists
+  elif [ -s /etc/slackware-version ]; then
+    dtype="slackware"
+
+  fi
+  echo $dtype
 }
 
 # Searches for text in all files in the current folder
-ftext ()
-{
-	# -i case-insensitive
-	# -I ignore binary files
-	# -H causes filename to be printed
-	# -r recursive search
-	# -n causes line number to be printed
-	# optional: -F treat search term as a literal, not a regular expression
-	# optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
-	grep -iIHrn --color=always "$1" . | less -r
+ftext() {
+  # -i case-insensitive
+  # -I ignore binary files
+  # -H causes filename to be printed
+  # -r recursive search
+  # -n causes line number to be printed
+  # optional: -F treat search term as a literal, not a regular expression
+  # optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
+  grep -iIHrn --color=always "$1" . | less -r
 }
 
 colorscript random
