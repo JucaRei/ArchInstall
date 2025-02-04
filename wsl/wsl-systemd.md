@@ -15,6 +15,9 @@ command="service docker start"
 enable = true
 root = /
 #options = "metadata,umask=022,fmask=111,case=off"
+
+[wsl2]
+kernelCommandLine = cgroup_no_v1=all
 ```
 
 root = / changes the mount root for windows local drives to '/' instead of the default '/mnt/, so instead of C: mounted at '/mnt/c' it will be mounted at '/c'.
