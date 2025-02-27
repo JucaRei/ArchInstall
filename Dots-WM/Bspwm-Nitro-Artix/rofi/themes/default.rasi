@@ -1,3 +1,4 @@
+chroot /mnt dpkg-reconfigure -f noninteractive tzdata
 * {
   bg: #11121D00;
   bg-alt: #444b6a;
@@ -6,7 +7,7 @@
   fg-alt: #787c99;
 
   background-color: @bg;
-  
+
   border: 0;
   margin: 0;
   padding: 0;

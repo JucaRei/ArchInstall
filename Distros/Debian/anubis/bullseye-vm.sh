@@ -1,14 +1,34 @@
 #!/usr/bin/env bash
 
-DRIVE="/dev/sda"
+### Variables ###
+DRIVE="/dev/vda"
+USER="juca"
+HOSTNAME="qemu"
+codename="bullseye"
+Debian_ARCH="amd64"
+
+BOOT_PARTITION="$DRIVE"1
+ROOT_PARTITION="$DRIVE"2
+SWAP_PARTITION="$DRIVE"3
+
+# BOOT_BY_LABEL="/dev/disk/by-label/BOOT"
+# ROOT_BY_LABEL="/dev/disk/by-label/DEBIAN"
+# SWAP_BY_LABEL="/dev/disk/by-label/SWAP"
+
+## fstab real hardware ##
+UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
+SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
+
+## btrfs options ##
+BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
+BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:3,acl,space_cache=v2,commit=60,discard=async"
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
 umount -Rv $DRIVE
-
-CODENAME=bullseye
 
 #### update fastest repo's
 apt update
@@ -18,27 +38,27 @@ apt update
 #####################################
 
 sgdisk -Z $DRIVE
-# parted $DRIVE mklabel gpt
-# parted $DRIVE mkpart primary 2048s 100%
+# parted "$DRIVE" mklabel gpt
+# parted "$DRIVE" mkpart primary 2048s 100%
 parted --script --fix --align optimal $DRIVE mklabel gpt
 parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
 parted --script $DRIVE -- set 1 boot on
 
-# parted --script --align optimal -- $DRIVE mkpart primary 600MB 100%
-# parted --script --align optimal --fix -- $DRIVE mkpart primary linux-swap -2GiB -1s
+# parted --script --align optimal -- "$DRIVE" mkpart primary 600MB 100%
+# parted --script --align optimal --fix -- "$DRIVE" mkpart primary linux-swap -2GiB -1s
 parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -4GiB
 parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
 
 # parted --script align-check 1 $DRIVE
 
-sgdisk -c 1:"Boot EFI Partition" ${DRIVE}
-sgdisk -c 2:"Debian FileSystem" ${DRIVE}
-sgdisk -c 3:"Swap FileSystem" ${DRIVE}
-sgdisk -p ${DRIVE}
+sgdisk -c 1:"Boot EFI Partition" $DRIVE
+sgdisk -c 2:"Debian FileSystem" $DRIVE
+sgdisk -c 3:"Swap FileSystem" $DRIVE
+sgdisk -p $DRIVE
 
-BOOT_PARTITION="${DRIVE}1"
-ROOT_PARTITION="${DRIVE}2"
-SWAP_PARTITION="${DRIVE}3"
+# BOOT_PARTITION="/dev/vda1"
+# ROOT_PARTITION="/dev/vda2"
+# SWAP_PARTITION="/dev/vda3"
 
 #######################
 #### real hardware ####
@@ -49,29 +69,17 @@ SWAP_PARTITION="${DRIVE}3"
 # mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
 
 mkfs.vfat -F32 $BOOT_PARTITION -n "BOOT"
-mkfs.btrfs $ROOT_PARTITION -f -L "Debian"
-mkswap $DRIVE -L "SWAP"
+mkfs.btrfs $ROOT_PARTITION -f -L "DEBIAN"
+mkswap $SWAP_PARTITION -L "SWAP"
 
-sleep 3
+sleep 5
 echo "Turning SWAP on."
-swapon /dev/disk/by-label/SWAP
+swapon $SWAP_PARTITION
 echo "Swap Enabled."
-sleep 3
+sleep 5
 ###############################
 #### Enviroments variables ####
 ###############################
-
-set -e
-Debian_ARCH="amd64"
-
-## btrfs options ##
-BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
-BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:3,acl,space_cache=v2,commit=60,discard=async"
-
-## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
-ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
-SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 
 ###########################################
 #### Mount and create Btrfs Subvolumes ####
@@ -95,6 +103,13 @@ mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/apt
 
 ## Mount btrfs subvolumes ##
+# mount -o $BTRFS_OPTS,subvol=@home      $ROOT_BY_LABEL /mnt/home
+# mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_BY_LABEL /mnt/.snapshots
+# mount -o $BTRFS_OPTS,subvol=@log       $ROOT_BY_LABEL /mnt/var/log
+# mount -o $BTRFS_OPTS2,subvol=@tmp      $ROOT_BY_LABEL /mnt/var/tmp
+# mount -o $BTRFS_OPTS,subvol=@apt       $ROOT_BY_LABEL /mnt/var/cache/apt
+# mount -t vfat -o noatime,nodiratime    $BOOT_BY_LABEL /mnt/boot
+
 mount -o $BTRFS_OPTS,subvol=@home $ROOT_PARTITION /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_PARTITION /mnt/.snapshots
 mount -o $BTRFS_OPTS,subvol=@log $ROOT_PARTITION /mnt/var/log
@@ -120,7 +135,7 @@ touch /mnt/etc/apt/sources.list.d/debian.list
 touch /mnt/etc/apt/sources.list.d/various.list
 # touch /mnt/etc/apt/sources.list.d/bullseye-security.list
 
-CODENAME=bullseye
+CODENAME=$codename
 # CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ####################
@@ -297,62 +312,83 @@ chroot /mnt apt upgrade -y
 ######################
 
 cat <<EOF >/mnt/etc/hostname
-scrubber
+$HOSTNAME
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<EOF >/mnt/etc/hosts
-127.0.0.1 localhost
-# 127.0.1.1 scrubber
-127.0.0.2 scrubber
+127.0.0.1     localhost
+# 127.0.1.1   $HOSTNAME
+127.0.0.2     $HOSTNAME
 
 ### The following lines are desirable for IPv6 capable hosts
-::1     localhost ip6-localhost ip6-loopback
-::1     scrubber ip6-localhost ip6-loopback
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
+::1         localhost ip6-localhost ip6-loopback
+::1         $HOSTNAME ip6-localhost ip6-loopback
+ff02::1     ip6-allnodes
+ff02::2     ip6-allrouters
 EOF
 
-echo $UEFI_UUID
-echo $ROOT_UUID
-echo $SWAP_UUID
+# echo $UEFI_UUID
+# echo $ROOT_UUID
+# echo $SWAP_UUID
 # echo $HOME_UUID
+
+# touch /mnt/etc/fstab
+# cat <<EOF >/mnt/etc/fstab
+# # <file system> <dir> <type> <options> <dump> <pass>
+
+# ### ROOTFS ###
+# LABEL=$ROOT_BY_LABEL      /               btrfs rw,$BTRFS_OPTS2,subvol=@                        0 0
+# LABEL=$ROOT_BY_LABEL      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+# LABEL=$ROOT_BY_LABEL      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+# LABEL=$ROOT_BY_LABEL      /var/tmp        btrfs rw,$BTRFS_OPTS2,subvol=@tmp                     0 0
+# LABEL=$ROOT_BY_LABEL      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
+
+# ### HOME_FS ###
+# LABEL=$ROOT_BY_LABEL      /home           btrfs rw,"$BTRFS_OPTS",subvol=@home                   0 0
+
+# ### EFI ###
+# LABEL=$BOOT_BY_LABEL      /boot           vfat noatime,nodiratime,umask=0077                    0 2
+
+# ### Swap ###
+# LABEL=$SWAP_BY_LABEL      none            swap defaults,noatime                                 0 0
+
+# #Swapfile
+# #LABEL="$SWAP_BY_LABEL    none            swap defaults,noatime
+# #/swap/swapfile           none            swap sw                                               0 0
+
+# ### Tmp ###
+# # tmpfs         /tmp               tmpfs defaults,nosuid,nodev,noatime                          0 0
+# tmpfs           /tmp               tmpfs noatime,mode=1777,nosuid,nodev                         0 0
+# EOF
 
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 ### ROOTFS ###
-# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                         0 0
-# UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-# UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
-LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
-LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS2,subvol=@tmp                      0 0
-# UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
-LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
+UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
 
 ### HOME_FS ###
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
-LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
+UUID=$HOME_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
 
 ### EFI ###
-# UUID=$UEFI_UUID /boot           vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro                            0 2
-LABEL="BOOT"       /boot       vfat noatime,nodiratime,umask=0077                      0 2
+UUID=$UEFI_UUID   /boot           vfat  defaults,noatime,nodiratime,umask=0077          0 2
 
 ### Swap ###
-# UUID=$SWAP_UUID  none            swap defaults,noatime                                  0 0
-LABEL="SWAP"       none            swap defaults,noatime                                  0 0
+UUID=$SWAP_UUID   none            swap defaults,noatime                                 0 0
 
-#Swapfile
-# LABEL="Debian"     none            swap defaults,noatime
-# /swap/swapfile     none            swap sw                                              0 0
+### Swapfile ###
+#LABEL=$SWAP_UUID none            swap defaults,noatime
+#/swap/swapfile   none            swap sw                                               0 0
 
 ### Tmp ###
-# tmpfs         /tmp               tmpfs defaults,nosuid,nodev,noatime                    0 0
-tmpfs           /tmp               tmpfs noatime,mode=1777,nosuid,nodev                   0 0
+# tmpfs          /tmp             tmpfs defaults,nosuid,nodev,noatime                   0 0
+tmpfs            /tmp             tmpfs noatime,mode=1777,nosuid,nodev                  0 0
 EOF
 
 #########################
@@ -481,11 +517,11 @@ chroot /mnt chsh -s /usr/bin/bash root
 ##############################
 
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
-chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
-chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-# chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm juca
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm juca
-chroot /mnt usermod -aG sudo juca
+chroot /mnt useradd "$USER" -m -c "Reinaldo P JR" -s /bin/bash
+chroot /mnt sh -c "echo "$USER:200291" | chpasswd -c SHA512"
+# chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,libvirt,kvm "$USER"
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,kvm,lp,cdrom,netdev,input,kvm "$USER"
+chroot /mnt usermod -aG sudo "$USER"
 
 ##############
 ### Polkit ###
@@ -494,7 +530,7 @@ mkdir -pv /mnt/etc/polkit-1/localauthority/50-local.d
 cat <<EOF >/mnt/etc/polkit-1/localauthority/50-local.d/service-auth.pkla
 ---
 [Allow USER to start/stop/restart services]
-Identity=unix-user:juca
+Identity=unix-user:"$USER"
 Action=org.freedesktop.systemd1.manage-units
 ResultActive=yes
 EOF
@@ -505,13 +541,13 @@ cat >/mnt/etc/polkit-1/rules.d/service-auth.rules <<HEREDOC
 ---
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.systemd1.manage-units" &&
-        subject.user == "juca") {
+        subject.user == ""$USER"") {
         return polkit.Result.YES;
     } });
 HEREDOC
 
 cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
-juca ALL = NOPASSWD: /bin/systemctl
+"$USER" ALL = NOPASSWD: /bin/systemctl
 HEREDOC
 
 #########################
@@ -562,10 +598,10 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 # Consult the keyboard(5) manual page.
 
-XKBMODEL="pc105"
-XKBLAYOUT="us"
-XKBVARIANT="mac"
-# XKBOPTIONS="terminate:ctrl_alt_bksp"
+# XKBMODEL="pc105"
+# XKBLAYOUT="us"
+# XKBVARIANT="mac"
+# # XKBOPTIONS="terminate:ctrl_alt_bksp"
 EOF
 
 # AppArmor podman fix
@@ -734,7 +770,7 @@ GRUB
 
 # # Add to fstab
 #echo " " >> /mnt/etc/fstab
-#echo "# Swap" >> /etc/fstab
+#echo " # Swap" >> /etc/fstab
 #SWAP_UUID=$(blkid -s UUID -o value /dev/vda2)
 #mount -o defaults,noatime,subvol=@swap ${DRIVE}2 /mnt/swap
 #echo "UUID=$SWAP_UUID /swap btrfs defaults,noatime,subvol=@swap 0 0" >> /etc/fstab
@@ -781,13 +817,13 @@ chroot /mnt apt install linux-zabbly -y
 ### Install Lightdm ###
 #######################
 
-cat >/mnt/home/juca/install-nix.sh <<NIX
+cat >/mnt/home/"$USER"/install-nix.sh <<NIX
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
   sh -s -- install
 NIX
 
-chroot /mnt chmod +x /mnt/home/juca/install-nix.sh
-chroot /mnt chown -R juca /mnt/home/juca/install-nix.sh
+chroot /mnt chmod +x /mnt/home/"$USER"/install-nix.sh
+chroot /mnt chown -R "$USER" /mnt/home/"$USER"/install-nix.sh
 
 echo "Installing LightDM"
 echo "================="
