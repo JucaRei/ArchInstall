@@ -803,31 +803,31 @@ rm -rf /mnt/vmlinuz.old \
 ### Install Latest Kernel ###
 #############################
 
-chroot /mnt apt install lsb-release software-properties-common apt-transport-https ca-certificates curl -y
-# chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
-chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
+# chroot /mnt apt install lsb-release software-properties-common apt-transport-https ca-certificates curl -y
+# # chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
+# chroot /mnt curl -fSsL https://pkgs.zabbly.com/key.asc | gpg --dearmor | tee /usr/share/keyrings/linux-zabbly.gpg >/dev/null
 
-# codename=$(lsb_release -sc) && echo deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | sudo tee /etc/apt/sources.list.d/linux-zabbly.list
-codename=bullseye && echo deb [arch=amd64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | tee /etc/apt/sources.list.d/linux-zabbly.list
+# # codename=$(lsb_release -sc) && echo deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | sudo tee /etc/apt/sources.list.d/linux-zabbly.list
+# codename=bullseye && echo deb [arch=amd64 signed-by=/usr/share/keyrings/linux-zabbly.gpg] https://pkgs.zabbly.com/kernel/stable $codename main | tee /etc/apt/sources.list.d/linux-zabbly.list
 
-chroot /mnt apt update
-chroot /mnt apt install linux-zabbly -y
+# chroot /mnt apt update
+# chroot /mnt apt install linux-zabbly -y
 
 #######################
 ### Install Lightdm ###
 #######################
 
-cat >/mnt/home/"$USER"/install-nix.sh <<NIX
+cat >/mnt/home/$USER/install-nix.sh <<NIX
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | \
   sh -s -- install
 NIX
 
-chroot /mnt chmod +x /mnt/home/"$USER"/install-nix.sh
-chroot /mnt chown -R "$USER" /mnt/home/"$USER"/install-nix.sh
+chroot /mnt chmod +x /mnt/home/$USER/install-nix.sh
+chroot /mnt chown -R $USER /mnt/home/$USER/install-nix.sh
 
 echo "Installing LightDM"
 echo "================="
-chroot /mnt apt install xorg-server lightdm lightdm-settings lightdm-gtk-greeter --no-install-recommends -y
+chroot /mnt apt install xserver-xorg-core xserver-xorg-input-all lightdm lightdm-settings lightdm-gtk-greeter --no-install-recommends -y
 sleep 5
 echo "LightDM installed!"
 
