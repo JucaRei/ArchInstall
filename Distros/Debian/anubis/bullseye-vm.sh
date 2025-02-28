@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# apt install tasksel
+# tasksel install standard
+# sudo cp /usr/share/dbus-1/session.conf /etc/dbus-1/session.conf
 
 ### Variables ###
 DRIVE="/dev/vda"
@@ -836,6 +839,7 @@ sed -i -e 's/#greeter-session=example-gtk-gnome/greeter-session=lightdm-gtk-gree
 sed -i -e 's/#greeter-hide-users=false/greeter-hide-users=false/' /etc/lightdm/lightdm.conf
 sed -i -e 's/#greeter-allow-guest=true/greeter-allow-guest=false/' /etc/lightdm/lightdm.conf
 sed -i -e 's/#user-session=default/#user-session=none+bspwm/' /etc/lightdm/lightdm.conf
+
 # cmake -B build \
 #   -DCMAKE_RELEASE_TYPE=Release \
 #   -D[ENABLE_SYSTEMD=on] -D[USE_BPF_PROC_IMPL=on] [STATIC=on] \
