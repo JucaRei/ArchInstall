@@ -4,7 +4,7 @@
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 
 #### Umount drive, if it's mounted ####
-umount -R /dev/sda
+umount -Rv /dev/nvme0n1
 
 #### Add faster repo's ####
 CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
@@ -60,73 +60,48 @@ apt update
 #### real hardware ####
 #######################
 
-sgdisk -Z /dev/sda5
-sgdisk -Z /dev/sda6
-parted -s -a optimal /dev/sda5 mklabel gpt
-parted -s -a optimal /dev/sda6 mklabel gpt
-sgdisk -c 5:Grub /dev/sda
-sgdisk -c 6:Debian /dev/sda
-sgdisk -t 5:ef00 /dev/sda
-sgdisk -t 6:8300 /dev/sda
-sgdisk -p /dev/sda
-
-#####################################
-##########  FileSystem  #############
-#####################################
-
-#######################
-#### real hardware ####
-#######################
-
-mkfs.vfat -F32 /dev/sda5 -n "GRUB"
-mkfs.btrfs /dev/sda6 -f -L "Debian"
-
-###############################
-#### Enviroments variables ####
-###############################
-
-set -e
+PARTITION="/dev/nvme0n1p3"
+INSTALL_PARTITION="/dev/disk/by-label/Debian"
+BOOT_PARTITION="/dev/disk/by-label/BOOTLOADER"
+SWAP_PARTITION="/dev/disk/by-label/SWAP"
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:5,space_cache=v2,nodatacow,commit=120,discard=async"
+BTRFS_OPTS_COMPRESSED="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
 Debian_ARCH="amd64"
 
-## btrfs options ##
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,autodefrag,discard=async"
 
-## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value /dev/sda5)
-ROOT_UUID=$(blkid -s UUID -o value /dev/sda6)
+sgdisk -Z $PARTITION
+mkfs.btrfs $PARTITION -f -L "Debian"
 
-## fstab virtual hardware ##
-# UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
-# ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-
-###########################################
-#### Mount and create Btrfs Subvolumes ####
-###########################################
-
-#######################
-#### real hardware ####
-#######################
-mount -o $BTRFS_OPTS /dev/sda6 /mnt
-btrfs su cr /mnt/@
+mount -o $BTRFS_OPTS $INSTALL_PARTITION /mnt
+btrfs su cr /mnt/@rootsystem
 btrfs su cr /mnt/@home
+btrfs su cr /mnt/@apt
+btrfs su cr /mnt/@tmp
+btrfs su cr /mnt/@logs
+# btrfs su cr /mnt/@swap
 btrfs su cr /mnt/@snapshots
-btrfs su cr /mnt/@var_log
-## btrfs su cr /mnt/@swap
-btrfs su cr /mnt/@var_cache_apt
-umount -v /mnt
+
+umount -Rv /mnt
+
 ## Make directories for mount ##
-mount -o $BTRFS_OPTS,subvol=@ /dev/sda6 /mnt
-mkdir -pv /mnt/boot/efi
+mount -o $BTRFS_OPTS,subvol=@rootsystem $INSTALL_PARTITION /mnt
+mkdir -pv /mnt/boot
 mkdir -pv /mnt/home
-mkdir -pv /mnt/.snapshots
-mkdir -pv /mnt/var/log
-mkdir -pv /mnt/var/cache/apt
+mkdir -pv /mnt/var/{log,tmp,cache/apt,snapshots}
+# mkdir -pv /mnt/var/tmp
+# mkdir -pv /mnt/var/cache/apt
+# mkdir -pv /mnt/var/snapshots
+# mkdir -pv /mnt/var/swap
+
 ## Mount btrfs subvolumes ##
-mount -o $BTRFS_OPTS,subvol=@home /dev/sda6 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/sda6 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/sda6 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_apt /dev/sda6 /mnt/var/cache/apt
-mount -t vfat -o noatime,nodiratime /dev/sda5 /mnt/boot/efi
+mount -o $BTRFS_OPTS_COMPRESSED,subvol=@home $INSTALL_PARTITION /mnt/home
+mount -o $BTRFS_OPTS_COMPRESSED,subvol=@apt $INSTALL_PARTITION /mnt/var/cache/apt
+mount -o $BTRFS_OPTS,subvol=@logs $INSTALL_PARTITION /mnt/var/log
+mount -o $BTRFS_OPTS_COMPRESSED,subvol=@tmp $INSTALL_PARTITION /mnt/var/tmp
+# mount -o $BTRFS_OPTS,subvol=@swap $INSTALL_PARTITION /mnt/var/swap
+mount -o $BTRFS_OPTS_COMPRESSED,subvol=@snapshots $INSTALL_PARTITION /mnt/var/snapshots
+mount -t vfat -o noatime,nodiratime $BOOT_PARTITION /mnt/boot
+
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -287,7 +262,7 @@ mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 ## Early module for bbswitch dual graphics ##
-#options bbswitch load_state=0 unload_state=1 
+#options bbswitch load_state=0 unload_state=1
 EOF
 
 touch /mnt/etc/modprobe.d/i915.conf
@@ -495,7 +470,7 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 127.0.1.1 nitro
 
@@ -505,35 +480,28 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 EOF
 
-echo $UEFI_UUID
-echo $ROOT_UUID
-# echo $SWAP_UUID
-# echo $HOME_UUID
-
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
-# <file system> <dir> <type> <options> <dump> <pass>
+# <file system>             <dir>           <type> <options>                                    <dump> <pass>
 
 ### ROOTFS ###
-UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@var_log                  0 0
-UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@var_cache_apt            0 0
+LABEL="$INSTALL_PARTITION"   /               btrfs $BTRFS_OPTS,subvol=@rootsystem                    0 0
+LABEL="$INSTALL_PARTITION"   /var/cache/apt  btrfs $BTRFS_OPTS_COMPRESSED,subvol=@apt                0 0
+LABEL="$INSTALL_PARTITION"   /var/snapshots  btrfs $BTRFS_OPTS_COMPRESSED,subvol=@snapshots          0 0
+LABEL="$INSTALL_PARTITION"   /var/tmp        btrfs $BTRFS_OPTS,subvol=@tmp                           0 0
+LABEL="$INSTALL_PARTITION"   /var/log        btrfs $BTRFS_OPTS,subvol=@logs                          0 0
 
 ### HOME_FS ###
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
-UUID=$ROOT_UUID   /home           btrfs rw,$BTRFS_OPTS,subvol=@home                     0 0
+LABEL="$INSTALL_PARTITION"   /home           btrfs $BTRFS_OPTS_COMPRESSED,subvol=@home               0 0
 
 ### EFI ###
-# UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro  0 2
-UUID=$UEFI_UUID   /boot/efi       vfat noatime,nodiratime,umask=0077        0 2
+LABEL="$BOOT_PARTITION"      /boot           vfat noatime,nodiratime,defaults                        0 2
 
 ### Swap ###
-#UUID=$SWAP_UUID  none            swap defaults,noatime                                 0 0
+LABEL="$SWAP_PARTITION"      none            swap defaults,noatime                                   0 0
 
 ### Tmp ###
-# tmpfs         /tmp              tmpfs defaults,nosuid,nodev,noatime                   0 0
-tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                  0 0
+tmpfs           /tmp              tmpfs noatime,mode=1777,nosuid,nodev                               0 0
 EOF
 
 #########################
@@ -762,7 +730,7 @@ chroot /mnt apt install python3 python3-pip snapd flatpak --no-install-recommend
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
-#Podman 
+#Podman
 chroot /mnt apt install -t testing podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
 
 ############################

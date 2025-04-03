@@ -3,6 +3,7 @@
 # tasksel install standard
 # sudo cp /usr/share/dbus-1/session.conf /etc/dbus-1/session.conf
 
+<<<<<<< Updated upstream
 ### Variables ###
 DRIVE="/dev/vda"
 USER="juca"
@@ -26,6 +27,10 @@ SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 ## btrfs options ##
 BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
 BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:3,acl,space_cache=v2,commit=60,discard=async"
+=======
+# DRIVE="/dev/sda"
+DRIVE="/dev/vda"
+>>>>>>> Stashed changes
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
@@ -75,7 +80,15 @@ mkfs.vfat -F32 $BOOT_PARTITION -n "BOOT"
 mkfs.btrfs $ROOT_PARTITION -f -L "DEBIAN"
 mkswap $SWAP_PARTITION -L "SWAP"
 
+<<<<<<< Updated upstream
 sleep 5
+=======
+BOOT_LABEL="/dev/disk/by-label/BOOT"
+ROOT_LABEL="/dev/disk/by-label/Debian"
+SWAP_LABEL="/dev/disk/by-label/SWAP"
+
+sleep 3
+>>>>>>> Stashed changes
 echo "Turning SWAP on."
 swapon $SWAP_PARTITION
 echo "Swap Enabled."
@@ -372,6 +385,7 @@ cat <<EOF >/mnt/etc/fstab
 
 ### ROOTFS ###
 UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
+<<<<<<< Updated upstream
 UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
 UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
 UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
@@ -384,6 +398,28 @@ UUID=$UEFI_UUID   /boot           vfat  defaults,noatime,nodiratime,umask=0077  
 
 ### Swap ###
 UUID=$SWAP_UUID   none            swap defaults,noatime                                 0 0
+=======
+# LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS2,subvol=@                         0 0
+UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+# LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
+UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+# LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
+# LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS2,subvol=@tmp                      0 0
+UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
+# LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
+
+### HOME_FS ###
+UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
+# LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
+
+### EFI ###
+UUID=$UEFI_UUID /boot           vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro                            0 2
+# LABEL="BOOT"       /boot       vfat noatime,nodiratime,umask=0077                      0 2
+
+### Swap ###
+UUID=$SWAP_UUID  none            swap defaults,noatime                                  0 0
+# LABEL="SWAP"       none            swap defaults,noatime                                  0 0
+>>>>>>> Stashed changes
 
 ### Swapfile ###
 #LABEL=$SWAP_UUID none            swap defaults,noatime
