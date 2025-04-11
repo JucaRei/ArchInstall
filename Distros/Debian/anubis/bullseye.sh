@@ -193,7 +193,7 @@ echo "Acquire { https::Verify-Peer false }" >>/mnt/etc/apt/apt.conf.d/99verify-p
 #### Mount points for chroot, just like arch-chroot ####
 ########################################################
 
-for dir in dev proc sys run; do
+for dir in dev dev/pts proc sys run; do
   mount --rbind /$dir /mnt/$dir
   mount --make-rslave /mnt/$dir
 done
@@ -594,29 +594,79 @@ EOF
 ##############
 ### Polkit ###
 ##############
+chroot /mnt apt install policykit-1 policykit-1-gnome udisks2 polkitd polkitd-pkla
+
 mkdir -pv /mnt/etc/polkit-1/localauthority/50-local.d
-cat <<EOF >/mnt/etc/polkit-1/localauthority/50-local.d/service-auth.pkla
----
-[Allow USER to start/stop/restart services]
-Identity=unix-user:juca
-Action=org.freedesktop.systemd1.manage-units
+cat <<EOF >/mnt/etc/polkit-1/localauthority/50-local.d/50-udisks.pkla
+[udisks]
+Identity=unix-group:sudo
+Action=org.freedesktop.udisks2.filesystem-mount-system
+ResultAny=yes
+ResultInactive=no
 ResultActive=yes
 EOF
 
 ### If you are on Arch/Redhat (polkit >= 106), then this would work:
 mkdir -pv /mnt/etc/polkit-1/rules.d
-cat >/mnt/etc/polkit-1/rules.d/service-auth.rules <<HEREDOC
----
+cat >/mnt/etc/polkit-1/rules.d/10-udisks2.rules <<HEREDOC
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.freedesktop.systemd1.manage-units" &&
-        subject.user == "juca") {
+    if ((action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+        action.id == "org.freedesktop.udisks2.filesystem-mount-system") &&
+        subject.isInGroup("sudo")) {
         return polkit.Result.YES;
-    } });
+    }
+});
 HEREDOC
+
+cat >/mnt/etc/polkit-1/rules.d/10-logs.rules <<HEREDOC
+/* Log authorization checks. */
+polkit.addRule(function(action, subject) {
+  polkit.log("user " +  subject.user + " is attempting action " + action.id + " from PID " + subject.pid);
+});
+HEREDOC
+
+cat >/mnt/etc/polkit-1/rules.d/10-commands.rules << HEREDOC
+polkit.addRule(function(action, subject) {
+  if (
+    subject.isInGroup("sudo")
+      && (
+        action.id == "org.freedesktop.login1.reboot" ||
+        action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.power-off" ||
+        action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.suspend" ||
+        action.id == "org.freedesktop.login1.suspend-multiple-sessions"
+      )
+    )
+  {
+    return polkit.Result.YES;
+  }
+})
+HEREDOC
+
+chmod 644 /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+chmod 644 /mnt/etc/polkit-1/rules.d/10-commands.rules
+chmod 644 /mnt/etc/polkit-1/rules.d/10-logs.rules
+chown root:root /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+chmod root:root /mnt/etc/polkit-1/rules.d/10-commands.rules
+chmod root:root /mnt/etc/polkit-1/rules.d/10-logs.rules
+
+mkdir -pv /mnt/run/polkit-1/rules.d
+chmod 755 /mnt/run/polkit-1/rules.d
 
 cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
 juca ALL = NOPASSWD: /bin/systemctl
 HEREDOC
+
+##################
+### SOCKET RAW ###
+##################
+
+mkdir -pv /mnt/usr/lib/sysctl.d
+touch /mnt/usr/lib/sysctl.d/50-default.conf
+echo "-net.ipv4.ping_group_range = 0 2147483647" >> /mnt/usr/lib/sysctl.d/50-default.conf
+
+# sudo setcap cap_net_raw+p /bin/ping
 
 #########################
 #### Config Powertop ####
@@ -626,6 +676,76 @@ touch /mnt/etc/rc.local
 cat <<EOF >/mnt/etc/rc.local
 #PowerTop
 powertop --auto-tune
+EOF
+
+##################
+### PAM CONFIG ###
+##################
+
+mkdir -pv /mnt/etc/pam.d
+touch /mnt/etc/pam.d/su
+cat << EOF > /mnt/etc/pam.d/su
+#
+# The PAM configuration file for the Shadow `su' service
+#
+
+# This allows root to su without passwords (normal operation)
+auth       sufficient pam_rootok.so
+
+# Uncomment this to force users to be a member of group wheel
+# before they can use `su'. You can also add "group=foo"
+# to the end of this line if you want to use a group other
+# than the default "wheel" (but this may have side effect of
+# denying "root" user, unless she's a member of "foo" or explicitly
+# permitted earlier by e.g. "sufficient pam_rootok.so").
+# (Replaces the `SU_WHEEL_ONLY' option from login.defs)
+auth       required   pam_wheel.so
+auth       sufficient pam_wheel.so trust group=sudo
+
+# Uncomment this if you want wheel members to be able to
+# su without a password.
+# auth       sufficient pam_wheel.so trust
+
+# Uncomment this if you want members of a specific group to not
+# be allowed to use su at all.
+# auth       required   pam_wheel.so deny group=nosu
+
+# Uncomment and edit /etc/security/time.conf if you need to set
+# time restrainst on su usage.
+# (Replaces the `PORTTIME_CHECKS_ENAB' option from login.defs
+# as well as /etc/porttime)
+# account    requisite  pam_time.so
+
+# This module parses environment configuration file(s)
+# and also allows you to use an extended config
+# file /etc/security/pam_env.conf.
+#
+# parsing /etc/environment needs "readenv=1"
+session       required   pam_env.so readenv=1
+# locale variables are also kept into /etc/default/locale in etch
+# reading this file *in addition to /etc/environment* does not hurt
+session       required   pam_env.so readenv=1 envfile=/etc/default/locale
+
+# Defines the MAIL environment variable
+# However, userdel also needs MAIL_DIR and MAIL_FILE variables
+# in /etc/login.defs to make sure that removing a user
+# also removes the user's mail spool file.
+# See comments in /etc/login.defs
+#
+# "nopen" stands to avoid reporting new mail when su'ing to another user
+session    optional   pam_mail.so nopen
+
+# Sets up user limits according to /etc/security/limits.conf
+# (Replaces the use of /etc/limits in old login)
+session    required   pam_limits.so
+
+# The standard Unix authentication modules, used with
+# NIS (man nsswitch) as well as normal /etc/passwd and
+# /etc/shadow entries.
+@include common-auth
+@include common-account
+@include common-session
+
 EOF
 
 #################################
