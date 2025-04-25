@@ -12,53 +12,58 @@
 # ip link set up <interface>
 
 
-wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20221001.tar.xz
+### Variables ###
+DRIVE="/dev/vda"
+USER="juca"
+HOSTNAME="qemu"
+BOOT_PARTITION="$DRIVE"1
+ROOT_PARTITION="$DRIVE"2
+SWAP_PARTITION="$DRIVE"3
+BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
 
-xbps-install -Su xbps xz --yes
+xbps-install -Su wget xbps xz gptfdisk parted --yes
 
-# -s script call | -a optimal
-# parted -s -a optimal /dev/vda mklabel gpt
-# parted -s /dev/vda1 set 1 esp on
+wget -c https://repo-default.voidlinux.org/live/current/void-x86_64-ROOTFS-20250202.tar.xz
+
 
 # Print partition table
-sgdisk -p /dev/vda
+sgdisk -p $DRIVE
+sgdisk -Z $DRIVE
 
-# Delete partition
-# sgdisk -d 1 /dev/vda
-
-# Create new partition
-sgdisk -n 0:0:100MiB /dev/vda
-sgdisk -n 0:0:2000MiB /dev/vda
-sgdisk -n 0:0:0 /dev/vda
+parted --script --fix --align optimal $DRIVE mklabel gpt
+parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
+parted --script $DRIVE -- set 1 boot on
+parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -4GiB
+parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
 
 # Change the name of partition
-sgdisk -c 1:VoidBoot /dev/vda
-sgdisk -c 2:Swap /dev/vda
-sgdisk -c 3:Voidlinux /dev/vda
+sgdisk -c 1:"Boot EFI Partition" $DRIVE
+sgdisk -c 2:"Voidlinux FileSystem" $DRIVE
+sgdisk -c 3:"Swap FileSystem" $DRIVE
+sgdisk -p $DRIVE
 
 # Change Types
 # sgdisk --list-types
-sgdisk -t 1:ef00 /dev/vda
-sgdisk -t 2:8200 /dev/vda
-sgdisk -t 3:8300 /dev/vda
+sgdisk -t 1:ef00 $DRIVE
+sgdisk -t 2:8200 $DRIVE
+sgdisk -t 3:8300 $DRIVE
 
 # Zap entire device
 # sgdisk -Z /dev/vda
 
-mkfs.vfat -F32 /dev/vda1
-mkfs.btrfs /dev/vda2 -f
-mkfs.btrfs /dev/vda3 -f
+mkfs.vfat -F32 $BOOT_PARTITION -n "BOOT"
+mkfs.btrfs $ROOT_PARTITION -f -L "VOID"
+mkswap $SWAP_PARTITION -L "SWAP"
 
 set -e
 XBPS_ARCH="x86_64"
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:14,space_cache=v2,commit=120,autodefrag,discard=async"
 # Mude de acordo com sua partição
-mount -o $BTRFS_OPTS /dev/vda2 /mnt
+mount -o $BTRFS_OPTS $ROOT_PARTITION /mnt
 
 #Cria os subvolumes
 
-btrfs su cr /mnt/@
-# btrfs su cr /mnt/@home
+btrfs su cr /mnt/@root
+btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
 btrfs su cr /mnt/@var_log
 btrfs su cr /mnt/@var_cache_xbps
@@ -69,18 +74,21 @@ umount -v /mnt
 # Monta com os valores selecionados
 # Lembre-se de mudar os valores de sdX
 
-mount -o $BTRFS_OPTS,subvol=@ /dev/vda2 /mnt
-mkdir -pv /mnt/boot
-mkdir -pv /mnt/boot/grub
-mkdir -pv /mnt/home
-mkdir -pv /mnt/.snapshots
-mkdir -pv /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@root $ROOT_PARTITION /mnt
+
+mkdir -pv /mnt/{boot,home,.snapshots,var}
+mkdir -pv /mnt/var/{log,cache}
 mkdir -pv /mnt/var/cache/xbps
-mount -o $BTRFS_OPTS /dev/vda3 /mnt/home
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/vda2 /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@var_log /dev/vda2 /mnt/var/log
-mount -o $BTRFS_OPTS,subvol=@var_cache_xbps /dev/vda2 /mnt/var/cache/xbps
-mount -t vfat -o defaults,noatime,nodiratime /dev/vda1 /mnt/boot
+# mkdir -pv /mnt/home
+# mkdir -pv /mnt/.snapshots
+# mkdir -pv /mnt/var/log
+# mkdir -pv /mnt/var/cache/xbps
+
+mount -o $BTRFS_OPTS,subvol=@home $ROOT_PARTITION /mnt/home
+mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_PARTITION /mnt/.snapshots
+mount -o $BTRFS_OPTS,subvol=@var_log $ROOT_PARTITION /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@var_cache_xbps $ROOT_PARTITION /mnt/var/cache/xbps
+mount -t vfat -o defaults,noatime,nodiratime $BOOT_PARTITION /mnt/boot
 
 # Descompacta e copia para /mnt o tarball
 tar xvf ./void-x86_64-*.tar.xz -C /mnt;sync;
@@ -100,31 +108,6 @@ omit_dracutmodules+=" lvm luks "
 compress="zstd"
 EOF
 
-# Repositorios mais rapidos
-cat <<EOF >/mnt/etc/xbps.d/00-repository-main.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current
-repository=https://voidlinux.com.br/repo/current/
-repository=http://void.chililinux.com/voidlinux/current/
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/nonfree
-repository=https://voidlinux.com.br/repo/current/nonfree
-repository=http://void.chililinux.com/voidlinux/current/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib-nonfree.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib/nonfree
-repository=https://voidlinux.com.br/repo/current/multilib/nonfree
-repository=http://void.chililinux.com/voidlinux/current/multilib/nonfree
-EOF
-
-cat <<EOF >/mnt/etc/xbps.d/10-repository-multilib.conf
-# repository=https://mirrors.servercentral.com/voidlinux/current/multilib
-repository=https://voidlinux.com.br/repo/current/multilib
-repository=http://void.chililinux.com/voidlinux/current/multilib
-EOF
-
 
 # Ignorar alguns pacotes
 cat << EOF > /mnt/etc/xbps.d/99-ignore.conf
@@ -137,7 +120,7 @@ EOF
 
 # Hostname
 cat << EOF > /mnt/etc/hostname
-oldmac
+$HOSTNAME
 EOF
 
 # Hosts
@@ -145,17 +128,17 @@ EOF
 cat << EOF > /mnt/etc/hosts
 127.0.0.1 localhost
 ::1 localhost
-127.0.1.1 oldmac.localdomain oldmac
+127.0.1.1 $HOSTNAME.localdomain $HOSTNAME
 EOF
 
 # fstab
 
-UEFI_UUID=$(blkid -s UUID -o value /dev/vda1)
-ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
-HOME_UUID=$(blkid -s UUID -o value /dev/vda3)
+UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
+SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 echo $UEFI_UUID
 echo $ROOT_UUID
-echo $HOME_UUID
+echo $SWAP_UUID
 
 cat << EOF > /mnt/etc/fstab
 #
@@ -164,18 +147,21 @@ cat << EOF > /mnt/etc/fstab
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # ROOTFS
-UUID=$ROOT_UUID /               btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@               0 1
-UUID=$ROOT_UUID /.snapshots     btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@snapshots      0 2
-UUID=$ROOT_UUID /var/log        btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_log        0 2
-UUID=$ROOT_UUID /var/cache/xbps btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async,subvol=@var_cache_xbps 0 2
+UUID=$ROOT_UUID /               btrfs $BTRFS_OPTS,subvol=@root                       0 1
+UUID=$ROOT_UUID /.snapshots     btrfs $BTRFS_OPTS,subvol=@snapshots                  0 2
+UUID=$ROOT_UUID /var/log        btrfs $BTRFS_OPTS,subvol=@var_log                    0 2
+UUID=$ROOT_UUID /var/cache/xbps btrfs $BTRFS_OPTS,subvol=@var_cache_xbps             0 2
 
 #HOME_FS
-UUID=$HOME_UUID /home           btrfs rw,noatime,ssd,compress-force=zstd:18,space_cache=v2,commit=120,discard=async           0 2
+UUID=$ROOT_UUID /home           btrfs $BTRFS_OPTS,subvol=@home                       0 2
 
 # EFI
-UUID=$UEFI_UUID /boot vfat rw,noatime,nodiratime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro 0 2
+UUID=$UEFI_UUID /boot           vfat noatime,nodiratime,defaults                        0 2
 
-tmpfs /tmp tmpfs defaults,nosuid,nodev,noatime 0 0
+### Swap ###
+UUID=$SWAP_UUID                 none swap defaults,noatime                              0 0
+
+tmpfs /tmp                      tmpfs defaults,nosuid,nodev,noatime                     0 0
 EOF
 
 # Set user permition
@@ -201,7 +187,7 @@ cat << EOF > /mnt/etc/rc.conf
 # NOTE: it's preferred to declare the hostname in /etc/hostname instead:
 #       - echo myhost > /etc/hostname
 #
-#HOSTNAME="nitrovoid"
+#HOSTNAME="$HOSTNAME"
 
 # Set RTC to UTC or localtime.
 HARDWARECLOCK="UTC"
@@ -239,8 +225,8 @@ chroot /mnt xbps-reconfigure -f glibc-locales
 # Update and install base system
 chroot /mnt xbps-install -Suy xbps --yes
 chroot /mnt xbps-install -uy
-chroot /mnt $XBPS_ARCH xbps-install -y base-system zstd bash-completion linux-lts linux-lts-headers efivar neovim base-devel gummiboot ripgrep dust exa fzf xtools lm_sensors inxi lshw intel-ucode zsh  alsa-utils vim git wget curl efibootmgr btrfs-progs  nano ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony neofetch dust duf lua bat glow bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
-chroot /mnt xbps-remove base-voidstrap --yes
+chroot /mnt $XBPS_ARCH xbps-install -y void-repo-multilib void-repo-multilib-nonfree void-repo-nonfree base-system zstd bash-completion linux-lts linux-lts-headers efivar nano base-devel gummiboot xtools lm_sensors alsa-utils vim git wget curl efibootmgr btrfs-progs ntfs-3g mtools dosfstools sysfsutils htop dbus-elogind dbus-elogind-libs dbus-elogind-x11 vsv vpm polkit chrony duf bluez bluez-alsa sof-firmware xdg-user-dirs xdg-utils xdg-desktop-portal-gtk --yes
+chroot /mnt xbps-remove base-container-full -R --yes
 #chroot /mnt xbps-install -y base-minimal zstd linux5.10 linux-base neovim chrony tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 
@@ -269,7 +255,6 @@ chroot /mnt xbps-install -S xf86-video-vesa --yes
 #chroot /mnt xbps-install -Sy libva-utils libva-vdpau-driver vdpauinfo
 
 # "Mons is a Shell script to quickly manage 2-monitors display using xrandr."
-chroot /mnt xbps-install -S mons --yes
 
 #File Management
 chroot /mnt xbps-install -S gvfs gvfs-smb udisks2 tumbler ffmpegthumbnailer libgsf libopenraw --yes
@@ -281,10 +266,14 @@ chroot /mnt xbps-install -S socklog-void --yes
 #Install Gummiboot
 mount --bind /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars
 # chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
-chroot /mnt gummiboot --path=/boot install
+# chroot /mnt gummiboot --path=/boot install
+chroot /mnt bootctl --path=/boot install
 
-chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@ rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-5.10.**'
+# chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@ rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/entries/void-6.1.**'
 
+chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@root rw quiet splash video=1920x1080 loglevel=3 mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug intel_iommu=igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" >> /boot/loader/void-options.conf'
+
+# resume=UUID=$SWAP_UUID
 
 # GRUB Configuration
 
@@ -315,16 +304,20 @@ chroot /mnt bash -c 'echo "options root=/dev/vda2 rootflags=subvol=@ rw quiet sp
 # EOF
 
 # Set zsh as default
-chroot /mnt chsh -s /usr/bin/zsh root
+# chroot /mnt chsh -s /usr/bin/zsh root
 
 # Define user and root password
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
-chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
-chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input juca
+chroot /mnt useradd $USER -m -c "Reinaldo P JR" -s /bin/bash
+chroot /mnt sh -c 'echo "$USER:200291" | chpasswd -c SHA512'
+chroot /mnt usermod -aG wheel,floppy,audio,video,optical,kvm,lp,storage,cdrom,xbuilder,input $USER
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\)/\1/' /etc/sudoers
 chroot /mnt sed -i 's/^#\s*\(%wheel\s*ALL=(ALL)\s*NOPASSWD:\s*ALL\)/\1/' /etc/sudoers
-chroot /mnt usermod -a -G socklog juca
+chroot /mnt usermod -a -G socklog $USER
+
+cat > /mnt/etc/sudoers.d/sysctl <<HEREDOC
+"$USER" ALL = NOPASSWD: /bin/systemctl
+HEREDOC
 
 # Refazer as config nvidia
 #cat << EOF > /mnt/usr/share/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
@@ -357,9 +350,10 @@ cat << EOF > /mnt/etc/X11/xorg.conf.d/00-keyboard.conf
 Section "InputClass"
         Identifier "system-keyboard"
         MatchIsKeyboard "on"
-        Option "XkbLayout" "us"
+        # Option "XkbLayout" "us"
+        Option "XkbLayout" "br"
         Option "XkbModel" "pc105"
-        Option "XkbVariant" "mac"
+        # Option "XkbVariant" "mac"
 EndSection
 EOF
 

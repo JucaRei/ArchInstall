@@ -9,7 +9,6 @@ USER="juca"
 HOSTNAME="qemu"
 codename="bullseye"
 Debian_ARCH="amd64"
-
 BOOT_PARTITION="$DRIVE"1
 ROOT_PARTITION="$DRIVE"2
 SWAP_PARTITION="$DRIVE"3

@@ -450,7 +450,7 @@ EOF
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-options bbswitch load_state=0 unload_state=1 
+options bbswitch load_state=0 unload_state=1
 EOF
 
 # Install Nvidia video drivers
