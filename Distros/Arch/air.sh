@@ -100,7 +100,7 @@ mount -t vfat -o defaults,noatime,nodiratime ${DRIVE}1 /mnt/boot/efi
 # Base packages Liquorix Kernel
 pacstrap /mnt base base-devel linux-lts54  linux-lts54-headers linux-firmware archlinux-keyring man-db perl sysfsutils python git man-pages dropbear git nano intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib nfs-utils --ignore linux vi
 
-pacstrap /mnt base base-devel linux linux-firmware archlinux-keyring man-db perl sysfsutils python git man-pages dropbear git nano intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib nfs-utils --ignore vi
+pacstrap /mnt base base-devel linux linux-firmware archlinux-keyring man-db perl sysfsutils python git man-pages dropbear git nano neovim intel-ucode duf reflector mtools dosfstools btrfs-progs pacman-contrib nfs-utils --ignore vi
 
 # Generate fstab
 genfstab -U /mnt >>/mnt/etc/fstab
@@ -114,6 +114,7 @@ done
 chroot /mnt ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 chroot /mnt hwclock --systohc
 chroot /mnt sed -i '171s/.//' /etc/locale.gen
+chroot /mnt sed -i '391s/.//' /etc/locale.gen
 chroot /mnt locale-gen
 # echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
@@ -155,7 +156,7 @@ pacman-key --populate
 #chroot /mnt pacman-key --recv-key B545E9B7CD906FE3
 #chroot /mnt pacman-key --lsign-key B545E9B7CD906FE3
 
-cat <<\EOF >>/mnt/etc/pacman.conf
+cat << EOF >>/mnt/etc/pacman.conf
 
 # [chaotic-aur]
 # Include = /etc/pacman.d/chaotic-mirrorlist
@@ -309,7 +310,7 @@ dev.i915.perf_stream_paranoid=0
 EOF
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
+cat << EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -320,7 +321,7 @@ EOF
 # Not asking for password
 
 mkdir -pv /mnt/etc/polkit-1/rules.d
-cat <<\EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
+cat << EOF >/mnt/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
@@ -332,7 +333,7 @@ polkit.addRule(function(action, subject) {
 });
 EOF
 
-cat <<\EOF >/mnt/etc/polkit-1/rules.d/00-mount-internal.rules
+cat <<EOF >/mnt/etc/polkit-1/rules.d/00-mount-internal.rules
 polkit.addRule(function(action, subject) {
    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" &&
       subject.local && subject.active && subject.isInGroup("storage")))
@@ -374,7 +375,7 @@ EOF
 chroot /mnt chown -c root:root /etc/doas.conf
 
 touch /mnt/etc/modprobe.d/i915.conf
-cat <<\EOF >/mnt/etc/modprobe.d/i915.conf
+cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 

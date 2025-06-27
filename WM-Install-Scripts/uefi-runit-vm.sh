@@ -2,13 +2,21 @@
 
 ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 hwclock --systohc
+## Locales
+
 sed -i '177s/.//' /etc/locale.gen
 locale-gen
+
+## Keyboard
 echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
 # echo "KEYMAP=us-intl" >>/etc/vconsole.conf
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
+
+## Hostname
 echo "artixnitro" >>/etc/hostname
+
+## Hosts
 echo "127.0.0.1 localhost" >>/etc/hosts
 echo "::1       localhost" >>/etc/hosts
 echo "127.0.1.1 artixnitro.localdomain artixnitro" >>/etc/hosts
@@ -95,13 +103,13 @@ pacman-key --lsign-key B545E9B7CD906FE3
 
 # Universe repo optimus-manager-runit
 
-cat <<\EOF >>/etc/pacman.conf
+cat << EOF >>/etc/pacman.conf
 # Other Repo's
 
-[omniverse] 
-Server = http://omniverse.artixlinux.org/$arch 
+[omniverse]
+Server = http://omniverse.artixlinux.org/$arch
 
-[universe] 
+[universe]
 Server = https://universe.artixlinux.org/$arch
 Server = https://mirror1.artixlinux.org/universe/$arch
 Server = https://mirror.pascalpuffke.de/artix-universe/$arch
@@ -143,113 +151,6 @@ pacman -Sy
 # alsa-utils alsa-utils-runit
 pacman -S grub grub-btrfs efibootmgr mesa mesa-utils wget curl backlight-runit networkmanager preload reflector nfs-utils nfs-utils-runit samba samba-runit metalog metalog-runit mpd mpd-runit networkmanager-runit network-manager-applet dropbear dropbear-runit powertop thermald thermald-runit htop neofetch chrony chrony-runit dialog duf bat exa lsd rsm avahi avahi-runit xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-runit bluez-utils pulseaudio pavucontrol pulseaudio-bluetooth paprefs pamixer pulseaudio-ctl pulseaudio-control pulseaudio-alsa pulseaudio-equalizer pulseaudio-jack pulseaudio-zeroconf pulseaudio-support bash-completion exfat-utils cups cups-runit hplip rsync rsync-runit acpi acpid acpi_call-dkms virt-manager libvirt-runit qemu vde2 edk2-ovmf bridge-utils dnsmasq dnsmasq-runit vde2 opendoas ebtables openbsd-netcat iptables-nft ipset firewalld firewalld-runit flatpak nss-mdns acpid-runit ntfs-3g
 
-# pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf pipewire-media-session
-# pacman -S pipewire-alsa pipewire-jack pipewire-pulse pipewire-v4l2 pipewire-zeroconf wireplumber
-
-# I know you got it working, but just in case (and for future readers sake):
-# you don't need to start pipewire-pulse or wireplumber manually, only pipewire itself with the correct config - see below.
-# also, pipewire-media-session is an inflexible reference implementation not intended for real use, best stick to wireplumber.
-# for the "recommended" pipewire + session manager + pulse setup, do this (all as superuser):
-#     pacman -S pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber
-#     mkdir /etc/pipewire
-#     cp /usr/share/pipewire/pipewire* /etc/pipewire
-#     edit the /etc/pipewire/pipewire.conf file
-#     go to the final option, context.exec = [...]
-#     add the following lines inside the ...
-# { path = "/usr/bin/wireplumber" args = "" }
-# { path = "/usr/bin/pipewire" args = "-c pipewire-pulse.conf" }
-# now simply do the one pipewire & in whatever init script you were using before and it should run pipewire, the pulse layer, and wireplumber to manage the session, all together at once.
-# btw, you probably know this, but you should be able to use any compatible config app for whatever backend pipewire is using, ie. for pulse you can use pavucontrol, for JACK KXStudio stuff like cadence should work..
-
-cat <<EOF >/etc/samba/smb.conf
-[global]
-   workgroup = WORKGROUP
-   dns proxy = no
-   log file = /var/log/samba/%m.log
-   max log size = 1000
-   client min protocol = NT1
-   server role = standalone server
-   passdb backend = tdbsam
-   obey pam restrictions = yes
-   unix password sync = yes
-   passwd program = /usr/bin/passwd %u
-   passwd chat = *New*UNIX*password* %n\n *ReType*new*UNIX*password* %n\n *passwd:*all*authentication*tokens*updated*successfully*
-   pam password change = yes
-   map to guest = Bad Password
-   usershare allow guests = yes
-   name resolve order = lmhosts bcast host wins
-   security = user
-   guest account = nobody
-   usershare path = /var/lib/samba/usershare
-   usershare max shares = 100
-   usershare owner only = yes
-   force create mode = 0070
-   force directory mode = 0070
-
-[homes]
-   comment = Home Directories
-   browseable = no
-   read only = yes
-   create mask = 0700
-   directory mask = 0700
-   valid users = %S
-
-[printers]
-   comment = All Printers
-   browseable = no
-   path = /var/spool/samba
-   printable = yes
-   guest ok = no
-   read only = yes
-   create mask = 0700
-
-[print$]s/#ParallelDownloads
-   comment = Printer Drivers
-   path = /var/lib/samba/printers
-   browseable = yes
-   read only = yes
-   guest ok = no
-EOF
-
-# Power top
-touch /etc/rc.local
-cat <<EOF >/etc/rc.local
-# PowerTop
-powertop --auto-tune
-
-# echo 60000 > /sys/bus/usb/devices/2-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/2-1.6/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/3-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/3-1.6/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/4-1.5/power/autosuspend_delay_ms
-# echo 60000 > /sys/bus/usb/devices/4-1.6/power/autosuspend_delay_ms
-
-# Preload
-preload
-EOF
-
-mkdir -pv /etc/X11/xorg.conf.d/
-touch /etc/X11/xorg.conf.d/20-intel.conf
-# Fix tearing with intel
-cat <<EOF >/etc/X11/xorg.conf.d/20-intel.conf
-# Section "Device"
-#  Identifier "Intel Graphics"
-#  Driver "Intel"
-#  Option "AccelMethod" "sna"
-#  Option "TearFree" "True"
-#  Option "Tiling" "True"
-#  Option "SwapbuffersWait" "True"
-#  Option "DRI" "3"
-# EndSection
-EOF
-
-mkdir -pv /etc/runit/sv/runsvdir-junior
-mkdir -pv $HOME/.runit/sv
-touch /etc/runit/sv/runsvdir-junior/run
-chmod +x /etc/runit/sv/runsvdir-junior/run
-cat <<EOF >>/etc/runit/sv/runsvdir-junior/run
-#!/bin/sh
-
 export USER="junior"
 export HOME="/home/root"
 
@@ -261,7 +162,7 @@ EOF
 
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
-cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
+cat << EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -276,11 +177,11 @@ cat <<EOF >/etc/polkit-1/rules.d/10-udisks2.rules
 // Allow udisks2 to mount devices without authentication
 // for users in the "wheel" group.
 polkit.addRule(function(action, subject) {
-    if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
-         action.id == "org.freedesktop.udisks2.filesystem-mount") &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
+   if ((action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+      action.id == "org.freedesktop.udisks2.filesystem-mount") &&
+      subject.isInGroup("wheel")) {
+         return polkit.Result.YES;
+   }
 });
 EOF
 
@@ -297,18 +198,13 @@ EOF
 
 ln -s /etc/runit/sv/NetworkManager /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
-# ln -s /etc/runit/sv/sshd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/thermald /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/chrony /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/dropbear /etc/runit/runsvdir/default/
-# ln -s /etc/runit/sv/acpid /etc/runit/runsvdir/default/
-# ln -s /etc/runit/sv/ntpd /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/bluetoothd /etc/runit/runsvdir/default/
-#ln -s /etc/runit/sv/wpa_supplicant /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/avahi-daemon /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/alsa /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/cupsd /etc/runit/runsvdir/default/
-# ln -s /etc/runit/sv/tlp /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/libvirtd/ /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/nfs-server /etc/runit/runsvdir/default/
 ln -s /etc/runit/sv/nmbd /etc/runit/runsvdir/default/
@@ -421,8 +317,6 @@ options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_
 EOF
 
 sudo sed -i 's/#GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
-# sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 i915.enable_dc=0 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
-# sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet udev.log_level=0 i915.fastboot=1 i915.enable_guc=2 acpi_backlight=vendor console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 ahci.mobile_lpm_policy=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=2 quiet apci_osi=Linux udev.log_level=0 acpi_backlight=video gpt acpi=force intel_pstate=active init_on_alloc=0 console=tty2 zswap.enabled=1 zswap.compressor=zstd zswap.max_pool_percent=10 zswap.zpool=zsmalloc mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug nvidia-drm.modeset=1 intel_iommu=on,igfx_off net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"/g' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
@@ -479,7 +373,7 @@ touch btrfs_map_physical.txt
 ./btrfs_map_physical /var/swap/swapfile > btrfs_map_physical.txt
 touch resume.txt
 filefrag -v /var/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' > resume.txt
-set -e 
+set -e
 RESUME_OFFSET=$(cat /tmp/btrfs/resume.txt)
 ROOT_UUID=$(blkid -s UUID -o value /dev/vda2)
 # export ROOT_UUID

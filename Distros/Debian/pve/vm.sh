@@ -1,55 +1,14 @@
 #!/bin/sh
 
-DRIVE="/dev/vda"
+DRIVE="/dev/sda"
+hostname=pvedeb
 
-#### Update and install needed packages ####
-apt update && apt install debootstrap btrfs-progs lsb-release wget -y
+apt update && apt install debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 #### Umount drive, if it's mounted ####
 umount -R $DRIVE
 
-#### Add faster repo's ####
-# CODENAME=$(lsb_release --codename --short) # or CODENAME=bullseye
 CODENAME=bookworm # or CODENAME=bullseye
-# cat >/etc/apt/sources.list <<HEREDOC
-# deb https://deb.debian.org/debian/ $CODENAME main contrib non-free
-# deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free
-
-# #deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free
-# #deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free
-
-# deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-# deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free
-
-# deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-# deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free
-
-# #######################
-# ### Debian unstable ###
-# #######################
-
-# ##Debian Testing
-# #deb http://deb.debian.org/debian/ testing main
-# #deb-src http://deb.debian.org/debian/ testing main
-
-# ##Debian Unstable
-# #deb http://deb.debian.org/debian/ unstable main
-# ##Debian Experimental
-# #deb http://deb.debian.org/debian/ experimental main
-
-# ###################
-# ### Tor com apt ###
-# ###################
-
-# #deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
-# #deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch main
-
-# #deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-# #deb-src tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-
-# #deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-# #deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-# HEREDOC
 
 #### update fastest repo's
 apt update
@@ -67,17 +26,22 @@ sgdisk -Z $DRIVE
 # parted $DRIVE mklabel gpt
 # parted $DRIVE mkpart primary 2048s 100%
 parted --script --fix --align optimal $DRIVE mklabel gpt
-parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
-parted --script $DRIVE -- set 1 boot on
+# sgdisk $DRIVE --new=1:0:+1M
+# sgdisk $DRIVE --typecode=1:EF02
+# parted --script --fix --align optimal $DRIVE mkpart primary fat32 0 1M
+parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 2MiB
+parted --script --align optimal --fix -- $DRIVE mkpart primary fat32 2MiB -3GiB
+# parted --script $DRIVE -- set 1 boot on
+parted --script $DRIVE -- set 1 bios_grub on
 
-# parted --script --align optimal -- $DRIVE mkpart primary 600MB 100%
-# parted --script --align optimal --fix -- $DRIVE mkpart primary linux-swap -2GiB -1s
-parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -4GiB
-parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
+parted --script --align optimal --fix -- $DRIVE mkpart primary -3GiB 100%
+
 
 # parted --script align-check 1 $DRIVE
-
-sgdisk -c 1:"EFI FileSystem partition" ${DRIVE}
+sgdisk $DRIVE --typecode=1:EF02
+sgdisk $DRIVE --typecode=2:8300
+sgdisk $DRIVE --typecode=3:8200
+sgdisk -c 1:"Bios Boot Mode" ${DRIVE}
 sgdisk -c 2:"Debian FileSystem" ${DRIVE}
 sgdisk -c 3:"Debian Swap" ${DRIVE}
 sgdisk -p ${DRIVE}
@@ -130,27 +94,27 @@ mount -o $BTRFS_OPTS $ROOT_PARTITION /mnt
 btrfs su cr /mnt/@
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
-btrfs su cr /mnt/@log
+btrfs su cr /mnt/@logs
 btrfs su cr /mnt/@apt
 btrfs su cr /mnt/@tmp
 umount -v /mnt
 ## Make directories for mount ##
 mount -o $BTRFS_OPTS,subvol=@ $ROOT_PARTITION /mnt
-mkdir -pv /mnt/boot
-mkdir -pv /mnt/boot/efi
+# mkdir -pv /mnt/boot
+# mkdir -pv /mnt/boot/efi
 mkdir -pv /mnt/home
 mkdir -pv /mnt/.snapshots
-mkdir -pv /mnt/var/log
+mkdir -pv /mnt/var/logs
 mkdir -pv /mnt/var/tmp
 mkdir -pv /mnt/var/cache/apt
 
 ## Mount btrfs subvolumes ##
 mount -o $BTRFS_OPTS,subvol=@home $ROOT_PARTITION /mnt/home
 mount -o $BTRFS_OPTS,subvol=@snapshots $ROOT_PARTITION /mnt/.snapshots
-mount -o $BTRFS_OPTS,subvol=@log $ROOT_PARTITION /mnt/var/log
+mount -o $BTRFS_OPTS,subvol=@logs $ROOT_PARTITION /mnt/var/logs
 mount -o $BTRFS_OPTS,subvol=@tmp $ROOT_PARTITION /mnt/var/tmp
 mount -o $BTRFS_OPTS,subvol=@apt $ROOT_PARTITION /mnt/var/cache/apt
-mount -t vfat -o defaults,noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
+# mount -t vfat -o defaults,noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -159,7 +123,8 @@ mount -t vfat -o defaults,noatime,nodiratime $BOOT_PARTITION /mnt/boot/efi
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 $CODENAME /mnt "http://debian.c3sl.ufpr.br/debian/ $CODENAME contrib non-free"
 # debootstrap --variant=minbase --include=apt,aptitude,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
 
-debootstrap --variant=minbase --include=apt,apt-utils,debian-archive-keyring,debconf,doas,locales,bsdutils,dracut,coreutils,zstd,ca-certificates,neovim,console-setup,dosfstools,console-setup-linux,keyboard-configuration,btrfs-progs,gdisk,neovim,netbase,ncurses-bin,kmod,procps,ifupdown,net-tools,iproute2,dbus-broker,libdbd-sqlite3-perl,nix-bin,nix-setup-systemd --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+debootstrap --variant=minbase --include=apt,apt-utils,debian-archive-keyring,debconf,doas,locales,bsdutils,dracut,coreutils,zstd,ca-certificates,neovim,console-setup,dosfstools,console-setup-linux,keyboard-configuration,btrfs-progs,gdisk,neovim,netbase,ncurses-bin,kmod,procps,ifupdown,net-tools,iproute2,dbus-broker,libdbd-sqlite3-perl,libdbi-perl,nix-bin,nix-setup-systemd,initramfs-tools --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
+# debootstrap --variant=minbase --include=apt,apt-utils,debian-archive-keyring,debconf,doas,locales,bsdutils,dracut,coreutils,zstd,ca-certificates,neovim,console-setup,dosfstools,console-setup-linux,keyboard-configuration,btrfs-progs,gdisk,neovim,netbase,ncurses-bin,kmod,procps,ifupdown,net-tools,iproute2,dbus-broker --arch amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free"
 
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free"
@@ -265,21 +230,12 @@ done
 ########################################
 
 mkdir -pv /mnt/etc/modprobe.d
-cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
-# Disable watchdog
-install iTCO_wdt /bin/true
-install iTCO_vendor_support /bin/true
-EOF
 
-cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
-options iwlwifi enable_ini=N
-EOF
-
-touch /mnt/etc/modprobe.d/i915.conf
-cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-## Boot Faster with intel ##
-options i915 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-EOF
+# touch /mnt/etc/modprobe.d/i915.conf
+# cat <<EOF >/mnt/etc/modprobe.d/i915.conf
+# ## Boot Faster with intel ##
+# options i915 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+# EOF
 
 #######################################
 #### Kernel params for tune system ####
@@ -304,10 +260,10 @@ cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
-# Intel Graphics
-dev.i915.perf_stream_paranoid=0
-EOF
+# cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
+# # Intel Graphics
+# dev.i915.perf_stream_paranoid=0
+# EOF
 
 ######################################
 #### Update initramfs load system ####
@@ -390,14 +346,14 @@ chroot /mnt apt upgrade -y
 ######################
 
 cat <<EOF >/mnt/etc/hostname
-anubis
+$hostname
 EOF
 
 # Hosts
 touch /mnt/etc/hosts
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
-127.0.1.1 anubis
+127.0.1.1 $hostname
 
 ### The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback
@@ -405,66 +361,22 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 EOF
 
-echo $UEFI_UUID
-echo $ROOT_UUID
-echo $SWAP_UUID
-# echo $HOME_UUID
-
-touch /mnt/etc/fstab
-cat <<EOF >/mnt/etc/fstab
-# <file system> <dir> <type> <options> <dump> <pass>
-
-### ROOTFS ###
-# UUID=$ROOT_UUID   /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-LABEL="Debian"      /               btrfs rw,$BTRFS_OPTS,subvol=@                         0 0
-# UUID=$ROOT_UUID   /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-LABEL="Debian"      /.snapshots     btrfs rw,$BTRFS_OPTS,subvol=@snapshots                0 0
-# UUID=$ROOT_UUID   /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
-LABEL="Debian"      /var/log        btrfs rw,$BTRFS_OPTS,subvol=@log                      0 0
-LABEL="Debian"      /var/tmp        btrfs rw,$BTRFS_OPTS,subvol=@tmp                      0 0
-# UUID=$ROOT_UUID   /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
-LABEL="Debian"      /var/cache/apt  btrfs rw,$BTRFS_OPTS,subvol=@apt                      0 0
-
-### HOME_FS ###
-# UUID=$HOME_UUID /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
-LABEL="Debian"    /home           btrfs rw,$BTRFS_OPTS,subvol=@home                       0 0
-
-### EFI ###
-# UUID=$UEFI_UUID /boot/efi       vfat rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=remount-ro                            0 2
-LABEL="EFI"       /boot/efi       vfat noatime,nodiratime,umask=0077                      0 2
-
-### Swap ###
-# UUID=$SWAP_UUID  none            swap defaults,noatime                                  0 0
-LABEL="SWAP"       none            swap defaults,noatime                                  0 0
-
-#Swapfile
-# LABEL="Debian"     none            swap defaults,noatime
-# /swap/swapfile     none            swap sw                                              0 0
-
-### Tmp ###
-# tmpfs         /tmp               tmpfs defaults,nosuid,nodev,noatime                    0 0
-tmpfs           /tmp               tmpfs noatime,mode=1777,nosuid,nodev                   0 0
-EOF
+genfstab -U /mnt >> /mnt/etc/fstab
 
 #########################
 #### Setting Locales ####
 #########################
 
-chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone &&
-        dpkg-reconfigure -f noninteractive tzdata &&
-        sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen &&
-        sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen &&
-        echo 'LANG="en_US.UTF-8"' >/etc/default/locale &&
-        # export LC_ALL=C && \
-        export LANGUAGE=en_US.UTF-8 &&
-        export LC_ALL=en_US.UTF-8 &&
-        export LANG=en_US.UTF-8 &&
-        export LC_CTYPE=en_US.UTF-8 &&
-        chroot /mnt apt update
+chroot /mnt echo "America/Sao_Paulo" >/mnt/etc/timezone \
+chroot /mnt dpkg-reconfigure -f noninteractive tzdata
+chroot /mnt sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+chroot /mnt sed -i -e 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
+chroot /mnt dpkg-reconfigure -f noninteractive locales
+chroot /mnt apt update
 
-cat <<EOF >/mnt/etc/environment
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-EOF
+# cat <<EOF >/mnt/etc/environment
+# LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# EOF
 
 #####################################
 #### Install additional packages ####

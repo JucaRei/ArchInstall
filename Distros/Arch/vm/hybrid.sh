@@ -172,12 +172,12 @@ cat << EOF |sed -e 's/^   //g' > /tmp/syslinux.cfg
    MENU LABEL ^Syslinux Modules
 
    label cli
-       MENU LABEL Syslinux ^CLI
-       TEXT HELP
-       Enter Syslinux CLI to use Syslinux utilities found in /syslinux/ or to
-       manually boot the system using one of the system targets.
-       ENDTEXT
-       MENU QUIT
+      MENU LABEL Syslinux ^CLI
+      TEXT HELP
+      Enter Syslinux CLI to use Syslinux utilities found in /syslinux/ or to
+      manually boot the system using one of the system targets.
+      ENDTEXT
+      MENU QUIT
 
    label hdt
       MENU LABEL ^Hardware Detection Tool
@@ -193,25 +193,25 @@ cat << EOF |sed -e 's/^   //g' > /tmp/syslinux.cfg
       localboot 0xffff
 
    label reboot
-       MENU LABEL System ^Reboot
-       kernel reboot.c32
+      MENU LABEL System ^Reboot
+      kernel reboot.c32
 
    label poweroff
-       MENU LABEL System ^Power Off
-       kernel poweroff.com
+      MENU LABEL System ^Power Off
+      kernel poweroff.com
 
    MENU END
 
    label slackware
-       MENU LABEL Slackware Linux 14.2 Install (64 bits)
-       TEXT HELP
-       Boot 64 bit Slackware installer for system builds or troubleshooting.
+      MENU LABEL Slackware Linux 14.2 Install (64 bits)
+      TEXT HELP
+      Boot 64 bit Slackware installer for system builds or troubleshooting.
 
-       Press [TAB] to append required boot options (i.e. console=ttyS1,115200).
-       ENDTEXT
-       kernel /boot/bzImage
-       initrd /boot/initrd
-       append load_ramdisk=1 prompt_ramdisk=0 rw printk.time=0  nomodeset
+      Press [TAB] to append required boot options (i.e. console=ttyS1,115200).
+      ENDTEXT
+      kernel /boot/bzImage
+      initrd /boot/initrd
+      append load_ramdisk=1 prompt_ramdisk=0 rw printk.time=0  nomodeset
 
 EOF
 sudo cp /tmp/syslinux.cfg /mnt/tmp/EFI/BOOT/syslinux.cfg

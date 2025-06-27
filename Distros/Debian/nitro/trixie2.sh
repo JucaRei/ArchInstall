@@ -731,7 +731,13 @@ chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 #Podman
+<<<<<<< Updated upstream:Distros/Debian/nitro/trixie2.sh
 chroot /mnt apt install -t testing podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
+=======
+chroot /mnt apt install podman buildah fuse-overlayfs passt slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname distrobox --no-install-recommends -y
+# Nix
+#chroot /mnt apt install nix-setup-systemd -y
+>>>>>>> Stashed changes:Distros/Debian/nitro/bookwarn.sh
 
 ############################
 #### BTRFS Backup tools ####

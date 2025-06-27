@@ -1,8 +1,0 @@
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = true
-[remote "origin"]
-	url = https://gitlab.com/dwt1/st-distrotube.git
-	fetch = +refs/*:refs/*
-	mirror = true

@@ -50,7 +50,7 @@ pacman-key --lsign-key 9AE4078033F8024D
 pacman-key --recv-key B545E9B7CD906FE3
 pacman-key --lsign-key B545E9B7CD906FE3
 
-cat <<\EOF >>/etc/pacman.conf
+cat <<EOF >>/etc/pacman.conf
 #[liquorix]
 #Server = https://liquorix.net/archlinux/
 
@@ -62,7 +62,7 @@ Include = /etc/pacman.d/chaotic-mirrorlist
 
 EOF
 
-# Liquorix Key-ID 
+# Liquorix Key-ID
 # pacman-key --recv-keys 9AE4078033F8024D
 # sudo pacman-key --lsign-key 9AE4078033F8024D
 
@@ -71,7 +71,7 @@ sed -i -e '$a Server = https://aur.andontie.net/$arch' /etc/pacman.conf
 
 pacman -Sy
 
-set -e 
+set -e
 USER="junior"
 
 mkdir -pv /media/$USER
@@ -238,7 +238,7 @@ EOF
 ### systemctl
 mkdir -pv /etc/sysctl.d
 touch /etc/sysctl.d/00-sysctl.conf
-cat <<\EOF >/etc/sysctl.d/00-sysctl.conf
+cat <<EOF >/etc/sysctl.d/00-sysctl.conf
 vm.vfs_cache_pressure=500
 vm.swappiness=100
 vm.dirty_background_ratio=1
@@ -249,7 +249,7 @@ EOF
 
 #Fix mount external HD
 mkdir -pv /etc/udev/rules.d
-cat <<\EOF >/etc/udev/rules.d/99-udisks2.rules
+cat <<EOF >/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/$USER/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
@@ -314,7 +314,7 @@ EOF
 chown -c root:root /etc/doas.conf
 
 touch /etc/modprobe.d/i915.conf
-cat <<\EOF >/etc/modprobe.d/i915.conf
+cat <<EOF >/etc/modprobe.d/i915.conf
 options i915 enable_guc=2 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1
 EOF
 

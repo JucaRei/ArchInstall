@@ -178,7 +178,7 @@ done
 ########################################
 
 mkdir -pv /mnt/etc/modprobe.d
-cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
+cat << EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
 install iTCO_wdt /bin/true
 install iTCO_vendor_support /bin/true
@@ -805,12 +805,17 @@ EOF
 chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
 dnsmasq ipset libguestfs0 virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
 bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+<<<<<<< Updated upstream
 
 #Podman
 chroot /mnt apt install podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname  --no-install-recommends -y
 # distrobox
 # Nix
 #chroot /mnt apt install nix-setup-systemd -y
+=======
+#Podman
+chroot /mnt apt install -t testing podman buildah fuse-overlayfs slirp4netns catatonit tini golang-github-containernetworking-plugin-dnsname --no-install-recommends -y
+>>>>>>> Stashed changes
 
 ############################
 #### BTRFS Backup tools ####

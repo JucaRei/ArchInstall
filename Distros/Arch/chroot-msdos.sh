@@ -10,7 +10,7 @@ sed -i '/Color/s/^#//' /etc/pacman.conf
 sed -i '3n; /^#UseSyslog/i DisableDownloadTimeout' /etc/pacman.conf
 sed -i 's/#ParallelDownloads = 5/ParallelDownloads = 4/g' /etc/pacman.conf
 
-cat <<\ EOF >> /etc/pacman.conf
+cat << EOF >> /etc/pacman.conf
 
 [liquorix]
 Server = https://liquorix.net/archlinux/$repo/$arch
