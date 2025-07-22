@@ -1,3 +1,4 @@
+sgdisk -n 0:0:+1G ${DRIVE} # system partition
 /*
  * SELECTIONMENU.JS (MODULE)
  *

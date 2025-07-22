@@ -103,7 +103,7 @@ tmpfs /tmp tmpfs noatime,mode=1777,nosuid                                       
 EOF
 
 # Set user permition
-cat <<\EOF >/mnt/etc/doas.conf
+cat <<EOF >/mnt/etc/doas.conf
 # allow user but require password
 permit keepenv :juca
 
@@ -326,7 +326,7 @@ powertop --auto-tune
 EOF
 
 touch /mnt/etc/default/earlyoom
-cat <<\EOF >/mnt/etc/default/earlyoom
+cat <<EOF >/mnt/etc/default/earlyoom
 EARLYOOM_ARGS=" -m 96,92 -s 99,99 -r 5 -n --avoid '(^|/)(runit|Xorg|sshd)$'"
 EOF
 
@@ -497,7 +497,7 @@ chroot /mnt xbps-reconfigure -f fontconfig
 
 #Fix mount external HD
 mkdir -pv /mnt/etc/udev/rules.d
-cat <<\EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
+cat <<EOF >/mnt/etc/udev/rules.d/99-udisks2.rules
 # UDISKS_FILESYSTEM_SHARED
 # ==1: mount filesystem to a shared directory (/media/VolumeName)
 # ==0: mount filesystem to a private directory (/run/media/$USER/VolumeName)
