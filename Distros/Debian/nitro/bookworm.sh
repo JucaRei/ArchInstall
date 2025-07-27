@@ -333,6 +333,7 @@ chroot /mnt dpkg-reconfigure -f noninteractive locales
 chroot /mnt apt update
 touch /mnt/etc/vconsole.conf
 echo 'KEYMAP="br-abnt2"' >/mnt/etc/vconsole.conf
+echo 'KEYMAP_TOGGLE="us-intl"' > /mnt/etc/vconsole.conf
 
 ######################################
 #### Update initramfs load system ####

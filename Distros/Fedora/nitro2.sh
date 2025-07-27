@@ -106,4 +106,5 @@ cp -L /etc/resolv.conf $MOUNTPOINT/etc/resolv.conf
 echo "📑 Generating /etc/fstab..."
 genfstab -U $MOUNTPOINT >> $MOUNTPOINT/etc/fstab
 
+
 echo "✅ Setup complete. Ready for chroot: chroot $MOUNTPOINT"
