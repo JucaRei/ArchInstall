@@ -198,7 +198,14 @@ add_dracutmodules+=" btrfs resume plymouth "
 #   securityfs selinuxfs \
 # "
 
-force_drivers+=" nvme ahci iwlwifi "
+# force_drivers+=" nvme ahci iwlwifi "
+
+force_drivers+=" \
+  nvme ahci i915 iwlwifi \
+  elantech hid_generic \
+  nvidia nvidia_modeset nvidia_uvm nvidia_drm \
+"
+
 
 # Limit to Btrfs root filesystem
 filesystems+=" btrfs "
@@ -331,7 +338,7 @@ chroot /mnt apt install sudo -y
 ##############################
 
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
-chroot /mnt useradd $username -m -c "Reinaldo P JR" -s /bin/bash
+chroot /mnt useradd $username -m -c "${name}" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input $username
 chroot /mnt usermod -aG sudo $username
@@ -353,99 +360,92 @@ chroot /mnt usermod -aG sudo $username
 mkdir -pv /mnt/etc/modprobe.d
 cat <<EOF >/mnt/etc/modprobe.d/blacklist.conf
 # Disable watchdog
-# install iTCO_wdt /bin/true
-# install iTCO_vendor_support /bin/true
+install iTCO_wdt /bin/true
+install iTCO_vendor_support /bin/true
 
 # This file lists those modules which we don't want to be loaded by
 # alias expansion, usually so some other driver will be loaded for the
 # device instead.
 
 # evbug is a debug tool that should be loaded explicitly
-# blacklist evbug
+blacklist evbug
 
 # these drivers are very simple, the HID drivers are usually preferred
-# blacklist usbmouse
-# blacklist usbkbd
+blacklist usbmouse
+blacklist usbkbd
 
 # replaced by e100
-# blacklist eepro100
+blacklist eepro100
 
 # replaced by tulip
-# blacklist de4x5
+blacklist de4x5
 
 # causes no end of confusion by creating unexpected network interfaces
-# blacklist eth1394
+blacklist eth1394
 
 # snd_intel8x0m can interfere with snd_intel8x0, doesn't seem to support much
 # hardware on its own (Ubuntu bug #2011, #6810)
-# blacklist snd_intel8x0m
+blacklist snd_intel8x0m
 
 # Conflicts with dvb driver (which is better for handling this device)
-# blacklist snd_aw2
+blacklist snd_aw2
 
 # replaced by p54pci
-# blacklist prism54
+blacklist prism54
 
 # replaced by b43 and ssb.
-# blacklist bcm43xx
+blacklist bcm43xx
 
 # most apps now use garmin usb driver directly (Ubuntu: #114565)
-# blacklist garmin_gps
+blacklist garmin_gps
 
 # replaced by asus-laptop (Ubuntu: #184721)
-# blacklist asus_acpi
+blacklist asus_acpi
 
 # low-quality, just noise when being used for sound playback, causes
 # hangs at desktop session start (Ubuntu: #246969)
-# blacklist snd_pcsp
+blacklist snd_pcsp
 
 # ugly and loud noise, getting on everyone's nerves; this should be done by a
 # nice pulseaudio bing (Ubuntu: #77010)
-# blacklist pcspkr
+blacklist pcspkr
 
 # EDAC driver for amd76x clashes with the agp driver preventing the aperture
 # from being initialised (Ubuntu: #297750). Blacklist so that the driver
 # continues to build and is installable for the few cases where its
 # really needed.
-# blacklist amd76x_e0dac
+blacklist amd76x_e0dac
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
-# options iwlwifi enable_ini=N
+options iwlwifi enable_ini=N
 EOF
 
-touch /mnt/etc/modprobe.d/blacklist-nouveau.conf
-cat <<EOF | tee /mnt/etc/modprobe.d/blacklist-nouveau.conf
-# blacklist nouveau
-# blacklist lbm-nouveau
-# options nouveau modeset=0
-# alias nouveau off
-# alias lbm-nouveau off
+touch /mnt/etc/modprobe.d/nouveau-kms.conf
+cat <<EOF | tee /mnt/etc/modprobe.d/nouveau-kms.conf
+## Disable nouveau on earlyboot ##
+blacklist nouveau
+blacklist lbm-nouveau
+options nouveau modeset=0
 EOF
 
 mkdir -pv /mnt/etc/modprobe.d
 touch /mnt/etc/modprobe.d/bbswitch.conf
 cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
 ## Early module for bbswitch dual graphics ##
-#options bbswitch load_state=0 unload_state=1
+# options bbswitch load_state=0 unload_state=1
 EOF
 
 touch /mnt/etc/modprobe.d/i915.conf
 cat <<EOF >/mnt/etc/modprobe.d/i915.conf
 ## Boot Faster with intel ##
-# options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
 EOF
 
 touch /mnt/etc/modprobe.d/nvidia.conf
 cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
 ## Nvidia early module ##
-# options nvidia_drm modeset=1
-EOF
-
-touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat <<EOF >/mnt/etc/modprobe.d/nouveau-kms.conf
-## Disable nouveau on earlyboot ##
-# options nouveau modeset=0
+options nvidia_drm modeset=1
 EOF
 
 mkdir -pv /mnt/etc/modules-load.d
@@ -478,7 +478,7 @@ EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
-# dev.i915.perf_stream_paranoid=0
+dev.i915.perf_stream_paranoid=0
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-console-messages.conf
@@ -864,11 +864,18 @@ chroot /mnt apt install rtkit
 ###############
 #### Utils ####
 ###############
-#
+chroot /mnt apt install gdisk acpid bash-completion pciutils debian-keyring xz-utils htop wget unzip sysfsutils  
+# dkms
 
-chroot /mnt apt install acpid dkms pciutils debian-keyring xz-utils \
-    htop efibootmgr grub-efi-amd64 os-prober \
-    wget unzip sysfsutils chrony 
+############
+### BOOT ###
+############
+chroot /mnt apt install efibootmgr grub-efi-amd64 os-prober
+
+############
+### TIME ###
+############
+chroot /mnt apt install chrony
 
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
@@ -890,12 +897,6 @@ chroot /mnt apt install acpid dkms pciutils debian-keyring xz-utils \
 
 # chroot /mnt update-initramfs -c -k all
 
-###############
-#### Tools ####
-###############
-
-chroot /mnt apt install bash-completion gdisk mtools p7zip duf 
-
 #############################
 #### Optimizations Tools ####
 #############################
@@ -911,30 +912,30 @@ chroot /mnt systemctl enable irqbalance
 #### Microcode ####
 ###################
 
-# chroot /mnt apt install intel-microcode 
+chroot /mnt apt install intel-microcode 
 
 #####################################
 #### intel Hardware Acceleration ####
 #####################################
 
-# chroot /mnt apt install intel-media-va-driver \
-#   intel-media-va-driver-non-free \
-#   libva2 \
-#   vainfo \
-#   intel-gpu-tools \
-#   firmware-misc-nonfree \
-#   mesa-va-drivers --no-install-recommends --yes
+chroot /mnt apt install intel-media-va-driver \
+  intel-media-va-driver-non-free \
+  libva2 \
+  vainfo \
+  intel-gpu-tools \
+  firmware-misc-nonfree \
+  mesa-va-drivers --no-install-recommends --yes
 
 ##################################
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-# chroot /mnt apt install -t bullseye-backports nvidia-detect \
-#     nvidia-driver firmware-misc-nonfree --no-install-recommends --yes
+chroot /mnt apt install -t bullseye-backports nvidia-detect \
+    nvidia-driver firmware-misc-nonfree --no-install-recommends --yes
 
 # Enable Video Acceleration
-# chroot /mnt apt install vdpauinfo libvdpau1 nvidia-vdpau-driver \
-#     libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
+chroot /mnt apt install vdpauinfo libvdpau1 nvidia-vdpau-driver \
+    libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
 
 ###############################
 #### Minimal xorg packages ####
@@ -942,6 +943,8 @@ chroot /mnt systemctl enable irqbalance
 
 # chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput \
 #     xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
+
+chroot /mnt apt install xserver-xorg x11-utils x11-xserver-utils xinit
 
 ###########################
 #### Some XORG configs ####
@@ -967,35 +970,39 @@ EOF
 
 touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-# Section "Device"
-#     Identifier "Nvidia GTX 1050"
-#     Driver "nvidia"
-#     BusID "PCI:1:0:0"
-#     Option "DPI" "96 x 96"
-#     Option "AllowEmptyInitialConfiguration" "Yes"
-#     Option      "AccelMethod"    "none"
-#     #  Option "UseDisplayDevice" "none"
-# EndSection
+Section "Device"
+    Identifier "Nvidia GTX 1050"
+    Driver  "nvidia"
+    BusID   "PCI:1:0:0"
+    Option  "DPI" "96 x 96"
+    Option  "AllowEmptyInitialConfiguration"    "Yes"
+    Option  "Coolbits"                          "28"    # Enables fan control + overclocking
+    Option  "TripleBuffer"                      "true"  # Improves frame pacing
+    Option  "SwapbuffersWait"                   "true"  # Syncs buffer swaps to VBlank
+    #Option "AccelMethod"                       "none"
+    #Option "UseDisplayDevice"                  "none"
+EndSection
 EOF
 
 # Fix tearing with intel
 touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-# Section "Device"
-# #   Identifier "Intel Graphics 630"
-# #   Driver "intel"
-# #   Option "AccelMethod" "sna"
-# #   Option "TearFree" "True"
-# #   Option "Tiling" "True"
-# #   Option "SwapbuffersWait" "True"
-# #   Option "DRI" "3"
+Section "Device"
+#   Identifier "Intel Graphics 630"
+#   Driver "intel"
+#   Option "AccelMethod" "sna"
+#   Option "TearFree" "True"
+#   Option "Tiling" "True"
+#   Option "SwapbuffersWait" "True"
+#   Option "DRI" "3"
 
-#     Identifier  "Intel Graphics"
-#     Driver      "modesetting"
-#     Option      "TearFree"       "True"
-#     Option      "AccelMethod"    "glamor"
-#     Option      "DRI"            "3"
-# EndSection
+    Identifier  "Intel Graphics"
+    Driver      "modesetting"
+    Option      "TearFree"       "True"
+    Option      "DRI"            "3"
+    # Option      "AccelMethod"    "glamor"
+    # Option      "TripleBuffer"   "True"
+EndSection
 EOF
 
 #########################
@@ -1254,7 +1261,7 @@ chroot /mnt update-grub
 
 # chroto /mnt efibootmgr -c -d /dev/disk/by-label/${ROOT_LABEL} -p 1 -L "${ROOT_LABEL} (Custom)" -l \\EFI\\DEBIAN\\SHIMX64.EFI
 # chroot /mnt efibootmgr -c -d /dev/by-label/${ROOT_LABEL} -L ${ROOT_LABEL} -l \\EFI\\BOOT\\BOOTX64.efi
-chroot /mnt efibootmgr -c -d /dev/by-label/Debian -L Debian -l \\EFI\\BOOT\\BOOTX64.efi
+# chroot /mnt efibootmgr -c -d /dev/by-label/Debian -L Debian -l \\EFI\\BOOT\\BOOTX64.efi
 chroot /mnt efibootmgr
 
 
@@ -1323,3 +1330,27 @@ rm -rf /mnt/debootstrap
 # --cdrom ~/Downloads/nixos-minimal-*-x86_64-linux.iso
 
 # sudo apt install task-xfce-desktop
+
+#############
+### XFCE4 ###
+#############
+
+chroot mnt apt install \
+  xfce4-panel \
+  xfce4-session \
+  xfce4-settings \
+  xfce4-terminal \
+  xfwm4 \
+  xfdesktop4 \
+  thunar \
+  xfce4-appfinder \
+  xfconf \
+  libxfce4ui-utils
+
+chroot /mnt apt install lightdm
+
+chroot /mnt apt install \
+  xfce4-notifyd \
+  xfce4-power-manager \
+  gvfs-backends \
+  network-manager-gnome
