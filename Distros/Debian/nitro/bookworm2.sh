@@ -918,7 +918,7 @@ chroot /mnt apt install intel-microcode
 #### intel Hardware Acceleration ####
 #####################################
 
-chroot /mnt apt install intel-media-va-driver \
+chroot /mnt apt install -t bullseye-backports intel-media-va-driver \
   intel-media-va-driver-non-free \
   libva2 \
   vainfo \
@@ -957,14 +957,14 @@ cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
         # Identifier "SynPS/2 Synaptics TouchPad"
         # Identifier "SynPS/2 Synaptics TouchPad"
-        # MatchIsTouchpad "on"
-        # Driver "libinput"
-        # Option "Tapping" "on"
+        # MatchIsTouchpad               "on"
+        # Driver            "libinput"
+        # Option            "Tapping"   "on"
 
-        Identifier      "touchpad"
-        Driver          "libinput"
-        MatchIsTouchpad "on"
-        Option          "Tapping"       "on"
+        Identifier          "touchpad"
+        Driver              "libinput"
+        MatchIsTouchpad     "on"
+        Option              "Tapping"   "on"
 EndSection
 EOF
 
