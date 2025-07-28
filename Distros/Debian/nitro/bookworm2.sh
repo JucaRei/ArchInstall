@@ -1,53 +1,11 @@
 #!/usr/bin/env bash
+# set -euo pipefail
+# IFS=$'\n\t'
+# This catches errors, undefined vars, and pipeline failures immediately.
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
 # apt update && apt install mmdebstrap btrfs-progs lsb-release wget -y
-
-
-CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bullseye
-
-#### Add faster repo's ####
-cat >/etc/apt/sources.list <<HEREDOC
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
-
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
-
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
-
-#######################
-### Debian unstable ###
-#######################
-
-##Debian Testing
-#deb http://deb.debian.org/debian/ testing main
-#deb-src http://deb.debian.org/debian/ testing main
-
-
-##Debian Unstable
-#deb http://deb.debian.org/debian/ unstable main
-##Debian Experimental
-#deb http://deb.debian.org/debian/ experimental main
-
-###################
-### Tor com apt ###
-###################
-
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch main
-
-#deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-#deb-src tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
-
-#deb tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-#deb-src tor+http://vwakviie2ienjx6t.onion/debian stretch-updates main
-HEREDOC
 
 #### update fastest repo's
 apt update
@@ -61,19 +19,22 @@ hostname="nitro"
 name="Reinaldo P JR"
 username="juca"
 Architecture="amd64"
+CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
 # DRIVE="/dev/sda"
 DRIVE="/dev/nvme0n1"
 SYSTEM_PART="${DRIVE}p2"
 EFI_PART="${DRIVE}p3"
 ROOT_PART="${DRIVE}p4"
-HOME_PART="${DRIVE}p5"
-WINDOWS_PART="${DRIVE}p7"
-MISC_PART="${DRIVE}p8"
+WINDOWS_PART="${DRIVE}p6"
+MISC_PART="${DRIVE}p7"
+# HOME_PART="${DRIVE}p5"
+# WINDOWS_PART="${DRIVE}p7"
+# MISC_PART="${DRIVE}p8"
 
 # MAPPER_NAME="secure_btrfs"
 MOUNTPOINT="/mnt"
 ROOT_LABEL="Debian"
-HOME_LABEL="home"
+# HOME_LABEL="home"
 SWAP_LABEL="swap" 
 EFI_LABEL="ESP"
 SYSTEM_LABEL="SYSTEM"
@@ -81,7 +42,7 @@ WINDOWS_LABEL="Windows 11"
 MISC_LABEL="SharedData"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,nodatacow,commit=120,discard=async"
 BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
-TMPFS="ssd,noatime,mode=1777,nosuid,nodev,compress-force=zstd:3,discard=async,space_cache=v2,commit=60"
+# TMPFS="ssd,noatime,mode=1777,nosuid,nodev,compress-force=zstd:3,discard=async,space_cache=v2,commit=60"
 
 echo "Disable SELinux temporarily..."
 # setenforce 0 # disable SELInux for now
@@ -94,10 +55,10 @@ parted -s -a optimal $DRIVE mklabel gpt
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"                           $DRIVE
 sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"                     $DRIVE
 sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"                          $DRIVE
-sgdisk -n 0:0:+10G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
-sgdisk -n 0:0:+3G      -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
+sgdisk -n 0:0:+85G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
+# sgdisk -n 0:0:+70G     -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
 sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+1G      -t 7:0700 -c 7:"Microsoft Windows Data"              $DRIVE
+sgdisk -n 0:0:+85G     -t 7:0700 -c 7:"Microsoft Windows Data"              $DRIVE
 sgdisk -n 0:0:0        -t 8:0700 -c 8:"Misc Data"                           $DRIVE
 sgdisk -p $DRIVE
 
@@ -113,26 +74,31 @@ echo "🧼 Formatting partitions..."
 mkfs.ext4   -L      	"$SYSTEM_LABEL"      "$SYSTEM_PART"
 mkfs.fat   -F32 -n      "$EFI_LABEL"         "$EFI_PART"
 mkfs.btrfs -f   -L      "$ROOT_LABEL"        "$ROOT_PART"
-mkfs.btrfs -f   -L      "$HOME_LABEL"        "$HOME_PART"
+# mkfs.btrfs -f   -L      "$HOME_LABEL"        "$HOME_PART"
 mkfs.ntfs  -Q   -f -L   "$WINDOWS_LABEL"     "$WINDOWS_PART"
 mkfs.exfat      -n      "$MISC_LABEL"        "$MISC_PART"
 
+udevadm trigger
 
 echo "Partitions formatted successfully on $DRIVE."
 
 
 echo "Creating Btrfs subvolumes..."
 mount "$ROOT_PART" "$MOUNTPOINT"
-for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix; do
+# for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix; do
+#   btrfs subvolume create "$MOUNTPOINT/$sv"
+# done
+
+for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix @home; do
   btrfs subvolume create "$MOUNTPOINT/$sv"
 done
 umount -Rvf "$MOUNTPOINT"
 
 # 🏠 Create @home subvolume on home partition
-mkdir -p /mnt/home-temp
-mount "$HOME_PART" /mnt/home-temp
-btrfs subvolume create /mnt/home-temp/@home
-umount -Rvf /mnt/home-temp
+# mkdir -p "$MOUNTPOINT"/home-temp
+# mount /dev/disk/by-label/"$HOME_LABEL" "$MOUNTPOINT"/home-temp
+# btrfs subvolume create "$MOUNTPOINT"/home-temp/@home
+# umount -Rvf "$MOUNTPOINT"/home-temp
 echo "Btrfs subvolumes created successfully."
 
 echo "Mounting subvolumes and boot partition..."
@@ -140,17 +106,17 @@ echo "Mounting subvolumes and boot partition..."
 mount -o $BTRFS_OPTS,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
 mkdir -pv $MOUNTPOINT/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache,lib/{libvirt,gdm}}}
 
-mount -o $BTRFS_OPTS_HOME,subvol=@home /dev/disk/by-label/$HOME_LABEL $MOUNTPOINT/home
+# mount -o $BTRFS_OPTS_HOME,subvol=@home /dev/disk/by-label/$HOME_LABEL $MOUNTPOINT/home
+mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/home
 mount -o $BTRFS_OPTS_HOME,subvol=@nix /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/nix
-mount -o $BTRFS_OPTS,subvol=@opt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/opt
+mount -o $BTRFS_OPTS_HOME,subvol=@opt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/opt
 mount -o $BTRFS_OPTS,subvol=@gdm /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/gdm
-mount -o $BTRFS_OPTS,subvol=@libvirt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/libvirt
+mount -o $BTRFS_OPTS_HOME,subvol=@libvirt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/libvirt
 mount -o $BTRFS_OPTS,subvol=@log /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/log
 mount -o $BTRFS_OPTS,subvol=@spool /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/spool
-mount -o $TMPFS,subvol=@tmp /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
-# mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache
+mount -o $BTRFS_OPTS,subvol=@tmp /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
 mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache
-mount -o $BTRFS_OPTS,subvol=@snapshots /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
+mount -o $BTRFS_OPTS_HOME,subvol=@snapshots /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
 mount /dev/disk/by-label/$SYSTEM_LABEL $MOUNTPOINT/boot
 # mount /dev/disk/by-label/BOOT /mnt/boot
 mkdir -pv $MOUNTPOINT/boot/efi
@@ -163,62 +129,86 @@ echo "Subvolumes and boot partition mounted successfully."
 
 # debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 ${CODENAME} /mnt "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
 
-debootstrap --variant=minbase --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,dracut,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,ifupdown,init,iproute2,iputils-ping --arch ${Architecture} bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
-# deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free non-free-firmware
-# mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,dhcpcd5,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/ bullseye contrib non-free non-free-firmware"
+# debootstrap --variant=minbase --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,dracut,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,ifupdown,init,iproute2,iputils-ping --arch ${Architecture} bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
 
-chroot /mnt apt install plymouth plymouth-themes --yes
+debootstrap \
+  --variant=minbase \
+  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,dracut,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,ifupdown,init,iproute2,iputils-ping \
+  --arch=${Architecture} \
+  ${CODENAME} /mnt \
+  "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
+
+# deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free non-free-firmware
+# mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,dhcpcd5,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
+
+########################################################
+#### Mount points for chroot, just like arch-chroot ####
+########################################################
+
+# Bind essential virtual filesystems
+for dir in dev proc sys run; do
+    mount --rbind /$dir /mnt/$dir
+    mount --make-rslave /mnt/$dir
+done
+
+# Ensure devpts is mounted for pseudo-terminal support
+mount -t devpts devpts /mnt/dev/pts
+
+
+chroot /mnt apt update
+chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
+# chroot /mnt apt install plymouth plymouth-themes --yes
 
 chroot /mnt apt --fix-broken install --yes
 
-
+######################
+### Dracut Modules ###
+######################
 mkdir -pv /mnt/etc/dracut.conf.d
-touch /mnt/etc/dracut.conf.d/hostonly.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/hostonly.conf
-# Host-specific image
+
+touch /mnt/etc/dracut.conf.d/10-debian.conf
+cat <<EOF > /mnt/etc/dracut.conf.d/10-debian.conf
+do_prelink="no"
 hostonly="yes"
-hostonly_cmdline="no"
+# add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
+add_dracutmodules+=" systemd "
+force_drivers+=" nvme ahci hid_generic iwlwifi "
+early_microcode=yes
+EOF
+
+touch /mnt/etc/dracut.conf.d/selinux.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
+# force_drivers+=" securityfs selinuxfs "
+EOF
+
+touch /mnt/etc/dracut.conf.d/hostonly.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/10-custom.conf
+# Host-specific image
+hostonly_cmdline="yes"
 
 # Fast compression
 compress="zstd --ultra -14"
 
-# Core modules: Btrfs, SELinux, resume + Plymouth splash
-# add_dracutmodules+=" btrfs selinux resume plymouth "
-add_dracutmodules+=" btrfs resume plymouth "
-
 # Don’t strip away any Plymouth bits
 # (remove any omit_dracutmodules line for plymouth)
-# omit_dracutmodules+=" "
-
-# Force only the drivers your Nitro needs
-# force_drivers+=" \
-#   nvme ahci i915 iwlwifi \
-#   elantech hid_generic \
-#   nvidia nvidia_modeset nvidia_uvm nvidia_drm \
-#   securityfs selinuxfs \
-# "
-
-# force_drivers+=" nvme ahci iwlwifi "
-
-force_drivers+=" \
-  nvme ahci i915 iwlwifi \
-  elantech hid_generic \
-  nvidia nvidia_modeset nvidia_uvm nvidia_drm \
-"
+omit_dracutmodules+=" amdgpu "
 
 
 # Limit to Btrfs root filesystem
-filesystems+=" btrfs "
+filesystems+=" resume btrfs "
 
 # Kernel command-line: enable SELinux, show splash, keep messages quiet
-# kernel_cmdline=" rootflags=subvol=@root rw security=selinux selinux=1 enforcing=1 quiet splash "
-# kernel_cmdline=" rootflags=subvol=@root rw quiet splash "
-kernel_cmdline=" rootflags=subvol=@root rw quiet splash security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
 
 # Ensure Plymouth theme files are embedded
 # install_items+="/usr/share/plymouth/themes/solar/* \
 #  /etc/plymouth/plymouthd.conf"
 
+EOF
+
+touch /mnt/etc/dracut.conf.d/input.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/input.conf
+add_drivers+=" psmouse "
 EOF
 
 ########################
@@ -228,7 +218,7 @@ EOF
 rm /mnt/etc/apt/sources.list
 touch /mnt/etc/apt/sources.list.d/{debian.list,various.list}
 
-CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bullseye
+CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
 cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
 ####################
 ### Debian repos ###
@@ -277,36 +267,19 @@ HEREDOC
 chroot /mnt apt update
 chroot /mnt apt upgrade --yes
 
-########################################################
-#### Mount points for chroot, just like arch-chroot ####
-########################################################
-
-# Bind essential virtual filesystems
-for dir in dev proc sys run; do
-    mount --rbind /$dir /mnt/$dir
-    mount --make-rslave /mnt/$dir
-done
-
-# Ensure devpts is mounted for pseudo-terminal support
-mount -t devpts devpts /mnt/dev/pts
-
 
 ### Kernel ###
-# chroot /mnt apt install linux-image-amd64 --yes
-# chroot /mnt apt install -t bookworm-backports linux-image-amd64 linux-headers-amd64 --yes
-chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
-
-# chroot /mnt dracut --kver $(uname -r) --force --debug
-chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
+chroot /mnt apt install linux-image linux-headers-amd64 --yes
+# chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 
 # make a initrd for the kernel:
-# chroot /mnt apt install -t bookworm-backports firmware-linux firmware-misc-nonfree firmware-iwlwifi --yes
+chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode
+# chroot /mnt apt install firmware-linux firmware-linux-free firmware-linux-nonfree firmware-linux-nonfree-amd64 firmware-misc-nonfree firmware-iwlwifi firmware-realtek --yes
 # chroot /mnt apt install firmware-linux firmware-misc-nonfree firmware-iwlwifi --yes
 # firmware-realtek fwupdate fwupd
 
 ### Network
-chroot /mnt apt install network-manager iwd --yes
-
+chroot /mnt apt install network-manager iwd rfkill --yes
 
 ## dbus initilized
 # chroot /mnt dbus-uuidgen > /var/lib/dbus/machine-id
@@ -338,7 +311,7 @@ chroot /mnt apt install sudo -y
 ##############################
 
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
-chroot /mnt useradd $username -m -c "${name}" -s /bin/bash
+chroot /mnt useradd $username -m -c "Reinaldo P Jr" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input $username
 chroot /mnt usermod -aG sudo $username
@@ -385,13 +358,13 @@ blacklist eth1394
 
 # snd_intel8x0m can interfere with snd_intel8x0, doesn't seem to support much
 # hardware on its own (Ubuntu bug #2011, #6810)
-blacklist snd_intel8x0m
+# blacklist snd_intel8x0m
 
 # Conflicts with dvb driver (which is better for handling this device)
 blacklist snd_aw2
 
 # replaced by p54pci
-blacklist prism54
+# blacklist prism54
 
 # replaced by b43 and ssb.
 blacklist bcm43xx
@@ -400,52 +373,25 @@ blacklist bcm43xx
 blacklist garmin_gps
 
 # replaced by asus-laptop (Ubuntu: #184721)
-blacklist asus_acpi
+# blacklist asus_acpi
 
 # low-quality, just noise when being used for sound playback, causes
 # hangs at desktop session start (Ubuntu: #246969)
-blacklist snd_pcsp
+# blacklist snd_pcsp
 
 # ugly and loud noise, getting on everyone's nerves; this should be done by a
 # nice pulseaudio bing (Ubuntu: #77010)
-blacklist pcspkr
+# blacklist pcspkr
 
 # EDAC driver for amd76x clashes with the agp driver preventing the aperture
 # from being initialised (Ubuntu: #297750). Blacklist so that the driver
 # continues to build and is installable for the few cases where its
 # really needed.
-blacklist amd76x_e0dac
+# blacklist amd76x_e0dac
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
 options iwlwifi enable_ini=N
-EOF
-
-touch /mnt/etc/modprobe.d/nouveau-kms.conf
-cat <<EOF | tee /mnt/etc/modprobe.d/nouveau-kms.conf
-## Disable nouveau on earlyboot ##
-blacklist nouveau
-blacklist lbm-nouveau
-options nouveau modeset=0
-EOF
-
-mkdir -pv /mnt/etc/modprobe.d
-touch /mnt/etc/modprobe.d/bbswitch.conf
-cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-## Early module for bbswitch dual graphics ##
-# options bbswitch load_state=0 unload_state=1
-EOF
-
-touch /mnt/etc/modprobe.d/i915.conf
-cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-## Boot Faster with intel ##
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-EOF
-
-touch /mnt/etc/modprobe.d/nvidia.conf
-cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
-## Nvidia early module ##
-options nvidia_drm modeset=1
 EOF
 
 mkdir -pv /mnt/etc/modules-load.d
@@ -547,13 +493,6 @@ cat <<EOF >/mnt/etc/sysctl.d/10-zeropage.conf
 # is reset to the secure default each time the sysctl values are loaded.
 vm.mmap_min_addr = 65536
 EOF
-
-######################################
-#### Update initramfs load system ####
-######################################
-
-# chroot /mnt update-initramfs -c -k all
-chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
 
 ############################
 #### Set default editor ####
@@ -720,8 +659,8 @@ LABEL="${ROOT_LABEL}"     /nix                btrfs     rw,$BTRFS_OPTS_HOME,subv
 # UUID="${ROOT_UUID}"     /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
 LABEL="${ROOT_LABEL}"     /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
 
-# UUID="${ROOT_UUID}"     /var/tmp            btrfs     rw,$TMPFS,subvol=@tmp                      0     0
-LABEL="${ROOT_LABEL}"     /var/tmp            btrfs     rw,$TMPFS,subvol=@tmp                      0     0
+# UUID="${ROOT_UUID}"     /var/tmp            btrfs     rw,$BTRFS_OPTS,subvol=@tmp                 0     0
+LABEL="${ROOT_LABEL}"     /var/tmp            btrfs     rw,$BTRFS_OPTS,subvol=@tmp                 0     0
 
 # UUID="${ROOT_UUID}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
 LABEL="${ROOT_LABEL}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
@@ -864,7 +803,7 @@ chroot /mnt apt install rtkit
 ###############
 #### Utils ####
 ###############
-chroot /mnt apt install gdisk acpid bash-completion pciutils debian-keyring xz-utils htop wget unzip sysfsutils  
+chroot /mnt apt install gdisk acpi acpid bash-completion pciutils debian-keyring xz-utils htop wget unzip sysfsutils  
 # dkms
 
 ############
@@ -918,24 +857,69 @@ chroot /mnt apt install intel-microcode
 #### intel Hardware Acceleration ####
 #####################################
 
-chroot /mnt apt install -t bullseye-backports intel-media-va-driver \
-  intel-media-va-driver-non-free \
-  libva2 \
-  vainfo \
-  intel-gpu-tools \
-  firmware-misc-nonfree \
-  mesa-va-drivers --no-install-recommends --yes
+sudo apt update
+chroot /mnt apt install intel-media-va-driver-non-free libva2 vainfo intel-gpu-tools firmware-misc-nonfree mesa-va-drivers --no-install-recommends --yes
+
+touch /mnt/etc/modprobe.d/i915.conf
+cat <<EOF >/mnt/etc/modprobe.d/i915.conf
+## Boot Faster with intel ##
+options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
+EOF
+
+touch /mnt/etc/dracut.conf.d/intel.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/intel.conf
+force_drivers+=" i915 "
+EOF
+
+# chroot /mnt apt install intel-media-va-driver-non-free
 
 ##################################
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-chroot /mnt apt install -t bullseye-backports nvidia-detect \
-    nvidia-driver firmware-misc-nonfree --no-install-recommends --yes
+# chroot /mnt apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree # Proprietary
+chroot /mnt apt install nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree --no-install-recommends --yes # Open drivers
 
 # Enable Video Acceleration
-chroot /mnt apt install vdpauinfo libvdpau1 nvidia-vdpau-driver \
-    libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
+chroot /mnt apt install vdpauinfo libvdpau1 nvidia-vdpau-driver libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
+
+touch /mnt/etc/dracut.conf.d/10-nvidia.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/nvidia.conf
+add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
+install_items+=" /etc/modprobe.d/nvidia-blacklists-nouveau.conf /etc/modprobe.d/nvidia.conf /etc/modprobe.d/nvidia-options.conf "
+EOF
+echo "options nvidia-drm modeset=1" >> /mnt/etc/modprobe.d/nvidia-options.conf
+echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" >> /mnt/etc/modprobe.d/nvidia-options.conf
+
+# touch /mnt/etc/modprobe.d/nouveau-kms.conf
+# cat <<EOF | tee /mnt/etc/modprobe.d/nouveau-kms.conf
+# ## Disable nouveau on earlyboot ##
+# blacklist nouveau
+# blacklist lbm-nouveau
+# options nouveau modeset=0
+# EOF
+
+# mkdir -pv /mnt/etc/modprobe.d
+# touch /mnt/etc/modprobe.d/bbswitch.conf
+# cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
+# ## Early module for bbswitch dual graphics ##
+# # options bbswitch load_state=0 unload_state=1
+# EOF
+
+# touch /mnt/etc/modprobe.d/nvidia.conf
+# cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
+# ## Nvidia early module ##
+# # options nvidia_drm modeset=1
+# EOF
+
+
+######################################
+#### Update initramfs load system ####
+######################################
+
+# chroot /mnt update-initramfs -c -k all
+chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
+
 
 ###############################
 #### Minimal xorg packages ####
@@ -1000,8 +984,8 @@ Section "Device"
     Driver      "modesetting"
     Option      "TearFree"       "True"
     Option      "DRI"            "3"
-    # Option      "AccelMethod"    "glamor"
-    # Option      "TripleBuffer"   "True"
+    # Option    "AccelMethod"    "glamor"
+    # Option    "TripleBuffer"   "True"
 EndSection
 EOF
 
@@ -1059,28 +1043,28 @@ EOF
 #### Plymouth animation boot ####
 #################################
 
-chroot /mnt apt install plymouth plymouth-themes 
-chroot /mnt plymouth-set-default-theme -R solar
+# chroot /mnt apt install plymouth plymouth-themes 
+# chroot /mnt plymouth-set-default-theme -R solar
 
-mkdir -pv /mnt/etc/plymouth
-touch /mnt/etc/plymouth/plymouth.conf
-cat <<EOF >/mnt/etc/plymouth/plymouth.conf
+# mkdir -pv /mnt/etc/plymouth
+# touch /mnt/etc/plymouth/plymouth.conf
+# cat <<EOF >/mnt/etc/plymouth/plymouth.conf
 # Administrator customizations go in this file
-[Daemon]
-Theme=solar
-ShowDelay=5
-EOF
+# [Daemon]
+# Theme=solar
+# ShowDelay=5
+# EOF
 
 ###########################
 #### Setup resolv.conf ####
 ###########################
-touch /mnt/etc/resolv.conf
-cat <<EOF >/mnt/etc/resolv.conf
-nameserver 9.9.9.9
-# nameserver 8.8.8.8
-# nameserver 8.8.4.4
-# nameserver 1.1.1.1
-EOF
+# touch /mnt/etc/resolv.conf
+# cat <<EOF >/mnt/etc/resolv.conf
+# nameserver 9.9.9.9
+# # nameserver 8.8.8.8
+# # nameserver 8.8.4.4
+# # nameserver 1.1.1.1
+# EOF
 
 ################################
 #### Setup default keyboard ####
@@ -1095,8 +1079,9 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 XKBMODEL="pc105"
 XKBLAYOUT="us,br"
-XKBVARIANT="intl,"
+XKBVARIANT="intl,abnt2"
 XKBOPTIONS="grp:alt_shift_toggle"
+BACKSPACE="guess"
 EOF
 
 chroot /mnt setupcon --save
@@ -1138,29 +1123,29 @@ plugins=ifupdown,keyfile
 managed=true
 EOF
 
-touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-#!/bin/sh
+# touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+# chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+# cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
+# #!/bin/sh
 
-# Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
-# replacing LAN_interface with yours
+# # Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
+# # replacing LAN_interface with yours
 
-# if [ "$1" = "LAN_interface" ]; then
-if [ "$1" = "eth0" ]; then
-    case "$2" in
-        up)
-            nmcli radio wifi off
-            ;;
-        down)
-            nmcli radio wifi on
-            ;;
-    esac
-# elif [ "$(nmcli -g GENERAL.STATE device show LAN_interface)" = "20 (unavailable)" ]; then
-elif [ "$(nmcli -g GENERAL.STATE device show eth0)" = "20 (unavailable)" ]; then
-    nmcli radio wifi on
-fi
-EOF
+# # if [ "$1" = "LAN_interface" ]; then
+# if [ "$1" = "eth0" ]; then
+#     case "$2" in
+#         up)
+#             nmcli radio wifi off
+#             ;;
+#         down)
+#             nmcli radio wifi on
+#             ;;
+#     esac
+# # elif [ "$(nmcli -g GENERAL.STATE device show LAN_interface)" = "20 (unavailable)" ]; then
+# elif [ "$(nmcli -g GENERAL.STATE device show eth0)" = "20 (unavailable)" ]; then
+#     nmcli radio wifi on
+# fi
+# EOF
 
 #########################
 #### Enable Services ####
@@ -1199,11 +1184,11 @@ chroot /mnt systemctl enable fstrim.timer
 # chroot /mnt systemctl --user enable pulseaudio
 
 ## Tune chrony ##
-touch /mnt/etc/chrony.conf
-# sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<EOF >>/mnt/etc/chrony.conf
-server time.windows.com iburst prefer
-EOF
+# touch /mnt/etc/chrony.conf
+sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
+# cat <<EOF >>/mnt/etc/chrony.conf
+# server time.windows.com iburst prefer
+# EOF
 
 ## Update initramfs
 # chroot /mnt update-initramfs -c -k all
@@ -1218,7 +1203,8 @@ chroot /mnt systemctl enable dbus-broker.service
 #### Install grub ####
 ######################
 
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
+# chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
 
 #####################
 #### Config Grub ####
@@ -1234,11 +1220,8 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet apparmor=1 security=apparmor splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-
-# GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-# GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet splash apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
 # Uncomment to use basic console
@@ -1335,22 +1318,22 @@ rm -rf /mnt/debootstrap
 ### XFCE4 ###
 #############
 
-chroot mnt apt install \
-  xfce4-panel \
-  xfce4-session \
-  xfce4-settings \
-  xfce4-terminal \
-  xfwm4 \
-  xfdesktop4 \
-  thunar \
-  xfce4-appfinder \
-  xfconf \
-  libxfce4ui-utils
+# chroot mnt apt install \
+#   xfce4-panel \
+#   xfce4-session \
+#   xfce4-settings \
+#   xfce4-terminal \
+#   xfwm4 \
+#   xfdesktop4 \
+#   thunar \
+#   xfce4-appfinder \
+#   xfconf \
+#   libxfce4ui-utils
 
-chroot /mnt apt install lightdm
+# chroot /mnt apt install lightdm
 
-chroot /mnt apt install \
-  xfce4-notifyd \
-  xfce4-power-manager \
-  gvfs-backends \
-  network-manager-gnome
+# chroot /mnt apt install \
+#   xfce4-notifyd \
+#   xfce4-power-manager \
+#   gvfs-backends \
+#   network-manager-gnome
