@@ -39,8 +39,8 @@ parted -s -a optimal $DRIVE mklabel gpt
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"           $DRIVE
 sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"     $DRIVE
 sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"          $DRIVE
-sgdisk -n 0:0:+50G     -t 4:8300 -c 4:"Fedora root"         $DRIVE
-sgdisk -n 0:0:+50G     -t 5:8302 -c 5:"Fedora home"         $DRIVE
+sgdisk -n 0:0:+60G     -t 4:8300 -c 4:"Fedora root"         $DRIVE
+sgdisk -n 0:0:+40G     -t 5:8302 -c 5:"Fedora home"         $DRIVE
 sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Reserved"  $DRIVE
 sgdisk -n 0:0:+100G    -t 7:0700 -c 7:"Windows data"        $DRIVE
 sgdisk -n 0:0:0        -t 8:0700 -c 8:"Misc data"           $DRIVE
@@ -116,6 +116,7 @@ done
 
 source /etc/os-release
 export VERSION_ID="$VERSION_ID"
+export VERSION_ID="42"
 # env | grep -i version
 
 mkdir -pv /mnt/etc
@@ -162,8 +163,8 @@ LABEL="${ROOT_LABEL}"     /opt                btrfs rw,$BTRFS_OPTS,subvol=@opt  
 LABEL="${HOME_LABEL}"     /home               btrfs rw,$BTRFS_OPTS_HOME,subvol=@home              0 0
 
 ### BOOT ###
-# UUID="${BOOT_UUID}"     /boot               ext4 rw,relatime                                    0 2
-LABEL="${SYSTEM_LABEL}"   /boot               ext4 rw,relatime                                    0 2
+# UUID="${BOOT_UUID}"     /boot               ext4 rw,relatime                                    0 1
+LABEL="${SYSTEM_LABEL}"   /boot               ext4 rw,relatime                                    0 1
 
 ### EFI ###
 # UUID="${ESP_UUID}"     /boot/efi           vfat defaults,noatime,nodiratime                     0 2
@@ -184,7 +185,10 @@ EOF
 
 ### Install core system
 # dnf --installroot=/mnt --releasever=$VERSION_ID groupinstall -y core --use-host-config
-dnf5 --installroot=/mnt --releasever=$VERSION_ID group install core --use-host-config -y
+# dnf5 --installroot=/mnt --releasever=$VERSION_ID group install core --use-host-config -y
+#dnf5 --installroot=/mnt --releasever=$VERSION_ID --forcearch=x86_64 --setopt=fastestmirror=True group install "core" --use-host-config -y --skip-unavailable
+dnf --installroot=/mnt --releasever=$VERSION_ID --forcearch=x86_64 --setopt=fastestmirror=True group install "core" --use-host-config -y --skip-unavailable
+# sudo dnf --installroot=/mnt --releasever=42 --forcearch=x86_64 --setopt=fastestmirror=True group install "Core"
 #dnf5 --installroot=/mnt --releasever=$VERSION_ID group install system-release coreutils bash --use-host-config -y
 #dnf5 --installroot=/mnt --releasever=41 group install base --nogpgcheck
 # dnf5 --installroot=/mnt --releasever=42 install system-release coreutils bash --use-host-config -y
@@ -192,7 +196,8 @@ dnf5 --installroot=/mnt --releasever=$VERSION_ID group install core --use-host-c
 
 # Lang pack
 # dnf5 --installroot=/mnt install -y glibc-langpack-en
-dnf5 --installroot=/mnt install -y glibc-langpack-en --use-host-config -y
+#dnf5 --installroot=/mnt install -y glibc-langpack-en --use-host-config -y
+dnf --installroot=/mnt install -y glibc-langpack-en --use-host-config -y
 
 # Get live iso resolv conf
 # cp /mnt/etc/resolv.conf /mnt/etc/resolv.conf.orig
@@ -215,7 +220,7 @@ chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 # fixfiles -F onboot
 chroot /mnt fixfiles -F onboot
 
-chroot /mnt dnf install -y btrfs-progs efi-filesystem efibootmgr fwupd grub2-common grub2-efi-ia32 grub2-efi-x64 grub2-pc grub2-pc-modules grub2-tools grub2-tools-efi grub2-tools-extra grub2-tools-minimal grubby kernel mactel-boot mokutil shim-ia32 shim-x64 --allowerasing
+chroot /mnt dnf install -y btrfs-progs efi-filesystem efibootmgr grub2-common grub2-efi-ia32 grub2-efi-x64 grub2-pc grub2-pc-modules grub2-tools grub2-tools-efi grub2-tools-extra grub2-tools-minimal grubby kernel mokutil shim-ia32 shim-x64 --allowerasing
 
 # regenerate with current environment
 #rm -f /mnt/boot/efi/EFI/fedora/grub.cfg
@@ -269,18 +274,18 @@ reboot
 # RPM Fusion | Nvidia
 
 # nvidia
-sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig
+#sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig
 
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm -y
 sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm -y
 
 sudo dnf makecache
-sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda -y
+sudo dnf install akmod-nvidia xorg-x11-drv-nvidia -y
 sudo dnf install nvidia-vaapi-driver libva-utils vdpauinfo -y
 
 # dnf lightdm slick-greeter xorg-x11-server-Xorg
 
-sudo localectl set-x11-keymap us,br pc105 "" grp:alt_shift_toggle
+sudo localectl set-x11-keymap us,br pc105 intl,abnt2 grp:alt_shift_toggle
 # sudo localectl set-keymap br-abnt2
 
 # Plasma
@@ -318,3 +323,23 @@ sudo dnf5 install \
   libreoffice \
   network-manager-applet \
   papirus-icon-theme
+  
+  dracut --add-drivers "systemd nvme ahci dbus-broker" --force
+  
+  sudo dnf install \
+  @base-x \
+  gnome-shell \
+  gnome-terminal \
+  nautilus \
+  gnome-control-center \
+  gnome-session \
+  gdm
+
+sudo dnf install \
+  gnome-tweaks \
+  gnome-system-monitor \
+  gnome-text-editor \
+  file-roller \
+  xdg-user-dirs \
+  xdg-user-dirs-gtk
+

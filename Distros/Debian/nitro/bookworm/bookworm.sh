@@ -51,22 +51,23 @@ echo "Disable SELinux temporarily..."
 ### Partition
 echo "Creating partitions on $DRIVE..."
 sgdisk --zap-all $DRIVE
-parted -s -a optimal $DRIVE mklabel gpt
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"                           $DRIVE
 sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"                     $DRIVE
 sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"                          $DRIVE
 sgdisk -n 0:0:+85G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
 # sgdisk -n 0:0:+70G     -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
-sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+85G     -t 7:0700 -c 7:"Microsoft Windows Data"              $DRIVE
-sgdisk -n 0:0:0        -t 8:0700 -c 8:"Misc Data"                           $DRIVE
+# sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
+sgdisk -n 0:0:+16M     -t 5:0C01 -c 5:"Microsoft Windows Reserved"          $DRIVE
+sgdisk -n 0:0:+85G     -t 6:0700 -c 6:"Microsoft Windows Data"              $DRIVE
+sgdisk -n 0:0:0        -t 7:0700 -c 7:"Misc Data"                           $DRIVE
 sgdisk -p $DRIVE
 
 
 # === ENCRYPT PARTITION ===
 # echo "Encrypting $DRIVE with LUKS2..."
 # cryptsetup luksFormat --type luks2 "$DRIVE" # rei20021
-# cryptsetup open "$DRIVE" "$MAPPER_NAME"
+# cryptsetup open "$DRIVE" "$MAPPER_NAME"parted -s -a optimal $DRIVE mklabel gpt
+
 
 echo "Formatting partitions on $DRIVE..."
 echo "🧼 Formatting partitions..."
@@ -133,7 +134,7 @@ echo "Subvolumes and boot partition mounted successfully."
 
 debootstrap \
   --variant=minbase \
-  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,dracut,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,ifupdown,init,iproute2,iputils-ping \
+  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
@@ -154,9 +155,6 @@ done
 # Ensure devpts is mounted for pseudo-terminal support
 mount -t devpts devpts /mnt/dev/pts
 
-
-chroot /mnt apt update
-chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
 # chroot /mnt apt install plymouth plymouth-themes --yes
 
 chroot /mnt apt --fix-broken install --yes
@@ -176,12 +174,10 @@ force_drivers+=" nvme ahci hid_generic iwlwifi "
 early_microcode=yes
 EOF
 
-touch /mnt/etc/dracut.conf.d/selinux.conf
 cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
 # force_drivers+=" securityfs selinuxfs "
 EOF
 
-touch /mnt/etc/dracut.conf.d/hostonly.conf
 cat <<EOF >/mnt/etc/dracut.conf.d/10-custom.conf
 # Host-specific image
 hostonly_cmdline="yes"
@@ -195,7 +191,8 @@ omit_dracutmodules+=" amdgpu "
 
 
 # Limit to Btrfs root filesystem
-filesystems+=" resume btrfs "
+# filesystems+=" resume btrfs "
+filesystems+=" btrfs "
 
 # Kernel command-line: enable SELinux, show splash, keep messages quiet
 kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
@@ -267,19 +264,19 @@ HEREDOC
 chroot /mnt apt update
 chroot /mnt apt upgrade --yes
 
-
-### Kernel ###
-chroot /mnt apt install linux-image linux-headers-amd64 --yes
-# chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
-
 # make a initrd for the kernel:
-chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode
+chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode --yes
 # chroot /mnt apt install firmware-linux firmware-linux-free firmware-linux-nonfree firmware-linux-nonfree-amd64 firmware-misc-nonfree firmware-iwlwifi firmware-realtek --yes
 # chroot /mnt apt install firmware-linux firmware-misc-nonfree firmware-iwlwifi --yes
 # firmware-realtek fwupdate fwupd
 
+chroot /mnt apt update
+chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
+chroot /mnt apt-mark hold initramfs-tools
+
 ### Network
-chroot /mnt apt install network-manager iwd rfkill --yes
+chroot /mnt apt install network-manager rfkill --yes
+# chroot /mnt apt install network-manager iwd rfkill --yes
 
 ## dbus initilized
 # chroot /mnt dbus-uuidgen > /var/lib/dbus/machine-id
@@ -391,8 +388,29 @@ blacklist garmin_gps
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
-options iwlwifi enable_ini=N
+options iwlwifi enable_ini=0
+options iwlwifi disable_11ac=0
+options iwlwifi disable_11ax=0
 EOF
+
+touch /mnt/etc/systemd/system/iwlwifi-reload.service
+
+cat <<EOF >/mnt/etc/systemd/system/iwlwifi-reload.service
+[Unit]
+Description=Reload iwlwifi module
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/modprobe -r iwlwifi
+ExecStart=/sbin/modprobe iwlwifi
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chroot /mnt systemctl enable iwlwifi-reload.service
 
 mkdir -pv /mnt/etc/modules-load.d
 touch /mnt/etc/modules-load.d/iptables.conf
@@ -401,6 +419,10 @@ ip6_tables
 ip6table_nat
 ip_tables
 iptable_nat
+EOF
+
+cat << EOF > /mnt/etc/modules-load.d/iwlwifi.conf
+iwlwifi
 EOF
 
 #######################################
@@ -535,6 +557,7 @@ touch /mnt/etc/apt/preferences.d/99stable.pref
 touch /mnt/etc/apt/preferences.d/50testing.pref
 touch /mnt/etc/apt/preferences.d/10unstable.pref
 touch /mnt/etc/apt/preferences.d/1experimental.pref
+touch /mnt/etc/apt/preferences.d/no-initramfs-tools
 
 cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
 # 500 <= P < 990: causes a version to be installed unless there is a
@@ -572,6 +595,12 @@ cat >/mnt/etc/apt/preferences.d/1experimental.pref <<HEREDOC
 Package: *
 Pin: release a=experimental
 Pin-Priority: 1
+HEREDOC
+
+cat >/mnt/etc/apt/preferences.d/no-initramfs-tools <<HEREDOC
+Package: initramfs-tools
+Pin: release *
+Pin-Priority: -1
 HEREDOC
 
 ################################
@@ -678,8 +707,8 @@ LABEL="${ROOT_LABEL}"     /var/lib/gdm        btrfs     rw,$BTRFS_OPTS,subvol=@g
 LABEL="${ROOT_LABEL}"     /opt                btrfs     rw,$BTRFS_OPTS,subvol=@opt                 0     0
 
 ### HOME_FS ###
-# UUID="${HOME_UUID}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
-LABEL="${HOME_LABEL}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
+# UUID="${ROOT_UUID}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
+LABEL="${ROOT_LABEL}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
 
 ### BOOT ###
 # UUID="${BOOT_UUID}"     /boot               ext4      rw,relatime                                0     1
@@ -762,6 +791,11 @@ wifi.backend=iwd
 wifi.iwd.autoconnect=yes
 EOF
 
+cat <<EOF >/mnt/etc/NetworkManager/conf.d/10-wlan.conf
+[keyfile]
+unmanaged-devices=none
+EOF
+
 mkdir -pv /mnt/etc/iwd
 touch /mnt/etc/iwd/main.conf
 cat <<EOF >/mnt/etc/iwd/main.conf
@@ -772,6 +806,15 @@ EnableNetworkConfiguration=true
 NameResolvingService=systemd
 RouterPriorityOffset=30
 EOF
+
+##################
+### SOCKET RAW ###
+##################
+
+mkdir -pv /mnt/usr/lib/sysctl.d
+touch /mnt/usr/lib/sysctl.d/50-default.conf
+echo "-net.ipv4.ping_group_range = 0 2147483647" >> /mnt/usr/lib/sysctl.d/50-default.conf
+
 
 ### BTRFS
 # chroot /mnt apt install btrfs-progs btrfs-compsize udisks2-btrfs duperemove 
@@ -806,6 +849,73 @@ chroot /mnt apt install rtkit
 chroot /mnt apt install gdisk acpi acpid bash-completion pciutils debian-keyring xz-utils htop wget unzip sysfsutils  
 # dkms
 
+##############
+### Polkit ###
+##############
+chroot /mnt apt install policykit-1 policykit-1-gnome udisks2 polkitd polkitd-pkla
+
+mkdir -pv /mnt/run/polkit-1/rules.d
+chmod 755 /mnt/run/polkit-1/rules.d
+
+mkdir -pv /mnt/etc/polkit-1/localauthority/50-local.d
+cat <<EOF >/mnt/etc/polkit-1/localauthority/50-local.d/50-udisks.pkla
+[udisks]
+Identity=unix-group:sudo
+Action=org.freedesktop.udisks2.filesystem-mount-system
+ResultAny=yes
+ResultInactive=no
+ResultActive=yes
+EOF
+
+### If you are on Arch/Redhat (polkit >= 106), then this would work:
+mkdir -pv /mnt/etc/polkit-1/rules.d
+cat >/mnt/etc/polkit-1/rules.d/10-udisks2.rules <<HEREDOC
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+        action.id == "org.freedesktop.udisks2.filesystem-mount-system") &&
+        subject.isInGroup("sudo")) {
+        return polkit.Result.YES;
+    }
+});
+HEREDOC
+
+cat >/mnt/etc/polkit-1/rules.d/10-logs.rules <<HEREDOC
+/* Log authorization checks. */
+polkit.addRule(function(action, subject) {
+  polkit.log("user " +  subject.user + " is attempting action " + action.id + " from PID " + subject.pid);
+});
+HEREDOC
+
+cat >/mnt/etc/polkit-1/rules.d/10-commands.rules << HEREDOC
+polkit.addRule(function(action, subject) {
+  if (
+    subject.isInGroup("sudo")
+      && (
+        action.id == "org.freedesktop.login1.reboot" ||
+        action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.power-off" ||
+        action.id == "org.freedesktop.login1.power-off-multiple-sessions" ||
+        action.id == "org.freedesktop.login1.suspend" ||
+        action.id == "org.freedesktop.login1.suspend-multiple-sessions"
+      )
+    )
+  {
+    return polkit.Result.YES;
+  }
+})
+HEREDOC
+
+chmod 644 /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+chmod 644 /mnt/etc/polkit-1/rules.d/10-commands.rules
+chmod 644 /mnt/etc/polkit-1/rules.d/10-logs.rules
+chown root:root /mnt/etc/polkit-1/rules.d/10-udisks2.rules
+chmod root:root /mnt/etc/polkit-1/rules.d/10-commands.rules
+chmod root:root /mnt/etc/polkit-1/rules.d/10-logs.rules
+
+cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
+$USER ALL = NOPASSWD: /bin/systemctl
+HEREDOC
+
 ############
 ### BOOT ###
 ############
@@ -818,21 +928,6 @@ chroot /mnt apt install chrony
 
 # apt install linux-headers-$(uname -r|sed 's/[^-]*-[^-]*-//')
 
-# cat <<EOF >/mnt/etc/initramfs-tools/modules
-# # crc32c-intel
-# # btrfs
-# # drm
-# ahci
-# lz4hc
-# lz4hc_compress
-# zstd
-# zram
-# z3fold
-# # i915.modeset=1
-# # intel_agp
-# # nvidia-drm.modeset=1
-# # nvidia-drm
-# EOF
 
 # chroot /mnt update-initramfs -c -k all
 
@@ -852,65 +947,6 @@ chroot /mnt systemctl enable irqbalance
 ###################
 
 chroot /mnt apt install intel-microcode 
-
-#####################################
-#### intel Hardware Acceleration ####
-#####################################
-
-sudo apt update
-chroot /mnt apt install intel-media-va-driver-non-free libva2 vainfo intel-gpu-tools firmware-misc-nonfree mesa-va-drivers --no-install-recommends --yes
-
-touch /mnt/etc/modprobe.d/i915.conf
-cat <<EOF >/mnt/etc/modprobe.d/i915.conf
-## Boot Faster with intel ##
-options i915 enable_guc=2 enable_fbc=1 enable_dc=4 enable_hangcheck=0 error_capture=0 enable_dp_mst=0 fastboot=1 #parameters may differ
-EOF
-
-touch /mnt/etc/dracut.conf.d/intel.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/intel.conf
-force_drivers+=" i915 "
-EOF
-
-# chroot /mnt apt install intel-media-va-driver-non-free
-
-##################################
-#### Nvidia Drivers with Cuda ####
-##################################
-
-# chroot /mnt apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree # Proprietary
-chroot /mnt apt install nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree --no-install-recommends --yes # Open drivers
-
-# Enable Video Acceleration
-chroot /mnt apt install vdpauinfo libvdpau1 nvidia-vdpau-driver libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
-
-touch /mnt/etc/dracut.conf.d/10-nvidia.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/nvidia.conf
-add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
-install_items+=" /etc/modprobe.d/nvidia-blacklists-nouveau.conf /etc/modprobe.d/nvidia.conf /etc/modprobe.d/nvidia-options.conf "
-EOF
-echo "options nvidia-drm modeset=1" >> /mnt/etc/modprobe.d/nvidia-options.conf
-echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" >> /mnt/etc/modprobe.d/nvidia-options.conf
-
-# touch /mnt/etc/modprobe.d/nouveau-kms.conf
-# cat <<EOF | tee /mnt/etc/modprobe.d/nouveau-kms.conf
-# ## Disable nouveau on earlyboot ##
-# blacklist nouveau
-# blacklist lbm-nouveau
-# options nouveau modeset=0
-# EOF
-
-# mkdir -pv /mnt/etc/modprobe.d
-# touch /mnt/etc/modprobe.d/bbswitch.conf
-# cat <<EOF >/mnt/etc/modprobe.d/bbswitch.conf
-# ## Early module for bbswitch dual graphics ##
-# # options bbswitch load_state=0 unload_state=1
-# EOF
-
-# touch /mnt/etc/modprobe.d/nvidia.conf
-# cat <<EOF >/mnt/etc/modprobe.d/nvidia.conf
-# ## Nvidia early module ##
-# # options nvidia_drm modeset=1
-# EOF
 
 
 ######################################
@@ -952,43 +988,6 @@ Section "InputClass"
 EndSection
 EOF
 
-touch /mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-nvidia.conf
-Section "Device"
-    Identifier "Nvidia GTX 1050"
-    Driver  "nvidia"
-    BusID   "PCI:1:0:0"
-    Option  "DPI" "96 x 96"
-    Option  "AllowEmptyInitialConfiguration"    "Yes"
-    Option  "Coolbits"                          "28"    # Enables fan control + overclocking
-    Option  "TripleBuffer"                      "true"  # Improves frame pacing
-    Option  "SwapbuffersWait"                   "true"  # Syncs buffer swaps to VBlank
-    #Option "AccelMethod"                       "none"
-    #Option "UseDisplayDevice"                  "none"
-EndSection
-EOF
-
-# Fix tearing with intel
-touch /mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-cat <<EOF >/mnt/etc/X11/xorg.conf.d/20-modesetting.conf
-Section "Device"
-#   Identifier "Intel Graphics 630"
-#   Driver "intel"
-#   Option "AccelMethod" "sna"
-#   Option "TearFree" "True"
-#   Option "Tiling" "True"
-#   Option "SwapbuffersWait" "True"
-#   Option "DRI" "3"
-
-    Identifier  "Intel Graphics"
-    Driver      "modesetting"
-    Option      "TearFree"       "True"
-    Option      "DRI"            "3"
-    # Option    "AccelMethod"    "glamor"
-    # Option    "TripleBuffer"   "True"
-EndSection
-EOF
-
 #########################
 #### Config Powertop ####
 #########################
@@ -999,18 +998,38 @@ cat <<EOF >/mnt/etc/rc.local
 powertop --auto-tune
 EOF
 
+#################
+### BLUETOOTH ###
+#################
+
+sudo apt install bluez blueman
+
+
 #################################
 #### Infrastructure packages ####
 #################################
 
 #Python, snap and flatpak
 # chroot /mnt apt install python3 python3-pip snapd flatpak 
+chroot /mnt apt install  snapd flatpak 
 
 ####################
 ### Virt-Manager ###
 ####################
 
-# chroot /mnt apt install apt install virt-manager qemu-system-x86 libvirt-daemon-system libvirt-clients bridge-utils --no-install-recommends -y
+
+#Virt-Manager
+chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
+dnsmasq ipset libguestfs0 qemu-user-static binfmt-support virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+
+chroot /mnt dpkg --add-architecture armhf -y
+chroot /mnt dpkg --add-architecture arm64 -y
+chroot /mnt apt update
+
+chroot /mnt apt install lib6c:armhf -y
+chroot /mnt apt install lib6c:arm64 -y
+
 ## For virtmanager
 # chroot /mnt adduser $username libvirt
 # chroot /mnt adduser $username kvm
@@ -1079,7 +1098,7 @@ cat <<EOF >/mnt/etc/default/keyboard
 
 XKBMODEL="pc105"
 XKBLAYOUT="us,br"
-XKBVARIANT="intl,abnt2"
+XKBVARIANT="alt-intl,abnt2"
 XKBOPTIONS="grp:alt_shift_toggle"
 BACKSPACE="guess"
 EOF
@@ -1115,13 +1134,15 @@ chroot /mnt chsh -s /usr/bin/bash root
 #### NetworkManager config as default instead of dhcpd5 ####
 ############################################################
 
-cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
-[main]
-plugins=ifupdown,keyfile
+# chroot /mnt apt install ifupdown # comment if using systemd-network
 
-[ifupdown]
-managed=true
-EOF
+# cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
+# [main]
+# plugins=ifupdown,keyfile
+
+# [ifupdown]
+# managed=true
+# EOF
 
 # touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
 # chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
@@ -1152,8 +1173,10 @@ EOF
 #########################
 
 ## Network
+chroot /mnt systemctl enable systemd-networkd.service # if want to use systemd as default, disable it if want network-manager or ifupdown
 chroot /mnt systemctl enable NetworkManager.service
-chroot /mnt systemctl enable iwd.service
+# chroot /mnt systemctl disable networking.service
+# chroot /mnt systemctl disable iwd.service
 chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
@@ -1220,7 +1243,7 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
@@ -1246,6 +1269,13 @@ chroot /mnt update-grub
 # chroot /mnt efibootmgr -c -d /dev/by-label/${ROOT_LABEL} -L ${ROOT_LABEL} -l \\EFI\\BOOT\\BOOTX64.efi
 # chroot /mnt efibootmgr -c -d /dev/by-label/Debian -L Debian -l \\EFI\\BOOT\\BOOTX64.efi
 chroot /mnt efibootmgr
+
+
+chroot /mnt apt install dracut
+
+### Kernel ###
+chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
+# chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 
 
 # chroot /mnt update-initramfs -c -k all
@@ -1318,22 +1348,48 @@ rm -rf /mnt/debootstrap
 ### XFCE4 ###
 #############
 
-# chroot mnt apt install \
-#   xfce4-panel \
-#   xfce4-session \
-#   xfce4-settings \
-#   xfce4-terminal \
-#   xfwm4 \
-#   xfdesktop4 \
-#   thunar \
-#   xfce4-appfinder \
-#   xfconf \
-#   libxfce4ui-utils
+chroot mnt apt install \
+  xfce4-panel \
+  xfce4-session \
+  xfce4-settings \
+  xfce4-terminal \
+  xfwm4 \
+  xfdesktop4 \
+  thunar \
+  xfce4-appfinder \
+  xfconf \
+  libxfce4ui-utils
 
-# chroot /mnt apt install lightdm
+chroot /mnt apt install lightdm
 
-# chroot /mnt apt install \
-#   xfce4-notifyd \
-#   xfce4-power-manager \
-#   gvfs-backends \
-#   network-manager-gnome
+chroot /mnt apt install \
+  xfce4-notifyd \
+  xfce4-power-manager \
+  gvfs-backends \
+  network-manager-gnome \
+  xfce4-pulseaudio-plugin \
+  xdg-desktop-portal \
+  librsvg2-common \
+  solaar \
+  at-spi2-core
+
+cat <<EOF > /etc/udev/rules.d/99-logitech-receiver.rules
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+EOF
+
+chroot /mnt apt install firefox ffmpeg libavcodec-extra pavucontrol
+
+##############
+### FCITX5 ###
+##############
+chroot /mnt apt install fcitx5 libfcitx5-qt1 fcitx5-config-qts
+cat <<EOF >>$HOME/.bashrc
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS="@im=fcitx"
+EOF
+
+cat <<EOF >$HOME/.XCompose
+<dead_acute> <c> : "ç"
+<dead_acute> <C> : "Ç"
+EOF

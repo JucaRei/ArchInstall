@@ -258,11 +258,11 @@ vm.dirty_background_bytes" = 167772160
 vm.dirty_ratio=50
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-conf.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
-cat <<\EOF >/mnt/etc/sysctl.d/10-intel.conf
+cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
 # Intel Graphics
 dev.i915.perf_stream_paranoid=0
 EOF
@@ -353,7 +353,7 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 127.0.1.1 vm
 
@@ -805,7 +805,7 @@ chroot /mnt systemctl --user --now mask pipewire{,-pulse}.{socket,service}
 ## Tune chrony ##
 touch /mnt/etc/chrony.conf
 # sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver time.windows.com iburst prefer/g' /mnt/etc/chrony.conf
-cat <<\EOF >>/mnt/etc/chrony.conf
+cat <<EOF >>/mnt/etc/chrony.conf
 server time.windows.com iburst prefer
 EOF
 
@@ -904,7 +904,7 @@ rm -rf /mnt/initrd.img.old
 ######################
 mkdir -pv /mnt/etc/samba
 touch /mnt/etc/samba/smb.conf
-cat <<\EOF >>/mnt/etc/samba/smb.conf
+cat <<EOF >>/mnt/etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
    dns proxy = no
