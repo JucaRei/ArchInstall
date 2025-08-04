@@ -43,8 +43,8 @@ alias podclean='podrm; podrmv; podrmi'
 # alias podtail='podman logs -f $(podman ps -lq)'
 
 # Tor browser
-# alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged --name tor-browser jess/tor-browser'
-# alias tor='doas podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged -p 5800:5800 --name tor-browser domistyle/tor-browser'
+# alias tor='sudo podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged --name tor-browser jess/tor-browser'
+# alias tor='sudo podman run -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v /dev/snd:/dev/snd --privileged -p 5800:5800 --name tor-browser domistyle/tor-browser'
 
 ########################################################
 ####################### Utils ##########################
@@ -59,11 +59,11 @@ alias playlistmaker="find ./ -type f | sort > playlist.m3u"
 
 # BTRFS
 alias btrfm="findmnt -t btrfs -o TARGET,SOURCE"
-alias btrfsfs="doas btrfs filesystem df /"
-alias btrfsli="doas btrfs su li / -t"
+alias btrfsfs="sudo btrfs filesystem df /"
+alias btrfsli="sudo btrfs su li / -t"
 
 #Others
-alias tarnowsu='doas tar -azcvf --exclude={dev/pts,home,lost+found,media,mnt,mnt2,proc,run,sys,tmp,var/lib/lxcfs,var/lib/lxd/unix.socket}'
+alias tarnowsu='sudo tar -azcvf --exclude={dev/pts,home,lost+found,media,mnt,mnt2,proc,run,sys,tmp,var/lib/lxcfs,var/lib/lxd/unix.socket}'
 alias tarnow='tar -azcvf'
 alias EXCLUDE="--exclude=proc --exclude=sys --exclude=dev/pts --exclude=/var/backups"
 alias untar='tar -zxvf'
@@ -81,7 +81,7 @@ alias catf='bat --theme=ansi'
 alias clean="clear; seq 1 $(tput cols) | sort -R | sparklines | lolcat"
 
 #fixes
-alias fix-permissions="doas chown -R $USER:$USER ~/.config ~/.local"
+alias fix-permissions="sudo chown -R $USER:$USER ~/.config ~/.local"
 
 #systeminfo
 alias probe="doas -E hw-probe -all -upload"
@@ -242,7 +242,7 @@ alias unbz2='tar -xvjf'
 alias ungz='tar -xvzf'
 
 # Show all logs in /var/log
-alias logs="doas find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
+alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
 
 # alias chmod commands
 alias mx='chmod a+x'

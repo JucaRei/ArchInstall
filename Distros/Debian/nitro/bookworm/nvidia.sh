@@ -4,11 +4,14 @@
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree --no-install-recommends --yes # Proprietary
-# apt install nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree --no-install-recommends --yes # Open drivers
+apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree  # Proprietary
+# apt install nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree  # Open drivers
 
 # Enable Video Acceleration
-apt install vdpauinfo libvdpau1 nvidia-vdpau-driver libnvidia-encode1 libnvcuvid1 --no-install-recommends --yes
+apt install vdpauinfo libvdpau1 nvidia-vdpau-driver libnvidia-encode1 libnvcuvid1 nvidia-vaapi-driver mesa-va-drivers 
+
+# Vdpau
+apt install nvidia-vdpau-driver libvdpau-va-gl1
 
 cat <<EOF >/etc/dracut.conf.d/10-nvidia.conf 
 # Include NVIDIA modules at boot

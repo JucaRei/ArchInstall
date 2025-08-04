@@ -313,7 +313,11 @@ chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input $username
 chroot /mnt usermod -aG sudo $username
 
-# chroot /mnt apt install --yes dbus-broker dbus dbus-bin dbus-daemon dbus-session-bus-common dbus-system-bus-common dbus-user-session libpam-systemd
+# chroot /mnt apt install --yes dbus dbus-bin dbus-daemon dbus-session-bus-common dbus-system-bus-common dbus-user-session libpam-systemd
+chroot /mnt apt install --yes dbus-broker dbus-user-session libpam-systemd
+
+chroot /mnt systemctl disable dbus-daemon.service
+chroot /mnt systemctl enable dbus-broker.service
 
 ## Disable verification ##
 # touch /mnt/etc/apt/apt.conf.d/99verify-peer.conf \
@@ -452,6 +456,10 @@ EOF
 cat <<EOF >/mnt/etc/sysctl.d/10-console-messages.conf
 # the following stops low-level messages on console
 kernel.printk = 4 4 1 7
+EOF
+
+cat <<EOF >/mnt/etc/sysctl.d/99-dmesg.conf
+kernel.dmesg_restrict = 0
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-ipv6-privacy.conf
@@ -1216,12 +1224,6 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ## Update initramfs
 # chroot /mnt update-initramfs -c -k all
 
-## Dbus ##
-chroot /mnt apt install dbus-broker --yes 
-
-chroot /mnt systemctl disable dbus-daemon.service
-chroot /mnt systemctl enable dbus-broker.service
-
 ######################
 #### Install grub ####
 ######################
@@ -1363,15 +1365,21 @@ chroot mnt apt install \
 chroot /mnt apt install lightdm
 
 chroot /mnt apt install \
+  dbus-x11 \
   xfce4-notifyd \
   xfce4-power-manager \
   gvfs-backends \
   network-manager-gnome \
   xfce4-pulseaudio-plugin \
+  xfce4-power-manager-plugins \
   xdg-desktop-portal \
   librsvg2-common \
   solaar \
-  at-spi2-core
+  at-spi2-core \
+  ristretto \
+  tumbler
+
+# edid-decode
 
 cat <<EOF > /etc/udev/rules.d/99-logitech-receiver.rules
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0660", GROUP="plugdev", TAG+="uaccess"

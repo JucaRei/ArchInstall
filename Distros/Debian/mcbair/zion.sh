@@ -396,7 +396,7 @@ EOF
 
 # Hosts
 touch /mnt/etc/hosts
-cat <<\EOF >/mnt/etc/hosts
+cat <<EOF >/mnt/etc/hosts
 127.0.0.1 localhost
 127.0.1.1 zion
 

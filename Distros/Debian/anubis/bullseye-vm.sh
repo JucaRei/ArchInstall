@@ -3,34 +3,32 @@
 # tasksel install standard
 # sudo cp /usr/share/dbus-1/session.conf /etc/dbus-1/session.conf
 
+#### Update and install needed packages ####
+apt update && apt install debootstrap btrfs-progs lsb-release wget -y
+
 ### Variables ###
 DRIVE="/dev/vda"
 USER="juca"
 HOSTNAME="qemu"
+username="juca"
+fullname="Reinaldo P Jr"
 codename="bullseye"
 Debian_ARCH="amd64"
-BOOT_PARTITION="$DRIVE"1
-ROOT_PARTITION="$DRIVE"2
-SWAP_PARTITION="$DRIVE"3
-
-# BOOT_BY_LABEL="/dev/disk/by-label/BOOT"
-# ROOT_BY_LABEL="/dev/disk/by-label/DEBIAN"
-# SWAP_BY_LABEL="/dev/disk/by-label/SWAP"
+BOOT_PART="${DRIVE}"2
+UEFI_PART="${DRIVE}"3
+ROOT_PART="${DRIVE}4"
+# SWAP_PART="${DRIVE}"5
+BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:6,acl,space_cache=v2,commit=60,discard=async"
+BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:15,acl,space_cache=v2,commit=60,discard=async"
 
 ## fstab real hardware ##
-UEFI_UUID=$(blkid -s UUID -o value $BOOT_PARTITION)
-ROOT_UUID=$(blkid -s UUID -o value $ROOT_PARTITION)
+UEFI_UUID=$(blkid -s UUID -o value $BOOT_PART)
+HOME_UUID=$(blkid -s UUID -o value $ROOT_PART)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PART)
 SWAP_UUID=$(blkid -s UUID -o value $SWAP_PARTITION)
 
-## btrfs options ##
-BTRFS_OPTS="noatime,nodatacow,compress-force=zstd:9,acl,space_cache=v2,commit=60,discard=async"
-BTRFS_OPTS2="noatime,nodatacow,compress-force=zstd:3,acl,space_cache=v2,commit=60,discard=async"
-
-#### Update and install needed packages ####
-apt update && apt install debootstrap btrfs-progs lsb-release wget -y
-
 #### Umount drive, if it's mounted ####
-umount -Rv $DRIVE
+umount -Rvf ${DRIVE}
 
 #### update fastest repo's
 apt update
@@ -39,28 +37,18 @@ apt update
 ##########  FileSystem  #############
 #####################################
 
-sgdisk -Z $DRIVE
-# parted "$DRIVE" mklabel gpt
-# parted "$DRIVE" mkpart primary 2048s 100%
-parted --script --fix --align optimal $DRIVE mklabel gpt
-parted --script --fix --align optimal $DRIVE mkpart primary fat32 1MiB 512MiB
-parted --script $DRIVE -- set 1 boot on
-
-# parted --script --align optimal -- "$DRIVE" mkpart primary 600MB 100%
-# parted --script --align optimal --fix -- "$DRIVE" mkpart primary linux-swap -2GiB -1s
-parted --script --align optimal --fix -- $DRIVE mkpart primary 512MiB -4GiB
-parted --script --align optimal --fix -- $DRIVE mkpart primary -4GiB 100%
-
-# parted --script align-check 1 $DRIVE
-
-sgdisk -c 1:"Boot EFI Partition" $DRIVE
-sgdisk -c 2:"Debian FileSystem" $DRIVE
-sgdisk -c 3:"Swap FileSystem" $DRIVE
+# Create Partitions and Encrypt
+### Partition
+echo "Creating partitions on $DRIVE..."
+sgdisk --zap-all $DRIVE
+sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"                           $DRIVE
+sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"                     $DRIVE
+sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"                          $DRIVE
+sgdisk -n 0:0:+10G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
+sgdisk -n 0:0:+10G     -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
+sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
+sgdisk -n 0:0:0        -t 7:0700 -c 7:"Misc Data"                           $DRIVE
 sgdisk -p $DRIVE
-
-# BOOT_PARTITION="/dev/vda1"
-# ROOT_PARTITION="/dev/vda2"
-# SWAP_PARTITION="/dev/vda3"
 
 #######################
 #### real hardware ####
@@ -70,9 +58,9 @@ sgdisk -p $DRIVE
 # swapon /dev/sda4
 # mkfs.btrfs /dev/sda5 -f -L "LinuxSystem"
 
-mkfs.vfat -F32 $BOOT_PARTITION -n "BOOT"
-mkfs.btrfs $ROOT_PARTITION -f -L "DEBIAN"
-mkswap $SWAP_PARTITION -L "SWAP"
+mkfs.vfat -F32 $BOOT_PART -n "BOOT"
+mkfs.btrfs $ROOT_PART -f -L "DEBIAN"
+mkswap $SWAP_PART -L "SWAP"
 
 sleep 5
 echo "Turning SWAP on."
