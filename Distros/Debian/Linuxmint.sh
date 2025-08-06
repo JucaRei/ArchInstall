@@ -1,5 +1,6 @@
 #!/bin/sh 
 
+
 sudo apt-get remove \
 baobab \
 ca-certificates-java \

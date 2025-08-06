@@ -134,7 +134,7 @@ echo "Subvolumes and boot partition mounted successfully."
 
 debootstrap \
   --variant=minbase \
-  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
+  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
@@ -1111,6 +1111,21 @@ XKBOPTIONS="grp:alt_shift_toggle"
 BACKSPACE="guess"
 EOF
 
+touch /mnt/etc/default/console-setup
+cat <<EOF >/mnt/etc/default/console-setup
+# CONFIGURATION FILE FOR SETUPCON
+
+ACTIVE_CONSOLES="/dev/tty[1-6]"
+CHARMAP="UTF-8"
+CODESET="Lat15"
+# FONTFACE="Terminus"
+FONTFACE="Fixed"
+# FONTSIZE="16x32"
+FONTSIZE="8x16"
+EOF
+
+# chroot /mnt apt install console-setup fonts-terminus
+
 chroot /mnt setupcon --save
 # chroot /mnt service keyboard-setup restart
 # setxkbmap -layout us,br -variant intl, -option grp:alt_shift_toggle
@@ -1302,6 +1317,7 @@ rm -rf /mnt/debootstrap
 
 # Add pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
+chroot /mnt bash -c "$(curl -fsSL https://pacstall.dev/q/install)"
 
 # this makes X server run only on your nvidia card considering you have optimus graphics (intel+nvidia)
 # cat <<\EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf

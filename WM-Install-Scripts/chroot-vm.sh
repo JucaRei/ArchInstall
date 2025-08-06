@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pacman -Sy archlinux-keyring --noconfirm
+pacman -Sy archlinux-keyring --noconfirm 
 
 # Enable pacman Color
 sed -i '1n; /^#UseSyslog/i ILoveCandy' /etc/pacman.conf

@@ -4,7 +4,7 @@
 #### Nvidia Drivers with Cuda ####
 ##################################
 
-apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree  # Proprietary
+apt install nvidia-kernel-dkms nvidia-driver firmware-misc-nonfree nvidia-settings  # Proprietary
 # apt install nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree  # Open drivers
 
 # Enable Video Acceleration

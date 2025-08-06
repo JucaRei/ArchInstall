@@ -10,7 +10,7 @@ locale-gen
 ## Keyboard
 echo "LANG=en_US.UTF-8" >>/etc/locale.conf
 echo "KEYMAP=br-abnt2" >>/etc/vconsole.conf
-# echo "KEYMAP=us-intl" >>/etc/vconsole.conf
+# echo "KEYMAP=us-intl" >>/etc/vconsole.conf 
 # echo "KEYMAP=mac-us" >>/etc/vconsole.conf
 
 ## Hostname

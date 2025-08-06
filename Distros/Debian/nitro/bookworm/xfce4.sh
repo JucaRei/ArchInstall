@@ -27,12 +27,16 @@ chroot /mnt apt install \
   xfce4-pulseaudio-plugin \
   xfce4-power-manager-plugins \
   xdg-desktop-portal \
+  xdg-utils \
+  xdg-user-dirs \
   librsvg2-common \
   solaar \
   at-spi2-core \
   ristretto \
-  tumbler
-
+  tumbler \
+  mousepad \
+  xarchiver \
+  ristretto
 # edid-decode
 
 cat <<EOF > /etc/udev/rules.d/99-logitech-receiver.rules
@@ -45,6 +49,9 @@ chroot /mnt apt install firefox ffmpeg libavcodec-extra pavucontrol
 ### FCITX5 ###
 ##############
 chroot /mnt apt install fcitx5 libfcitx5-qt1 fcitx5-config-qts
+# chroot /mnt apt install fcitx5-config-qt fcitx5-frontend-gtk2 fcitx5-frontend-gtk3
+# chroot /mnt apt install fcitx5-chinese-addons
+# chroot /mnt apt install fcitx5 fcitx5-pinyin
 cat <<EOF >>$HOME/.bashrc
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
@@ -55,3 +62,12 @@ cat <<EOF >$HOME/.XCompose
 <dead_acute> <c> : "ç"
 <dead_acute> <C> : "Ç"
 EOF
+
+apt install thunar-volman \
+  thunar-archive-plugin \
+  thunar-font-manager \
+  thunar-media-tags-plugin \
+  thunar-volman \
+  thunar-gtkhash \
+  thunar-shares-plugin \
+  tumbler-plugins-extra
