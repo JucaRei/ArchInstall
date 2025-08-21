@@ -12,6 +12,7 @@ chroot mnt apt install \
   xfwm4 \
   xfdesktop4 \
   thunar \
+  atril \
   xfce4-appfinder \
   xfconf \
   libxfce4ui-utils
@@ -21,11 +22,13 @@ chroot /mnt apt install lightdm
 chroot /mnt apt install \
   dbus-x11 \
   xfce4-notifyd \
+  thumbler \
   xfce4-power-manager \
   gvfs-backends \
   network-manager-gnome \
   xfce4-pulseaudio-plugin \
   xfce4-power-manager-plugins \
+  xfce4-screenshooter \
   xdg-desktop-portal \
   xdg-utils \
   xdg-user-dirs \
@@ -38,6 +41,9 @@ chroot /mnt apt install \
   xarchiver \
   ristretto
 # edid-decode
+
+# chroot /mnt apt install -t sid xfce4-screensaver
+chroot /mnt apt install -t unstable xfce4-screensaver
 
 cat <<EOF > /etc/udev/rules.d/99-logitech-receiver.rules
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0660", GROUP="plugdev", TAG+="uaccess"
@@ -71,3 +77,10 @@ apt install thunar-volman \
   thunar-gtkhash \
   thunar-shares-plugin \
   tumbler-plugins-extra
+
+# Office
+apt install libreoffice libreoffice-gtk3 \
+  libreoffice-style-breeze \
+  libreoffice-l10n-pt-br \
+  hunspell-pt-br hunspell-en-us \
+  myspell-pt-br

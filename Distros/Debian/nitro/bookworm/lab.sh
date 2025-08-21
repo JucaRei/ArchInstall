@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-# set -euo pipefail
-# IFS=$'\n\t'
-# This catches errors, undefined vars, and pipeline failures immediately.
 
-#### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
-# apt update && apt install mmdebstrap btrfs-progs lsb-release wget -y
-
-#### update fastest repo's
 apt update
 
 #####################################
@@ -15,34 +8,22 @@ apt update
 #####################################
 
 # Variables
-hostname="nitro"
-name="Reinaldo P JR"
+hostname="lab"
+name="Virtual Machine"
 username="juca"
 Architecture="amd64"
 CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
-# DRIVE="/dev/sda"
-DRIVE="/dev/nvme0n1"
-SYSTEM_PART="${DRIVE}p2"
-EFI_PART="${DRIVE}p3"
-ROOT_PART="${DRIVE}p4"
-WINDOWS_PART="${DRIVE}p6"
-MISC_PART="${DRIVE}p7"
-# HOME_PART="${DRIVE}p5"
-# WINDOWS_PART="${DRIVE}p7"
-# MISC_PART="${DRIVE}p8"
+DRIVE="/dev/vda"
+EFI_PART="${DRIVE}2"
+SWAP_PART="${DRIVE}3"
+ROOT_PART="${DRIVE}4"
 
-# MAPPER_NAME="secure_btrfs"
 MOUNTPOINT="/mnt"
 ROOT_LABEL="Debian"
-# HOME_LABEL="home"
-SWAP_LABEL="swap" 
+SWAP_LABEL="SWAP" 
 EFI_LABEL="ESP"
-SYSTEM_LABEL="SYSTEM"
-WINDOWS_LABEL="Windows 11"
-MISC_LABEL="SharedData"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,nodatacow,commit=120,discard=async"
 BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
-# TMPFS="ssd,noatime,mode=1777,nosuid,nodev,compress-force=zstd:3,discard=async,space_cache=v2,commit=60"
 
 echo "Disable SELinux temporarily..."
 # setenforce 0 # disable SELInux for now
@@ -52,32 +33,19 @@ echo "Disable SELinux temporarily..."
 echo "Creating partitions on $DRIVE..."
 sgdisk --zap-all $DRIVE
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"                           $DRIVE
-sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"                     $DRIVE
-sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"                          $DRIVE
-sgdisk -n 0:0:+85G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
-# sgdisk -n 0:0:+70G     -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
-# sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+16M     -t 5:0C01 -c 5:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+85G     -t 6:0700 -c 6:"Microsoft Windows Data"              $DRIVE
-sgdisk -n 0:0:0        -t 7:0700 -c 7:"Misc Data"                           $DRIVE
+sgdisk -n 0:0:+600M    -t 2:EF00 -c 2:"EFI SYSTEM"                          $DRIVE
+sgdisk -n 0:0:+2G      -t 3:8200 -c 3:"${SWAP_LABEL}"                       $DRIVE
+sgdisk -n 0:0:0        -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
 sgdisk -p $DRIVE
-
-
-# === ENCRYPT PARTITION ===
-# echo "Encrypting $DRIVE with LUKS2..."
-# cryptsetup luksFormat --type luks2 "$DRIVE" # rei20021
-# cryptsetup open "$DRIVE" "$MAPPER_NAME"parted -s -a optimal $DRIVE mklabel gpt
 
 
 echo "Formatting partitions on $DRIVE..."
 echo "🧼 Formatting partitions..."
 
-mkfs.ext4   -L      	"$SYSTEM_LABEL"      "$SYSTEM_PART"
-mkfs.fat   -F32 -n      "$EFI_LABEL"         "$EFI_PART"
-mkfs.btrfs -f   -L      "$ROOT_LABEL"        "$ROOT_PART"
-# mkfs.btrfs -f   -L      "$HOME_LABEL"        "$HOME_PART"
-mkfs.ntfs  -Q   -f -L   "$WINDOWS_LABEL"     "$WINDOWS_PART"
-mkfs.exfat      -n      "$MISC_LABEL"        "$MISC_PART"
+mkfs.fat    -F32 -n      "$EFI_LABEL"         "$EFI_PART"
+mkswap      -L           "$SWAP_LABEL"        "$SWAP_PART"
+swapon                                        "$SWAP_PART"
+mkfs.btrfs  -f   -L      "$ROOT_LABEL"        "$ROOT_PART"
 
 udevadm trigger
 
@@ -86,41 +54,26 @@ echo "Partitions formatted successfully on $DRIVE."
 
 echo "Creating Btrfs subvolumes..."
 mount "$ROOT_PART" "$MOUNTPOINT"
-# for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix; do
-#   btrfs subvolume create "$MOUNTPOINT/$sv"
-# done
-
-for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix @home; do
+for sv in @root @cache @opt @gdm @spool @log @tmp @snapshots @nix @home; do
   btrfs subvolume create "$MOUNTPOINT/$sv"
 done
 umount -Rvf "$MOUNTPOINT"
-
-# 🏠 Create @home subvolume on home partition
-# mkdir -p "$MOUNTPOINT"/home-temp
-# mount /dev/disk/by-label/"$HOME_LABEL" "$MOUNTPOINT"/home-temp
-# btrfs subvolume create "$MOUNTPOINT"/home-temp/@home
-# umount -Rvf "$MOUNTPOINT"/home-temp
 echo "Btrfs subvolumes created successfully."
 
 echo "Mounting subvolumes and boot partition..."
 ### Mount subvolumes
 mount -o $BTRFS_OPTS,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
-mkdir -pv $MOUNTPOINT/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache,lib/{libvirt,gdm}}}
+mkdir -pv $MOUNTPOINT/{boot/efi,home,opt,nix,.snapshots,var/{tmp,spool,log,cache,lib/gdm}}
 
-# mount -o $BTRFS_OPTS_HOME,subvol=@home /dev/disk/by-label/$HOME_LABEL $MOUNTPOINT/home
 mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/home
 mount -o $BTRFS_OPTS_HOME,subvol=@nix /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/nix
 mount -o $BTRFS_OPTS_HOME,subvol=@opt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/opt
 mount -o $BTRFS_OPTS,subvol=@gdm /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/gdm
-mount -o $BTRFS_OPTS_HOME,subvol=@libvirt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/libvirt
 mount -o $BTRFS_OPTS,subvol=@log /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/log
 mount -o $BTRFS_OPTS,subvol=@spool /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/spool
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
 mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache
 mount -o $BTRFS_OPTS_HOME,subvol=@snapshots /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
-mount /dev/disk/by-label/$SYSTEM_LABEL $MOUNTPOINT/boot
-# mount /dev/disk/by-label/BOOT /mnt/boot
-mkdir -pv $MOUNTPOINT/boot/efi
 mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/$EFI_LABEL $MOUNTPOINT/boot/efi
 echo "Subvolumes and boot partition mounted successfully."
 
@@ -128,19 +81,12 @@ echo "Subvolumes and boot partition mounted successfully."
 #### Install tarball debootstrap to the mount / ####
 ####################################################
 
-# debootstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,busybox,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch amd64 ${CODENAME} /mnt "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
-
-# debootstrap --variant=minbase --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,tzdata,keyboard-configuration,zstd,dracut,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,ifupdown,init,iproute2,iputils-ping --arch ${Architecture} bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
-
 debootstrap \
   --variant=minbase \
   --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
-
-# deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free non-free-firmware
-# mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,dhcpcd5,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
 
 ########################################################
 #### Mount points for chroot, just like arch-chroot ####
@@ -170,8 +116,6 @@ do_prelink="no"
 hostonly="yes"
 # add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
 add_dracutmodules+=" systemd "
-force_drivers+=" nvme ahci hid_generic iwlwifi "
-early_microcode=yes
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
@@ -195,7 +139,7 @@ omit_dracutmodules+=" amdgpu "
 filesystems+=" btrfs "
 
 # Kernel command-line: enable SELinux, show splash, keep messages quiet
-kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+kernel_cmdline=" rootflags=subvol=@root rw quiet  "
 
 # Ensure Plymouth theme files are embedded
 # install_items+="/usr/share/plymouth/themes/solar/* \
@@ -265,32 +209,35 @@ cat >/mnt/etc/apt/sources.list.d/sid.list <<HEREDOC
 deb http://deb.debian.org/debian sid main
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
-Types: deb
-Architectures: amd64 arm64
-Components: main
-Uris: https://repo.librewolf.net
-Suites: librewolf
-Signed-By: /var/lib/extrepo/keys/librewolf.asc
-HEREDOC
+# cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
+# Types: deb
+# Architectures: amd64 arm64
+# Components: main
+# Uris: https://repo.librewolf.net
+# Suites: librewolf
+# Signed-By: /var/lib/extrepo/keys/librewolf.asc
+# HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/vscode.list <<HEREDOC
-### THIS FILE IS AUTOMATICALLY CONFIGURED ###
-# You may comment out this entry, but any other modifications may be lost.
-Types: deb
-URIs: https://packages.microsoft.com/repos/code
-Suites: stable
-Components: main
-Architectures: amd64,arm64,armhf
-Signed-By: /usr/share/keyrings/microsoft.gpg
-HEREDOC
+# cat >/mnt/etc/apt/sources.list.d/vscode.list <<HEREDOC
+# ### THIS FILE IS AUTOMATICALLY CONFIGURED ###
+# # You may comment out this entry, but any other modifications may be lost.
+# Types: deb
+# URIs: https://packages.microsoft.com/repos/code
+# Suites: stable
+# Components: main
+# Architectures: amd64,arm64,armhf
+# Signed-By: /usr/share/keyrings/microsoft.gpg
+# HEREDOC
+
+curl -fsSL https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /mnt/etc/apt/keyrings/xanmod.gpg > /dev/null
+curl -fsSL https://repo.waydro.id/waydroid.gpg | tee /mnt/etc/apt/keyrings/waydroid.gpg > /dev/null
 
 cat >/mnt/etc/apt/sources.list.d/waydroid.list <<HEREDOC
-deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ bookworm main
+deb [signed-by=/etc/apt/keyrings/waydroid.gpg] https://repo.waydro.id bookworm main
 HEREDOC
 
 cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
-deb [signed-by=/usr/share/keyrings/xanmod.gpg] http://deb.xanmod.org releases main
+deb [signed-by=/etc/apt/keyrings/xanmod.gpg] http://deb.xanmod.org releases main
 HEREDOC
 
 chroot /mnt apt update
@@ -328,6 +275,7 @@ echo 'KEYMAP="br-abnt2"' >/mnt/etc/vconsole.conf
 echo 'KEYMAP_TOGGLE="us-intl"' >> /mnt/etc/vconsole.conf
 
 chroot /mnt apt update
+chroot /mnt apt upgrade --yes
 
 ##############
 #### sudo ####
@@ -406,21 +354,21 @@ blacklist bcm43xx
 blacklist garmin_gps
 
 # replaced by asus-laptop (Ubuntu: #184721)
-# blacklist asus_acpi
+blacklist asus_acpi
 
 # low-quality, just noise when being used for sound playback, causes
 # hangs at desktop session start (Ubuntu: #246969)
-# blacklist snd_pcsp
+blacklist snd_pcsp
 
 # ugly and loud noise, getting on everyone's nerves; this should be done by a
 # nice pulseaudio bing (Ubuntu: #77010)
-# blacklist pcspkr
+blacklist pcspkr
 
 # EDAC driver for amd76x clashes with the agp driver preventing the aperture
 # from being initialised (Ubuntu: #297750). Blacklist so that the driver
 # continues to build and is installable for the few cases where its
 # really needed.
-# blacklist amd76x_e0dac
+blacklist amd76x_e0dac
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
@@ -589,7 +537,8 @@ APT::Get::Assume-Yes "true";
 HEREDOC
 
 # echo 'APT::Default-Release "stable";' | sudo tee /etc/apt/apt.conf.d/99default-release
-echo 'APT::Default-Release "stable";' | tee /mnt/etc/apt/apt.conf.d/99default-release
+# echo 'APT::Default-Release "stable";' | tee /mnt/etc/apt/apt.conf.d/99default-release
+echo 'APT::Default-Release "bookworm";' | tee /mnt/etc/apt/apt.conf.d/99default-release
 
 mkdir -pv /mnt/etc/apt/preferences.d
 
@@ -606,7 +555,8 @@ cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
 # version is more recent
 
 Package: *
-Pin: release a=stable
+# Pin: release a=stable
+Pin: release a=bookworm
 Pin-Priority: 900
 HEREDOC
 
@@ -713,10 +663,10 @@ publickey:  files
 rpc:        files
 EOF
 
-BOOT_UUID=$(blkid -s UUID -o value $SYSTEM_PART)
 ESP_UUID=$(blkid -s UUID -o value $EFI_PART)
 ROOT_UUID=$(blkid -s UUID -o value $ROOT_PART)
 HOME_UUID=$(blkid -s UUID -o value $HOME_PART)
+SWAP_UUID=$(blkid -s UUID -o value $SWAP_PART)
 
 touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
@@ -757,17 +707,13 @@ LABEL="${ROOT_LABEL}"     /opt                btrfs     rw,$BTRFS_OPTS,subvol=@o
 # UUID="${ROOT_UUID}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
 LABEL="${ROOT_LABEL}"     /home               btrfs     rw,$BTRFS_OPTS_HOME,subvol=@home           0     0
 
-### BOOT ###
-# UUID="${BOOT_UUID}"     /boot               ext4      rw,relatime                                0     1
-LABEL="${SYSTEM_LABEL}"   /boot               ext4      rw,relatime                                0     1
-
 ### EFI ###
 # UUID="${ESP_UUID}"      /boot/efi           vfat      defaults,noatime,nodiratime                0     2
 LABEL="${EFI_LABEL}"      /boot/efi           vfat      defaults,noatime,nodiratime                0     2
 
 ### Swap ###
-# UUID="${SWAP_UUID}"     none                swap      defaults,noatime                           0     0
-# LABEL="${SWAP_LABEL}"   none                swap      defaults,noatime                           0     0
+UUID="${SWAP_UUID}"     none                swap      defaults,noatime                           0     0
+LABEL="${SWAP_LABEL}"   none                swap      defaults,noatime                           0     0
 
 #Swapfile
 # LABEL="${ROOT_UUID}"    none                swap      defaults,noatime
@@ -777,52 +723,6 @@ LABEL="${EFI_LABEL}"      /boot/efi           vfat      defaults,noatime,nodirat
 # tmpfs                   /tmp                tmpfs     defaults,nosuid,nodev,noatime              0     0
 # tmpfs                   /tmp                tmpfs     noatime,mode=1777,nosuid,nodev             0     0
 EOF
-
-#####################################
-#### Install additional packages ####
-#####################################
-
-##############
-## AppArmor ##
-##############
-
-chroot /mnt apt install apparmor apparmor-utils auditd --no-install-recommends -y
-
-mkdir -p /mnt/var/log/audit
-chown root:root /mnt/var/log/audit
-chmod 0700 /mnt/var/log/audit
-
-
-#############
-## Selinux ##
-#############
-
-# chroot /mnt apt purge apparmor apparmor-utils
-
-# chroot /mnt systemctl disable apparmor # --now
-# chroot /mnt apt install selinux-basics selinux-policy-default selinux-utils policycoreutils auditd 
-# chroot /mnt selinux-activate
-# # Verify
-# chroot /mnt sestatus
-# # Switch to Enforcing Mode
-# chroot /mnt setenforce 1
-
-# mkdir -pv /mnt/etc/selinux
-# touch /mnt/etc/selinux/config
-# cat <<EOF >/mnt/etc/selinux/config
-# SELINUX=enforcing
-# SELINUXTYPE=targeted
-# SETLOCALDEFS=0
-# EOF
-
-# chroot /mnt fixfiles -F onboot
-
-
-## Extra tools: Configure Policies
-# chroot /mnt apt install policycoreutils-python-utils --no-install-recommends --y
-## Allow HTTP/HTTPS ports:
-# chroot /mnt semanage port -a -t http_port_t -p tcp 80
-# chroot /mnt semanage port -a -t http_port_t -p tcp 443
 
 #############
 ## Network ##
@@ -898,13 +798,13 @@ chroot /mnt apt install rtkit
 ###############
 #### Utils ####
 ###############
-chroot /mnt apt install gdisk acpi acpid bash-completion pciutils debian-keyring xz-utils htop wget unzip sysfsutils  
-# dkms
+chroot /mnt apt install gdisk bash-completion pciutils debian-keyring xz-utils htop wget unzip 
 
 ##############
 ### Polkit ###
 ##############
-chroot /mnt apt install policykit-1 policykit-1-gnome udisks2 polkitd polkitd-pkla
+# chroot /mnt apt install policykit-1 policykit-1-gnome udisks2 polkitd polkitd-pkla
+chroot /mnt apt install polkitd pkexec udisks2
 
 mkdir -pv /mnt/run/polkit-1/rules.d
 chmod 755 /mnt/run/polkit-1/rules.d
@@ -983,24 +883,6 @@ chroot /mnt apt install chrony
 
 # chroot /mnt update-initramfs -c -k all
 
-#############################
-#### Optimizations Tools ####
-#############################
-
-chroot /mnt apt install earlyoom powertop tlp thermald irqbalance 
-chroot /mnt systemctl enable earlyoom
-chroot /mnt systemctl enable powertop
-chroot /mnt systemctl enable tlp
-chroot /mnt systemctl enable thermald
-chroot /mnt systemctl enable irqbalance
-
-###################
-#### Microcode ####
-###################
-
-chroot /mnt apt install intel-microcode 
-
-
 ######################################
 #### Update initramfs load system ####
 ######################################
@@ -1012,9 +894,6 @@ chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
 ###############################
 #### Minimal xorg packages ####
 ###############################
-
-# chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput \
-#     xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
 
 chroot /mnt apt install xserver-xorg x11-utils x11-xserver-utils xinit
 
@@ -1047,64 +926,9 @@ EOF
 #########################
 
 touch /mnt/etc/rc.local
-cat <<EOF >/mnt/etc/rc.local
-#PowerTop
-powertop --auto-tune
-EOF
-
-#################
-### BLUETOOTH ###
-#################
-
-sudo apt install bluez blueman
-
-
-#################################
-#### Infrastructure packages ####
-#################################
-
-#Python, snap and flatpak
-# chroot /mnt apt install python3 python3-pip snapd flatpak 
-chroot /mnt apt install  snapd flatpak 
-
-####################
-### Virt-Manager ###
-####################
-
-
-#Virt-Manager
-chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset libguestfs0 qemu-user-static binfmt-support virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
-
-chroot /mnt dpkg --add-architecture armhf -y
-chroot /mnt dpkg --add-architecture arm64 -y
-chroot /mnt apt update
-
-chroot /mnt apt install lib6c:armhf -y
-chroot /mnt apt install lib6c:arm64 -y
-
-## For virtmanager
-# chroot /mnt adduser $username libvirt
-# chroot /mnt adduser $username kvm
-
-##############
-### Podman ###
-##############
-
-# sudo apt install curl gpg gnupg2 software-properties-common apt-transport-https lsb-release ca-certificates -y
-
-# source /etc/os-release
-# wget http://downloadcontent.opensuse.org/repositories/home:/alvistack/Debian_$VERSION_ID/Release.key -O alvistack_key
-# cat alvistack_key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/alvistack.gpg >/dev/null
-
-# echo "deb http://downloadcontent.opensuse.org/repositories/home:/alvistack/Debian_$VERSION_ID/ /" | sudo tee /etc/apt/sources.list.d/alvistack.list
-
-# sudo apt update
-# sudo apt install podman python3-podman-compose
 
 ### Nix
-#chroot /mnt apt install nix-setup-systemd -y
+chroot /mnt apt install nix-setup-systemd -y
 
 ############################
 #### BTRFS Backup tools ####
@@ -1186,56 +1010,6 @@ chroot /mnt setupcon --save
 
 chroot /mnt chsh -s /usr/bin/bash root
 
-# AppArmor podman fix
-
-# mkdir -pv /mnt/etc/apparmor.d/local/
-# touch /mnt/etc/apparmor.d/local/usr.sbin.dnsmasq
-# cat << EOF >> /mnt/etc/apparmor.d/local/usr.sbin.dnsmasq
-# owner /run/user/[0-9]*/containers/cni/dnsname/*/dnsmasq.conf r,
-# owner /run/user/[0-9]*/containers/cni/dnsname/*/addnhosts r,
-# owner /run/user/[0-9]*/containers/cni/dnsname/*/pidfile rw,
-# EOF
-
-# chroot /mnt apparmor_parser -R /etc/apparmor.d/usr.sbin.dnsmasq
-# chroot /mnt apparmor_parser /etc/apparmor.d/usr.sbin.dnsmasq
-
-############################################################
-#### NetworkManager config as default instead of dhcpd5 ####
-############################################################
-
-# chroot /mnt apt install ifupdown # comment if using systemd-network
-
-# cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
-# [main]
-# plugins=ifupdown,keyfile
-
-# [ifupdown]
-# managed=true
-# EOF
-
-# touch /mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-# chroot /mnt chmod +x /etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-# cat <<EOF >/mnt/etc/NetworkManager/dispatcher.d/wlan_auto_toggle.sh
-# #!/bin/sh
-
-# # Use dispatcher to automatically toggle wireless depending on LAN cable being plugged in
-# # replacing LAN_interface with yours
-
-# # if [ "$1" = "LAN_interface" ]; then
-# if [ "$1" = "eth0" ]; then
-#     case "$2" in
-#         up)
-#             nmcli radio wifi off
-#             ;;
-#         down)
-#             nmcli radio wifi on
-#             ;;
-#     esac
-# # elif [ "$(nmcli -g GENERAL.STATE device show LAN_interface)" = "20 (unavailable)" ]; then
-# elif [ "$(nmcli -g GENERAL.STATE device show eth0)" = "20 (unavailable)" ]; then
-#     nmcli radio wifi on
-# fi
-# EOF
 
 #########################
 #### Enable Services ####
@@ -1290,7 +1064,7 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ######################
 
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --removable --recheck
 
 #####################
 #### Config Grub ####
@@ -1306,7 +1080,8 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
@@ -1340,8 +1115,8 @@ chroot /mnt apt install dracut
 chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 # chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 
-chroot /mnt apt install extrepo -y
-chroot /mnt extrepo enable librewolf
+# chroot /mnt apt install extrepo -y
+# chroot /mnt extrepo enable librewolf
 
 # chroot /mnt update-initramfs -c -k all
 
@@ -1365,48 +1140,5 @@ rm -rf /mnt/debootstrap
 
 # Add pacstall
 # bash -c "$(curl -fsSL https://git.io/JsADh || wget -q https://git.io/JsADh -O -)"
-chroot /mnt bash -c "$(curl -fsSL https://pacstall.dev/q/install)"
-
-# this makes X server run only on your nvidia card considering you have optimus graphics (intel+nvidia)
-# cat <<\EOF > /mnt/etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf
-# Section "OutputClass"
-#     Identifier "intel"
-#     MatchDriver "i915"
-#     Driver "modesetting"
-# EndSection
-
-# Section "OutputClass"
-#     Identifier "nvidia"
-#     MatchDriver "nvidia-drm"
-#     Driver "nvidia"
-#     Option "AllowEmptyInitialConfiguration"
-#     Option "PrimaryGPU" "yes"
-#     ModulePath "/usr/lib/nvidia/xorg"
-#     ModulePath "/usr/lib/xorg/modules"
-# EndSection
-# EOF
-
-# cmake -B build \
-#   -DCMAKE_RELEASE_TYPE=Release \
-#   -D[ENABLE_SYSTEMD=on] -D[USE_BPF_PROC_IMPL=on] [STATIC=on] \
-#   -S .
-# cmake --build build --target ananicy-cpp
-# sudo cmake --install build --component Runtime
-
-# gnome-disk-utilities
-# nosuid,nodev,nofail,x-gvfs-show,auto
-# https://github.com/fkortsagin/Simple-Debian-Setup
-
-# virt-install \
-# --name nixos \
-# --boot uefi \
-# --ram 8196 \
-# --vcpus 4 \
-# --network bridge:virbr0 \
-# --os-variant nixos-unstable \
-# --disk path=/var/lib/libvirt/images/nixos.qcow2,size=100 \
-# --console pty,target_type=serial \
-# --cdrom ~/Downloads/nixos-minimal-*-x86_64-linux.iso
-
-# sudo apt install task-xfce-desktop
+# chroot /mnt bash -c "$(curl -fsSL https://pacstall.dev/q/install)"
 
