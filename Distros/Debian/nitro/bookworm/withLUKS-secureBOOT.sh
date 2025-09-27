@@ -44,8 +44,10 @@ BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,nodatacow,commit=12
 BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
 # TMPFS="ssd,noatime,mode=1777,nosuid,nodev,compress-force=zstd:3,discard=async,space_cache=v2,commit=60"
 
-echo "Disable SELinux temporarily..."
-# setenforce 0 # disable SELInux for now
+# Disable SELinux temporarily if present
+if command -v setenforce >/dev/null 2>&1; then
+  setenforce 0
+fi
 
 # Create Partitions and Encrypt
 ### Partition
@@ -475,7 +477,7 @@ vm.swappiness=100
 vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
-
+net.ipv4.ping_group_range=0 2147483647
 cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
 net.ipv4.ping_group_range=0 $MAX_GID
 EOF

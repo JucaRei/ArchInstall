@@ -3,8 +3,8 @@
 # Put it on /usr/local/bin/ as git
 # give exec right's chmod +x /usr/local/bin/git
 
-# GIT_WINDOWS="/mnt/c/Program Files/Git/cmd/git.exe"
-GIT_WINDOWS="/mnt/c/Users/$USER/scoop/apps/git/2.47.1.2/cmd/git.exe"
+GIT_WINDOWS="/mnt/c/Program Files/Git/cmd/git.exe"
+# GIT_WINDOWS="/mnt/c/Users/$USER/scoop/apps/git/2.47.1.2/cmd/git.exe"
 # GIT_WINDOWS="/mnt/c/Users/Reinaldo/scoop/apps/git/2.39.0.windows.2/bin/git.exe"
 GIT_LINUX="/usr/bin/git"
 

@@ -221,6 +221,18 @@ options nvidia_drm modeset=1
 options nvidia NVreg_PreserveVideoMemoryAllocations=1
 EOF
 
+touch /mnt/etc/modprobe.d/hid_apple.conf
+cat <<EOF > /mnt/etc/modprobe.d/hid_apple.conf
+# Apple HID driver options ##
+options hid_apple fnmode=2
+EOF
+
+touch /mnt/etc/modprobe.d/disable-usb-autosuspend.conf
+cat <<EOF > /mnt/etc/modprobe.d/disable-usb-autosuspend.conf
+# Disable USB autosuspend
+options usbcore autosuspend=-1
+EOF
+
 mkdir -pv /mnt/etc/modules-load.d
 # touch /mnt/etc/modules-load.d/iptables.conf
 # cat << EOF > /mnt/etc/modules-load.d/iptables.conf
@@ -608,6 +620,12 @@ chroot /mnt apt install -y nvidia-kernel-dkms nvidia-driver firmware-misc-nonfre
 # chroot /mnt dpkg -i /tmp/virtualgl_*.deb
 # chroot /mnt apt -f install /tmp/virtualgl_*.deb
 # chroot /mnt ln -svrf /opt/VirtualGL/bin/glxspheres64 /usr/local/bin/
+
+touch /mnt/etc/vdpau_wrapper.cfg
+cat <<EOF > /mnt/etc/vdpau_wrapper.cfg
+enable_flash_uv_swap=1
+disable_flash_pq_bg_color=1
+EOF
 
 ###############################
 #### Minimal xorg packages ####
@@ -1122,8 +1140,8 @@ GRUB_DEFAULT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash usbcore.autosuspend=-1 kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rd.driver.blacklist=grub.nouveau rcutree.rcu_idle_gp_delay=1 intel_iommu=on nvidia-drm.modeset=1 i915.enable_psr=0 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+# usbcore.autosuspend=-1
 GRUB_DEFAULT=saved
 
 #GRUB_TERMINAL_INPUT="console"

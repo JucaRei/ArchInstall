@@ -15,34 +15,27 @@ apt update
 #####################################
 
 # Variables
-hostname="nitro"
-name="Reinaldo P JR"
+hostname="debianvm"
+name="Developer Machine"
 username="juca"
 Architecture="amd64"
 CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
-# DRIVE="/dev/sda"
-DRIVE="/dev/nvme0n1"
-SYSTEM_PART="${DRIVE}p2"
-EFI_PART="${DRIVE}p3"
-ROOT_PART="${DRIVE}p4"
-WINDOWS_PART="${DRIVE}p6"
-MISC_PART="${DRIVE}p7"
+DRIVE="/dev/sda"
+SYSTEM_PART="${DRIVE}2"
+EFI_PART="${DRIVE}3"
+ROOT_PART="${DRIVE}4"
 # HOME_PART="${DRIVE}p5"
-# WINDOWS_PART="${DRIVE}p7"
-# MISC_PART="${DRIVE}p8"
 
 # MAPPER_NAME="secure_btrfs"
 MOUNTPOINT="/mnt"
 ROOT_LABEL="Debian"
-# HOME_LABEL="home"
-SWAP_LABEL="swap" 
+# HOME_LABEL="HOME_FILESYSTEM"
+BIOS_LABEL="Bios_Boot"
+SWAP_LABEL="SWAP"
 EFI_LABEL="ESP"
-SYSTEM_LABEL="SYSTEM"
-WINDOWS_LABEL="Windows_11"
-MISC_LABEL="SharedData"
+SYSTEM_LABEL="System_Boot"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,nodatacow,commit=120,discard=async"
 BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
-# TMPFS="ssd,noatime,mode=1777,nosuid,nodev,compress-force=zstd:3,discard=async,space_cache=v2,commit=60"
 
 echo "Disable SELinux temporarily..."
 # setenforce 0 # disable SELInux for now
@@ -51,16 +44,12 @@ echo "Disable SELinux temporarily..."
 ### Partition
 echo "Creating partitions on $DRIVE..."
 sgdisk --zap-all $DRIVE
-sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"                           $DRIVE
-sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"                     $DRIVE
-sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"                          $DRIVE
-sgdisk -n 0:0:+85G     -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem "      $DRIVE
-# sgdisk -n 0:0:+70G     -t 5:8302 -c 5:"${ROOT_LABEL} Home Filesystem"       $DRIVE
-# sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+16M     -t 5:0C01 -c 5:"Microsoft Windows Reserved"          $DRIVE
-sgdisk -n 0:0:+85G     -t 6:0700 -c 6:"Microsoft Windows Data"              $DRIVE
-sgdisk -n 0:0:0        -t 7:0700 -c 7:"Misc Data"                           $DRIVE
-sgdisk -p $DRIVE
+sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"${BIOS_LABEL} Filesystem"                           $DRIVE
+sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"${SYSTEM_LABEL} Filesystem"                         $DRIVE
+sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"${EFI_LABEL} Filesystem"                            $DRIVE
+sgdisk -n 0:0:0        -t 4:8300 -c 4:"${ROOT_LABEL} Root Filesystem"                      $DRIVE
+# sgdisk -n 0:0:+70G     -t 5:8302 -c 5:"${HOME_LABEL} Home Filesystem"                    $DRIVE
+sgdisk -p ${DRIVE}
 
 
 # === ENCRYPT PARTITION ===
@@ -72,12 +61,10 @@ sgdisk -p $DRIVE
 echo "Formatting partitions on $DRIVE..."
 echo "🧼 Formatting partitions..."
 
-mkfs.ext4   -L      	"$SYSTEM_LABEL"      "$SYSTEM_PART"
+mkfs.ext4   -L      	  "$SYSTEM_LABEL"      "$SYSTEM_PART"
 mkfs.fat   -F32 -n      "$EFI_LABEL"         "$EFI_PART"
 mkfs.btrfs -f   -L      "$ROOT_LABEL"        "$ROOT_PART"
-# mkfs.btrfs -f   -L      "$HOME_LABEL"        "$HOME_PART"
-mkfs.ntfs  -Q   -f -L   "$WINDOWS_LABEL"     "$WINDOWS_PART"
-mkfs.exfat      -n      "$MISC_LABEL"        "$MISC_PART"
+# mkfs.btrfs -f   -L    "$HOME_LABEL"        "$HOME_PART"
 
 udevadm trigger
 
@@ -118,7 +105,7 @@ mount -o $BTRFS_OPTS,subvol=@spool /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/va
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
 mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache
 mount -o $BTRFS_OPTS_HOME,subvol=@snapshots /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
-mount /dev/disk/by-label/$SYSTEM_LABEL $MOUNTPOINT/boot
+mount "/dev/disk/by-label/${SYSTEM_LABEL}" "$MOUNTPOINT/boot"
 # mount /dev/disk/by-label/BOOT /mnt/boot
 mkdir -pv $MOUNTPOINT/boot/efi
 mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/$EFI_LABEL $MOUNTPOINT/boot/efi
@@ -265,33 +252,129 @@ cat >/mnt/etc/apt/sources.list.d/sid.list <<HEREDOC
 deb http://deb.debian.org/debian sid main
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
-Types: deb
-Architectures: amd64 arm64
-Components: main
-Uris: https://repo.librewolf.net
-Suites: librewolf
-Signed-By: /var/lib/extrepo/keys/librewolf.asc
+# cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
+# Types: deb
+# Architectures: amd64 arm64
+# Components: main
+# Uris: https://repo.librewolf.net
+# Suites: librewolf
+# Signed-By: /var/lib/extrepo/keys/librewolf.asc
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/vscode.list <<HEREDOC
+# ### THIS FILE IS AUTOMATICALLY CONFIGURED ###
+# # You may comment out this entry, but any other modifications may be lost.
+# Types: deb
+# URIs: https://packages.microsoft.com/repos/code
+# Suites: stable
+# Components: main
+# Architectures: amd64,arm64,armhf
+# Signed-By: /usr/share/keyrings/microsoft.gpg
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/waydroid.list <<HEREDOC
+# deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ bookworm main
+# HEREDOC
+
+# cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
+# deb [signed-by=/usr/share/keyrings/xanmod.gpg] http://deb.xanmod.org releases main
+# HEREDOC
+
+# chroot /mnt apt install gnupg2 curl -y
+# chroot /mnt apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F7D09EE734E623
+# chroot /mnt curl -fsSL https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/xanmod.gpg > /dev/null
+
+
+######################################
+#### Optimize apt package manager ####
+######################################
+
+mkdir -pv /mnt/etc/apt/apt.conf.d
+touch /mnt/etc/apt/apt.conf.d/99norecommends
+cat >/mnt/etc/apt/apt.conf.d/99norecommends <<HEREDOC
+#Recommends are as of now abused in many packages
+APT::Install-Recommends "0";        # Prevents auto-installing recommended packages
+APT::Install-Suggests "0";          # Skips suggested packages (often unnecessary)
+
+# // no install recommends/suggests packages
+# APT::Install-Recommends "false";
+# APT::Install-Suggests "false";
+
+### For install testing packages
+#APT::Default-Release "testing";    # Commented out, but useful if you want to prioritize testing selectively
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/vscode.list <<HEREDOC
-### THIS FILE IS AUTOMATICALLY CONFIGURED ###
-# You may comment out this entry, but any other modifications may be lost.
-Types: deb
-URIs: https://packages.microsoft.com/repos/code
-Suites: stable
-Components: main
-Architectures: amd64,arm64,armhf
-Signed-By: /usr/share/keyrings/microsoft.gpg
+touch /mnt/etc/apt/apt.conf.d/99assumeyes
+cat >/mnt/etc/apt/apt.conf.d/99assumeyes <<HEREDOC
+# assume yes install packages
+// assume yes install packages
+APT::Get::Assume-Yes "true";
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/waydroid.list <<HEREDOC
-deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ bookworm main
+# echo 'APT::Default-Release "stable";' | sudo tee /etc/apt/apt.conf.d/99default-release
+echo 'APT::Default-Release "bookworm";' | tee /mnt/etc/apt/apt.conf.d/99default-release
+
+mkdir -pv /mnt/etc/apt/preferences.d
+
+touch /mnt/etc/apt/preferences.d/99stable.pref
+touch /mnt/etc/apt/preferences.d/50testing.pref
+touch /mnt/etc/apt/preferences.d/99sid.pref
+touch /mnt/etc/apt/preferences.d/10unstable.pref
+touch /mnt/etc/apt/preferences.d/1experimental.pref
+touch /mnt/etc/apt/preferences.d/no-initramfs-tools
+
+cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
+# 500 <= P < 990: causes a version to be installed unless there is a
+# version available belonging to the target release or the installed
+# version is more recent
+
+Package: *
+# Pin: release a=stable
+# Pin: release a=${CODENAME}
+Pin: release a=bookworm
+Pin-Priority: 900
 HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
-deb [signed-by=/usr/share/keyrings/xanmod.gpg] http://deb.xanmod.org releases main
+cat >/mnt/etc/apt/preferences.d/99sid.pref <<HEREDOC
+Package: *
+Pin: release a=sid
+Pin-Priority: 100
 HEREDOC
+
+cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
+# 100 <= P < 500: causes a version to be installed unless there is a
+# version available belonging to some other distribution or the installed
+# version is more recent
+
+Package: *
+Pin: release a=testing
+Pin-Priority: 400
+HEREDOC
+
+cat >/mnt/etc/apt/preferences.d/10unstable.pref <<HEREDOC
+# 0 < P < 100: causes a version to be installed only if there is no
+# installed version of the package
+
+Package: *
+Pin: release a=unstable
+Pin-Priority: 50
+HEREDOC
+
+cat >/mnt/etc/apt/preferences.d/1experimental.pref <<HEREDOC
+# 0 < P < 100: causes a version to be installed only if there is no
+# installed version of the package
+
+Package: *
+Pin: release a=experimental
+Pin-Priority: 1
+HEREDOC
+
+cat >/mnt/etc/apt/preferences.d/no-initramfs-tools <<HEREDOC
+Package: initramfs-tools
+Pin: release *
+Pin-Priority: -1
+HEREDOC
+
 
 chroot /mnt apt update
 chroot /mnt apt upgrade --yes
@@ -303,8 +386,8 @@ chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode -
 # firmware-realtek fwupdate fwupd
 
 chroot /mnt apt update
-chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
-chroot /mnt apt-mark hold initramfs-tools
+# chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
+# chroot /mnt apt-mark hold initramfs-tools
 
 ### Network
 chroot /mnt apt install network-manager rfkill --yes
@@ -477,7 +560,7 @@ vm.dirty_ratio=50
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
-net.ipv4.ping_group_range=0 $MAX_GID
+net.ipv4.ping_group_range=0 2147483647
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
@@ -561,94 +644,6 @@ EOF
 ############################
 
 # chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
-
-######################################
-#### Optimize apt package manager ####
-######################################
-
-mkdir -pv /mnt/etc/apt/apt.conf.d
-touch /mnt/etc/apt/apt.conf.d/99norecommends
-cat >/mnt/etc/apt/apt.conf.d/99norecommends <<HEREDOC
-#Recommends are as of now abused in many packages
-APT::Install-Recommends "0";        # Prevents auto-installing recommended packages
-APT::Install-Suggests "0";          # Skips suggested packages (often unnecessary)
-
-# // no install recommends/suggests packages
-# APT::Install-Recommends "false";
-# APT::Install-Suggests "false";
-
-### For install testing packages
-#APT::Default-Release "testing";    # Commented out, but useful if you want to prioritize testing selectively
-HEREDOC
-
-touch /mnt/etc/apt/apt.conf.d/99assumeyes
-cat >/mnt/etc/apt/apt.conf.d/99assumeyes <<HEREDOC
-# assume yes install packages
-// assume yes install packages
-APT::Get::Assume-Yes "true";
-HEREDOC
-
-# echo 'APT::Default-Release "stable";' | sudo tee /etc/apt/apt.conf.d/99default-release
-echo 'APT::Default-Release "stable";' | tee /mnt/etc/apt/apt.conf.d/99default-release
-
-mkdir -pv /mnt/etc/apt/preferences.d
-
-touch /mnt/etc/apt/preferences.d/99stable.pref
-touch /mnt/etc/apt/preferences.d/50testing.pref
-touch /mnt/etc/apt/preferences.d/99sid.pref
-touch /mnt/etc/apt/preferences.d/10unstable.pref
-touch /mnt/etc/apt/preferences.d/1experimental.pref
-touch /mnt/etc/apt/preferences.d/no-initramfs-tools
-
-cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
-# 500 <= P < 990: causes a version to be installed unless there is a
-# version available belonging to the target release or the installed
-# version is more recent
-
-Package: *
-Pin: release a=stable
-Pin-Priority: 900
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/99sid.pref <<HEREDOC
-Package: *
-Pin: release a=sid
-Pin-Priority: 100
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
-# 100 <= P < 500: causes a version to be installed unless there is a
-# version available belonging to some other distribution or the installed
-# version is more recent
-
-Package: *
-Pin: release a=testing
-Pin-Priority: 400
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/10unstable.pref <<HEREDOC
-# 0 < P < 100: causes a version to be installed only if there is no
-# installed version of the package
-
-Package: *
-Pin: release a=unstable
-Pin-Priority: 50
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/1experimental.pref <<HEREDOC
-# 0 < P < 100: causes a version to be installed only if there is no
-# installed version of the package
-
-Package: *
-Pin: release a=experimental
-Pin-Priority: 1
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/no-initramfs-tools <<HEREDOC
-Package: initramfs-tools
-Pin: release *
-Pin-Priority: -1
-HEREDOC
 
 ################################
 #### Update package manager ####
@@ -957,21 +952,30 @@ polkit.addRule(function(action, subject) {
 })
 HEREDOC
 
-chmod 644 /mnt/etc/polkit-1/rules.d/10-udisks2.rules
-chmod 644 /mnt/etc/polkit-1/rules.d/10-commands.rules
-chmod 644 /mnt/etc/polkit-1/rules.d/10-logs.rules
-chown root:root /mnt/etc/polkit-1/rules.d/10-udisks2.rules
-chmod root:root /mnt/etc/polkit-1/rules.d/10-commands.rules
-chmod root:root /mnt/etc/polkit-1/rules.d/10-logs.rules
+chmod 644 /mnt/etc/polkit-1/rules.d/10-udisks2.rules \
+  /mnt/etc/polkit-1/rules.d/10-commands.rules \
+  /mnt/etc/polkit-1/rules.d/10-logs.rules
+
+chown root:root /mnt/etc/polkit-1/rules.d/10-udisks2.rules \
+  /mnt/etc/polkit-1/rules.d/10-commands.rules \
+  /mnt/etc/polkit-1/rules.d/10-logs.rules
 
 cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
 $USER ALL = NOPASSWD: /bin/systemctl
 HEREDOC
 
+### XANMOD KERNEL ###
+chroot /mnt apt install software-properties-common apt-transport-https ca-certificates curl gnupg 
+
 ############
 ### BOOT ###
 ############
-chroot /mnt apt install efibootmgr grub-efi-amd64 os-prober
+# chroot /mnt apt install efibootmgr grub-efi-amd64 os-prober
+
+#############################
+### BOOT WITH SECURE BOOT ###
+#############################
+chroot /mnt apt install shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
 
 ############
 ### TIME ###
@@ -1056,7 +1060,7 @@ EOF
 ### BLUETOOTH ###
 #################
 
-sudo apt install bluez blueman
+sudo apt install bluez blueman -y
 
 
 #################################
@@ -1073,16 +1077,16 @@ chroot /mnt apt install  snapd flatpak
 
 
 #Virt-Manager
-chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-dnsmasq ipset libguestfs0 qemu-user-static binfmt-support virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+# chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
+# dnsmasq ipset libguestfs0 qemu-user-static binfmt-support virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
+# bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
 
-chroot /mnt dpkg --add-architecture armhf -y
-chroot /mnt dpkg --add-architecture arm64 -y
-chroot /mnt apt update
+# chroot /mnt dpkg --add-architecture armhf -y
+# chroot /mnt dpkg --add-architecture arm64 -y
+# chroot /mnt apt update
 
-chroot /mnt apt install lib6c:armhf -y
-chroot /mnt apt install lib6c:arm64 -y
+# chroot /mnt apt install lib6c:armhf -y
+# chroot /mnt apt install lib6c:arm64 -y
 
 ## For virtmanager
 # chroot /mnt adduser $username libvirt
@@ -1285,12 +1289,78 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ## Update initramfs
 # chroot /mnt update-initramfs -c -k all
 
+### Kernel ###
+chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
+
 ######################
 #### Install grub ####
 ######################
 
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
+# chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
+
+#####################################
+### Secure Boot + GRUB + MOK Keys ###
+#####################################
+
+# Instalar pacotes necessários
+chroot /mnt apt install -y shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
+
+# Instalar GRUB via shim
+chroot /mnt grub-install \
+  --target=x86_64-efi \
+  --efi-directory=/boot/efi \
+  --bootloader-id=debian \
+  --recheck
+
+# Atualizar configuração do GRUB
+chroot /mnt update-grub
+
+# Criar diretório para chaves
+chroot /mnt mkdir -p /root/secureboot-keys
+
+# Gerar chave MOK (PEM para sbsign, DER para mokutil/kmodsign)
+chroot /mnt bash -c '
+  if [ ! -f /root/secureboot-keys/MOK.key ]; then
+    openssl req -new -x509 -newkey rsa:2048 \
+      -keyout /root/secureboot-keys/MOK.key \
+      -out    /root/secureboot-keys/MOK.crt \
+      -nodes -days 36500 -subj "/CN=My Kernel Module Signing/"
+    openssl x509 -in /root/secureboot-keys/MOK.crt -outform DER -out /root/secureboot-keys/MOK.der
+  fi
+'
+
+# Importar chave no MOK Manager (vai pedir confirmação no próximo boot)
+chroot /mnt mokutil --import /root/secureboot-keys/MOK.der || true
+
+
+
+# Assinar todos os kernels instalados
+chroot /mnt bash -c '
+  for kver in $(ls /lib/modules); do
+    vmlinuz="/boot/vmlinuz-${kver}"
+    if [ -f "$vmlinuz" ]; then
+      sbsign --key /root/secureboot-keys/MOK.key \
+             --cert /root/secureboot-keys/MOK.crt \
+             --output "${vmlinuz}.signed" "$vmlinuz"
+      mv -f "${vmlinuz}.signed" "$vmlinuz"
+    fi
+  done
+'
+
+# Criar hook DKMS para assinar módulos automaticamente
+cat << 'EOF' > /mnt/etc/dkms/post-build.d/99-sign-with-mok
+#!/bin/bash
+KEY=/root/secureboot-keys/MOK.key
+DER=/root/secureboot-keys/MOK.der
+sf=$(find /usr/src/linux-headers-$(uname -r)/scripts -name sign-file 2>/dev/null | head -n1)
+[ -x "$sf" ] || exit 0
+find /lib/modules/$(uname -r) -type f -name '*.ko' -print0 | \
+  xargs -0 -I{} "$sf" sha256 "$KEY" "$DER" "{}"
+EOF
+chmod +x /mnt/etc/dkms/post-build.d/99-sign-with-mok
+
+
 
 #####################
 #### Config Grub ####
@@ -1306,7 +1376,7 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable" 
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
@@ -1333,12 +1403,16 @@ chroot /mnt update-grub
 # chroot /mnt efibootmgr -c -d /dev/by-label/Debian -L Debian -l \\EFI\\BOOT\\BOOTX64.efi
 chroot /mnt efibootmgr
 
+#####################################
+### Geração e importação da chave MOK
+#####################################
+
+# Atualizar configuração do GRUB
+chroot /mnt update-grub
+
+
 
 chroot /mnt apt install dracut
-
-### Kernel ###
-chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
-# chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 
 chroot /mnt apt install extrepo -y
 chroot /mnt extrepo enable librewolf
@@ -1410,3 +1484,83 @@ chroot /mnt bash -c "$(curl -fsSL https://pacstall.dev/q/install)"
 
 # sudo apt install task-xfce-desktop
 
+##################
+### SIGN CHECK ###
+##################
+touch /mnt/usr/local/bin/check-kernel-signatures.sh
+cat <<EOF >/mnt/usr/local/bin/check-kernel-signatures.sh
+#!/bin/bash
+# Lista todos os kernels instalados e verifica se estão assinados com a chave MOK
+
+echo " [Kernels Instalados] Verificando assinaturas..."
+
+for k in /boot/vmlinuz-*; do
+    KERNEL_NAME=$(basename "$k")
+    echo ""
+    echo " Verificando $KERNEL_NAME..."
+
+    if sbverify --list "$k" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+        echo " $KERNEL_NAME está assinado corretamente com sua chave MOK"
+    else
+        echo " $KERNEL_NAME NÃO está assinado ou tem assinatura inválida"
+    fi
+done
+EOF
+chmod +x /mnt/usr/local/bin/check-kernel-signatures.sh
+
+touch /mnt/usr/local/bin/check-secureboot.sh
+cat <<EOF >/mnt/usr/local/bin/check-secureboot.sh
+#!/bin/bash
+# Verifica se o sistema está 100% compatível com Secure Boot
+
+echo " [Secure Boot] Verificando status..."
+if mokutil --sb-state | grep -q "SecureBoot enabled"; then
+    echo " Secure Boot está ATIVADO"
+else
+    echo " Secure Boot está DESATIVADO"
+fi
+
+echo ""
+echo " [Shim/GRUB] Verificando binários EFI..."
+EFI_DIR="/boot/efi/EFI/debian"
+for bin in shimx64.efi grubx64.efi; do
+    if sbverify --list "$EFI_DIR/$bin" &>/dev/null; then
+        echo " $bin está assinado corretamente"
+    else
+        echo " $bin NÃO está assinado ou está corrompido"
+    fi
+done
+
+echo ""
+echo " [MOK] Verificando chave registrada..."
+if mokutil --list-enrolled | grep -q "My Kernel Module Signing"; then
+    echo " Chave MOK está registrada no firmware"
+else
+    echo " Chave MOK NÃO está registrada"
+fi
+
+echo ""
+echo " [Kernel] Verificando assinatura do kernel atual..."
+KERNEL="/boot/vmlinuz-$(uname -r)"
+if sbverify --list "$KERNEL" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+    echo " Kernel $(uname -r) está assinado corretamente"
+else
+    echo " Kernel $(uname -r) NÃO está assinado"
+fi
+
+echo ""
+echo " [DKMS] Verificando módulos DKMS..."
+DKMS_DIR="/lib/modules/$(uname -r)/updates/dkms"
+if [ -d "$DKMS_DIR" ]; then
+    for mod in "$DKMS_DIR"/*.ko; do
+        if modinfo "$mod" | grep -q "signer"; then
+            echo " $(basename "$mod") está assinado"
+        else
+            echo " $(basename "$mod") NÃO está assinado"
+        fi
+    done
+else
+    echo "ℹ Nenhum módulo DKMS encontrado para $(uname -r)"
+fi
+EOF
+chmod +x /mnt/usr/local/bin/check-secureboot.sh

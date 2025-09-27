@@ -1,0 +1,55 @@
+# Omarchy packages
+
+1password-beta 1password-cli \
+alacritty bash-completion  \
+whois eza bat btop duf dust fd fzf ripgrep starship tldr fastfetch \
+asdcontrol-git \
+brightnessctl \ 
+blueberry \
+btrfs-progs snapper \ 
+clang gcc14 \ 
+cups cups-browsed cups-filters cups-pdf \
+docker docker-buildx docker-compose lazydocker ufw-docker \
+efibootmgr limine limine-mkinitcpio-hook limine-snapper-sync  \
+evince typora \  
+fcitx5 fcitx5-gtk fcitx5-qt \
+ffmpegthumbnailer fontconfig gst-plugin-pipewire \ 
+git github-cli lazygit \ 
+gnome-calculator gnome-keyring gnome-themes-extra \ 
+gum \
+gvfs-mtp gvfs-smb \  
+hypridle hyprland hyprland-qtutils hyprlock hyprpicker hyprshot hyprsunset \ 
+imagemagick impala imv \
+inetutils iwd \
+jq less \
+kdenlive kvantum-qt5 \  
+libpulse libqalculate \ 
+libreoffice-fresh obsidian pinta \
+linux linux-firmware llvm \
+localsend-bin \
+neovim luarocks \
+mako \
+man-db mariadb-libs \ 
+mise \
+mpv \
+nautilus \
+noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra \ 
+tree-sitter-cli ttf-cascadia-mono-nerd ttf-ia-writer ttf-jetbrains-mono-nerd \ 
+nss-mdns obs-studio omarchy-chromium woff2-font-awesome \
+playerctl pamixer pipewire pipewire-alsa pipewire-jack pipewire-pulse \ 
+plymouth polkit-gnome postgresql-libs \
+power-profiles-daemon \
+python-gobject python-poetry-core python-terminaltexteffects \
+qt5-wayland uwsm rust slurp satty plocate sushi swaybg swayosd waybar walker-bin wf-recorder \  
+wl-clip-persist wl-clipboard wl-screenrec \ 
+signal-desktop spotify \ 
+system-config-printer \  
+tzupdate ufw \
+unzip zoxide xmlstarlet \
+wireless-regdb wiremix wireplumber \ 
+xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
+ zram-generator \ 
+yaru-icon-theme yay
+ 
+#  cat /etc/mkinitcpio.conf.d/omarchy_hooks.conf
+# HOOKS=(base udev plymouth keyboard autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck btrfs-overlayfs)
