@@ -19,7 +19,7 @@ hostname="debianvm"
 name="Developer Machine"
 username="juca"
 Architecture="amd64"
-CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
+CODENAME=trixie #$(lsb_release --codename --short) # or CODENAME=bookworm
 DRIVE="/dev/sda"
 SYSTEM_PART="${DRIVE}2"
 EFI_PART="${DRIVE}3"
@@ -77,7 +77,7 @@ mount "$ROOT_PART" "$MOUNTPOINT"
 #   btrfs subvolume create "$MOUNTPOINT/$sv"
 # done
 
-for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @snapshots @nix @home; do
+for sv in @root @cache @opt @gdm @libvirt @spool @log @tmp @apt @snapshots @nix @home; do
   btrfs subvolume create "$MOUNTPOINT/$sv"
 done
 umount -Rvf "$MOUNTPOINT"
@@ -92,7 +92,7 @@ echo "Btrfs subvolumes created successfully."
 echo "Mounting subvolumes and boot partition..."
 ### Mount subvolumes
 mount -o $BTRFS_OPTS,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
-mkdir -pv $MOUNTPOINT/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache,lib/{libvirt,gdm}}}
+mkdir -pv $MOUNTPOINT/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache/apt,lib/{libvirt,gdm}}}
 
 # mount -o $BTRFS_OPTS_HOME,subvol=@home /dev/disk/by-label/$HOME_LABEL $MOUNTPOINT/home
 mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/home
@@ -104,6 +104,7 @@ mount -o $BTRFS_OPTS,subvol=@log /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/
 mount -o $BTRFS_OPTS,subvol=@spool /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/spool
 mount -o $BTRFS_OPTS,subvol=@tmp /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
 mount -o $BTRFS_OPTS,subvol=@cache /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache
+mount -o $BTRFS_OPTS,subvol=@apt /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache/apt
 mount -o $BTRFS_OPTS_HOME,subvol=@snapshots /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
 mount "/dev/disk/by-label/${SYSTEM_LABEL}" "$MOUNTPOINT/boot"
 # mount /dev/disk/by-label/BOOT /mnt/boot
@@ -121,7 +122,7 @@ echo "Subvolumes and boot partition mounted successfully."
 
 debootstrap \
   --variant=minbase \
-  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
+  --include=apt,bash,btrfs-compsize,btrfs-progs,udisks2-btrfs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
@@ -157,7 +158,7 @@ do_prelink="no"
 hostonly="yes"
 # add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
 add_dracutmodules+=" systemd "
-force_drivers+=" nvme ahci hid_generic iwlwifi "
+# force_drivers+=" nvme ahci hid_generic iwlwifi "
 early_microcode=yes
 EOF
 
@@ -200,66 +201,126 @@ EOF
 ########################
 
 rm /mnt/etc/apt/sources.list
-touch /mnt/etc/apt/sources.list.d/{debian.list,various.list,sid.list}
+# touch /mnt/etc/apt/sources.list.d/{debian.list,various.list,sid.list}
+touch /mnt/etc/apt/sources.list.d/debian.sources
 
-CODENAME=bookworm #$(lsb_release --codename --short) # or CODENAME=bookworm
-cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
-####################
-### Debian repos ###
-####################
+#### OLD WAY ####
+# cat >/mnt/etc/apt/sources.list.d/debian.list <<HEREDOC
+# ####################
+# ### Debian repos ###
+# ####################
 
-deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+# deb https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
+# deb-src https://deb.debian.org/debian/ $CODENAME main contrib non-free non-free-firmware
 
-#deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
-#deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+# #deb https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
+# #deb-src https://security.debian.org/debian-security $CODENAME-security main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+# deb https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
+# deb-src https://deb.debian.org/debian/ $CODENAME-updates main contrib non-free non-free-firmware
 
-deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
-deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+# deb https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
+# deb-src https://deb.debian.org/debian/ $CODENAME-backports main contrib non-free non-free-firmware
 
-#######################
-### Debian unstable ###
-#######################
+# #######################
+# ### Debian unstable ###
+# #######################
 
-##Debian Testing
-# deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
-# deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+# ##Debian Testing
+# # deb http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
+# # deb-src http://deb.debian.org/debian/ testing main contrib non-free non-free-firmware
 
 
-##Debian Unstable (Sid)
-# deb http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
-# deb-src http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
-##Debian Experimental
-# deb http://deb.debian.org/debian experimental main contrib non-free non-free-firmware
-# deb-src http://deb.debian.org/debian experimental main contrib non-free non-free-firmware
+# ##Debian Unstable (Sid)
+# # deb http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
+# # deb-src http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
+# ##Debian Experimental
+# # deb http://deb.debian.org/debian experimental main contrib non-free non-free-firmware
+# # deb-src http://deb.debian.org/debian experimental main contrib non-free non-free-firmware
 
-###################
-### Tor com apt ###
-###################
-# In particular, once you have the apt-transport-tor package installed, the following entries should work in your sources list for a Debian system:
+# ###################
+# ### Tor com apt ###
+# ###################
+# # In particular, once you have the apt-transport-tor package installed, the following entries should work in your sources list for a Debian system:
 
-# deb tor+http://vwakviie2ienjx6t.onion/debian stable main
+# # deb tor+http://vwakviie2ienjx6t.onion/debian stable main
 
-# deb  tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm            main
-# deb  tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm-updates    main
-# deb  tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/debian-security bookworm/updates    main
+# # deb  tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm            main
+# # deb  tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm-updates    main
+# # deb  tor+http://5ajw6aqf3ep7sijnscdzw77t7xq4xjpsy335yb2wiwgouo7yfxtjlmid.onion/debian-security bookworm/updates    main
 
-# deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm-backports  main
+# # deb tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian          bookworm-backports  main
 
-## The old onion services using version 2 of Tor's onion protocol continue to work for now:
-# deb  tor+http://vwakviie2ienjx6t.onion/debian          bookworm            main
-# deb  tor+http://vwakviie2ienjx6t.onion/debian          bookworm-updates    main
-# deb  tor+http://sgvtcaew4bxjd7ln.onion/debian-security bookworm/updates    main
+# ## The old onion services using version 2 of Tor's onion protocol continue to work for now:
+# # deb  tor+http://vwakviie2ienjx6t.onion/debian          bookworm            main
+# # deb  tor+http://vwakviie2ienjx6t.onion/debian          bookworm-updates    main
+# # deb  tor+http://sgvtcaew4bxjd7ln.onion/debian-security bookworm/updates    main
 
-# deb tor+http://vwakviie2ienjx6t.onion/debian          bookworm-backports  main
+# # deb tor+http://vwakviie2ienjx6t.onion/debian          bookworm-backports  main
 
-HEREDOC
+# HEREDOC
 
-cat >/mnt/etc/apt/sources.list.d/sid.list <<HEREDOC
-deb http://deb.debian.org/debian sid main
+### NEW WAY ###
+cat >/mnt/etc/apt/sources.list.d/debian.sources <<HEREDOC
+Types: deb deb-src
+# URIs: https://deb.debian.org/debian/
+URIs: http://debian.c3sl.ufpr.br/debian/
+Suites: trixie
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+# URIs: https://deb.debian.org/debian/
+URIs: http://debian.c3sl.ufpr.br/debian/
+Suites: trixie-updates
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+# URIs: https://deb.debian.org/debian/
+URIs: http://debian.c3sl.ufpr.br/debian/
+Suites: trixie-backports
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Types: deb deb-src
+# # URIs: https://deb.debian.org/debian/
+# URIs: http://debian.c3sl.ufpr.br/debian/
+# Suites: trixie-security
+# Components: main contrib non-free non-free-firmware
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+# URIs: http://deb.debian.org/debian/
+URIs: http://debian.c3sl.ufpr.br/debian/
+Suites: unstable
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+# URIs: http://deb.debian.org/debian/
+URIs: http://debian.c3sl.ufpr.br/debian/
+Suites: experimental
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Types: deb
+# URIs: tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian/
+# Suites: trixie
+# Components: main
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Types: deb
+# URIs: tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian/
+# Suites: trixie-updates
+# Components: main
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Types: deb
+# URIs: tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian/
+# Suites: trixie-backports
+# Components: main
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 HEREDOC
 
 # cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
@@ -322,18 +383,17 @@ APT::Get::Assume-Yes "true";
 HEREDOC
 
 # echo 'APT::Default-Release "stable";' | sudo tee /etc/apt/apt.conf.d/99default-release
-echo 'APT::Default-Release "bookworm";' | tee /mnt/etc/apt/apt.conf.d/99default-release
+echo 'APT::Default-Release "trixie";' | tee /mnt/etc/apt/apt.conf.d/99default-release
 
 mkdir -pv /mnt/etc/apt/preferences.d
 
 touch /mnt/etc/apt/preferences.d/99stable.pref
 touch /mnt/etc/apt/preferences.d/50testing.pref
-touch /mnt/etc/apt/preferences.d/99sid.pref
 touch /mnt/etc/apt/preferences.d/10unstable.pref
 touch /mnt/etc/apt/preferences.d/1experimental.pref
 touch /mnt/etc/apt/preferences.d/no-initramfs-tools
 
-cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
+cat >/mnt/etc/apt/preferences.d/99trixie.pref <<HEREDOC
 # 500 <= P < 990: causes a version to be installed unless there is a
 # version available belonging to the target release or the installed
 # version is more recent
@@ -341,14 +401,8 @@ cat >/mnt/etc/apt/preferences.d/99stable.pref <<HEREDOC
 Package: *
 # Pin: release a=stable
 # Pin: release a=${CODENAME}
-Pin: release a=bookworm
+Pin: release a=trixie
 Pin-Priority: 900
-HEREDOC
-
-cat >/mnt/etc/apt/preferences.d/99sid.pref <<HEREDOC
-Package: *
-Pin: release a=sid
-Pin-Priority: 100
 HEREDOC
 
 cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
@@ -390,7 +444,8 @@ chroot /mnt apt update
 chroot /mnt apt upgrade --yes
 
 # make a initrd for the kernel:
-chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode --yes
+chroot /mnt apt install intel-microcode --yes
+# chroot /mnt apt install firmware-iwlwifi firmware-misc-nonfree intel-microcode --yes
 # chroot /mnt apt install firmware-linux firmware-linux-free firmware-linux-nonfree firmware-linux-nonfree-amd64 firmware-misc-nonfree firmware-iwlwifi firmware-realtek --yes
 # chroot /mnt apt install firmware-linux firmware-misc-nonfree firmware-iwlwifi --yes
 # firmware-realtek fwupdate fwupd
@@ -749,6 +804,9 @@ LABEL="${ROOT_LABEL}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@s
 # UUID="${ROOT_UUID}"     /var/cache          btrfs     rw,$BTRFS_OPTS,subvol=@cache               0     0
 LABEL="${ROOT_LABEL}"     /var/cache          btrfs     rw,$BTRFS_OPTS,subvol=@cache               0     0
 
+# UUID="${ROOT_UUID}"     /var/cache/apt      btrfs     rw,$BTRFS_OPTS,subvol=@apt                 0     0
+LABEL="${ROOT_LABEL}"     /var/cache/apt      btrfs     rw,$BTRFS_OPTS,subvol=@apt                 0     0
+
 # UUID="${ROOT_UUID}"     /var/lib/libvirt    btrfs     rw,$BTRFS_OPTS,subvol=@libvirt             0     0
 LABEL="${ROOT_LABEL}"     /var/lib/libvirt    btrfs     rw,$BTRFS_OPTS,subvol=@libvirt             0     0
 
@@ -1030,7 +1088,7 @@ chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
 # chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput \
 #     xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
 
-chroot /mnt apt install xserver-xorg x11-utils x11-xserver-utils xinit
+# chroot /mnt apt install xserver-xorg x11-utils x11-xserver-utils xinit
 
 ###########################
 #### Some XORG configs ####
@@ -1041,18 +1099,18 @@ mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # Identifier "SynPS/2 Synaptics TouchPad"
-        # MatchIsTouchpad                                     "on"
-        # Driver            "libinput"
-        # Option            "Tapping"                         "on"
+    # Identifier "SynPS/2 Synaptics TouchPad"
+    # Identifier "SynPS/2 Synaptics TouchPad"
+    # MatchIsTouchpad                                     "on"
+    # Driver            "libinput"
+    # Option            "Tapping"                         "on"
 
-        Identifier          "libinput touchpad catchall"
-        Driver              "libinput"
-        MatchIsTouchpad     "on"
-        MatchDevicePath     "/dev/input/event*"
-        Option              "Tapping"   			                "on"
-        Option 		          "NaturalScrolling" 			          "true"
+    Identifier          "libinput touchpad catchall"
+    Driver              "libinput"
+    MatchIsTouchpad     "on"
+    MatchDevicePath     "/dev/input/event*"
+    Option              "Tapping"   			                "on"
+    Option 		          "NaturalScrolling" 			          "true"
 EndSection
 EOF
 
@@ -1079,7 +1137,7 @@ sudo apt install bluez blueman -y
 
 #Python, snap and flatpak
 # chroot /mnt apt install python3 python3-pip snapd flatpak 
-chroot /mnt apt install  snapd flatpak 
+chroot /mnt apt install snapd flatpak 
 
 ####################
 ### Virt-Manager ###
@@ -1177,7 +1235,8 @@ cat <<EOF >/mnt/etc/default/console-setup
 
 ACTIVE_CONSOLES="/dev/tty[1-6]"
 CHARMAP="UTF-8"
-CODESET="Lat15"
+# CODESET="Lat15"
+CODESET="guess"
 # FONTFACE="Terminus"
 FONTFACE="Fixed"
 # FONTSIZE="16x32"
@@ -1574,3 +1633,8 @@ else
 fi
 EOF
 chmod +x /mnt/usr/local/bin/check-secureboot.sh
+
+### As sudo
+# nix-env --install --file '<nixpkgs>' --attr nix cacert -I nixpkgs=channel:nixpkgs-unstable
+
+# nix-shell -p nix-info --run "nix-info -m"
