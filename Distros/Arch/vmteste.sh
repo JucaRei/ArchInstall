@@ -264,6 +264,16 @@ vm.watermark_scale_factor = 125
 vm.page-cluster = 0
 EOF
 
+mkdir -p /etc/systemd/zram-generator.d
+cat << EOF > /mnt/etc/systemd/zram-generator.d/zram.conf
+[zram0]
+# zram-size = ram / 2
+zram-size = ram 
+compression-algorithm = lz4
+EOF
+
+pacman -S zram-generator
+
 # Boot loader
 pacman -S efibootmgr grub os-prober --noconfirm
 
