@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Minimal Packages
+yay -S dolphin dunst grim hyprland kitty polkit-kde-agent \
+        qt5-wayland qt6-wayland slurp wwsm wofi xdg-desktop-portal-hyprland
+        
 ######################
 ### Core Utilities ###
 ######################
