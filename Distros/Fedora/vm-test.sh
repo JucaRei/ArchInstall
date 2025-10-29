@@ -62,6 +62,7 @@ mount -t devpts /mnt/dev/pts
 
 source /etc/os-release
 export VERSION_ID="$VERSION_ID"
+# VERSION_ID=43
 # env | grep -i version
 
 ### Install core system

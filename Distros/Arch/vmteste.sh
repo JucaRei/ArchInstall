@@ -98,7 +98,7 @@ echo "Subvolumes and boot partition mounted successfully."
 
 # Base packages LTS kernel
 pacstrap /mnt base linux-zen linux-zen-headers linux-firmware sof-firmware archlinux-keyring sysfsutils git zsh neovim duf reflector mtools dosfstools \
-   btrfs-progs pacman-contrib --ignore sudo linux linux-firmware-nvidia linux-firmware-atheros linux-firmware-radeon linux-firmware-broadcom linux-firmware-amdgpu linux-firmware-amdgpu vi --noconfirm
+   btrfs-progs pacman-contrib --ignore linux linux-firmware-nvidia linux-firmware-atheros linux-firmware-radeon linux-firmware-broadcom linux-firmware-amdgpu linux-firmware-amdgpu vi --noconfirm
 # base-devel
 
 # Generate fstab
@@ -247,8 +247,8 @@ touch /etc/modules-load.d/zram.conf
 cat <<EOF >/etc/modules-load.d/zram.conf
 zram
 EOF
-touch /etc/udev.rules.d/99-zram.rules
-cat <<EOF >/etc/udev.rules.d/99-zram.rules
+touch /etc/udev/rules.d/99-zram.rules
+cat <<EOF >/etc/udev/rules.d/99-zram.rules
 ACTION=="add", KERNEL=="zram0", ATTR{initstate}=="0", ATTR{comp_algorithm}="zstd", ATTR{disksize}="4G", TAG+="systemd"
 EOF
 
@@ -265,7 +265,8 @@ vm.page-cluster = 0
 EOF
 
 mkdir -p /etc/systemd/zram-generator.d
-cat << EOF > /mnt/etc/systemd/zram-generator.d/zram.conf
+touch /etc/systemd/zram-generator.d/zram.conf
+cat <<EOF >/etc/systemd/zram-generator.d/zram.conf
 [zram0]
 # zram-size = ram / 2
 zram-size = ram 
@@ -285,10 +286,10 @@ pacman -S openssh networkmanager-iwd wireless_tools avahi gvfs gvfs-smb gvfs-wsd
 # pacman -S bluez bluez-utils bluez-tools --noconfirm
 
 # Supervisor doas
-pacman -S doas --noconfirm
+# pacman -S doas --noconfirm
 
 # Tools and Utilities
-pacman -S tar pam_mount chrony irqbalance ananicy-cpp preload htop dialog xdg-user-dirs xdg-utils bash-completion rsync firewalld ntfs-3g
+pacman -S base-devel tar pam_mount chrony irqbalance ananicy-cpp preload htop dialog xdg-user-dirs xdg-utils bash-completion ntfs-3g --noconfirm
 
 # Flatpak and nix
 pacman -S flatpak nix --noconfirm
@@ -453,33 +454,33 @@ EOF
 # usermod -aG storage $USER
 
 # Doas Set user permition
-cat <<EOF >/etc/doas.conf
-# allow user but require password
-permit keepenv :$username
+# cat <<EOF >/etc/doas.conf
+# # allow user but require password
+# permit keepenv :$username
 
-# allow user and dont require a password to execute commands as root
-# permit nopass keepenv :$username
+# # allow user and dont require a password to execute commands as root
+# # permit nopass keepenv :$username
 
-# mount drives
-permit nopass :$username cmd mount
-permit nopass :$username cmd umount
+# # mount drives
+# permit nopass :$username cmd mount
+# permit nopass :$username cmd umount
 
-# musicpd service start and stop
-#permit nopass :$username cmd service args musicpd onestart
-#permit nopass :$username cmd service args musicpd onestop
+# # musicpd service start and stop
+# #permit nopass :$username cmd service args musicpd onestart
+# #permit nopass :$username cmd service args musicpd onestop
 
-# pkg update
-#permit nopass :$username cmd vpm args update
+# # pkg update
+# #permit nopass :$username cmd vpm args update
 
-# run personal scripts as root without prompting for a password,
-# requires entering the full path when running with doas
-#permit nopass :$username cmd /home/username/bin/somescript
+# # run personal scripts as root without prompting for a password,
+# # requires entering the full path when running with doas
+# #permit nopass :$username cmd /home/username/bin/somescript
 
-# root as root
-#permit nopass keepenv root as root
-EOF
+# # root as root
+# #permit nopass keepenv root as root
+# EOF
 
-chown -c root:root /etc/doas.conf
+# chown -c root:root /etc/doas.conf
 
 sed -i '1n; /^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/i %wheel ALL=(ALL:ALL) ALL' /etc/sudoers
 

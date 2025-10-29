@@ -268,6 +268,14 @@ chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 
 chroot /mnt usermod -aG wheel juca
 
+chroot /mnt dnf install openssh-server -y
+chroot /mnt firewall-cmd --permanent --add-service=ssh
+chroot /mnt firewall-cmd --reload
+
+chroot /mnt systemctl enable sshd
+
+# sudo setenforce 0
+
 reboot
 
 
