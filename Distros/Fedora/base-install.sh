@@ -12,17 +12,17 @@ echo "🛑 Disabling SELinux temporarily..."
 setenforce 0
 
 # 🧭 Drive + partition paths
-DRIVE="/dev/sda"
-SYSTEM_PART="${DRIVE}2"
-EFI_PART="${DRIVE}3"
-ROOT_PART="${DRIVE}4"
-HOME_PART="${DRIVE}5"
-WINDOWS_PART="${DRIVE}7"
-MISC_PART="${DRIVE}8"
+DRIVE="/dev/nvme0n1"
+SYSTEM_PART="${DRIVE}p2"
+EFI_PART="${DRIVE}p3"
+ROOT_PART="${DRIVE}p4"
+HOME_PART="${DRIVE}p5"
+WINDOWS_PART="${DRIVE}p7"
+MISC_PART="${DRIVE}p8"
 
 # 🔖 Labels
 ROOT_LABEL="Fedora"
-HOME_LABEL="HOME"
+HOME_LABEL="Workspace"
 SWAP_LABEL="SWAP"
 SYSTEM_LABEL="BOOT"
 EFI_LABEL="ESP"
@@ -36,27 +36,13 @@ BTRFS_OPTS_HOME="noatime,nodatasum,nodatacow,ssd,compress-force=zstd:15,space_ca
 # 📁 Mount point
 MOUNTPOINT="/mnt"
 
-echo "🧱 Creating partitions..."
-sgdisk --zap-all $DRIVE
-sleep 2
-parted -s -a optimal $DRIVE mklabel gpt
-sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"          $DRIVE
-sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"    $DRIVE
-sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
-sgdisk -n 0:0:+46G     -t 4:8300 -c 4:"Fedora root"        $DRIVE
-sgdisk -n 0:0:+50G     -t 5:8302 -c 5:"Fedora home"        $DRIVE
-sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Reserved" $DRIVE
-sgdisk -n 0:0:+100G    -t 7:0700 -c 7:"Windows data"       $DRIVE
-sgdisk -n 0:0:0        -t 8:0700 -c 8:"Miscellaceous data" $DRIVE
-sgdisk -p $DRIVE
-
 echo "🧼 Formatting partitions..."
-mkfs.ext4  -F   -L "$SYSTEM_LABEL"  "$SYSTEM_PART"
-mkfs.fat   -F32 -n "$EFI_LABEL"     "$EFI_PART"
+# mkfs.ext4  -F   -L "$SYSTEM_LABEL"  "$SYSTEM_PART"
+# mkfs.fat   -F32 -n "$EFI_LABEL"     "$EFI_PART"
 mkfs.btrfs -f   -L "$ROOT_LABEL"    "$ROOT_PART"
 mkfs.btrfs -f   -L "$HOME_LABEL"    "$HOME_PART"
-mkfs.ntfs  -F   -L "$WINDOWS_LABEL" "$WINDOWS_PART"
-mkfs.exfat      -n "$MISC_LABEL"    "$MISC_PART"
+# mkfs.ntfs  -F   -L "$WINDOWS_LABEL" "$WINDOWS_PART"
+# mkfs.exfat      -n "$MISC_LABEL"    "$MISC_PART"
 
 # 🎯 Create Btrfs subvolumes on root partition
 mount "$ROOT_PART" "$MOUNTPOINT"
@@ -66,10 +52,10 @@ done
 umount -Rv "$MOUNTPOINT"
 
 # 🏠 Create @home subvolume on home partition
-mkdir -p /mnt/home-temp
-mount "$HOME_PART" /mnt/home-temp
-btrfs subvolume create /mnt/home-temp/@home
-umount /mnt/home-temp
+mkdir -p $MOUNTPOINT/home-temp
+mount "$HOME_PART" $MOUNTPOINT/home-temp
+btrfs subvolume create $MOUNTPOINT/home-temp/@home
+umount $MOUNTPOINT/home-temp
 
 echo "📦 Mounting subvolumes..."
 mount -o $BTRFS_OPTS,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
@@ -155,6 +141,9 @@ LABEL="${ROOT_LABEL}"     /var/lib/gdm        btrfs rw,$BTRFS_OPTS,subvol=@gdm  
 
 # UUID="${ROOT_UUID}"     /opt                btrfs rw,$BTRFS_OPTS,subvol=@opt                    0 0
 LABEL="${ROOT_LABEL}"     /opt                btrfs rw,$BTRFS_OPTS,subvol=@opt                    0 0
+
+# UUID="${ROOT_UUID}"     /nix                btrfs rw,$BTRFS_OPTS,subvol=@nix                    0 0
+LABEL="${ROOT_LABEL}"     /nix                btrfs rw,$BTRFS_OPTS,subvol=@nix                    0 0
 
 ### HOME_FS ###
 # UUID="${HOME_UUID}"     /home               btrfs rw,$BTRFS_OPTS_HOME,subvol=@home              0 0
