@@ -288,8 +288,14 @@ sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-rele
 sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm -y
 
 sudo dnf makecache
-sudo dnf install akmod-nvidia xorg-x11-drv-nvidia -y
+sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda -y
+## Enable VDPAU and VA-API
+sudo dnf install mesa-vdpau-drivers-freeworld
 sudo dnf install nvidia-vaapi-driver libva-utils vdpauinfo -y
+
+cat << EOF > /etc/environment 
+export LIBVA_DRIVER_NAME=nvidia
+EOF
 
 # dnf lightdm slick-greeter xorg-x11-server-Xorg
 

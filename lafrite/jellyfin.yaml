@@ -1,0 +1,7 @@
+docker run -d \
+  --name jellyfin \
+  --network host \
+  --device /dev/video0:/dev/video0 \
+  -v /home/juca/services/jellyfin/config:/config \
+  -v /home/juca/services/jellyfin/media:/media \
+  jellyfin/jellyfin:latest

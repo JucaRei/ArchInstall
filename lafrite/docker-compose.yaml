@@ -1,0 +1,33 @@
+# version: "3.8"
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    networks:
+      jellyfin-macvlan:
+        ipv4_address: 10.10.10.77
+    devices:
+      - /dev/video0:/dev/video0
+    group_add:
+      - 44  # video 
+      - 993 # render
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - ./media:/media:ro
+      - /usr/local/bin/jellyfin-ffmpeg:/usr/lib/jellyfin-ffmpeg/jellyfin-ffmpeg:ro
+    restart: unless-stopped
+
+networks:
+  jellyfin-macvlan:
+    external: true
+
+
+# create macvlan network (adjust parent, subnet, gateway)
+# docker network create -d macvlan \
+#   --subnet=10.1.1.0/24 --gateway=10.1.1.1 \
+#   -o parent=end0 jellyfin-macvlan
+
+# docker network create -d macvlan \
+#   --subnet=10.10.10.0/24 --gateway=10.10.10.1 \
+#   -o parent=end0 jellyfin-macvlan

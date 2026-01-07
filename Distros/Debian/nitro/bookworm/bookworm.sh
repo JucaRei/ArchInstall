@@ -1289,8 +1289,11 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 #### Install grub ####
 ######################
 
+chroot /mnt mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
 chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
+
 
 #####################
 #### Config Grub ####
