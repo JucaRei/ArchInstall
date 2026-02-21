@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-apt update && apt install gdisk debootstrap btrfs-progs lsb-release wget -y
+apt update && apt install gdisk debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 # 🧭 Drive + partition paths
 DRIVE="/dev/vda"
@@ -225,19 +225,19 @@ Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 # Components: main contrib non-free non-free-firmware
 # Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-Types: deb deb-src
-# URIs: http://deb.debian.org/debian/
-URIs: http://debian.c3sl.ufpr.br/debian/
-Suites: unstable
-Components: main contrib non-free non-free-firmware
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+# Types: deb deb-src
+# # URIs: http://deb.debian.org/debian/
+# URIs: http://debian.c3sl.ufpr.br/debian/
+# Suites: unstable
+# Components: main contrib non-free non-free-firmware
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-Types: deb deb-src
-# URIs: http://deb.debian.org/debian/
-URIs: http://debian.c3sl.ufpr.br/debian/
-Suites: experimental
-Components: main contrib non-free non-free-firmware
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+# Types: deb deb-src
+# # URIs: http://deb.debian.org/debian/
+# URIs: http://debian.c3sl.ufpr.br/debian/
+# Suites: experimental
+# Components: main contrib non-free non-free-firmware
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 # Types: deb
 # URIs: tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian/

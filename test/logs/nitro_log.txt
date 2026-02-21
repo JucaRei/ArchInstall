@@ -1,0 +1,703 @@
+fev 05 11:35:31 nitro kernel: zswap: zpool z3fold not available, using default zsmalloc
+fev 05 11:35:31 nitro kernel: integrity: Problem loading X.509 certificate -65
+fev 05 11:35:31 nitro kernel: integrity: Problem loading X.509 certificate -65
+fev 05 11:35:32 nitro systemd-modules-load[283]: Error running install command 'modprobe nvidia-modeset ; modprobe -i nvidia-current-drm modeset=1 ' for module nvidia_drm: retcode 1
+fev 05 11:35:32 nitro systemd-modules-load[283]: Failed to insert module 'nvidia_drm': Invalid argument
+fev 05 11:35:32 nitro systemd[1]: Failed to start systemd-modules-load.service - Load Kernel Modules.
+fev 05 11:35:38 nitro systemd[1]: Failed to start apparmor.service - Load AppArmor profiles.
+fev 05 11:35:38 nitro kernel: 
+fev 05 11:35:42 nitro kernel: ACPI BIOS Error (bug): Could not resolve symbol [\_SB.PCI0.LPCB.EC0._Q37.POWS], AE_NOT_FOUND (20240827/psargs-332)
+fev 05 11:35:42 nitro kernel: ACPI Error: Aborting method \_SB.PCI0.LPCB.EC0._Q37 due to previous error (AE_NOT_FOUND) (20240827/psparse-529)
+fev 05 11:35:47 nitro kernel: pcieport 0000:00:1d.5: AER:   Error of this Agent is reported first
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:55 nitro kernel: usb 1-1.1: 2:1: usb_set_interface failed (-28)
+fev 05 11:35:58 nitro obexd[2745]: Unable to get reference to default address book
+fev 05 11:35:58 nitro obexd[2745]: Unable to get reference to default address book
+fev 05 11:36:03 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 11:39:57 nitro init: Could not set 'ro.vndk.lite' to 'true' while loading .prop filesRead-only property was already set
+fev 05 11:39:57 nitro init: /vendor/etc/init/android.hardware.audio.service.rc: 1: ignored duplicate definition of service 'vendor.audio-hal'
+fev 05 11:39:57 nitro init: /vendor/etc/init/android.hardware.graphics.composer@2.1-service.rc: 1: ignored duplicate definition of service 'vendor.hwcomposer-2-1'
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount blkio cgroup: Operation not permitted
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount cgroup v2: Device or resource busy
+fev 05 11:39:57 nitro libprocessgroup: lchown() failed for /sys/fs/cgroup/.: Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to create directory for cgroup2 cgroup
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount cgroup2 cgroup: Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount cpu cgroup: Operation not permitted
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount cpuset cgroup: No such device
+fev 05 11:39:57 nitro kernel: cgroup: Unknown subsys name 'memory'
+fev 05 11:39:57 nitro kernel: cgroup: Unknown subsys name 'schedtune'
+fev 05 11:39:57 nitro libprocessgroup: Failed to mount schedtune cgroup: Invalid argument
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 4) failed for service 'exec 1 (/system/bin/bootstrap/linkerconfig --target /linkerconfig/bootstrap)': Read-only file system
+fev 05 11:39:57 nitro linkerconfig: Unable to access VNDK APEX at path: /apex/com.android.vndk.v33: No such file or directory
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 5) failed for service 'ueventd': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 6) failed for service 'apexd-bootstrap': Read-only file system
+fev 05 11:39:57 nitro apexd: Failed to scan /system_ext/apex : Can't open /system_ext/apex for reading : No such file or directory
+fev 05 11:39:57 nitro apexd: Failed to scan /product/apex : Can't open /product/apex for reading : No such file or directory
+fev 05 11:39:57 nitro apexd: Failed to scan /vendor/apex : Can't open /vendor/apex for reading : No such file or directory
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1092: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1092, 17) failed for service 'prng_seeder': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 18) failed for service 'boringssl_self_test32_vendor': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 19) failed for service 'boringssl_self_test64_vendor': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 20) failed for service 'exec 2 (/vendor/bin/sh -c [ -c /dev/host_hwbinder ] && setprop ctl.stop vendor.gralloc-2-0)': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1036, 21) failed for service 'logd': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1069: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1069, 22) failed for service 'lmkd': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 23) failed for service 'servicemanager': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 24) failed for service 'hwservicemanager': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 25) failed for service 'vndservicemanager': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 26) failed for service 'boringssl_self_test32': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 34) failed for service 'boringssl_self_test64': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 35) failed for service 'vold': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 36) failed for service 'exec 3 (/system/bin/vdc checkpoint markBootAttempt)': Read-only file system
+fev 05 11:39:57 nitro vold: Failed to opendir: No such file or directory
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 40) failed for service 'exec 4 (/system/bin/recovery-refresh)': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 41) failed for service 'system_suspend': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1017: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1017, 42) failed for service 'keystore2': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 43) failed for service 'vendor.keymaster-4-0': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(0, 44) failed for service 'exec 5 (/system/bin/fsverity_init --load-verified-keys)': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 47) failed for service 'exec 6 (/system/bin/vdc checkpoint prepareCheckpoint)': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1058: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1058, 48) failed for service 'tombstoned': Read-only file system
+fev 05 11:39:57 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:57 nitro init: createProcessGroup(1000, 49) failed for service 'exec 7 (/system/bin/vdc keymaster earlyBootEnded)': Read-only file system
+fev 05 11:39:57 nitro init: failed to set task profiles
+fev 05 11:39:57 nitro incfs: IncFs_Features: failed to open features dir, assuming v1/none.: No such file or directory
+fev 05 11:39:58 nitro vold: keystore2 Keystore earlyBootEnded returned service specific error: -68
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1036, 57) failed for service 'logd-reinit': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 58) failed for service 'apexd': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1081: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1081, 59) failed for service 'exec 8 (/bin/rm -rf /data/misc/virtualizationservice)': Read-only file system
+fev 05 11:39:58 nitro logd: FrameworkListener: read() failed (Connection reset by peer)
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1023: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1023, 61) failed for service 'exec 9 (/system/bin/chattr +F /data/media)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(9999, 62) failed for service 'derive_sdk': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 63) failed for service 'exec 10 (/system/bin/vdc --wait cryptfs init_user0)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 66) failed for service 'derive_classpath': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 67) failed for service 'odsign': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 68) failed for service 'exec 11 (/system/bin/fsverity_init --lock)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 69) failed for service 'apexd-snapshotde': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 70) failed for service 'exec 12 (/system/bin/tzdatacheck /apex/com.android.tzdata/etc/tz /data/misc/zoneinfo)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 71) failed for service 'exec 13 (/system/bin/recovery-persist)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 72) failed for service 'exec 14 (/system/bin/sh /system/bin/resetprop.sh)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 73) failed for service 'bpfloader': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1066: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1066, 76) failed for service 'statsd': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 77) failed for service 'netd': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 78) failed for service 'zygote': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 79) failed for service 'zygote_secondary': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 80) failed for service 'hidl_memory': Read-only file system
+fev 05 11:39:58 nitro init: Could not start service 'vendor.audio-hal-2-0' as part of class 'hal': Cannot find '/vendor/bin/hw/android.hardware.audio@2.0-service': No such file or directory
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 81) failed for service 'vendor.audio-hal': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 82) failed for service 'vendor.hwcomposer-2-1': Read-only file system
+fev 05 11:39:58 nitro init: Could not start service 'vendor.camera-provider-2-4' as part of class 'hal': Cannot find '/vendor/bin/hw/android.hardware.camera.provider@2.4-service': No such file or directory
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 83) failed for service 'task-hal-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1047: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1047, 84) failed for service 'vendor.camera-provider-2-7-ext': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1013, 85) failed for service 'vendor.cas-hal-1-2': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 86) failed for service 'vendor.configstore-hal': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 87) failed for service 'vendor.gatekeeper-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 88) failed for service 'vendor.graphics.allocator-4-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 89) failed for service 'vendor.health-hal-2-0': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 93) failed for service 'vendor.light-hal-2-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 94) failed for service 'vendor.memtrack-hal-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 95) failed for service 'vendor.power-hal-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 96) failed for service 'vendor.sensors-hal-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 97) failed for service 'vendor.vibrator-1-0': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1041: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1041, 98) failed for service 'audioserver': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1076: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1076, 99) failed for service 'credstore': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1072: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1072, 100) failed for service 'gpu': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(1000, 101) failed for service 'surfaceflinger': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 102) failed for service 'exec 15 (/system/bin/gsid run-startup-tasks)': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 103) failed for service 'exec 16 (/system/bin/profcollectctl reset)': Read-only file system
+fev 05 11:39:58 nitro init: failed to set task profiles
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 104) failed for service 'boringssl_self_test_apex32': Read-only file system
+fev 05 11:39:58 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:58 nitro init: createProcessGroup(0, 113) failed for service 'boringssl_self_test_apex64': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 123) failed for service 'adbd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1000, 124) failed for service 'exec 17 (/system/bin/bootstat --set_system_boot_reason)': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 125) failed for service 'exec 18 (/system/bin/sh -c echo ':arm_exe:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28::/system/bin/houdini:P' > /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 126) failed for service 'exec 19 (/system/bin/sh -c echo ':arm_dyn:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\x28::/system/bin/houdini:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 127) failed for service 'exec 20 (/system/bin/sh -c echo ':arm64_exe:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\xb7::/system/bin/houdini64:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 128) failed for service 'exec 21 (/system/bin/sh -c echo ':arm64_dyn:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\xb7::/system/bin/houdini64:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(9999, 131) failed for service 'traced_probes': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(9999, 135) failed for service 'traced': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1047: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1047, 139) failed for service 'cameraserver': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1000, 140) failed for service 'idmap2d': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1067: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1067, 141) failed for service 'incidentd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 146) failed for service 'installd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1040: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1040, 147) failed for service 'mediaextractor': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1013, 148) failed for service 'mediametrics': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1013, 149) failed for service 'media': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 150) failed for service 'storaged': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1010: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1010, 151) failed for service 'wificond': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 152) failed for service 'adb_root': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1046: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1046, 153) failed for service 'vendor.media.omx': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1046: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1046, 154) failed for service 'media.swcodec': Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1020: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1020, 160) failed for service 'mdnsd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(1000, 161) failed for service 'gatekeeperd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:39:59 nitro init: createProcessGroup(0, 165) failed for service 'usbd': Read-only file system
+fev 05 11:39:59 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:39:59 nitro init: failed to set task profiles
+fev 05 11:39:59 nitro init: createProcessGroup(1000, 166) failed for service 'exec 22 (/system/bin/flags_health_check BOOT_FAILURE)': Read-only file system
+fev 05 11:39:59 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:39:59 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:40:00 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:40:01 nitro init: Control message: Could not find 'aidl/SurfaceFlinger' for ctl.interface_start from pid: 23 (/system/bin/servicemanager)
+fev 05 11:40:01 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:40:02 nitro init: Control message: Could not find 'aidl/SurfaceFlinger' for ctl.interface_start from pid: 23 (/system/bin/servicemanager)
+fev 05 11:40:02 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:40:03 nitro init: Control message: Could not find 'aidl/SurfaceFlinger' for ctl.interface_start from pid: 23 (/system/bin/servicemanager)
+fev 05 11:40:03 nitro init: Control message: Could not find 'android.hardware.graphics.composer@2.1::IComposer/default' for ctl.interface_start from pid: 24 (/system/bin/hwservicemanager)
+fev 05 11:40:03 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:40:03 nitro init: createProcessGroup(1000, 294) failed for service 'vendor.hwcomposer-2-1': Read-only file system
+fev 05 11:40:03 nitro init: failed to set task profiles
+fev 05 11:40:04 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1003: Read-only file system
+fev 05 11:40:04 nitro init: createProcessGroup(1003, 316) failed for service 'bootanim': Read-only file system
+fev 05 11:40:04 nitro init: failed to set task profiles
+fev 05 11:40:04 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 11:40:04 nitro init: createProcessGroup(0, 371) failed for service 'exec 23 (/system/bin/extra_free_kbytes.sh 4218)': Read-only file system
+fev 05 11:40:13 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:40:13 nitro init: createProcessGroup(1000, 1009) failed for service 'exec 24 (/bin/rm -rf /data/per_boot)': Read-only file system
+fev 05 11:40:13 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:40:13 nitro init: createProcessGroup(1000, 1037) failed for service 'exec 25 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)': Read-only file system
+fev 05 11:40:13 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 11:40:13 nitro init: createProcessGroup(1036, 1046) failed for service 'logd-auditctl': Read-only file system
+fev 05 11:40:23 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 11:40:23 nitro init: createProcessGroup(1013, 2520) failed for service 'vendor.drm-clearkey-service': Read-only file system
+fev 05 11:40:23 nitro init: failed to set task profiles
+fev 05 11:40:23 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 11:40:23 nitro init: createProcessGroup(1013, 2530) failed for service 'vendor.drm-widevine-hal': Read-only file system
+fev 05 11:40:23 nitro init: failed to set task profiles
+fev 05 11:42:46 nitro init: Could not open '/metadata/bootstat/persist.sys.boot.reason' to persist reboot reason: No such file or directory
+fev 05 11:42:46 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 11:42:46 nitro init: createProcessGroup(1000, 4267) failed for service 'blank_screen': Read-only file system
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'zygote' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'zygote_secondary' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'hidl_memory' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'system_suspend' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'audioserver' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'cameraserver' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'credstore' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'gatekeeperd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'gpu' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'idmap2d' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'incidentd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.audio-hal' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.hwcomposer-2-1' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'installd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'keystore2' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'lmkd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mdnsd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mediaextractor' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mediametrics' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'media' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'netd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'traced' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'traced_probes' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'prng_seeder' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'storaged' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'surfaceflinger' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'task-hal-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'wificond' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'adb_root' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.camera-provider-2-7-ext' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.cas-hal-1-2' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.configstore-hal' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.gatekeeper-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.graphics.allocator-4-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.health-hal-2-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.keymaster-4-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.media.omx' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.memtrack-hal-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.power-hal-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.sensors-hal-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.vibrator-1-0' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'media.swcodec' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'statsd' is still running 3000ms after receiving SIGTERM
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'zygote' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'zygote_secondary' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'hidl_memory' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'system_suspend' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'audioserver' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'cameraserver' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'credstore' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'gatekeeperd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'gpu' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'idmap2d' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'incidentd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.audio-hal' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.hwcomposer-2-1' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'installd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'keystore2' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'lmkd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mdnsd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mediaextractor' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'mediametrics' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'media' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'netd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'traced' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'traced_probes' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'prng_seeder' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'storaged' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'surfaceflinger' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'task-hal-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'wificond' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'adb_root' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.camera-provider-2-7-ext' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.cas-hal-1-2' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.configstore-hal' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.gatekeeper-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.graphics.allocator-4-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.health-hal-2-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.keymaster-4-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.media.omx' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.memtrack-hal-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.power-hal-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.sensors-hal-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'vendor.vibrator-1-0' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'media.swcodec' is still running 0ms after receiving SIGKILL
+fev 05 11:42:49 nitro init: [service-misbehaving] : service 'statsd' is still running 0ms after receiving SIGKILL
+fev 05 11:42:50 nitro init: InitFatalReboot: signal 6
+fev 05 11:42:50 nitro init: InitFatalReboot: signal 11
+fev 05 11:42:50 nitro init: #00 pc 00000000001475be  /system/bin/init (android::init::InitFatalReboot(int)+94)
+fev 05 11:42:50 nitro init: #01 pc 0000000000147a73  /system/bin/init (android::init::InstallRebootSignalHandlers()::$_24::__invoke(int)+19)
+fev 05 11:42:50 nitro init: #02 pc 000000000005bb90  /system/lib64/bootstrap/libc.so (__restore_rt)
+fev 05 11:42:50 nitro init: #03 pc 000000000005f68e  /system/lib64/bootstrap/libc.so (abort+190)
+fev 05 11:42:50 nitro init: #04 pc 000000000004f361  /system/lib64/libc++.so (abort_message+305)
+fev 05 11:42:50 nitro init: #05 pc 000000000004f463  /system/lib64/libc++.so (demangling_terminate_handler()+35)
+fev 05 11:42:50 nitro init: #06 pc 000000000004ffa2  /system/lib64/libc++.so (std::__terminate(void (*)())+2)
+fev 05 11:42:50 nitro init: #07 pc 000000000004ff31  /system/lib64/libc++.so (std::terminate()+33)
+fev 05 11:42:50 nitro init: #08 pc 00000000000a9bed  /system/lib64/libc++.so (std::__1::thread::~thread()+13)
+fev 05 11:42:50 nitro init: #09 pc 00000000000cfd9a  /system/lib64/bootstrap/libc.so (__cxa_finalize+282)
+fev 05 11:42:50 nitro init: #10 pc 00000000000c2f9e  /system/lib64/bootstrap/libc.so (exit+14)
+fev 05 11:42:50 nitro init: #11 pc 000000000014730a  /system/bin/init (android::init::RebootSystem(unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)+90)
+fev 05 11:42:50 nitro init: #12 pc 00000000001435be  /system/bin/init (std::__1::__function::__func<android::init::HandlePowerctlMessage(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)::$_38, std::__1::allocator<android::init::HandlePowerctlMessage(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)::$_38>, android::base::expected<void, android::base::ResultError<android::base::Errno, true> > (android::init::BuiltinArguments const&)>::operator()(android::init::BuiltinArguments const&)+1614)
+fev 05 11:42:50 nitro init: #13 pc 00000000000be601  /system/bin/init (android::init::RunBuiltinFunction(std::__1::function<android::base::expected<void, android::base::ResultError<android::base::Errno, true> > (android::init::BuiltinArguments const&)> const&, std::__1::vector<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::allocator<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > > > const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)+545)
+fev 05 11:42:50 nitro init: #14 pc 00000000000be709  /system/bin/init (android::init::Command::InvokeFunc(android::init::Subcontext*) const+121)
+fev 05 11:42:50 nitro init: #15 pc 00000000000bf412  /system/bin/init (android::init::Action::ExecuteCommand(android::init::Command const&) const+98)
+fev 05 11:42:50 nitro init: #16 pc 00000000000bf315  /system/bin/init (android::init::Action::ExecuteOneCommand(unsigned long) const+325)
+fev 05 11:42:50 nitro init: #17 pc 00000000000f5367  /system/bin/init (android::init::ActionManager::ExecuteOneCommand()+647)
+fev 05 11:42:50 nitro init: #18 pc 000000000010f441  /system/bin/init (android::init::SecondStageMain(int, char**)+7793)
+fev 05 11:42:50 nitro init: #19 pc 00000000000b862b  /system/bin/init (main+299)
+fev 05 11:42:50 nitro init: #20 pc 0000000000050d29  /system/lib64/bootstrap/libc.so (__libc_init+89)
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM unable to dlopen(pam_sss.so): /usr/lib/security/pam_sss.so: cannot open shared object file: No such file or directory
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM adding faulty module: pam_sss.so
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM unable to dlopen(pam_fprintd.so): /usr/lib/security/pam_fprintd.so: cannot open shared object file: No such file or directory
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM adding faulty module: pam_fprintd.so
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM adding faulty module: pam_kwallet5.so
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM adding faulty module: pam_kwallet5.so
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 11:47:47 nitro kscreenlocker_greet[10387]: PAM adding faulty module: pam_kwallet5.so
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM unable to dlopen(pam_sss.so): /usr/lib/security/pam_sss.so: cannot open shared object file: No such file or directory
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM adding faulty module: pam_sss.so
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM unable to dlopen(pam_fprintd.so): /usr/lib/security/pam_fprintd.so: cannot open shared object file: No such file or directory
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM adding faulty module: pam_fprintd.so
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM adding faulty module: pam_kwallet5.so
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM adding faulty module: pam_kwallet5.so
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 12:01:46 nitro kscreenlocker_greet[12321]: PAM adding faulty module: pam_kwallet5.so
+fev 05 12:31:21 nitro kernel: i915 0000:00:02.0: [drm] *ERROR* Atomic update failure on pipe A (start=153645 end=153646) time 135 us, min 1073, max 1079, scanline start 1070, end 1079
+fev 05 12:50:05 nitro init: Could not set 'ro.vndk.lite' to 'true' while loading .prop filesRead-only property was already set
+fev 05 12:50:05 nitro init: /vendor/etc/init/android.hardware.audio.service.rc: 1: ignored duplicate definition of service 'vendor.audio-hal'
+fev 05 12:50:05 nitro init: /vendor/etc/init/android.hardware.graphics.composer@2.1-service.rc: 1: ignored duplicate definition of service 'vendor.hwcomposer-2-1'
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount blkio cgroup: Operation not permitted
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount cgroup v2: Device or resource busy
+fev 05 12:50:05 nitro libprocessgroup: lchown() failed for /sys/fs/cgroup/.: Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to create directory for cgroup2 cgroup
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount cgroup2 cgroup: Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount cpu cgroup: Operation not permitted
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount cpuset cgroup: No such device
+fev 05 12:50:05 nitro kernel: cgroup: Unknown subsys name 'memory'
+fev 05 12:50:05 nitro kernel: cgroup: Unknown subsys name 'schedtune'
+fev 05 12:50:05 nitro libprocessgroup: Failed to mount schedtune cgroup: Invalid argument
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 4) failed for service 'exec 1 (/system/bin/bootstrap/linkerconfig --target /linkerconfig/bootstrap)': Read-only file system
+fev 05 12:50:05 nitro linkerconfig: Unable to access VNDK APEX at path: /apex/com.android.vndk.v33: No such file or directory
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 5) failed for service 'ueventd': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 6) failed for service 'apexd-bootstrap': Read-only file system
+fev 05 12:50:05 nitro apexd: Failed to scan /system_ext/apex : Can't open /system_ext/apex for reading : No such file or directory
+fev 05 12:50:05 nitro apexd: Failed to scan /product/apex : Can't open /product/apex for reading : No such file or directory
+fev 05 12:50:05 nitro apexd: Failed to scan /vendor/apex : Can't open /vendor/apex for reading : No such file or directory
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1092: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1092, 17) failed for service 'prng_seeder': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 18) failed for service 'boringssl_self_test32_vendor': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 19) failed for service 'boringssl_self_test64_vendor': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 20) failed for service 'exec 2 (/vendor/bin/sh -c [ -c /dev/host_hwbinder ] && setprop ctl.stop vendor.gralloc-2-0)': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1036, 21) failed for service 'logd': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1069: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1069, 22) failed for service 'lmkd': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 23) failed for service 'servicemanager': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 24) failed for service 'hwservicemanager': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 25) failed for service 'vndservicemanager': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 26) failed for service 'boringssl_self_test32': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 34) failed for service 'boringssl_self_test64': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 35) failed for service 'vold': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 36) failed for service 'exec 3 (/system/bin/vdc checkpoint markBootAttempt)': Read-only file system
+fev 05 12:50:05 nitro vold: Failed to opendir: No such file or directory
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 40) failed for service 'exec 4 (/system/bin/recovery-refresh)': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 41) failed for service 'system_suspend': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1017: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1017, 42) failed for service 'keystore2': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 43) failed for service 'vendor.keymaster-4-0': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 44) failed for service 'exec 5 (/system/bin/fsverity_init --load-verified-keys)': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 47) failed for service 'exec 6 (/system/bin/vdc checkpoint prepareCheckpoint)': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1058: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1058, 48) failed for service 'tombstoned': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1000, 49) failed for service 'exec 7 (/system/bin/vdc keymaster earlyBootEnded)': Read-only file system
+fev 05 12:50:05 nitro incfs: IncFs_Features: failed to open features dir, assuming v1/none.: No such file or directory
+fev 05 12:50:05 nitro vold: keystore2 Keystore earlyBootEnded returned service specific error: -68
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1036, 57) failed for service 'logd-reinit': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 58) failed for service 'apexd': Read-only file system
+fev 05 12:50:05 nitro init: failed to set task profiles
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1081: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1081, 59) failed for service 'exec 8 (/bin/rm -rf /data/misc/virtualizationservice)': Read-only file system
+fev 05 12:50:05 nitro logd: FrameworkListener: read() failed (Connection reset by peer)
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1023: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(1023, 61) failed for service 'exec 9 (/system/bin/chattr +F /data/media)': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(9999, 62) failed for service 'derive_sdk': Read-only file system
+fev 05 12:50:05 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:05 nitro init: createProcessGroup(0, 63) failed for service 'exec 10 (/system/bin/vdc --wait cryptfs init_user0)': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 66) failed for service 'derive_classpath': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 67) failed for service 'odsign': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 68) failed for service 'exec 11 (/system/bin/fsverity_init --lock)': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 69) failed for service 'apexd-snapshotde': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 70) failed for service 'exec 12 (/system/bin/tzdatacheck /apex/com.android.tzdata/etc/tz /data/misc/zoneinfo)': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 71) failed for service 'exec 13 (/system/bin/recovery-persist)': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 72) failed for service 'exec 14 (/system/bin/sh /system/bin/resetprop.sh)': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 73) failed for service 'bpfloader': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1066: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1066, 76) failed for service 'statsd': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 77) failed for service 'netd': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 78) failed for service 'zygote': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(0, 79) failed for service 'zygote_secondary': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 83) failed for service 'hidl_memory': Read-only file system
+fev 05 12:50:06 nitro init: Could not start service 'vendor.audio-hal-2-0' as part of class 'hal': Cannot find '/vendor/bin/hw/android.hardware.audio@2.0-service': No such file or directory
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 84) failed for service 'vendor.audio-hal': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 85) failed for service 'vendor.hwcomposer-2-1': Read-only file system
+fev 05 12:50:06 nitro init: Could not start service 'vendor.camera-provider-2-4' as part of class 'hal': Cannot find '/vendor/bin/hw/android.hardware.camera.provider@2.4-service': No such file or directory
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 86) failed for service 'task-hal-1-0': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1047: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1047, 87) failed for service 'vendor.camera-provider-2-7-ext': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1013, 88) failed for service 'vendor.cas-hal-1-2': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 89) failed for service 'vendor.configstore-hal': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 90) failed for service 'vendor.gatekeeper-1-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 91) failed for service 'vendor.graphics.allocator-4-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 92) failed for service 'vendor.health-hal-2-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 93) failed for service 'vendor.light-hal-2-0': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 94) failed for service 'vendor.memtrack-hal-1-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 95) failed for service 'vendor.power-hal-1-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 96) failed for service 'vendor.sensors-hal-1-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 97) failed for service 'vendor.vibrator-1-0': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1041: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1041, 98) failed for service 'audioserver': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1076: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1076, 99) failed for service 'credstore': Read-only file system
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1072: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1072, 101) failed for service 'gpu': Read-only file system
+fev 05 12:50:06 nitro init: failed to set task profiles
+fev 05 12:50:06 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:06 nitro init: createProcessGroup(1000, 107) failed for service 'surfaceflinger': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 109) failed for service 'exec 15 (/system/bin/gsid run-startup-tasks)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 110) failed for service 'exec 16 (/system/bin/profcollectctl reset)': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 113) failed for service 'boringssl_self_test_apex32': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 126) failed for service 'boringssl_self_test_apex64': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 144) failed for service 'adbd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1000, 145) failed for service 'exec 17 (/system/bin/bootstat --set_system_boot_reason)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 146) failed for service 'exec 18 (/system/bin/sh -c echo ':arm_exe:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28::/system/bin/houdini:P' > /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 154) failed for service 'exec 19 (/system/bin/sh -c echo ':arm_dyn:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\x28::/system/bin/houdini:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1020: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1020, 159) failed for service 'mdnsd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 160) failed for service 'exec 20 (/system/bin/sh -c echo ':arm64_exe:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\xb7::/system/bin/houdini64:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 163) failed for service 'exec 21 (/system/bin/sh -c echo ':arm64_dyn:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\xb7::/system/bin/houdini64:P' >> /proc/sys/fs/binfmt_misc/register)': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(9999, 165) failed for service 'traced_probes': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_9999: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(9999, 166) failed for service 'traced': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1047: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1047, 167) failed for service 'cameraserver': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1000, 168) failed for service 'idmap2d': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1067: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1067, 169) failed for service 'incidentd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 170) failed for service 'installd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1040: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1040, 171) failed for service 'mediaextractor': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1013, 172) failed for service 'mediametrics': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1013, 173) failed for service 'media': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 174) failed for service 'storaged': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1010: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1010, 178) failed for service 'wificond': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 179) failed for service 'adb_root': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1046: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1046, 180) failed for service 'vendor.media.omx': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1046: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1046, 181) failed for service 'media.swcodec': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1000, 184) failed for service 'gatekeeperd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(0, 185) failed for service 'usbd': Read-only file system
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1000, 186) failed for service 'exec 22 (/system/bin/flags_health_check BOOT_FAILURE)': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:07 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1003: Read-only file system
+fev 05 12:50:07 nitro init: createProcessGroup(1003, 240) failed for service 'bootanim': Read-only file system
+fev 05 12:50:07 nitro init: failed to set task profiles
+fev 05 12:50:10 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_0: Read-only file system
+fev 05 12:50:10 nitro init: createProcessGroup(0, 357) failed for service 'exec 23 (/system/bin/extra_free_kbytes.sh 5567)': Read-only file system
+fev 05 12:50:19 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:19 nitro init: createProcessGroup(1000, 1006) failed for service 'exec 24 (/bin/rm -rf /data/per_boot)': Read-only file system
+fev 05 12:50:19 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1000: Read-only file system
+fev 05 12:50:19 nitro init: createProcessGroup(1000, 1014) failed for service 'exec 25 (/system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l)': Read-only file system
+fev 05 12:50:19 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1036: Read-only file system
+fev 05 12:50:19 nitro init: createProcessGroup(1036, 1015) failed for service 'logd-auditctl': Read-only file system
+fev 05 12:50:28 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:28 nitro init: createProcessGroup(1013, 2522) failed for service 'vendor.drm-clearkey-service': Read-only file system
+fev 05 12:50:28 nitro init: failed to set task profiles
+fev 05 12:50:28 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:28 nitro init: createProcessGroup(1013, 2556) failed for service 'vendor.drm-widevine-hal': Read-only file system
+fev 05 12:50:28 nitro init: failed to set task profiles
+fev 05 12:50:55 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:55 nitro init: createProcessGroup(1013, 3919) failed for service 'vendor.drm-clearkey-service': Read-only file system
+fev 05 12:50:55 nitro init: failed to set task profiles
+fev 05 12:50:56 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:50:56 nitro init: createProcessGroup(1013, 3924) failed for service 'vendor.drm-widevine-hal': Read-only file system
+fev 05 12:50:56 nitro init: failed to set task profiles
+fev 05 12:51:25 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:51:25 nitro init: createProcessGroup(1013, 4430) failed for service 'vendor.drm-clearkey-service': Read-only file system
+fev 05 12:51:25 nitro init: failed to set task profiles
+fev 05 12:51:25 nitro libprocessgroup: Failed to make and chown /sys/fs/cgroup/uid_1013: Read-only file system
+fev 05 12:51:25 nitro init: createProcessGroup(1013, 4432) failed for service 'vendor.drm-widevine-hal': Read-only file system
+fev 05 12:51:25 nitro init: failed to set task profiles
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM unable to dlopen(pam_fprintd.so): /usr/lib/security/pam_fprintd.so: cannot open shared object file: No such file or directory
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM adding faulty module: pam_fprintd.so
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM unable to dlopen(pam_sss.so): /usr/lib/security/pam_sss.so: cannot open shared object file: No such file or directory
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM adding faulty module: pam_sss.so
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM adding faulty module: pam_kwallet5.so
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM adding faulty module: pam_kwallet5.so
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 13:05:30 nitro kscreenlocker_greet[21169]: PAM adding faulty module: pam_kwallet5.so
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM unable to dlopen(pam_sss.so): /usr/lib/security/pam_sss.so: cannot open shared object file: No such file or directory
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM adding faulty module: pam_sss.so
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM unable to dlopen(pam_fprintd.so): /usr/lib/security/pam_fprintd.so: cannot open shared object file: No such file or directory
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM adding faulty module: pam_fprintd.so
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM adding faulty module: pam_kwallet5.so
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM adding faulty module: pam_kwallet5.so
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM unable to dlopen(pam_kwallet5.so): /usr/lib/security/pam_kwallet5.so: cannot open shared object file: No such file or directory
+fev 05 15:01:49 nitro kscreenlocker_greet[26018]: PAM adding faulty module: pam_kwallet5.so
+fev 05 15:27:47 nitro bluetoothd[1648]: src/profile.c:ext_io_disconnected() Unable to get io data for Hands-Free Voice gateway: getpeername: Transport endpoint is not connected (107)
+fev 05 15:27:53 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:28:00 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:28:09 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:28:22 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:28:43 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:29:20 nitro bluetoothd[1648]: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+fev 05 15:30:24 nitro bluetoothd[1648]: plugins/policy.c:reconnect_timeout() Reconnecting services failed: Operation already in progress (114)

@@ -35,7 +35,7 @@ cat <<EOF >/etc/modprobe.d/nvidia-blacklists-nouveau.conf
 blacklist nouveau
 EOF
 
-cat <<EOF >//etc/modprobe.d/nvidia.conf
+cat <<EOF >/etc/modprobe.d/nvidia.conf
 install nvidia modprobe -i nvidia-current $CMDLINE_OPTS
 
 install nvidia-modeset modprobe nvidia ; modprobe -i nvidia-current-modeset $CMDLINE_OPTS

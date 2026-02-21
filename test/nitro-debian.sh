@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-apt update && apt install gdisk debootstrap btrfs-progs lsb-release wget -y
+apt update && apt install gdisk debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 # 🧭 Drive + partition paths
 DRIVE="/dev/nvme0n1"
@@ -146,13 +146,11 @@ chroot /mnt apt --fix-broken install --yes
 
 mkdir -pv /mnt/etc/dracut.conf.d
 
-touch /mnt/etc/dracut.conf.d/10-debian.conf
-cat <<EOF > /mnt/etc/dracut.conf.d/10-debian.conf
+touch /mnt/etc/dracut.conf.d/debian.conf
+cat <<EOF > /mnt/etc/dracut.conf.d/debian.conf
+
 do_prelink="no"
 hostonly="yes"
-# add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
-add_dracutmodules+=" systemd "
-# force_drivers+=" nvme ahci hid_generic iwlwifi "
 early_microcode=yes
 EOF
 
@@ -161,33 +159,110 @@ cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/10-custom.conf
-# Host-specific image
-hostonly_cmdline="yes"
-
-# Fast compression
-compress="zstd"
-compressargs="-19"
-
 # Don’t strip away any Plymouth bits
 # (remove any omit_dracutmodules line for plymouth)
 omit_dracutmodules+=" amdgpu 90crypt "
 
-
-# Limit to Btrfs root filesystem
-# filesystems+=" resume btrfs "
-filesystems+=" btrfs "
-
 # Kernel command-line: enable SELinux, show splash, keep messages quiet
-kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+kernel_cmdline=" rootflags=subvol=@root rw quiet lsm=landlock lockdown yama  bpf "
+EOF
+
+cat <<EOF >/mnt/etc/dracut.conf.d/apparmor.conf
+add_dracutmodules+=" apparmor "
+kernel_cmdline=" apparmor=1 security=apparmor apparmor=1 "
+EOF
+
+touch /mnt/etc/dracut.conf.d/plymouth.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/plymouth.conf
+add_dracutmodules+=" plymouth "
 
 # Ensure Plymouth theme files are embedded
-install_items+=" /usr/share/plymouth/themes/solar/* \
- /etc/plymouth/plymouthd.conf "
+#install_items+=" /usr/share/plymouth/themes/solar/*  /etc/plymouth/plymouthd.conf "
 EOF
 
 touch /mnt/etc/dracut.conf.d/input.conf
 cat <<EOF >/mnt/etc/dracut.conf.d/input.conf
 add_drivers+=" psmouse "
+EOF
+
+touch /mnt/etc/dracut.conf.d/iwlwifi.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/iwlwifi.conf
+add_drivers+=" iwlwifi "
+EOF
+
+touch /mnt/etc/dracut.conf.d/override.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/override.conf
+# Força initramfs no /boot padrão (não em /boot/efi/MACHINE-ID)
+uefi="no"  # evita paths EFI errados se usa GRUB
+
+# Fast compression
+compress="zstd"
+compressargs="-19"
+
+hostonly="yes"   # ou "no" se quiser initramfs genérico
+EOF
+
+touch /mnt/etc/dracut.conf.d/quiet.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/quiet.conf
+omit_dracutmodules+=" crypt " # se não usa LUKS, silencia warnings
+EOF
+
+touch /mnt/etc/dracut.conf.d/resume.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/resume.conf
+# resume_offset="0"   # se usar swap em arquivo
+EOF
+
+touch /mnt/etc/dracut.conf.d/btrfs.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/btrfs.conf
+add_dracutmodules+=" btrfs "
+
+# Limit to Btrfs root filesystem
+# filesystems+=" resume btrfs "
+filesystems+=" btrfs "
+EOF
+
+touch /mnt/etc/dracut.conf.d/nvme.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/nvme.conf
+add_drivers+=" nvme "
+EOF
+
+touch /mnt/etc/dracut.conf.d/systemd.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/systemd.conf
+add_dracutmodules+=" systemd "
+EOF
+
+touch /mnt/etc/dracut.conf.d/nvidia.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/nvidia.conf
+# add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm " # para NVIDIA/VA-API
+EOF
+
+touch /mnt/etc/dracut.conf.d/waydroid.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/waydroid.conf
+add_drivers+=" binder_linux ashmem_linux "  # para Waydroid
+EOF
+
+touch /mnt/etc/dracut.conf.d/intel.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/intel.conf
+add_drivers+=" i915 "
+EOF
+
+###################
+### Environment ###
+###################
+touch /mnt/etc/environment
+cat <<EOF >/mnt/etc/environment
+### Nvidia ###
+#LIBVA_DRIVER_NAME=nvidia
+#MOZ_DISABLE_RDD_SANDBOX=1   # para Firefox (desabilita sandbox no decoder)
+#NVD_BACKEND=direct
+
+#Se usar driver proprietário antigo (ex: 470 ou 535 legacy), instale o pacote antigo:
+#LIBVA_DRIVER_NAME=vdpau
+
+### Intel ###
+LIBVA_DRIVER_NAME=iHD
+LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 EOF
 
 ########################
@@ -1092,7 +1167,7 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=0 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet psi=1 i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=0 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
@@ -1136,7 +1211,20 @@ rm -rf /mnt/debootstrap
 apt install bluedevil
 apt install plymouth kde-config-plymouth plymouth-themes
 
-apt install sddm kde-config-sddm sddm-theme-debian-breeze
+apt install sddm kde-config-sddm sddm-theme-debian-breeze plasma-desktop plasma-workspace \ 
+kde-plasma-desktop konsole dolphin kate plasma-nm systemsettings powerdevil ark \ 
+plasma-systemmonitor kscreen plasma-discover plasma-pa xdg-utils xdg-user-dirs xdg-desktop-portal \ 
+xdg-desktop-portal-kde plymouth plymouth-themes qt6-style-kvantum libqt6svg6 \ 
+qt6-virtualkeyboard-plugin libqt6multimedia6 qml6-module-qtquick-controls \   
+qml6-module-qtquick-effects libxcb-cursor0
+
+install -y \
+  libpam-kwallet5 pam-kwallet5 \
+  libpam-gnome-keyring libpam-fprintd \
+  libpam-sss libnss-sss
+
+pam-auth-update --package
+
 mkdir -p /etc/sddm.conf.d
 
 # sudo sed -i 's/^Current=.*/Current=debian-breeze/' /etc/sddm.conf.d/theme.conf
@@ -1148,11 +1236,61 @@ grep -q '^Current=' /etc/sddm.conf.d/theme.conf \
 
 apt install kio-extras xdg-utils xdg-user-dirs xdg-desktop-portal xdg-desktop-portal-kde plasma-desktop plasma-workspace kde-plasma-desktop \
   konsole dolphin kate plasma-nm systemsettings powerdevil ark \
-  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover plasma-pa
+  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover plasma-pa qt6-style-kvantum
 
 # apt install -t unstable firefox
 
 # sudo apt update
-# sudo apt install qemu-utils
-# sudo apt install ovmf
-# sudo apt install virt-manager qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst libvirt-daemon virt-top libguestfs-tools cpu-checker
+# sudo apt install virt-manager ovmf qemu-utils qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst libvirt-daemon virt-top libguestfs-tools cpu-checker
+
+sudo apt install virt-manager qemu-kvm qemu-system-x86 \
+libvirt-daemon libvirt-daemon-system libvirt-clients \
+ebtables nftables dnsmasq ovmf seabios bridge-utils spice-vdagent -y
+
+# Arm64
+sudo apt install qemu-system-arm qemu-system-aarch64 -y
+sudo usermod -aG libvirt $USER
+sudo usermod -aG kvm $USER
+
+# XANMOD
+# remove the broken key file if present
+sudo rm -f /etc/apt/trusted.gpg.d/xanmod.gpg
+
+# fetch and convert the XanMod GPG key to a keyring
+wget -qO - https://dl.xanmod.org/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg
+
+# create the repo file that references the keyring
+echo "deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main" | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
+
+# update package lists
+sudo apt update
+
+sudo apt install linux-xanmod linux-headers-xanmod
+sudo update-grub
+
+####################
+### INTEL VA-API ###
+####################
+
+# sudo apt update
+# sudo apt install vainfo libva-utils intel-media-va-driver libva-drm2 libva-x11-2 libva-wayland2
+
+sudo apt install vainfo intel-media-va-driver-non-free libva-drm2 libva-x11-2 libva-wayland2
+
+#####################
+### NVIDIA VA-API ###
+#####################
+sudo apt install vainfo nvidia-driver nvidia-kernel-dkms nvidia-settings nvidia-smi nvidia-vaapi-driver libva2 libva-drm2 libva-x11-2 libva-wayland2 libcuda1 libnvcuvid1
+
+# Se usar driver proprietário antigo (ex: 470 ou 535 legacy), instale o pacote antigo:
+sudo apt install libva-vdpau-driver vdpau-va-driver
+
+### Flatpak ###
+sudo apt install flatpak
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak update
+
+### Snapd ###
+sudo apt install snapd
+sudo systemctl enable --now snapd.socket
+# sudo ln -s /var/lib/snapd/snap /snap

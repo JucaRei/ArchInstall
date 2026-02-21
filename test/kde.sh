@@ -15,5 +15,5 @@ grep -q '^Current=' /etc/sddm.conf.d/theme.conf \
 
 apt install bluedevil kio-extras xdg-utils xdg-user-dirs xdg-desktop-portal xdg-desktop-portal-kde plasma-desktop plasma-workspace kde-plasma-desktop \
   konsole dolphin kate plasma-nm systemsettings powerdevil ark \
-  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover plasma-pa okular mpv ark
+  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover plasma-pa okular gwenview mpv ark
 
