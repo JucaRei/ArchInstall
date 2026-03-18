@@ -29,10 +29,10 @@ echo "Creating partitions on $DRIVE..."
 sgdisk --zap-all ${DRIVE}
 
 parted --script --fix --align optimal $DRIVE mklabel gpt
-parted --script --fix --align optimal $DRIVE mkpart primary ext4 1M 600M
+parted --script --fix --align optimal $DRIVE mkpart primary ext4 1M 1G
 parted --script $DRIVE -- set 1 boot on
-parted --script --fix --align optimal $DRIVE mkpart primary fat32 600M 1.6G
-parted --script --align optimal --fix -- $DRIVE mkpart primary 1.6G 100%
+parted --script --fix --align optimal $DRIVE mkpart primary fat32 1G 1.1G
+parted --script --align optimal --fix -- $DRIVE mkpart primary 1.1G 100%
 
 # parted -s -a optimal ${DRIVE} mklabel gpt
 # sgdisk -n 0:0:+600M ${DRIVE}

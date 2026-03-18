@@ -7,22 +7,25 @@ apt install -y gdisk debootstrap btrfs-progs lsb-release wget curl gpg ca-certif
 
 # 🧭 Drive + partition paths
 DRIVE="/dev/sda"
-# SYSTEM_PART="${DRIVE}2"
-SYSTEM_PART="${DRIVE}1"
-# EFI_PART="${DRIVE}3"
-EFI_PART="${DRIVE}2"
-# ROOT_PART="${DRIVE}4"
-ROOT_PART="${DRIVE}3"
+
+# SYSTEM_PART="${DRIVE}1"
+# EFI_PART="${DRIVE}2"
+# ROOT_PART="${DRIVE}3"
+
+SYSTEM_PART="${DRIVE}2"
+EFI_PART="${DRIVE}3"
+ROOT_PART="${DRIVE}4"
+# SWAP_PART="${DRIVE}5"
 
 # 🔖 Labels
 ROOT_LABEL="Linux"
 SYSTEM_LABEL="BOOT"
 EFI_LABEL="ESP"
 
-# ⚙️ Btrfs options (otimizado: zstd:3 + autodefrag para SSD antigo)
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async,autodefrag"
-NIX_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=20,discard=async,autodefrag"
-BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async,autodefrag"  # uniformizei
+# ⚙️ Btrfs options (simplificado para hardware antigo - removido autodefrag que pode causar problemas)
+BTRFS_OPTS="noatime,ssd,compress=zstd:3,space_cache=v2,commit=120,discard=async"
+NIX_OPTS="noatime,ssd,compress=zstd:3,space_cache=v2,commit=20,discard=async"
+BTRFS_OPTS2="noatime,ssd,compress=zstd:3,space_cache=v2,commit=120,discard=async"
 
 # 📁 Mount point
 MOUNTPOINT="/mnt"
@@ -33,17 +36,20 @@ sgdisk --zap-all "${DRIVE}"
 sleep 1
 parted -s -a optimal "${DRIVE}" mklabel gpt
 
-# 1: BIOS boot (1M)
+sgdisk -n 1:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"       "${DRIVE}"
+sgdisk -n 2:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED" "${DRIVE}"
+sgdisk -n 3:0:+100M    -t 3:EF00 -c 3:"EFI SYSTEM"      "${DRIVE}"
+sgdisk -n 4:0:0        -t 4:8300 -c 4:"Linux Root"      "${DRIVE}"
+
 # sgdisk -n 1:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"       "${DRIVE}"
-# 2: System reserved (1G)
 # sgdisk -n 2:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED" "${DRIVE}"
-sgdisk -n 1:0:+1G      -t 1:8301 -c 1:"SYSTEM RESERVED" "${DRIVE}"
-# 3: EFI (600M)
 # sgdisk -n 3:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"      "${DRIVE}"
-sgdisk -n 2:0:+600M    -t 2:EF00 -c 2:"EFI SYSTEM"      "${DRIVE}"
-# 4: Root (todo o espaço restante)
-# sgdisk -n 4:0:0        -t 4:8300 -c 4:"${ROOT_LABEL} root" "${DRIVE}"
-sgdisk -n 3:0:0        -t 3:8300 -c 3:"${ROOT_LABEL} root" "${DRIVE}"
+# sgdisk -n 4:0:-6G      -t 4:8300 -c 4:"Linux Root"      "${DRIVE}"
+# sgdisk -n 5:0:0        -t 4:8200 -c 5:"SWAP Filesystem" "${DRIVE}"
+
+# sgdisk -n 1:0:+1G      -t 1:8301 -c 1:"SYSTEM RESERVED" "${DRIVE}"
+# sgdisk -n 2:0:+600M    -t 2:EF00 -c 2:"EFI SYSTEM"      "${DRIVE}"
+# sgdisk -n 3:0:0        -t 3:8300 -c 3:"Linux Root"      "${DRIVE}"
 
 sgdisk -p "${DRIVE}"
 
@@ -57,14 +63,14 @@ mkfs.btrfs -f -L "${ROOT_LABEL}" "${ROOT_PART}"
 echo "🎯 Creating btrfs subvolumes on root..."
 mkdir -p "${MOUNTPOINT}"
 mount "${ROOT_PART}" "${MOUNTPOINT}"
-for sv in @root @home @opt @nix @gdm @libvirt @spool @log @tmp @apt @snapshots @swap; do
+for sv in @ @home @opt @nix @gdm @libvirt @spool @log @tmp @apt @snapshots @swap; do
     btrfs subvolume create "${MOUNTPOINT}/${sv}"
 done
 umount -Rv "${MOUNTPOINT}"
 
 # ---- Mounting subvolumes (com opts otimizados + montar @swap)
 echo "📦 Mounting subvolumes..."
-mount -o "${BTRFS_OPTS2},subvol=@root" "/dev/disk/by-label/${ROOT_LABEL}" "${MOUNTPOINT}"
+mount -o "${BTRFS_OPTS2},subvol=@" "/dev/disk/by-label/${ROOT_LABEL}" "${MOUNTPOINT}"
 mkdir -pv "${MOUNTPOINT}/"{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache/apt,lib/{gdm,libvirt}},swap}
 
 mount -o "${BTRFS_OPTS},subvol=@home" "/dev/disk/by-label/${ROOT_LABEL}" "${MOUNTPOINT}/home"
@@ -85,24 +91,42 @@ mkdir -pv "${MOUNTPOINT}/boot/efi"
 mount -t vfat -o defaults,noatime,nodiratime "/dev/disk/by-label/${EFI_LABEL}" "${MOUNTPOINT}/boot/efi"
 
 # ---- Generate /etc/fstab entries (using LABEL=) - atualizado para swapfile
+BOOT_UUID=$(blkid -s UUID -o value $SYSTEM_PART)
+ESP_UUID=$(blkid -s UUID -o value $EFI_PART)
+ROOT_UUID=$(blkid -s UUID -o value $ROOT_PART)
+
 echo "📝 Generating /etc/fstab in ${MOUNTPOINT}/etc/fstab"
 mkdir -p "${MOUNTPOINT}/etc"
 cat > "${MOUNTPOINT}/etc/fstab" <<EOF
 # <file system> <mount point> <type> <options> <dump> <pass>
 LABEL=${SYSTEM_LABEL}   /boot            ext4    defaults,noatime 0 2
+# UUID=${BOOT_UUID}     /boot            ext4    defaults,noatime 0 2
 LABEL=${EFI_LABEL}      /boot/efi        vfat    defaults,noatime,nodiratime 0 1
-LABEL=${ROOT_LABEL}     /                btrfs   ${BTRFS_OPTS2},subvol=@root 0 1
+# UUID=${ESP_LABEL}     /boot/efi        vfat    defaults,noatime,nodiratime 0 1
+LABEL=${ROOT_LABEL}     /                btrfs   ${BTRFS_OPTS2},subvol=@ 0 1
+# UUID=${ROOT_UUID}     /                btrfs   ${BTRFS_OPTS2},subvol=@ 0 1
 LABEL=${ROOT_LABEL}     /home            btrfs   ${BTRFS_OPTS},subvol=@home 0 2
+# UUID=${ROOT_UUID}     /home            btrfs   ${BTRFS_OPTS},subvol=@home 0 2
 LABEL=${ROOT_LABEL}     /opt             btrfs   ${BTRFS_OPTS},subvol=@opt 0 2
+# UUID=${ROOT_UUID}     /opt             btrfs   ${BTRFS_OPTS},subvol=@opt 0 2
 LABEL=${ROOT_LABEL}     /var/lib/gdm     btrfs   ${BTRFS_OPTS},subvol=@gdm 0 2
+# UUID=${ROOT_UUID}     /var/lib/gdm     btrfs   ${BTRFS_OPTS},subvol=@gdm 0 2
 LABEL=${ROOT_LABEL}     /var/lib/libvirt btrfs   ${BTRFS_OPTS},subvol=@libvirt 0 2
+# UUID=${ROOT_UUID}     /var/lib/libvirt btrfs   ${BTRFS_OPTS},subvol=@libvirt 0 2
 LABEL=${ROOT_LABEL}     /var/log         btrfs   ${BTRFS_OPTS2},subvol=@log 0 2
+# UUID=${ROOT_UUID}     /var/log         btrfs   ${BTRFS_OPTS2},subvol=@log 0 2
 LABEL=${ROOT_LABEL}     /nix             btrfs   ${NIX_OPTS},subvol=@nix 0 2
+# UUID=${ROOT_UUID}     /nix             btrfs   ${NIX_OPTS},subvol=@nix 0 2
 LABEL=${ROOT_LABEL}     /var/spool       btrfs   ${BTRFS_OPTS},subvol=@spool 0 2
+# UUID=${ROOT_UUID}     /var/spool       btrfs   ${BTRFS_OPTS},subvol=@spool 0 2
 LABEL=${ROOT_LABEL}     /var/tmp         btrfs   ${BTRFS_OPTS2},subvol=@tmp 0 2
+# UUID=${ROOT_UUID}     /var/tmp         btrfs   ${BTRFS_OPTS2},subvol=@tmp 0 2
 LABEL=${ROOT_LABEL}     /var/cache/apt   btrfs   ${BTRFS_OPTS},subvol=@apt 0 2
+# UUID=${ROOT_UUID}     /var/cache/apt   btrfs   ${BTRFS_OPTS},subvol=@apt 0 2
 LABEL=${ROOT_LABEL}     /.snapshots      btrfs   ${BTRFS_OPTS},subvol=@snapshots 0 2
+# UUID=${ROOT_UUID}     /.snapshots      btrfs   ${BTRFS_OPTS},subvol=@snapshots 0 2
 LABEL=${ROOT_LABEL}     /swap            btrfs   ${BTRFS_OPTS2},subvol=@swap 0 2
+# UUID=${ROOT_UUID}     /swap            btrfs   ${BTRFS_OPTS2},subvol=@swap 0 2
 # swapfile
 /swap/swapfile          none             swap    sw 0 0
 EOF
@@ -117,10 +141,12 @@ username="juca"
 hostname="anubis"
 
   # --include=apt,bash,zsh,neovim,ssh,curl,locales,wpasupplicant,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
+  # --include=apt,bash,cpio,kmod,initramfs-tools,neovim,ssh,curl,locales,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
 debootstrap \
   --arch=${Architecture} \
   --variant=minbase \
-  --include=apt,bash,cpio,kmod,initramfs-tools,neovim,ssh,curl,locales,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
+  --no-check-gpg \
+  --include=apt,bash,cpio,kmod,initramfs-tools,dkms,neovim,ssh,curl,locales,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
   ${CODENAME} /mnt \
   http://debian.c3sl.ufpr.br/debian
 
@@ -183,7 +209,7 @@ chroot /mnt apt --fix-broken install --yes
 #
 # touch /mnt/etc/dracut.conf.d/kernel.conf
 # cat <<EOF > /mnt/etc/dracut.conf.d/kernel.conf
-# kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+# kernel_cmdline=" rootflags=subvol=@ rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
 # EOF
 #
 # touch /mnt/etc/dracut.conf.d/quiet.conf
@@ -457,7 +483,7 @@ chroot /mnt apt autoremove
 chroot /mnt apt autoclean
 
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
-chroot /mnt useradd $username -m -c "Reinaldo PJr" -s /bin/bash
+chroot /mnt useradd $username -m -c "Reinaldo P Jr" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
 chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev $username
 chroot /mnt usermod -aG sudo $username
@@ -480,7 +506,6 @@ blacklist eth1394
 # blacklist snd_intel8x0m
 
 # blacklist prism54
-blacklist bcm43xx
 blacklist garmin_gps
 # blacklist asus_acpi
 # blacklist snd_pcsp
@@ -488,6 +513,7 @@ blacklist garmin_gps
 # blacklist amd76x_edac
 
 # Blacklist drivers Broadcom ruins (prioriza wl)
+blacklist bcm43xx
 blacklist brcmsmac
 blacklist wl
 blacklist bcma
@@ -596,46 +622,10 @@ publickey:  files
 rpc:        files
 EOF
 
-BOOT_UUID=$(blkid -s UUID -o value $SYSTEM_PART)
-ESP_UUID=$(blkid -s UUID -o value $EFI_PART)
-ROOT_UUID=$(blkid -s UUID -o value $ROOT_PART)
-
 # Cria swapfile e calcula resume_offset (tamanho 8 GB, ajuste se necessário)
 chroot /mnt btrfs filesystem mkswapfile --size 8g /swap/swapfile
 RESUME_OFFSET=$(chroot /mnt btrfs inspect-internal map-swapfile -r /swap/swapfile)
 chroot /mnt swapon /swap/swapfile
-
-touch /mnt/etc/fstab
-cat <<EOF >/mnt/etc/fstab
-LABEL="${ROOT_LABEL}"     /                   btrfs     rw,$BTRFS_OPTS,subvol=@root                0     0
-# UUID="${ROOT_UUID}"      /                   btrfs     rw,$BTRFS_OPTS,subvol=@root                0     0
-LABEL="${ROOT_LABEL}"     /.snapshots         btrfs     rw,$BTRFS_OPTS,subvol=@snapshots           0     0
-# UUID="${ROOT_UUID}"      /.snapshots         btrfs     rw,$BTRFS_OPTS,subvol=@snapshots           0     0
-LABEL="${ROOT_LABEL}"     /nix                btrfs     rw,$NIX_OPTS,subvol=@nix                   0     0
-# UUID="${ROOT_UUID}"      /nix                btrfs     rw,$NIX_OPTS,subvol=@nix                   0     0
-LABEL="${ROOT_LABEL}"     /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
-# UUID="${ROOT_UUID}"      /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
-LABEL="${ROOT_LABEL}"     /var/tmp            btrfs     rw,$BTRFS_OPTS2,subvol=@tmp                0     0
-# UUID="${ROOT_UUID}"      /var/tmp            btrfs     rw,$BTRFS_OPTS2,subvol=@tmp                0     0
-LABEL="${ROOT_LABEL}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
-# UUID="${ROOT_UUID}"      /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
-LABEL="${ROOT_LABEL}"     /var/cache/apt      btrfs     rw,$BTRFS_OPTS,subvol=@apt                 0     0
-# UUID="${ROOT_UUID}"      /var/cache/apt      btrfs     rw,$BTRFS_OPTS,subvol=@apt                 0     0
-LABEL="${ROOT_LABEL}"     /var/lib/libvirt    btrfs     rw,$BTRFS_OPTS,subvol=@libvirt             0     0
-# UUID="${ROOT_UUID}"      /var/lib/libvirt    btrfs     rw,$BTRFS_OPTS,subvol=@libvirt             0     0
-LABEL="${ROOT_LABEL}"     /var/lib/gdm        btrfs     rw,$BTRFS_OPTS,subvol=@gdm                 0     0
-# UUID="${ROOT_UUID}"      /opt                btrfs     rw,$BTRFS_OPTS,subvol=@opt                 0     0
-LABEL="${ROOT_LABEL}"     /home               btrfs     rw,$BTRFS_OPTS,subvol=@home                0     0
-# UUID="${ROOT_UUID}"      /home               btrfs     rw,$BTRFS_OPTS,subvol=@home                0     0
-LABEL="${ROOT_LABEL}"     /swap               btrfs     rw,$BTRFS_OPTS2,subvol=@swap               0     0
-# UUID="${ROOT_UUID}"      /swap               btrfs     rw,$BTRFS_OPTS2,subvol=@swap               0     0
-LABEL="${SYSTEM_LABEL}"   /boot               ext4      rw,relatime                                0     1
-# UUID="${BOOT_UUID}"      /boot               ext4      rw,relatime                                0     1
-LABEL="${EFI_LABEL}"      /boot/efi           vfat      defaults,noatime,nodiratime                0     2
-# UUID="${ESP_UUID}"      /boot/efi           vfat      defaults,noatime,nodiratime                0     2
-# swapfile
-/swap/swapfile          none                swap      sw                                         0     0
-EOF
 
 chroot /mnt apt install apparmor \
     apparmor-utils auditd -y
@@ -839,7 +829,7 @@ chroot /mnt systemctl mask systemd-networkd.service
 chroot /mnt systemctl mask systemd-networkd.socket
 chroot /mnt systemctl mask systemd-networkd-wait-online.service
 
-chroot /mnt systemctl enable wpa_supplicant.service
+# chroot /mnt systemctl enable wpa_supplicant.service
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable ssh.service
 chroot /mnt systemctl enable rtkit-daemon.service
@@ -880,12 +870,14 @@ ahci  # Para detecção de SSD no MacBook
 btrfs  # Para suporte Btrfs completo
 EOF
 
-# Correção: Para suporte a resume com swapfile, criamos /etc/initramfs-tools/conf.d/resume com UUID e offset (em vez de dracut's resume.conf).
+# Correção: Removido resume_offset do initramfs para evitar problemas de boot.
+# O zram já fornece swap comprimido que é mais simples e confiável para hardware antigo.
+# Se quiser usar hibernação com swapfile, você precisará configurar manualmente depois.
 mkdir -pv /mnt/etc/initramfs-tools/conf.d
 touch /mnt/etc/initramfs-tools/conf.d/resume
-cat <<EOF >/mnt/etc/initramfs-tools/conf.d/resume
-RESUME=UUID=${ROOT_UUID} resume_offset=${RESUME_OFFSET}
-EOF
+# cat <<EOF >/mnt/etc/initramfs-tools/conf.d/resume
+# RESUME=UUID=${ROOT_UUID} resume_offset=${RESUME_OFFSET}
+# EOF
 
 chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --recheck --force
 
@@ -899,9 +891,11 @@ GRUB_DISTRIBUTOR="Debian"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pci=noaer nomodeset psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 loglevel=0 rd.systemd.show_status=auto rd.udev.log_level=0 i915.enable_psr=0 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 pcie_aspm=force intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold nohz_full=1 mitigations=auto,nosmt resume=LABEL=${ROOT_LABEL} resume_offset=${RESUME_OFFSET}"
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pci=noaer acpi_backlight=vendor psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 loglevel=0 rd.systemd.show_status=auto rd.udev.log_level=0 i915.enable_psr=0 i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold resume=LABEL=${ROOT_LABEL} resume_offset=${RESUME_OFFSET}"
 # GRUB_CMDLINE_LINUX_DEFAULT="pci=noaer acpi_backlight=vendor psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 loglevel=0 rd.systemd.show_status=auto rd.udev.log_level=0 i915.enable_psr=0 i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold resume=LABEL=${ROOT_LABEL} resume_offset=${RESUME_OFFSET}"
-# Correção: Adicionando 'root=LABEL=${ROOT_LABEL} rootflags=subvol=@root' no início para especificar o root filesystem, evitando hang no initramfs. Usando LABEL como original, mas UUID seria mais seguro (pode substituir LABEL por UUID=${ROOT_UUID}). Comentando linhas antigas e usando uma nova com parâmetros Mac-specific (nomodeset, intel_iommu=off, reboot=pci) para hardware MacBook Air 4,1. Removendo loglevel=0 e rd.udev.log_level=0 para logs verbosos durante debug. Comentando temporariamente resume e resume_offset para testar sem hibernação (descomente após boot funcionar).
-# GRUB_CMDLINE_LINUX_DEFAULT="root=LABEL=${ROOT_LABEL} rootflags=subvol=@root pci=noaer acpi_backlight=vendor psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 rd.systemd.show_status=auto i915.enable_psr=0 i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold nomodeset intel_iommu=off reboot=pci # resume=UUID=${ROOT_UUID} resume_offset=${RESUME_OFFSET}"
-GRUB_CMDLINE_LINUX_DEFAULT="root=UUID=${ROOT_UUID} rootflags=subvol=@root pci=noaer acpi_backlight=vendor psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 rd.systemd.show_status=auto i915.enable_psr=0 i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold nomodeset intel_iommu=off reboot=pci acpi=off # resume=UUID=${ROOT_UUID} resume_offset=${RESUME_OFFSET}"
+# Correção: Removido acpi=off que estava causando travamento no boot. 
+# Parâmetros otimizados para MacBook Air 4,1 (Core 2 Duo) - simplificados para maior compatibilidade.
+GRUB_CMDLINE_LINUX_DEFAULT="root=UUID=${ROOT_UUID} rootflags=subvol=@ quiet splash i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 apparmor=1 security=apparmor"
+# Parâmetros originais mantidos para referência (comentados):
+# GRUB_CMDLINE_LINUX_DEFAULT="root=UUID=${ROOT_UUID} rootflags=subvol=@ pci=noaer acpi_backlight=vendor psi=1 i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor vt.global_cursor_default=0 rd.systemd.show_status=auto i915.enable_psr=0 i915.modeset=1 i915.enable_rc6=1 i915.enable_fbc=1 i915.fastboot=1 i915.enable_dc=0 intel_idle.max_cstate=1 zswap.enabled=1 zswap.compressor=lz4 zswap.zpool=z3fold nomodeset intel_iommu=off reboot=pci acpi=off"
 GRUB_DISABLE_OS_PROBER=false
 GRUB_ENABLE_BLSCFG=true
 EOF
@@ -917,20 +911,20 @@ rm -rf /mnt/initrd.img.old
 rm -rf /mnt/debootstrap
 
 # Config zram para otimização RAM (50% da RAM como swap comprimido, prioridade alta)
-cat <<EOF > /mnt/etc/default/zramswap
-ALLOCATION=50
-PRIORITY=100
-COMPRESSION_ALGORITHM=lz4
-SWAPPINESS=150  # Mais agressivo para usar zram antes de swap disco
-EOF
+# cat <<EOF > /mnt/etc/default/zramswap
+# ALLOCATION=50
+# PRIORITY=100
+# COMPRESSION_ALGORITHM=lz4
+# SWAPPINESS=150  # Mais agressivo para usar zram antes de swap disco
+# EOF
 
-chroot /mnt systemctl enable zramswap.service
+# chroot /mnt systemctl enable zramswap.service
 
-# Configuração extra para hibernação (force resume service)
-chroot /mnt systemctl enable systemd-hibernate-resume.service
+# # Configuração extra para hibernação (force resume service)
+# chroot /mnt systemctl enable systemd-hibernate-resume.service
 
-echo "Instalação concluída com todas as otimizações para MacBook Air 4,1, incluindo swapfile!"
-echo "Kernel Liquorix instalado como default. Reinicie e selecione no GRUB se necessário."
-echo "Teste hibernação com: systemctl hibernate"
-echo "Verifique swap: swapon -s (deve mostrar zram + /swap/swapfile)"
-echo "Para bateria: sudo tlp-stat -b"
+# echo "Instalação concluída com todas as otimizações para MacBook Air 4,1, incluindo swapfile!"
+# echo "Kernel Liquorix instalado como default. Reinicie e selecione no GRUB se necessário."
+# echo "Teste hibernação com: systemctl hibernate"
+# echo "Verifique swap: swapon -s (deve mostrar zram + /swap/swapfile)"
+# echo "Para bateria: sudo tlp-stat -b"

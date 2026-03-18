@@ -1,50 +1,81 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-apt install -y arch-install-scripts 
+########################################
+# CONFIG
+########################################
 
-# AJUSTE CONFORME SEU DISCO
-SYSTEM_PART="/dev/sda2"   # /boot ext4
-EFI_PART="/dev/sda3"      # EFI vfat
-ROOT_PART="/dev/sda4"     # root ext4
-
-ROOT_LABEL="Linux"
-SYSTEM_LABEL="BOOT"
-EFI_LABEL="ESP"
-
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async,autodefrag"
-NIX_OPTS="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=20,discard=async,autodefrag"
-BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async,autodefrag"  # uniformizei
-
-
+DRIVE="/dev/sda"
 MNT="/mnt"
 
-echo "[+] Criando diretórios..."
+EFI_PART="${DRIVE}1"
+BOOT_PART="${DRIVE}2"
+ROOT_PART="${DRIVE}3"
+SWAP_PART="${DRIVE}4"
 
-mount -o $BTRFS_OPTS2,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MNT
-mount -o $BTRFS_OPTS,subvol=@home /dev/disk/by-label/$ROOT_LABEL $MNT/home
-mount -o $BTRFS_OPTS,subvol=@opt /dev/disk/by-label/$ROOT_LABEL $MNT/opt
-mount -o $BTRFS_OPTS,subvol=@gdm /dev/disk/by-label/$ROOT_LABEL $MNT/var/lib/gdm
-mount -o $BTRFS_OPTS,subvol=@libvirt /dev/disk/by-label/$ROOT_LABEL $MNT/var/lib/libvirt
-mount -o $BTRFS_OPTS2,subvol=@log /dev/disk/by-label/$ROOT_LABEL $MNT/var/log
-mount -o $NIX_OPTS,subvol=@nix /dev/disk/by-label/$ROOT_LABEL $MNT/nix
-mount -o $BTRFS_OPTS,subvol=@spool" "/dev/disk/by-label/$ROOT_LABEL" $MNT/var/spool
-mount -o $BTRFS_OPTS2,subvol=@tmp" "/dev/disk/by-label/$ROOT_LABEL" $MNT/var/tmp
-mount -o $BTRFS_OPTS,subvol=@apt" "/dev/disk/by-label/$ROOT_LABEL" $MNT/var/cache/apt
-mount -o $BTRFS_OPTS,subvol=@snapshots" "/dev/disk/by-label/$ROOT_LABEL" $MNT/.snapshots
-mount -o $BTRFS_OPTS2,subvol=@swap /dev/disk/by-label/$ROOT_LABEL $MNT/swap
-mount /dev/disk/by-label/$SYSTEM_LABEL $MNT/boot
-mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/$EFI_LABEL $MNT/boot/efi
+ROOT_OPTS="noatime,ssd,space_cache=v2,compress=zstd:3"
+HOME_OPTS="noatime,ssd,space_cache=v2,compress=zstd:3"
+NIX_OPTS="noatime,ssd,space_cache=v2,compress=zstd:15"
 
+########################################
+# CLEAN OLD MOUNTS (if any)
+########################################
 
+echo "Unmounting old mounts..."
+umount -R "$MNT" 2>/dev/null || true
+swapoff "$SWAP_PART" 2>/dev/null || true
 
-# udevadm trigger
-# mkdir -p $MOUNTPOINT/{proc,sys,dev/pts}
-# mount -t proc     proc      $MOUNTPOINT/proc
-# mount -t sysfs    sysfs     $MOUNTPOINT/sys
-# mount --rbind     /dev      $MOUNTPOINT/dev
-# mount -t devpts   devpts    $MOUNTPOINT/dev/pts
-# mount -t efivarfs efivarfs  $MOUNTPOINT/sys/firmware/efi/efivars
+########################################
+# MOUNT ROOT SUBVOLUME
+########################################
 
-# echo "[+] Copiando resolv.conf..."
-# cp /etc/resolv.conf $MNT/etc/resolv.conf
+echo "Mounting BTRFS root..."
+mount -o ${ROOT_OPTS},subvol=@ "$ROOT_PART" "$MNT"
 
+########################################
+# CREATE MOUNTPOINTS
+########################################
+
+mkdir -pv "$MNT"/{boot,boot/efi,home,nix,var/log,var/cache,.snapshots}
+
+########################################
+# MOUNT OTHER PARTITIONS
+########################################
+
+mount "$BOOT_PART" "$MNT/boot"
+mount "$EFI_PART" "$MNT/boot/efi"
+
+mount -o ${HOME_OPTS},subvol=@home "$ROOT_PART" "$MNT/home"
+# mount -o ${NIX_OPTS},subvol=@nix "$ROOT_PART" "$MNT/nix"
+mount -o noatime,ssd,compress=none,subvol=@var_log "$ROOT_PART" "$MNT/var/log"
+mount -o noatime,ssd,compress=none,subvol=@var_cache "$ROOT_PART" "$MNT/var/cache"
+mount -o ${ROOT_OPTS},subvol=@snapshots "$ROOT_PART" "$MNT/.snapshots"
+
+########################################
+# ENABLE SWAP
+########################################
+
+swapon "$SWAP_PART"
+
+########################################
+# BIND SYSTEM DIRECTORIES
+########################################
+
+mount --bind /dev  "$MNT/dev"
+mount --bind /proc "$MNT/proc"
+mount --bind /sys  "$MNT/sys"
+mount --bind /run  "$MNT/run"
+
+########################################
+# EFI VARIABLES (CRITICAL FOR GRUB)
+########################################
+
+mount -t efivarfs efivarfs "$MNT/sys/firmware/efi/efivars" || true
+
+########################################
+# READY FOR CHROOT
+########################################
+
+echo "System mounted successfully."
+echo "Enter with:"
+echo "chroot $MNT /bin/bash"

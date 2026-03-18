@@ -33,7 +33,7 @@ sleep 2
 parted -s -a optimal $DRIVE mklabel gpt
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"          $DRIVE
 sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"    $DRIVE
-sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
+sgdisk -n 0:0:+100M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
 sgdisk -n 0:0:+35G     -t 4:8300 -c 4:"Fedora root"        $DRIVE
 sgdisk -n 0:0:0        -t 5:8302 -c 5:"Fedora home"        $DRIVE
 sgdisk -p $DRIVE
