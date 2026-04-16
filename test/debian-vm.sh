@@ -3,85 +3,70 @@
 apt update && apt install gdisk debootstrap btrfs-progs lsb-release wget arch-install-scripts -y
 
 # 🧭 Drive + partition paths
-DRIVE="/dev/nvme0n1"
-SYSTEM_PART="${DRIVE}p2"
-EFI_PART="${DRIVE}p3"
-ROOT_PART="${DRIVE}p4"
-HOME_PART="${DRIVE}p5"
-# WINDOWS_PART="${DRIVE}p7"
-# MISC_PART="${DRIVE}p8"
+DRIVE="/dev/vda"
+SYSTEM_PART="${DRIVE}2"
+EFI_PART="${DRIVE}3"
+ROOT_PART="${DRIVE}4"
+HOME_PART="${DRIVE}5"
+
 
 # 🔖 Labels
-ROOT_LABEL="Linux"
-HOME_LABEL="Data-home"
+ROOT_LABEL="Linux_Root"
+HOME_LABEL="data"
 # SWAP_LABEL="SWAP"
-SYSTEM_LABEL="BOOT"
+SYSTEM_LABEL="SYSTEM"
 EFI_LABEL="ESP"
-# WINDOWS_LABEL="Windows 11"
-# MISC_LABEL="Shared-Data"
 
 # ⚙️ Btrfs options
-# BTRFS_OPTS="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
-# BTRFS_OPTS2="noatime,ssd,compress-force=zstd:6,space_cache=v2,commit=120,discard=async"
-# BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
-NIX_OPTS="noatime,ssd,compress-force=zstd:22,space_cache=v2,commit=60,discard=async"
 BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,commit=120,discard=async"
-BTRFS_OPTS2="noatime,ssd,compress-force=zstd:3,space_cache=v2,commit=120,discard=async"
-BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:9,space_cache=v2,commit=120,discard=async"
-
+BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,commit=120,discard=async"
 
 # 📁 Mount point
 MOUNTPOINT="/mnt"
 
-# echo "🧱 Creating partitions..."
-# sgdisk --zap-all $DRIVE
-# sleep 2
-# parted -s -a optimal $DRIVE mklabel gpt
-# sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"          $DRIVE
-# sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"    $DRIVE
-# sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
-# sgdisk -n 0:0:+50G     -t 4:8300 -c 4:"$ROOT_LABEL root"        $DRIVE
-# # sgdisk -n 0:0:+50G     -t 5:8302 -c 5:"$ROOT_LABEL home"        $DRIVE
-# sgdisk -n 0:0:0        -t 5:8302 -c 5:"$HOME_LABEL home"        $DRIVE
-# # sgdisk -n 0:0:+16M     -t 6:0C01 -c 6:"Microsoft Reserved" $DRIVE
-# # sgdisk -n 0:0:+100G    -t 7:0700 -c 7:"Windows data"       $DRIVE
-# # sgdisk -n 0:0:0        -t 8:0700 -c 8:"Miscellaceous data" $DRIVE
-# sgdisk -p $DRIVE
+echo "🧱 Creating partitions..."
+sgdisk --zap-all $DRIVE
+sleep 2
+parted -s -a optimal $DRIVE mklabel gpt
+sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"          $DRIVE
+sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"    $DRIVE
+sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
+sgdisk -n 0:0:+30G     -t 4:8300 -c 4:"$ROOT_LABEL root"   $DRIVE
+sgdisk -n 0:0:0        -t 5:8302 -c 5:"$HOME_LABEL home"   $DRIVE
+sgdisk -p $DRIVE
 
 
 echo "🧼 Formatting partitions..."
 mkfs.ext4  -F   -L "$SYSTEM_LABEL"  "$SYSTEM_PART"
-# mkfs.fat   -F32 -n "$EFI_LABEL"     "$EFI_PART"
+mkfs.fat   -F32 -n "$EFI_LABEL"     "$EFI_PART"
 mkfs.btrfs -f   -L "$ROOT_LABEL"    "$ROOT_PART"
-# mkfs.btrfs -f   -L "$HOME_LABEL"    "$HOME_PART"
-# mkfs.ntfs  -F   -L "$WINDOWS_LABEL" "$WINDOWS_PART"
-# mkfs.exfat      -n "$MISC_LABEL"    "$MISC_PART"
+mkfs.btrfs -f   -L "$HOME_LABEL"    "$HOME_PART"
 
 # 🎯 Create Btrfs subvolumes on root partition
 mount "$ROOT_PART" "$MOUNTPOINT"
-for sv in @ @opt @nix @gdm @libvirt @spool @log @tmp @apt @snapshots; do
+for sv in @root @opt @nix @gdm @libvirt @spool @log @tmp @apt @snapshots; do
   btrfs subvolume create "$MOUNTPOINT/$sv"
 done
 umount -Rv "$MOUNTPOINT"
 
 # 🏠 Create @home subvolume on home partition
-# mkdir -p $MOUNTPOINT/home-temp
-# mount "$HOME_PART" $MOUNTPOINT/home-temp
-# btrfs subvolume create $MOUNTPOINT/home-temp/@home
-# umount $MOUNTPOINT/home-temp
+mkdir -p $MOUNTPOINT/home-temp
+mount "$HOME_PART" $MOUNTPOINT/home-temp
+btrfs subvolume create $MOUNTPOINT/home-temp/@home
+umount $MOUNTPOINT/home-temp
 
 echo "📦 Mounting subvolumes..."
-mount -o $BTRFS_OPTS2,subvol=@ /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
+mount -o $BTRFS_OPTS,subvol=@root /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT
 mkdir -pv $MOUNTPOINT/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache/apt,lib/{gdm,libvirt}}}
 
 mount -o $BTRFS_OPTS_HOME,subvol=@home      /dev/disk/by-label/$HOME_LABEL $MOUNTPOINT/home
 mount -o $BTRFS_OPTS,subvol=@opt            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/opt
 mount -o $BTRFS_OPTS,subvol=@gdm            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/gdm
 mount -o $BTRFS_OPTS,subvol=@libvirt        /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/lib/libvirt
-mount -o $BTRFS_OPTS2,subvol=@log           /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/log
-mount -o $NIX_OPTS,subvol=@nix              /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/nix
+mount -o $BTRFS_OPTS,subvol=@log            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/log
+mount -o $BTRFS_OPTS,subvol=@nix            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/nix
 mount -o $BTRFS_OPTS,subvol=@spool          /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/spool
-mount -o $BTRFS_OPTS2,subvol=@tmp           /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
+mount -o $BTRFS_OPTS,subvol=@tmp            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/tmp
 mount -o $BTRFS_OPTS,subvol=@apt            /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/var/cache/apt
 mount -o $BTRFS_OPTS,subvol=@snapshots      /dev/disk/by-label/$ROOT_LABEL $MOUNTPOINT/.snapshots
 
@@ -94,7 +79,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/$EFI_LABEL $MOUN
 Architecture="amd64"
 CODENAME="trixie" #$(lsb_release --codename --short) # or CODENAME=bookworm
 username="juca"
-hostname="nitro"
+hostname="virtualvm"
 
 # debootstrap \
 #   --variant=minbase \
@@ -103,17 +88,10 @@ hostname="nitro"
 #   ${CODENAME} /mnt \
 #   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
 
-# debootstrap \
-#   --arch=${Architecture} \
-#   --variant=minbase \
-#   --include=apt,bash,zsh,neovim,wpasupplicant,firmware-iwlwifi,locales,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
-#   ${CODENAME} /mnt \
-#   http://debian.c3sl.ufpr.br/debian
-
 debootstrap \
   --arch=${Architecture} \
   --variant=minbase \
-  --include=apt,bash,zsh,neovim,wpasupplicant,zstd,apt-utils,btrfs-progs,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
+  --include=apt,bash,zsh,neovim,nano,locales,apt-utils,iputils-ping,dbus-broker,dbus-user-session,libpam-systemd,wget,curl,tzdata,ca-certificates,systemd-sysv,grub-efi-amd64,login,passwd,procps,e2fsprogs,network-manager,sudo \
   ${CODENAME} /mnt \
   http://debian.c3sl.ufpr.br/debian
 
@@ -137,8 +115,8 @@ iface lo inet loopback
 EOF
 
 
-chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
-chroot /mnt apt --fix-broken install --yes
+# chroot /mnt update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 100
+# chroot /mnt apt --fix-broken install --yes
 
 ######################
 ### Dracut Modules ###
@@ -146,11 +124,13 @@ chroot /mnt apt --fix-broken install --yes
 
 mkdir -pv /mnt/etc/dracut.conf.d
 
-touch /mnt/etc/dracut.conf.d/debian.conf
-cat <<EOF > /mnt/etc/dracut.conf.d/debian.conf
-
+touch /mnt/etc/dracut.conf.d/10-debian.conf
+cat <<EOF > /mnt/etc/dracut.conf.d/10-debian.conf
 do_prelink="no"
 hostonly="yes"
+# add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
+add_dracutmodules+=" systemd "
+# force_drivers+=" nvme ahci hid_generic iwlwifi "
 early_microcode=yes
 EOF
 
@@ -159,110 +139,34 @@ cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/10-custom.conf
-# Don’t strip away any Plymouth bits
-# (remove any omit_dracutmodules line for plymouth)
-omit_dracutmodules+=" amdgpu 90crypt "
-
-# Kernel command-line: enable SELinux, show splash, keep messages quiet
-kernel_cmdline=" rootflags=subvol=@ rw quiet lsm=landlock lockdown yama  bpf "
-EOF
-
-cat <<EOF >/mnt/etc/dracut.conf.d/apparmor.conf
-add_dracutmodules+=" apparmor "
-kernel_cmdline=" apparmor=1 security=apparmor apparmor=1 "
-EOF
-
-touch /mnt/etc/dracut.conf.d/plymouth.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/plymouth.conf
-add_dracutmodules+=" plymouth "
-
-# Ensure Plymouth theme files are embedded
-#install_items+=" /usr/share/plymouth/themes/solar/*  /etc/plymouth/plymouthd.conf "
-EOF
-
-touch /mnt/etc/dracut.conf.d/input.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/input.conf
-add_drivers+=" psmouse "
-EOF
-
-touch /mnt/etc/dracut.conf.d/iwlwifi.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/iwlwifi.conf
-add_drivers+=" iwlwifi "
-EOF
-
-touch /mnt/etc/dracut.conf.d/override.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/override.conf
-# Força initramfs no /boot padrão (não em /boot/efi/MACHINE-ID)
-uefi="no"  # evita paths EFI errados se usa GRUB
+# Host-specific image
+hostonly_cmdline="yes"
 
 # Fast compression
 compress="zstd"
 compressargs="-19"
 
-hostonly="yes"   # ou "no" se quiser initramfs genérico
-EOF
+# Don’t strip away any Plymouth bits
+# (remove any omit_dracutmodules line for plymouth)
+omit_dracutmodules+=" amdgpu 90crypt "
 
-touch /mnt/etc/dracut.conf.d/quiet.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/quiet.conf
-omit_dracutmodules+=" crypt " # se não usa LUKS, silencia warnings
-EOF
-
-touch /mnt/etc/dracut.conf.d/resume.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/resume.conf
-# resume_offset="0"   # se usar swap em arquivo
-EOF
-
-touch /mnt/etc/dracut.conf.d/btrfs.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/btrfs.conf
-add_dracutmodules+=" btrfs "
 
 # Limit to Btrfs root filesystem
 # filesystems+=" resume btrfs "
 filesystems+=" btrfs "
+
+# Kernel command-line: enable SELinux, show splash, keep messages quiet
+kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+
+# Ensure Plymouth theme files are embedded
+# install_items+="/usr/share/plymouth/themes/solar/* \
+#  /etc/plymouth/plymouthd.conf"
+
 EOF
 
-touch /mnt/etc/dracut.conf.d/nvme.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/nvme.conf
-add_drivers+=" nvme "
-EOF
-
-touch /mnt/etc/dracut.conf.d/systemd.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/systemd.conf
-add_dracutmodules+=" systemd "
-EOF
-
-touch /mnt/etc/dracut.conf.d/nvidia.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/nvidia.conf
-# add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm " # para NVIDIA/VA-API
-EOF
-
-touch /mnt/etc/dracut.conf.d/waydroid.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/waydroid.conf
-add_drivers+=" binder_linux ashmem_linux "  # para Waydroid
-EOF
-
-touch /mnt/etc/dracut.conf.d/intel.conf
-cat <<EOF >/mnt/etc/dracut.conf.d/intel.conf
-add_drivers+=" i915 "
-EOF
-
-###################
-### Environment ###
-###################
-touch /mnt/etc/environment
-cat <<EOF >/mnt/etc/environment
-### Nvidia ###
-#LIBVA_DRIVER_NAME=nvidia
-#MOZ_DISABLE_RDD_SANDBOX=1   # para Firefox (desabilita sandbox no decoder)
-#NVD_BACKEND=direct
-
-#Se usar driver proprietário antigo (ex: 470 ou 535 legacy), instale o pacote antigo:
-#LIBVA_DRIVER_NAME=vdpau
-
-### Intel ###
-LIBVA_DRIVER_NAME=iHD
-LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+touch /mnt/etc/dracut.conf.d/input.conf
+cat <<EOF >/mnt/etc/dracut.conf.d/input.conf
+# add_drivers+=" psmouse "
 EOF
 
 ########################
@@ -321,19 +225,19 @@ Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 # Components: main contrib non-free non-free-firmware
 # Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-Types: deb deb-src
-# URIs: http://deb.debian.org/debian/
-URIs: http://debian.c3sl.ufpr.br/debian/
-Suites: unstable
-Components: main contrib non-free non-free-firmware
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+# Types: deb deb-src
+# # URIs: http://deb.debian.org/debian/
+# URIs: http://debian.c3sl.ufpr.br/debian/
+# Suites: unstable
+# Components: main contrib non-free non-free-firmware
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-Types: deb deb-src
-# URIs: http://deb.debian.org/debian/
-URIs: http://debian.c3sl.ufpr.br/debian/
-Suites: experimental
-Components: main contrib non-free non-free-firmware
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+# Types: deb deb-src
+# # URIs: http://deb.debian.org/debian/
+# URIs: http://debian.c3sl.ufpr.br/debian/
+# Suites: experimental
+# Components: main contrib non-free non-free-firmware
+# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 # Types: deb
 # URIs: tor+http://2s4yqjx5ul6okpp3f2gaunr2syex5jgbfpfvhxxbbjwnrsvbk5v3qbid.onion/debian/
@@ -361,83 +265,90 @@ HEREDOC
 mkdir -pv /mnt/etc/apt/apt.conf.d
 
 touch /mnt/etc/apt/apt.conf.d/00recommends
-cat >/mnt/etc/apt/apt.conf.d/00recommends <<HEREDOC
+cat << EOF >/mnt/etc/apt/apt.conf.d/00recommends
 APT::Install-Recommends "false"; # Prevents auto-installing recommended packages
 # Aptitude::Recommends-Important "false";
-HEREDOC
+EOF
 
 touch /mnt/etc/apt/apt.conf.d/70debconf
-cat >/mnt/etc/apt/apt.conf.d/70debconf <<HEREDOC
+cat << EOF >/mnt/etc/apt/apt.conf.d/70debconf
 // Pre-configure all packages with debconf before they are installed.
 // If you don't like it, comment it out.
 # DPkg::Pre-Install-Pkgs {"/usr/sbin/dpkg-preconfigure --apt || true";};
-HEREDOC
+EOF
 
 touch /mnt/etc/apt/apt.conf.d/99suggests
-cat >/mnt/etc/apt/apt.conf.d/99suggests <<HEREDOC
+cat << EOF >/mnt/etc/apt/apt.conf.d/99suggests
 #Recommends are as of now abused in many packages
 APT::Install-Suggests "0";          # Skips suggested packages (often unnecessary)
 # Aptitude::Suggests-Important "false";
 
 # // no install recommends/suggests packages
 # APT::Install-Suggests "false";
-HEREDOC
+EOF
 
 touch /mnt/etc/apt/apt.conf.d/01autoremove
-cat >/mnt/etc/apt/apt.conf.d/01autoremove <<HEREDOC
+cat << EOF >/mnt/etc/apt/apt.conf.d/01autoremove
 APT
 {
   NeverAutoRemove
   {
-        "^firmware-linux.*";
-        "^linux-firmware$";
-        // "^linux-image-[a-z0-9]*$";
-        // "^linux-image-[a-z0-9]*-[a-z0-9]*$";
+    "^firmware-linux.*";
+    "^linux-firmware$";
+    # "^linux-image-[a-z0-9]*$";
+    # "^linux-image-[a-z0-9]*-[a-z0-9]*$";
   };
 
-  VersionedKernelPackages
+  VersionedKernelPackages,
   {
-        // Linux kernels
-        "linux-image";
-        "linux-headers";
-        "linux-image-extra";
-        "linux-modules";
-        "linux-modules-extra";
-        "linux-signed-image";
-        "linux-.*";
-        // BSD kernels
-        "kfreebsd-.*";
-        "kfreebsd-image";
-        "kfreebsd-headers";
-        // hurd kernels
-        "gnumach-image";
-        "gnumach-.*";
-        // (out-of-tree) modules
-        ".*-modules";
-        ".*-kernel";
-        "linux-backports-modules-.*";
-        "linux-modules-.*";
-        // tools
-        "linux-tools";
+    # Linux kernels
+    "linux-image";
+    "linux-headers";
+    "linux-image-extra";
+    "linux-modules";
+    "linux-modules-extra";
+    "linux-signed-image";
+    "linux-.*";
+    # BSD kernels,
+    "kfreebsd-.*";
+    "kfreebsd-image";
+    "kfreebsd-headers";
+    # hurd kernels
+    "gnumach-image";
+    "gnumach-.*";
+    # (out-of-tree) modules
+    ".*-modules";
+    ".*-kernel";
+    "linux-backports-modules-.*";
+    "linux-modules-.*";
+    # tools
+    "linux-tools";
   };
 
   Never-MarkAuto-Sections
   {
-        "metapackages";
-        "tasks";
+    "metapackages";
+    "tasks";
   };
 
   Move-Autobit-Sections
   {
-        "oldlibs";
+    "oldlibs";
   };
-}
-HEREDOC
+};
+EOF
+
+touch /mnt/etc/apt/apt.conf.d/99assumeyes
+cat << EOF >/mnt/etc/apt/apt.conf.d/99assumeyes
+# assume yes install packages
+// assume yes install packages
+APT::Get::Assume-Yes "true";
+EOF
 
 touch /mnt/etc/apt/apt.conf.d/70assumeyes
-cat >/mnt/etc/apt/apt.conf.d/70assumeyes <<HEREDOC
+cat << EOF >/mnt/etc/apt/apt.conf.d/70assumeyes
 APT::Get::Assume-Yes "true";
-HEREDOC
+EOF
 
 # echo 'APT::Default-Release "stable";' | sudo tee /etc/apt/apt.conf.d/99default-release
 echo 'APT::Default-Release "trixie";' | tee /mnt/etc/apt/apt.conf.d/99default-release
@@ -451,19 +362,18 @@ touch /mnt/etc/apt/preferences.d/10unstable.pref
 touch /mnt/etc/apt/preferences.d/1experimental.pref
 touch /mnt/etc/apt/preferences.d/no-initramfs-tools
 
-cat >/mnt/etc/apt/preferences.d/99trixie.pref <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/99trixie.pref
 # 500 <= P < 990: causes a version to be installed unless there is a
 # version available belonging to the target release or the installed
 # version is more recent
 
 Package: *
 # Pin: release a=stable
-# Pin: release a=${CODENAME}
-Pin: release a=trixie
+Pin: release a=${CODENAME}
 Pin-Priority: 900
-HEREDOC
+EOF
 
-cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/50testing.pref
 # 100 <= P < 500: causes a version to be installed unless there is a
 # version available belonging to some other distribution or the installed
 # version is more recent
@@ -471,9 +381,9 @@ cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
 Package: *
 Pin: release a=testing
 Pin-Priority: 400
-HEREDOC
+EOF
 
-cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/50testing.pref
 # 100 <= P < 500: causes a version to be installed unless there is a
 # version available belonging to some other distribution or the installed
 # version is more recent
@@ -481,37 +391,35 @@ cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
 Package: *
 Pin: release a=testing
 Pin-Priority: 400
-HEREDOC
+EOF
 
 
-cat >/mnt/etc/apt/preferences.d/10unstable.pref <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/10unstable.pref
 # 0 < P < 100: causes a version to be installed only if there is no
 # installed version of the package
 
 Package: *
 Pin: release a=unstable
 Pin-Priority: 50
-HEREDOC
+EOF
 
-cat >/mnt/etc/apt/preferences.d/1experimental.pref <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/1experimental.pref
 # 0 < P < 100: causes a version to be installed only if there is no
 # installed version of the package
 
 Package: *
 Pin: release a=experimental
 Pin-Priority: 1
-HEREDOC
+EOF
 
-cat >/mnt/etc/apt/preferences.d/no-initramfs-tools <<HEREDOC
+cat << EOF >/mnt/etc/apt/preferences.d/no-initramfs-tools
 Package: initramfs-tools
 Pin: release *
 Pin-Priority: -1
-HEREDOC
+EOF
 
 chroot /mnt apt update
 chroot /mnt apt upgrade --yes
-
-chroot /mnt apt install locales firmware-iwlwifi --yes
 # chroot /mnt apt purge initramfs-tools initramfs-tools-core --yes
 # chroot /mnt apt-mark hold initramfs-tools
 
@@ -673,8 +581,8 @@ vm.dirty_background_ratio=1
 vm.dirty_ratio=50
 EOF
 
-cat <<EOF >/mnt/etc/sysctl.d/99-allow-ping.conf
-net.ipv4.ping_group_range=0 2147483647
+cat <<EOF >/mnt/etc/sysctl.d/10-conf.conf
+net.ipv4.ping_group_range=0 $MAX_GID
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-intel.conf
@@ -684,11 +592,11 @@ EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-console-messages.conf
 # the following stops low-level messages on console
-kernel.printk=4 4 1 7
+kernel.printk = 4 4 1 7
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/99-dmesg.conf
-kernel.dmesg_restrict=0
+kernel.dmesg_restrict = 0
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/10-ipv6-privacy.conf
@@ -811,20 +719,20 @@ touch /mnt/etc/fstab
 cat <<EOF >/mnt/etc/fstab
 # <file system>           <dir>               <type>    <options>                               <dump> <pass>
 ### ROOTFS ###
-# UUID="${ROOT_UUID}"     /                   btrfs     rw,$BTRFS_OPTS,subvol=@                    0     0
-LABEL="${ROOT_LABEL}"     /                   btrfs     rw,$BTRFS_OPTS,subvol=@                    0     0
+# UUID="${ROOT_UUID}"     /                   btrfs     rw,$BTRFS_OPTS,subvol=@root                0     0
+LABEL="${ROOT_LABEL}"     /                   btrfs     rw,$BTRFS_OPTS,subvol=@root                0     0
 
 # UUID="${ROOT_UUID}"     /.snapshots         btrfs     rw,$BTRFS_OPTS,subvol=@snapshots           0     0
 LABEL="${ROOT_LABEL}"     /.snapshots         btrfs     rw,$BTRFS_OPTS,subvol=@snapshots           0     0
 
-# UUID="${ROOT_UUID}"     /nix                btrfs     rw,$NIX_OPTS,subvol=@nix                   0     0
-LABEL="${ROOT_LABEL}"     /nix                btrfs     rw,$NIX_OPTS,subvol=@nix                   0     0
+# UUID="${ROOT_UUID}"     /nix                btrfs     rw,$BTRFS_OPTS_HOME,subvol=@nix            0     0
+LABEL="${ROOT_LABEL}"     /nix                btrfs     rw,$BTRFS_OPTS_HOME,subvol=@nix            0     0
 
 # UUID="${ROOT_UUID}"     /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
 LABEL="${ROOT_LABEL}"     /var/log            btrfs     rw,$BTRFS_OPTS,subvol=@log                 0     0
 
-# UUID="${ROOT_UUID}"     /var/tmp            btrfs     rw,$BTRFS_OPTS2,subvol=@tmp                0     0
-LABEL="${ROOT_LABEL}"     /var/tmp            btrfs     rw,$BTRFS_OPTS2,subvol=@tmp                0     0
+# UUID="${ROOT_UUID}"     /var/tmp            btrfs     rw,$BTRFS_OPTS,subvol=@tmp                 0     0
+LABEL="${ROOT_LABEL}"     /var/tmp            btrfs     rw,$BTRFS_OPTS,subvol=@tmp                 0     0
 
 # UUID="${ROOT_UUID}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
 LABEL="${ROOT_LABEL}"     /var/spool          btrfs     rw,$BTRFS_OPTS,subvol=@spool               0     0
@@ -914,10 +822,30 @@ echo "net.ipv4.ping_group_range = 0 2147483647" >> /mnt/usr/lib/sysctl.d/50-defa
 #### Audio ####
 ###############
 
-## Pipewire
-# chroot /mnt apt purge pipewire* pipewire-bin -y
-chroot /mnt apt install pulseaudio-utils pipewire-audio wireplumber pipewire-pulse pipewire-alsa libspa-0.2-bluetooth libspa-0.2-jack
+## Pipewire ##
 
+# chroot /mnt apt purge pipewire* pipewire-bin -y
+chroot /mnt apt install pipewire-audio pipewire-audio-client-libraries wireplumber pipewire-pulse pipewire-alsa libspa-0.2-bluetooth libspa-0.2-jack
+
+# To support AAC and LDAC
+chroot /mnt apt install libfdk-aac-dev libldacbt-abr2 libldacbt-enc2
+
+mkdir -pv /mnt/etc/pulse/default.pa.d
+cat << EOF >/etc/pulse/default.pa
+load-module module-switch-on-connect
+EOF
+cat << EOF >/mnt/etc/pulse/default.pa.d/bluez5.pa
+load-module module-bluez5-device
+load-module module-bluez5-discover
+EOF
+
+mkdir -pv /mnt/etc/pipewire/media-session.d
+cat << EOF >/mnt/etc/pipewire/media-session.d/bluez-monitor.conf
+properties = {
+    bluez5.codecs = [ aac ldac ]
+    bluez5.default-codec = ldac
+}
+EOF
 
 # Enable WirePlumber session manager:
 chroot /mnt systemctl --user enable wireplumber.service # --now
@@ -927,7 +855,8 @@ chroot /mnt systemctl --user enable wireplumber.service # --now
 chroot /mnt systemctl --user disable pulseaudio.service pulseaudio.socket # --now
 chroot /mnt systemctl --user mask pulseaudio
 # Enable PipeWire services:
-chroot /mnt systemctl --user enable pipewire pipewire-pulse # --now
+chroot /mnt systemctl --user enable pipewire pipewire-pulse wireplumber
+# chroot /mnt systemctl --user start pipewire pipewire-pulse wireplumber
 
 ## RealtimeKit
 chroot /mnt apt install rtkit
@@ -935,7 +864,7 @@ chroot /mnt apt install rtkit
 ###############
 #### Utils ####
 ###############
-chroot /mnt apt install gdisk bash-completion pciutils xz-utils curl unzip
+chroot /mnt apt install gdisk bash-completion pciutils xz-utils curl unzip \
   # acpi acpid
   #dkms
 
@@ -1017,7 +946,9 @@ chroot /mnt apt install chrony
 #### Optimizations Tools ####
 #############################
 
-chroot /mnt apt install earlyoom powertop tlp thermald irqbalance
+# chroot /mnt apt install nix-setup-systemd --yes
+
+chroot /mnt apt install earlyoom powertop tlp thermald irqbalance ssh --yes
 chroot /mnt systemctl enable earlyoom
 chroot /mnt systemctl enable powertop
 chroot /mnt systemctl enable tlp
@@ -1033,18 +964,18 @@ mkdir -pv /mnt/etc/X11/xorg.conf.d/
 touch /mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 cat <<EOF >/mnt/etc/X11/xorg.conf.d/30-touchpad.conf
 Section "InputClass"
-    # Identifier        "SynPS/2 Synaptics TouchPad"
-    # Identifier        "SynPS/2 Synaptics TouchPad"
-    # MatchIsTouchpad                                     "on"
-    # Driver            "libinput"
-    # Option            "Tapping"                         "on"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # Identifier "SynPS/2 Synaptics TouchPad"
+        # MatchIsTouchpad                                     "on"
+        # Driver            "libinput"
+        # Option            "Tapping"                         "on"
 
-    Identifier          "libinput touchpad catchall"
-    Driver              "libinput"
-    MatchIsTouchpad     "on"
-    MatchDevicePath     "/dev/input/event*"
-    Option              "Tapping"   			                "on"
-    Option 		          "NaturalScrolling"		            "true"
+        Identifier          "libinput touchpad catchall"
+        Driver              "libinput"
+        MatchIsTouchpad     "on"
+        MatchDevicePath     "/dev/input/event*"
+        Option              "Tapping"   			                "on"
+        Option 		          "NaturalScrolling" 			          "true"
 EndSection
 EOF
 
@@ -1052,13 +983,8 @@ EOF
 ### BLUETOOTH ###
 #################
 
-chroot /mnt apt install bluez bluez-tools -y
-#  blueman
-# sudo systemctl enable bluetooth
-# sudo systemctl start bluetooth
+# chroot /mnt apt install bluez blueman
 
-
-rfkill list
 
 ################################
 #### Setup default keyboard ####
@@ -1074,10 +1000,9 @@ cat <<EOF >/mnt/etc/default/keyboard
 XKBMODEL="pc105"
 XKBLAYOUT="us,br"
 XKBVARIANT="alt-intl,abnt2"
-XKBOPTIONS="lv3:ralt_switch,grp:alt_shift_toggle"
+XKBOPTIONS="grp:alt_shift_toggle"
 BACKSPACE="guess"
 EOF
-
 
 chroot /mnt apt install console-setup
 
@@ -1114,11 +1039,12 @@ chroot /mnt systemctl disable systemd-networkd.service
 chroot /mnt systemctl disable systemd-networkd.socket
 chroot /mnt systemctl disable systemd-networkd-wait-online.service
 
+chroot /mnt systemctl enable nix-daemon
+
 chroot /mnt systemctl mask systemd-networkd.service
 chroot /mnt systemctl mask systemd-networkd.socket
 chroot /mnt systemctl mask systemd-networkd-wait-online.service
 
-chroot /mnt systemctl enable wpa_supplicant.service
 chroot /mnt systemctl enable NetworkManager.service
 # chroot /mnt systemctl disable networking.service
 # chroot /mnt systemctl disable iwd.service
@@ -1141,8 +1067,6 @@ chroot /mnt apt install linux-image-amd64 linux-headers-amd64 --yes
 
 # chroot /mnt update-initramfs -c -k all
 chroot /mnt apt install dracut
-chroot /mnt apt autoremove
-chroot /mnt apt autoclean
 chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
 
 ######################
@@ -1150,8 +1074,7 @@ chroot /mnt dracut --kver "$(ls /mnt/lib/modules/ | head -n 1)" --force
 ######################
 
 # chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --no-nvram --removable --recheck
-# chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --removable --recheck
-chroot /mnt grub-install --target=x86_64-efi --bootloader-id="Debian" --efi-directory=/boot/efi --recheck --force
+chroot /mnt grub-install --target=x86_64-efi --bootloader-id="${ROOT_LABEL}" --efi-directory=/boot/efi --removable --recheck
 
 #####################
 #### Config Grub ####
@@ -1167,10 +1090,7 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-# GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet psi=1 i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=0 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
-
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet psi=1 i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=1 i915.enable_guc=3 i915.modeset=1 nvidia-drm.modeset=1 nvidia-drm.fbdev=1 rd.driver.blacklist=nouveau modprobe.blacklist=nouveau msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 no_timer_check page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable vt.global_cursor_default=0 loglevel=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1"
-
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=0 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 
@@ -1201,14 +1121,10 @@ rm -rf /mnt/initrd.img
 rm -rf /mnt/initrd.img.old
 rm -rf /mnt/debootstrap
 
-#####################
-### Intel Drivers ###
-#####################
+chroot /mnt apt autoremove --yes
+chroot /mnt apt clean
 
-chroot /mnt apt install intel-media-va-driver-non-free libva2 vainfo intel-gpu-tools firmware-misc-nonfree mesa-va-drivers
-
-# sudo apt install -t sid nvidia-driver nvidia-settings
-# sudo apt install firmware-misc-nonfree
+# sudo apt install nvidia-driver nvidia-settings firmware-misc-nonfree
 # sudo apt install mesa-utils mesa-vulkan-drivers intel-microcode
 # sudo apt install xserver-xorg-video-intel
 
@@ -1217,89 +1133,25 @@ chroot /mnt apt install intel-media-va-driver-non-free libva2 vainfo intel-gpu-t
 ### KDE ###
 ###########
 
-apt install bluedevil
-apt install plymouth kde-config-plymouth plymouth-themes
+sudo apt install debconf dialog
 
-apt install sddm kde-config-sddm sddm-theme-debian-breeze plasma-desktop plasma-workspace \
-kde-plasma-desktop konsole dolphin kate plasma-nm systemsettings powerdevil ark \
-plasma-systemmonitor kscreen plasma-discover plasma-pa xdg-utils xdg-user-dirs xdg-desktop-portal \
-xdg-desktop-portal-kde plymouth plymouth-themes qt6-style-kvantum libqt6svg6 \
-qt6-virtualkeyboard-plugin libqt6multimedia6 qml6-module-qtquick-controls \
-qml6-module-qtquick-effects libxcb-cursor0
+sudo apt install plymouth kde-config-plymouth plymouth-theme-breeze
 
-install -y \
-  libpam-kwallet5 pam-kwallet5 \
-  libpam-gnome-keyring libpam-fprintd \
-  libpam-sss libnss-sss
-
-pam-auth-update --package
-
-mkdir -p /etc/sddm.conf.d
+sudo apt install sddm kde-config-sddm sddm-theme-debian-breeze
+sudo mkdir -p /etc/sddm.conf.d
 
 # sudo sed -i 's/^Current=.*/Current=debian-breeze/' /etc/sddm.conf.d/theme.conf
 # echo -e "[Theme]\nCurrent=debian-breeze" | sudo tee /etc/sddm.conf.d/theme.conf
 
 grep -q '^Current=' /etc/sddm.conf.d/theme.conf \
-  && sed -i 's/^Current=.*/Current=debian-breeze/' /etc/sddm.conf.d/theme.conf \
-  || echo "Current=debian-breeze" | tee -a /etc/sddm.conf.d/theme.conf
+  && sudo sed -i 's/^Current=.*/Current=debian-breeze/' /etc/sddm.conf.d/theme.conf \
+  || echo "Current=debian-breeze" | sudo tee -a /etc/sddm.conf.d/theme.conf
 
-apt install kio-extras xdg-utils xdg-user-dirs xdg-desktop-portal xdg-desktop-portal-kde plasma-desktop plasma-workspace kde-plasma-desktop \
-  konsole dolphin kate plasma-nm systemsettings powerdevil ark \
-  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover plasma-pa qt6-style-kvantum
+sudo apt install kio-extras xdg-utils xdg-user-dirs xdg-desktop-portal xdg-desktop-portal-kde plasma-desktop plasma-workspace kde-plasma-desktop \
+  konsole dolphin kate plasma-nm systemsettings powerdevil \
+  plasma-systemmonitor systemsettings kde-config-screenlocker kscreen plasma-discover gir1.2-ayatanaappindicator3-0.1 gir1.2-appindicator3-0.1 libayatana-appindicator3-1
 
-# apt install -t unstable firefox
+sudo apt install -t sid firefox
 
-# sudo apt update
-# sudo apt install virt-manager ovmf qemu-utils qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virtinst libvirt-daemon virt-top libguestfs-tools cpu-checker
-
-sudo apt install virt-manager qemu-kvm qemu-system-x86 \
-libvirt-daemon libvirt-daemon-system libvirt-clients \
-ebtables nftables dnsmasq ovmf seabios bridge-utils spice-vdagent -y
-
-# Arm64
-sudo apt install qemu-system-arm qemu-system-aarch64 -y
-sudo usermod -aG libvirt $USER
-sudo usermod -aG kvm $USER
-
-# XANMOD
-# remove the broken key file if present
-sudo rm -f /etc/apt/trusted.gpg.d/xanmod.gpg
-
-# fetch and convert the XanMod GPG key to a keyring
-wget -qO - https://dl.xanmod.org/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg
-
-# create the repo file that references the keyring
-echo "deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main" | sudo tee /etc/apt/sources.list.d/xanmod-kernel.list
-
-# update package lists
-sudo apt update
-
-sudo apt install linux-xanmod linux-headers-xanmod
-sudo update-grub
-
-####################
-### INTEL VA-API ###
-####################
-
-# sudo apt update
-# sudo apt install vainfo libva-utils intel-media-va-driver libva-drm2 libva-x11-2 libva-wayland2
-
-sudo apt install vainfo intel-media-va-driver-non-free libva-drm2 libva-x11-2 libva-wayland2
-
-#####################
-### NVIDIA VA-API ###
-#####################
-sudo apt install vainfo nvidia-driver nvidia-kernel-dkms nvidia-settings nvidia-smi nvidia-vaapi-driver libva2 libva-drm2 libva-x11-2 libva-wayland2 libcuda1 libnvcuvid1
-
-# Se usar driver proprietário antigo (ex: 470 ou 535 legacy), instale o pacote antigo:
-sudo apt install libva-vdpau-driver vdpau-va-driver
-
-### Flatpak ###
-sudo apt install flatpak
-flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak update
-
-### Snapd ###
-sudo apt install snapd
-sudo systemctl enable --now snapd.socket
-# sudo ln -s /var/lib/snapd/snap /snap
+# nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
+# nix-channel --update

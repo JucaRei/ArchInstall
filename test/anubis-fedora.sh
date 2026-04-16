@@ -253,3 +253,9 @@ CHROOT
 
 echo "✅ Fedora 43 installed for MacBook Air 4,1 (2GB RAM)"
 echo "⚠ First boot will relabel SELinux."
+
+#########
+## KDE ##
+#########
+
+chroot /mnt dnf install -y plasma-desktop kde-settings sddm --exclude=vlc* 
