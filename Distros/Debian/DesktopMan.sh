@@ -18,7 +18,7 @@ xdg-user-dirs-gtk xdg-utils blueman xfwm4 pavucontrol debian-goodies zenity zeni
 xfce4-notifyd xfce4-xkb-plugin xfce4-power-manager thunar-volman thunar-font-manager \
 lightdm at-spi2-core orchis-gtk-theme network-manager-gnome slick-greeter lightdm-settings light-locker xfce4-places-plugin \
 mpv xfce4-appmenu-plugin gnome-disk-utility thunar-media-tags-plugin xfce4-weather-plugin fancontrol \
-xfce4-systemload-plugin libnotify-bin python3-xlib firefox exa paper-icon-theme moka-icon-theme papirus-icon-theme \
+xfce4-systemload-plugin libnotify-bin python3-xlib firefox eza paper-icon-theme moka-icon-theme papirus-icon-theme \
 network-manager-openvpn network-manager-gnome \
 network-manager-openvpn-gnome keepassxc atril ristretto libreoffice-gtk3 \
 libreoffice-calc libreoffice-writer qt5ct adwaita-qt

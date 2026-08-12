@@ -75,7 +75,7 @@ EOF
 pikaur -S xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font
 
 #Plasma
-pikaur -S sddm kio zramd kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow kdialog plasma5-applets-eventcalendar wget curl snapd smb4k partitionmanager zramd firefox-esr pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer exa bat duf brave-bin
+pikaur -S sddm kio zramd kio-extras kio-fuse kio-gdrive audiocd-kio plasma glow kdialog plasma5-applets-eventcalendar wget curl snapd smb4k partitionmanager zramd firefox-esr pavucontrol mpv stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer eza bat duf brave-bin
 
 # Utils
 pacman -S btop --noconfirm

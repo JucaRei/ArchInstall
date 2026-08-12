@@ -1,67 +1,137 @@
 {
-  "spellright.language": [
-    "en"
-  ],
-  "spellright.documentTypes": [
-    "latex",
-    "plaintext"
-  ],
+  "editor.minimap.autohide": "mouseover",
+  "editor.minimap.maxColumn": 100,
+  "editor.minimap.size": "proportional",
+  // Tamanho da fonte do editor de código
   "editor.fontSize": 25,
+  // Tamanho da fonte do terminal integrado
+  "terminal.integrated.fontSize": 20,
+  // Customizações de cores da interface (Mix Catppuccin Mocha + RedTheme RedCrafter07)
   "workbench.colorCustomizations": {
+    // --- Editor Principal ---
+    // Cor de fundo do editor de código (Catppuccin Mocha suave)
     "editor.background": "#1e1e2e",
+    // Cor do texto padrão no editor
+    "editor.foreground": "#f2f4fc",
+    // Cor de fundo do destaque da linha atual onde está o cursor
+    "editor.lineHighlightBackground": "#ff2a4b24",
+    // Borda ao redor da linha ativa atual
+    "editor.lineHighlightBorder": "#ff2a4b66",
+    // Cor de fundo do texto selecionado
+    "editor.selectionBackground": "#ff2a4b59",
+    // Cor de fundo de outras ocorrências da mesma palavra selecionada
+    "editor.selectionHighlightBackground": "#ff2a4b33",
+    // Cor de fundo do resultado de busca ativo (Ctrl+F)
+    "editor.findMatchBackground": "#ff2a4b88",
+    // Cor de fundo dos demais resultados da busca (Ctrl+F)
+    "editor.findMatchHighlightBackground": "#ff2a4b44",
+    // Cor do cursor de digitação (Vermelho vibrante RedTheme)
+    "editorCursor.foreground": "#ff1744",
+    // Cor do número da linha ativa atual
+    "editorLineNumber.activeForeground": "#ff3344",
+    // Cor dos números das outras linhas do editor
+    "editorLineNumber.foreground": "#8085a2",
+    // Cor dos avisos/warnings no editor
+    "editorWarning.foreground": "#ff6600",
+    // Cor dos avisos na barra lateral de rolagem (Overview Ruler)
+    "editorOverviewRuler.warningForeground": "#ff6600",
+    // --- Barra Lateral (Side Bar / Explorer) ---
+    // Cor de fundo da barra lateral esquerda (arquivos/pastas)
     "sideBar.background": "#181825",
-    "activityBar.background": "#11111b",
-    "activityBar.foreground": "#ff4c59",
-    "activityBar.activeBorder": "#ff4c59",
-    "activityBar.inactiveForeground": "#6c7086",
-    "activityBarBadge.background": "#ff4c59",
-    "activityBarBadge.foreground": "#11111b",
+    // Cor do texto dos arquivos/pastas na barra lateral
+    "sideBar.foreground": "#f2f4fc",
+    // Borda da barra lateral
+    "sideBar.border": "#313248",
+    // Cor de fundo do cabeçalho das seções na barra lateral
+    "sideBarSectionHeader.background": "#1e1e2e",
+    // Cor do texto dos cabeçalhos das seções na barra lateral
+    "sideBarSectionHeader.foreground": "#ff3344",
+    // --- Barra de Atividades (Activity Bar - Ícones à esquerda) ---
+    // Cor de fundo da barra de ícones lateral principal
+    "activityBar.background": "#14141f",
+    // Cor do ícone ativo (selecionado) na barra de atividades
+    "activityBar.foreground": "#ff2a4b",
+    // Borda indicadora da aba ativa na barra de atividades
+    "activityBar.activeBorder": "#ff1744",
+    // Cor dos ícones inativos na barra de atividades
+    "activityBar.inactiveForeground": "#9399b2",
+    // Fundo dos badges com número de notificações/mudanças nos ícones
+    "activityBarBadge.background": "#ff1744",
+    // Texto/número dentro do badge
+    "activityBarBadge.foreground": "#ffffff",
+    // --- Barra de Título Superior (Title Bar) ---
+    // Cor de fundo da barra de título quando a janela está ativa
     "titleBar.activeBackground": "#181825",
-    "titleBar.activeForeground": "#cdd6f4",
-    "titleBar.inactiveBackground": "#11111b",
-    "titleBar.inactiveForeground": "#a6adc8",
-    "titleBar.border": "#31324400",
-    "statusBar.background": "#11111b",
-    "statusBar.foreground": "#cdd6f4",
-    "statusBar.noFolderBackground": "#11111b",
-    "statusBarItem.remoteBackground": "#ff4c59",
-    "statusBarItem.remoteForeground": "#11111b",
+    // Cor do texto/título quando a janela está ativa
+    "titleBar.activeForeground": "#ffffff",
+    // Cor de fundo da barra de título quando a janela perde o foco
+    "titleBar.inactiveBackground": "#14141f",
+    // Cor do texto da barra de título quando a janela perde o foco
+    "titleBar.inactiveForeground": "#9fa5c0",
+    // Borda inferior da barra de título
+    "titleBar.border": "#ff2a4b33",
+    // --- Barra de Status Inferior (Status Bar) ---
+    // Cor de fundo da barra de status no rodapé
+    "statusBar.background": "#14141f",
+    // Cor do texto e ícones da barra de status
+    "statusBar.foreground": "#f2f4fc",
+    // Cor de fundo da barra de status quando nenhuma pasta está aberta
+    "statusBar.noFolderBackground": "#14141f",
+    // Fundo do indicador de conexão remota (ex: WSL/SSH) no canto da barra de status
+    "statusBarItem.remoteBackground": "#ff1744",
+    // Texto do indicador de conexão remota
+    "statusBarItem.remoteForeground": "#ffffff",
+    // Cor de fundo da barra de status durante o modo de depuração (debug)
     "statusBar.debuggingBackground": "#e53935",
-    "editorGroupHeader.tabsBackground": "#11111b",
-    "tab.activeBackground": "#1e1e2e",
-    "tab.activeForeground": "#ff4c59",
-    "tab.activeBorderTop": "#ff4c59",
+    // --- Abas de Arquivos (Tabs & Editor Group Header) ---
+    // Cor de fundo da barra de cabeçalho das abas abertas
+    "editorGroupHeader.tabsBackground": "#14141f",
+    // Cor de fundo da aba de arquivo aberta/ativa
+    "tab.activeBackground": "#242032",
+    // Cor do nome do arquivo na aba ativa
+    "tab.activeForeground": "#ff3344",
+    // Linha/borda superior indicadora na aba ativa
+    "tab.activeBorderTop": "#ff1744",
+    // Cor de fundo das abas inativas (em segundo plano)
     "tab.inactiveBackground": "#181825",
-    "tab.inactiveForeground": "#a6adc8",
-    "editor.lineHighlightBackground": "#ff4c591a",
-    "editor.lineHighlightBorder": "#ff4c5933",
-    "editor.selectionBackground": "#ff4c593d",
-    "editor.selectionHighlightBackground": "#ff4c5926",
-    "editor.findMatchBackground": "#ff4c5966",
-    "editor.findMatchHighlightBackground": "#ff4c5933",
-    "editorCursor.foreground": "#ff4c59",
-    "editorLineNumber.activeForeground": "#ff4c59",
-    "editorLineNumber.foreground": "#585b70",
-    "sideBarSectionHeader.background": "#181825",
-    "sideBarSectionHeader.foreground": "#ff4c59",
-    "sideBar.foreground": "#cdd6f4",
-    "list.activeSelectionBackground": "#ff4c592b",
-    "list.activeSelectionForeground": "#ff4c59",
-    "list.hoverBackground": "#3132444d",
-    "list.inactiveSelectionBackground": "#31324466",
-    "list.inactiveSelectionForeground": "#cdd6f4",
-    "list.focusOutline": "#ff4c5977",
-    "list.highlightForeground": "#ff4c59",
-    "sideBar.border": "#31324440",
-    "editorGroup.border": "#31324440",
-    "panel.border": "#31324440",
+    "tab.inactiveForeground": "#a6abc0",
+    // Divisórias/bordas entre grupos de editores
+    "editorGroup.border": "#313248",
+    // --- Listas e Árvores de Arquivos (List & Tree Views) ---
+    // Cor de fundo do item selecionado ativamente em listas
+    "list.activeSelectionBackground": "#ff2a4b40",
+    // Cor do texto do item selecionado ativamente
+    "list.activeSelectionForeground": "#ffffff",
+    // Cor de fundo ao passar o mouse sobre itens em listas
+    "list.hoverBackground": "#2c2d3f",
+    // Cor de fundo de itens selecionados quando a lista não está em foco
+    "list.inactiveSelectionBackground": "#313248",
+    "list.inactiveSelectionForeground": "#f2f4fc",
+    // Borda de foco em elementos de listas
+    "list.focusOutline": "#ff1744",
+    // Cor do texto correspondente ao filtrar/buscar em listas
+    "list.highlightForeground": "#ff3344",
+    // Cor dos avisos/warnings em listas
+    "list.warningForeground": "#ff6600",
+    // --- Painel Inferior (Terminal/Output/Problems) ---
+    // Cor de fundo do painel inferior (Terminal/Saída)
     "panel.background": "#181825",
-    "panelTitle.activeBorder": "#ff4c59",
-    "panelTitle.activeForeground": "#ff4c59",
-    "panelTitle.inactiveForeground": "#a6adc8",
-    "gitDecoration.addedResourceForeground": "#a6e3a1",
-    "gitDecoration.modifiedResourceForeground": "#ffac5d",
-    "gitDecoration.deletedResourceForeground": "#ff4c59",
-    "gitDecoration.untrackedResourceForeground": "#f9e2af"
+    // Borda do painel inferior
+    "panel.border": "#313248",
+    // Borda da aba ativa no painel inferior
+    "panelTitle.activeBorder": "#ff1744",
+    // Texto da aba ativa no painel inferior
+    "panelTitle.activeForeground": "#ff3344",
+    // Texto das abas inativas no painel inferior
+    "panelTitle.inactiveForeground": "#9fa5c0",
+    // --- Decorações do Git (Git File Status Colors) ---
+    // Cor para arquivos novos adicionados (Staged/Created)
+    "gitDecoration.addedResourceForeground": "#40ff7d",
+    // Cor para arquivos modificados (Laranja forte)
+    "gitDecoration.modifiedResourceForeground": "#ff6600",
+    // Cor para arquivos deletados
+    "gitDecoration.deletedResourceForeground": "#ff3344",
+    // Cor para arquivos não rastreados (Untracked)
+    "gitDecoration.untrackedResourceForeground": "#ffe066"
   }
 }

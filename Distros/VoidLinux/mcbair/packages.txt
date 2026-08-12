@@ -169,7 +169,7 @@ fatresize
 dialog
 dropbear
 duf
-exa
+eza
 fzf
 gvfs
 gvfs-afc

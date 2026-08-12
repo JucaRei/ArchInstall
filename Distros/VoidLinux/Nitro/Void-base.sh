@@ -576,7 +576,7 @@ chroot /mnt xbps-install -S ansible virt-manager bridge-utils qemu qemu-ga qemu-
 #### Utils ####
 ###############
 
-chroot /mnt xbps-install -S bash-completion fuse-9pfs ifuse fuse-usmb basu bat p7zip neofetch btop chrony curl wget dialog duf exa fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
+chroot /mnt xbps-install -S bash-completion fuse-9pfs ifuse fuse-usmb basu bat p7zip neofetch btop chrony curl wget dialog duf eza fzf gvfs gvfs-afc gvfs-mtp gvfs-smb ffmpegthumbnailer flatpak glow gping htop jq libgsf libinput-gestures libopenraw lolcat-c lshw lua ripgrep rofi st skim socklog-void speedtest-cli starship tumbler usbutils xtools zip --yes
 chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools openssh inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
 # chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cifs-utils lm_sensors xtools inxi lshw nano ntfs-3g xdg-user-dirs xdg-utils --yes
 
@@ -588,7 +588,7 @@ chroot /mnt xbps-install -Sy util-linux compsize zramen hwinfo ffmpeg udevil cif
 #############################
 
 # alsa-firmware deadbeef deadbeef-fb deadbeef-waveform-seekbar alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol bluez bluez-alsa sof-firmware
-chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv neovim ripgrep netcat dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
+chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv neovim ripgrep netcat dialog eza fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
 #chroot /mnt xbps-remove -oORvy sudo
 
 # Install Xorg base & others

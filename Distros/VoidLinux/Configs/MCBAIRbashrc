@@ -364,13 +364,13 @@ alias 666='chmod -R 666'
 alias 755='chmod -R 755'
 alias 777='chmod -R 777'
 
-# Changing "ls" to "exa"
-alias ls='exa -lha --color=always --group-directories-first'  # my preferred listing
-alias la='exa -a --color=always --group-directories-first'    # all files and dirs
-alias ll='exa -l --color=always --group-directories-first'    # long format
-alias lt='exa -aT --color=always --group-directories-first'   # tree listing
-alias lz='exa -lSrh --color=always --group-directories-first' # sort by size
-alias l.='exa -a | egrep "^\."'
+# Changing "ls" to "eza"
+alias ls='eza -lha --color=always --group-directories-first'  # my preferred listing
+alias la='eza -a --color=always --group-directories-first'    # all files and dirs
+alias ll='eza -l --color=always --group-directories-first'    # long format
+alias lt='eza -aT --color=always --group-directories-first'   # tree listing
+alias lz='eza -lSrh --color=always --group-directories-first' # sort by size
+alias l.='eza -a | egrep "^\."'
 
 #Logo-ls
 #alias ls='logo-ls -al --color=always --group-directories-first' # my preferred listing

@@ -138,7 +138,7 @@ swapon /mnt/var/swap/swapfile
 # swapon /dev/disk/by-label/SWAP
 
 ### Old Mac
-# pacstrap /mnt base base-devel linux linux-headers linux-firmware intel-ucode btrfs-progs archlinux-keyring git neovim nano reflector dropbear duf exa fzf ripgrep pacman-contrib --ignore vi openssh
+# pacstrap /mnt base base-devel linux linux-headers linux-firmware intel-ucode btrfs-progs archlinux-keyring git neovim nano reflector dropbear duf eza fzf ripgrep pacman-contrib --ignore vi openssh
 pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware zsh intel-ucode btrfs-progs archlinux-keyring git dropbear duf pacman-contrib --ignore vi openssh linux linux-headers
 
 # Generate fstab

@@ -30,7 +30,7 @@ fi
 paru -Syu xorg-server xorg-server-xdmx xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh  xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb ttf-dejavu libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font dejavu-fonts-ttf btop
 
 # KDE
-#paru -S sddm sddm-dinit plasma-meta wsdd2 glow konsole exa duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular wsdd2 ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition microsoft-edge-stable-bin pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+#paru -S sddm sddm-dinit plasma-meta wsdd2 glow konsole eza duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular wsdd2 ark kate kwrite kcalc spectacle krunner partitionmanager firefox-developer-edition microsoft-edge-stable-bin pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono font-victor-mono qimgv-light plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 paru -S xorg lightdm lightdm-dinit lightdm-slick-greeter lightdm-gtk-greeter-settings xfce4 xfce4-goodies vivaldi vivaldi-ffmpeg-codecs vivaldi-widevine vivaldi-update-ffmpeg-hook firefox-esr visual-studio-code-bin
 

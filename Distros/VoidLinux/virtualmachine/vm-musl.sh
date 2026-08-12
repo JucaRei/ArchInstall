@@ -462,7 +462,7 @@ chroot /mnt xbps-install -Sy zramen cifs-utils lm_sensors --yes
 
 # Audio/Video & Others
 # alsa-firmware deadbeef deadbeef-fb deadbeef-waveform-seekbar alsa-plugins alsa-plugins-ffmpeg alsa-plugins-samplerate alsa-plugins-speex alsa-tools alsa_rnnoise alsa-utils alsaequal alsa-plugins-pulseaudio pulseaudio pulseaudio-utils apulse PAmix pulseaudio-equalizer-ladspa pulsemixer pamixer pavucontrol bluez bluez-alsa sof-firmware
-# chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep netcat dialog exa fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
+# chroot /mnt xbps-install -Sy arp-scan xev playerctl mpv yt-dlp neovim ripgrep netcat dialog eza fzf dust fzf zsh alsa-utils vim git wget curl htop neofetch duf lua bat glow --yes
 #chroot /mnt xbps-install -y base-minimal x86info schedtool cpuinfo pcc pcc-libs cpufrequtils libcpufreq pstate-frequency thermald lsscsi zstd linux5.10 linux-base neovim chrony grub-x86_64-efi tlp intel-ucode zsh curl opendoas tlp xorg-minimal libx11 xinit xorg-video-drivers xf86-input-evdev xf86-video-intel xf86-input-libinput libinput-gestures dbus dbus-x11 xorg-input-drivers xsetroot xprop xbacklight xrdb
 #chroot /mnt xbps-remove -oORvy sudo
 

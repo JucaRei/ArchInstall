@@ -30,7 +30,7 @@ sudo firewall-cmd --reload
 paru -Syu xorg-server xorg-xrdb xorg-xsetroot xorg-xprop xorg-xrefresh  xorg-fonts xorg-xdpyinfo xorg-xclipboard xorg-xcursorgen xorg-mkfontdir xorg-mkfontscale xorg-xcmsdb ttf-dejavu libxinerama xf86-input-libinput libinput-gestures xorg-setxkbmap exfat-utils xorg-xauth xorg-xrandr xorg-fonts-misc terminus-font btop
 
 # KDE
-paru -S sddm sddm-runit plasma-meta glow konsole exa duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular ark kate kwrite kcalc spectacle krunner partitionmanager firefox-esr vivaldi vivaldi-widevine vivaldi-snapshot-ffmpeg-codecs vivaldi-update-ffmpeg-hook pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono gwenview plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
+paru -S sddm sddm-runit plasma-meta glow konsole eza duf kdialog plasma5-applets-eventcalendar wget curl dolphin okular ark kate kwrite kcalc spectacle krunner partitionmanager firefox-esr vivaldi vivaldi-widevine vivaldi-snapshot-ffmpeg-codecs vivaldi-update-ffmpeg-hook pavucontrol mpv brave-bin stacer papirus-icon-theme materia-kde visual-studio-code-bin zsh pacman-contrib ttf-consolas-ligaturized ttf-fira-code ttf-jetbrains-mono gwenview plasma5-applets-virtual-desktop-bar-git kvantum-qt5 grub-customizer breeze-hacked-cursor-theme
 
 # Nvidia card
 paru -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader nvidia-tweaks
