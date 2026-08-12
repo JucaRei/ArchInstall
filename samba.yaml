@@ -50,7 +50,7 @@ services:
       #     browseable = yes
 
       SAMBA_VOLUME_CONFIG_orico: |
-        [Orico]
+        [Orico] 
           path = /orico
           guest ok = yes
           read only = no

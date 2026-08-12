@@ -113,14 +113,14 @@ echo "📦 Mounting subvolumes..."
 mount -o $BTRFS_OPTS2,subvol=@ /dev/disk/by-label/"$ROOT_LABEL" "$MNT"
 mkdir -pv "$MNT"/{boot,home,opt,nix,.snapshots,var/{tmp,spool,log,cache/apt,lib/{gdm,libvirt}}}
 
-mount -o $BTRFS_OPTS_HOME,subvol=@home            /dev/disk/by-label/"$HOME_LABEL" "$MNT/home"
+mount -o $BTRFS_OPTS_HOME,subvol=@home      /dev/disk/by-label/"$HOME_LABEL" "$MNT/home"
 mount -o $BTRFS_OPTS,subvol=@opt            /dev/disk/by-label/"$ROOT_LABEL" "$MNT/opt"
 mount -o $BTRFS_OPTS,subvol=@gdm            /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/lib/gdm"
 mount -o $BTRFS_OPTS,subvol=@libvirt        /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/lib/libvirt"
-mount -o $BTRFS_OPTS2,subvol=@log            /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/log"
+mount -o $BTRFS_OPTS2,subvol=@log           /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/log"
 mount -o $NIX_OPTS,subvol=@nix              /dev/disk/by-label/"$ROOT_LABEL" "$MNT/nix"
 mount -o $BTRFS_OPTS,subvol=@spool          /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/spool"
-mount -o $BTRFS_OPTS2,subvol=@tmp            /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/tmp"
+mount -o $BTRFS_OPTS2,subvol=@tmp           /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/tmp"
 mount -o $BTRFS_OPTS,subvol=@cache          /dev/disk/by-label/"$ROOT_LABEL" "$MNT/var/cache"
 mount -o $BTRFS_OPTS,subvol=@snapshots      /dev/disk/by-label/"$ROOT_LABEL" "$MNT/.snapshots"
 
@@ -175,6 +175,7 @@ dnf --installroot=$MNT \
     tar \
     rsync \
     glibc-langpack-en \
+    policycoreutils-python-utils \
     curl -y
 
 ########################################
@@ -359,7 +360,7 @@ mkdir -p $MNT/etc/systemd/zram-generator.conf.d
 touch $MNT/etc/systemd/zram-generator.conf.d/99-zram.conf
 cat <<EOF > $MNT/etc/systemd/zram-generator.conf.d/99-zram.conf
 [zram0]
-zram-size = ram * 4
+zram-size = ram * 3
 compression-algorithm = lz4
 swap-priority = 100
 EOF
@@ -597,7 +598,16 @@ chown root:root $MNT/etc/polkit-1/rules.d/10-logs.rules
 chroot $MNT dracut --force --regenerate-all
 chroot $MNT grub2-mkconfig -o /boot/grub2/grub.cfg
 chroot $MNT fixfiles -F onboot
+# Hyper V
 
+# sudo mkdir -p /etc/X11/xorg.conf.d
+# sudo nano /etc/X11/xorg.conf.d/10-video.conf
+
+# sudo dnf install lightdm lightdm-gtk -y
+# ls /usr/share/xgreeters/
+
+# sudo dnf install xorg-x11-drv-vesa xorg-x11-drv-fbdev xorg-x11-server-Xorg xorg-x11-drv-modesetting -y
+# sudo dnf install lightdm lightdm-gtk xterm xorg-x11-xinit dbus-x11 -y
 ########################################################
 # KDE
 # sudo dnf upgrade --refresh -y

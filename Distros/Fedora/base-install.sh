@@ -195,7 +195,7 @@ GRUB_TERMINAL_OUTPUT="console"
 # splash
 GRUB_CMDLINE_LINUX="rhgb quiet usbcore.autosuspend=-1 kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=20 zswap.zpool=z3fold mitigations=off nowatchdog msr.allow_writes=on pcie_aspm=force module.sig_unenforce intel_idle.max_cstate=1 cryptomgr.notests initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable "
 GRUB_DISABLE_RECOVERY="true"
-GRUB_GFXMODE=1920x1080x32
+# GRUB_GFXMODE=1920x1080x32
 GRUB_COLOR_NORMAL="light-blue/black"
 GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 GRUB_DISABLE_OS_PROBER=false

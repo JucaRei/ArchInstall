@@ -52,8 +52,8 @@ ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
 hwclock --systohc
 
-sed -i '171s/.//' /etc/locale.gen # en-US
-sed -i '391s/.//' /etc/locale.gen # pt-BR
+sed -i '172s/.//' /etc/locale.gen # en-US
+sed -i '392s/.//' /etc/locale.gen # pt-BR
 locale-gen
 
 echo "$hostname" >>/etc/hostname

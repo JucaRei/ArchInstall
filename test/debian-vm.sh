@@ -11,8 +11,8 @@ HOME_PART="${DRIVE}5"
 
 
 # 🔖 Labels
-ROOT_LABEL="Linux_Root"
-HOME_LABEL="data"
+ROOT_LABEL="Linux"
+HOME_LABEL="Home"
 # SWAP_LABEL="SWAP"
 SYSTEM_LABEL="SYSTEM"
 EFI_LABEL="ESP"
@@ -31,8 +31,8 @@ parted -s -a optimal $DRIVE mklabel gpt
 sgdisk -n 0:0:+1M      -t 1:EF02 -c 1:"BIOS BOOT"          $DRIVE
 sgdisk -n 0:0:+1G      -t 2:8301 -c 2:"SYSTEM RESERVED"    $DRIVE
 sgdisk -n 0:0:+600M    -t 3:EF00 -c 3:"EFI SYSTEM"         $DRIVE
-sgdisk -n 0:0:+30G     -t 4:8300 -c 4:"$ROOT_LABEL root"   $DRIVE
-sgdisk -n 0:0:0        -t 5:8302 -c 5:"$HOME_LABEL home"   $DRIVE
+sgdisk -n 0:0:+30G     -t 4:8300 -c 4:"$ROOT_LABEL Filesystem"   $DRIVE
+sgdisk -n 0:0:0        -t 5:8302 -c 5:"$HOME_LABEL Filesystem"   $DRIVE
 sgdisk -p $DRIVE
 
 
@@ -79,7 +79,7 @@ mount -t vfat -o defaults,noatime,nodiratime /dev/disk/by-label/$EFI_LABEL $MOUN
 Architecture="amd64"
 CODENAME="trixie" #$(lsb_release --codename --short) # or CODENAME=bookworm
 username="juca"
-hostname="virtualvm"
+hostname="vmdebian"
 
 # debootstrap \
 #   --variant=minbase \
@@ -529,29 +529,29 @@ blacklist garmin_gps
 EOF
 
 cat <<EOF >/mnt/etc/modprobe.d/iwlwifi.conf
-options iwlwifi enable_ini=0
-options iwlwifi disable_11ac=0
-options iwlwifi disable_11ax=0
+# options iwlwifi enable_ini=0
+# options iwlwifi disable_11ac=0
+# options iwlwifi disable_11ax=0
 EOF
 
 touch /mnt/etc/systemd/system/iwlwifi-reload.service
 
 cat <<EOF >/mnt/etc/systemd/system/iwlwifi-reload.service
-[Unit]
-Description=Reload iwlwifi module
-After=network.target
+# [Unit]
+# Description=Reload iwlwifi module
+# After=network.target
 
-[Service]
-Type=oneshot
-ExecStart=/sbin/modprobe -r iwlwifi
-ExecStart=/sbin/modprobe iwlwifi
-RemainAfterExit=yes
+# [Service]
+# Type=oneshot
+# ExecStart=/sbin/modprobe -r iwlwifi
+# ExecStart=/sbin/modprobe iwlwifi
+# RemainAfterExit=yes
 
-[Install]
-WantedBy=multi-user.target
+# [Install]
+# WantedBy=multi-user.target
 EOF
 
-chroot /mnt systemctl enable iwlwifi-reload.service
+# chroot /mnt systemctl enable iwlwifi-reload.service
 
 mkdir -pv /mnt/etc/modules-load.d
 touch /mnt/etc/modules-load.d/iptables.conf
@@ -562,9 +562,9 @@ ip_tables
 iptable_nat
 EOF
 
-cat << EOF > /mnt/etc/modules-load.d/iwlwifi.conf
-iwlwifi
-EOF
+# cat << EOF > /mnt/etc/modules-load.d/iwlwifi.conf
+# iwlwifi
+# EOF
 
 #######################################
 #### Kernel params for tune system ####
@@ -864,7 +864,7 @@ chroot /mnt apt install rtkit
 ###############
 #### Utils ####
 ###############
-chroot /mnt apt install gdisk bash-completion pciutils xz-utils curl unzip \
+chroot /mnt apt install gdisk bash-completion pciutils xz-utils curl unzip xdg-user-dirs xdg-utils
   # acpi acpid
   #dkms
 
@@ -948,11 +948,13 @@ chroot /mnt apt install chrony
 
 # chroot /mnt apt install nix-setup-systemd --yes
 
-chroot /mnt apt install earlyoom powertop tlp thermald irqbalance ssh --yes
+# chroot /mnt apt install earlyoom powertop tlp thermald irqbalance ssh --yes
+chroot /mnt apt install earlyoom irqbalance ssh --yes
+
 chroot /mnt systemctl enable earlyoom
-chroot /mnt systemctl enable powertop
-chroot /mnt systemctl enable tlp
-chroot /mnt systemctl enable thermald
+# chroot /mnt systemctl enable powertop
+# chroot /mnt systemctl enable tlp
+# chroot /mnt systemctl enable thermald
 chroot /mnt systemctl enable irqbalance
 
 ###########################
@@ -1090,7 +1092,7 @@ GRUB_TIMEOUT=5
 #GRUB_HIDDEN_TIMEOUT_QUIET=false
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=$(lsb_release -i -s 2>/dev/null || echo Debian)
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 i915.enable_psr=0 i915.enable_fbc=0 nvidia-drm.modeset=1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
+GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet i8042.nopnp usbcore.autosuspend=-1 apparmor=1 security=apparmor kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz mitigations=off msr.allow_writes=on pcie_aspm=force initcall_debug no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet selinux=1 security=selinux splash kernel.unprivileged_userns_clone vt.global_cursor_default=0 loglevel=0 gpt init_on_alloc=0 udev.log_level=0 rcutree.rcu_idle_gp_delay=1 intel_iommu=on,igfx_off nvidia-drm.modeset=1 i915.modeset=1 zswap.enabled=1 zswap.compressor=lz4hc zswap.max_pool_percent=10 zswap.zpool=z3fold nohz=on mitigations=off msr.allow_writes=on pcie_aspm=force intel_idle.max_cstate=1 initcall_debug net.ifnames=0 no_timer_check noreplace-smp page_alloc.shuffle=1 rcupdate.rcu_expedited=1 tsc=reliable"
 # security=selinux selinux=1
 

@@ -97,7 +97,7 @@ rm -f /mnt/boot/efi/EFI/fedora/grub.cfg
 rm -f /mnt/boot/grub2/grub.cfg
 chroot /mnt dnf reinstall -y shim-* grub2-efi-* grub2-common
 
-cat <<\EOF >/mnt/etc/default/grub
+cat <<EOF >/mnt/etc/default/grub
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
 GRUB_DEFAULT=saved
