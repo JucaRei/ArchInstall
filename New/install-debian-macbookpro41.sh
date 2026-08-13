@@ -110,17 +110,27 @@ blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null |
 udevadm settle 2>/dev/null || true
 sleep 2
 
-# --- Particionamento GPT Atômico (sfdisk em transação única) ---
-log_info "Criando nova tabela GPT e partições em transação única atômica (sfdisk)..."
-sfdisk "${DRIVE}" >/dev/null 2>&1 <<EOF
-label: gpt
-device: ${DRIVE}
-unit: sectors
+# --- Particionamento GPT (Parted + Fallback SGDisk com tratamento set +e) ---
+log_info "Criando tabela de partições GPT no disco ${DRIVE}..."
+set +e
+parted -s -a optimal "${DRIVE}" -- \
+    mklabel gpt \
+    mkpart primary 2048s 6143s \
+    set 1 bios_grub on \
+    mkpart primary fat32 6144s 1054719s \
+    set 2 esp on \
+    mkpart primary btrfs 1054720s 100% 2>/dev/null
 
-1 : start=2048, size=4096, type=21686148-6449-6E6F-744D-61634F53424F, name="BIOS Boot Partition"
-2 : start=6144, size=1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="EFI System Partition"
-3 : type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name="Debian Btrfs System"
-EOF
+PARTED_STATUS=$?
+
+if [ $PARTED_STATUS -ne 0 ] || [ ! -b "${DRIVE}1" -a ! -b "${DRIVE}p1" ]; then
+    log_warn "Aplicando segunda tentativa com sgdisk..."
+    sgdisk -Z "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System Partition" "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs System" "${DRIVE}" 2>/dev/null || true
+fi
+set -e
 
 # Detectar nomes das partições (suporta /dev/sdaX e /dev/nvme0n1pX)
 if [[ "${DRIVE}" =~ "nvme" ]] || [[ "${DRIVE}" =~ "mmcblk" ]]; then
