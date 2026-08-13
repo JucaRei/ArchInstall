@@ -75,21 +75,42 @@ if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
 fi
 
 # --- Desmontagem e Limpeza Agressiva de Partições no Disco ---
-log_info "Desmontando e liberando todas as partições ativas em ${DRIVE}..."
+log_info "Forçando encerramento de processos e desalocação do disco ${DRIVE}..."
+fuser -k -9 -m "${DRIVE}"* 2>/dev/null || true
+btrfs device scan --forget 2>/dev/null || true
+
 swapoff -a 2>/dev/null || true
-umount -R /mnt 2>/dev/null || true
+umount -R -f /mnt 2>/dev/null || true
 umount -l "${DRIVE}"* 2>/dev/null || true
 vgchange -an 2>/dev/null || true
 dmsetup remove_all -f 2>/dev/null || true
+losetup -D 2>/dev/null || true
 
-log_info "Limpando assinaturas antigas de sistema de arquivos (wipefs / zap-all)..."
+log_info "Zerando assinaturas de MBR/GPT primário e secundário em ${DRIVE}..."
 wipefs --all --force "${DRIVE}" 2>/dev/null || true
 sgdisk --zap-all "${DRIVE}" 2>/dev/null || true
-partprobe "${DRIVE}" 2>/dev/null || true
+
+# Escreve zeros no início (cabeçalho GPT primário)
+dd if=/dev/zero of="${DRIVE}" bs=1M count=10 status=none 2>/dev/null || true
+sync
+
+# Escreve zeros no final do disco (cabeçalho GPT secundário/backup)
+DISK_SECTORS=$(blockdev --getsz "${DRIVE}" 2>/dev/null || echo 0)
+if [ "$DISK_SECTORS" -gt 2048 ]; then
+    BACKUP_START=$((DISK_SECTORS - 2048))
+    dd if=/dev/zero of="${DRIVE}" seek="${BACKUP_START}" bs=512 count=2048 status=none 2>/dev/null || true
+    sync
+fi
+
+blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
-sleep 3
-sgdisk -Z "${DRIVE}"
+sleep 2
+
+# --- Particionamento GPT com Partição BIOS Boot (2MB EF02) ---
+log_info "Criando tabela de partições GPT limpa no disco ${DRIVE}..."
 parted -s -a optimal "${DRIVE}" mklabel gpt
+blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
+udevadm settle 2>/dev/null || true
 
 # Partição 1: BIOS Boot Partition (2MB) - Necessária para o GRUB i386-pc inicializar a VBIOS da GPU NVIDIA 8600M GT
 log_info "Criando Partição 1: BIOS Boot Partition (2MB, tipo EF02)..."
@@ -117,6 +138,15 @@ fi
 partprobe "${DRIVE}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 sleep 3
+
+# Aguarda até que os nós de dispositivo das partições sejam criados pelo udev
+log_info "Aguardando inicialização dos nós de dispositivo de partições em /dev..."
+for i in {1..10}; do
+    if [ -b "${PART_EFI}" ] && [ -b "${PART_ROOT}" ]; then
+        break
+    fi
+    sleep 1
+done
 
 # --- Formatação dos Sistemas de Arquivos ---
 log_info "Formatando a Partição EFI em FAT32..."
