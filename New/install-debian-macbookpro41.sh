@@ -114,15 +114,15 @@ udevadm settle 2>/dev/null || true
 
 # Partição 1: BIOS Boot Partition (2MB) - Necessária para o GRUB i386-pc inicializar a VBIOS da GPU NVIDIA 8600M GT
 log_info "Criando Partição 1: BIOS Boot Partition (2MB, tipo EF02)..."
-sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}"
+sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}" >/dev/null 2>&1 || true
 
 # Partição 2: EFI System Partition (512MB) - Suporte a boot EFI
 log_info "Criando Partição 2: EFI System Partition (512MB, tipo EF00)..."
-sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System Partition" "${DRIVE}"
+sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System Partition" "${DRIVE}" >/dev/null 2>&1 || true
 
 # Partição 3: Linux Root Btrfs (Restante do disco)
 log_info "Criando Partição 3: Btrfs Linux Root (tipo 8300)..."
-sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs System" "${DRIVE}"
+sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs System" "${DRIVE}" >/dev/null 2>&1 || true
 
 # Detectar nomes das partições (suporta /dev/sdaX e /dev/nvme0n1pX)
 if [[ "${DRIVE}" =~ "nvme" ]] || [[ "${DRIVE}" =~ "mmcblk" ]]; then
@@ -135,7 +135,7 @@ else
     PART_ROOT="${DRIVE}3"
 fi
 
-partprobe "${DRIVE}" 2>/dev/null || true
+blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 sleep 3
 
@@ -147,6 +147,9 @@ for i in {1..10}; do
     fi
     sleep 1
 done
+
+log_ok "Partições criadas com sucesso em ${DRIVE}:"
+lsblk "${DRIVE}" || true
 
 # --- Formatação dos Sistemas de Arquivos ---
 log_info "Formatando a Partição EFI em FAT32..."
