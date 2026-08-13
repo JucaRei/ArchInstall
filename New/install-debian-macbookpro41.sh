@@ -57,18 +57,27 @@ APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false
 
 # --- Verificação de Dependências no Host ---
 log_info "Verificando ferramentas necessárias no sistema live/host..."
-HOST_DEPS=(debootstrap btrfs-progs sgdisk parted mkfs.vfat wget curl wipefs)
-FOR_INSTALL=()
-for dep in "${HOST_DEPS[@]}"; do
-    if ! command -v "$dep" &>/dev/null; then
-        FOR_INSTALL+=("$dep")
-    fi
-done
+PACKAGES_TO_INSTALL=()
+if ! command -v debootstrap &>/dev/null; then PACKAGES_TO_INSTALL+=(debootstrap); fi
+if ! command -v mkfs.btrfs &>/dev/null; then PACKAGES_TO_INSTALL+=(btrfs-progs); fi
+if ! command -v sgdisk &>/dev/null; then PACKAGES_TO_INSTALL+=(gdisk); fi
+if ! command -v parted &>/dev/null; then PACKAGES_TO_INSTALL+=(parted); fi
+if ! command -v mkfs.vfat &>/dev/null; then PACKAGES_TO_INSTALL+=(dosfstools); fi
+if ! command -v wipefs &>/dev/null; then PACKAGES_TO_INSTALL+=(util-linux); fi
+if ! command -v wget &>/dev/null; then PACKAGES_TO_INSTALL+=(wget); fi
+if ! command -v curl &>/dev/null; then PACKAGES_TO_INSTALL+=(curl); fi
 
-if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
-    log_info "Instalando dependências ausentes no host: ${FOR_INSTALL[*]}..."
+if [ ${#PACKAGES_TO_INSTALL[@]} -ne 0 ]; then
+    log_info "Instalando dependências ausentes no host: ${PACKAGES_TO_INSTALL[*]}..."
     apt-get update "${APT_OPT[@]}" -qq || true
-    apt-get install "${APT_OPT[@]}" -y -qq "${FOR_INSTALL[@]}" || true
+    for pkg in "${PACKAGES_TO_INSTALL[@]}"; do
+        apt-get install "${APT_OPT[@]}" -y "$pkg" || true
+    done
+fi
+
+if ! command -v debootstrap &>/dev/null; then
+    log_err "Não foi possível instalar o utilitário 'debootstrap' no sistema host/live!"
+    exit 1
 fi
 
 # --- Desmontagem e Limpeza Agressiva de Partições no Disco ---
