@@ -81,17 +81,18 @@ fi
 log_info "Parando automounters (udisks2) e liberando o disco ${DRIVE}..."
 systemctl stop udisks2 udisks tracker 2>/dev/null || true
 
-# Desmonta qualquer ponto de montagem registrado em /proc/mounts referente a /mnt ou ao disco
-for mnt in $(grep -E "(${DRIVE}|/mnt)" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
+# Desmonta qualquer ponto de montagem registrado em /proc/mounts referente ao disco
+for mnt in $(grep "${DRIVE}" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
     log_info "Desmontando ponto ativo: $mnt..."
     umount -R -f "$mnt" 2>/dev/null || true
 done
 
-fuser -k -9 -m /mnt /mnt/* "${DRIVE}"* 2>/dev/null || true
-btrfs device scan --forget 2>/dev/null || true
 swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 umount -l "${DRIVE}"* 2>/dev/null || true
+btrfs device scan --forget 2>/dev/null || true
+# Encerra apenas processos que segurem especificamente os nós de partição do disco (sem afetar o sistema host ou SSH)
+fuser -k -9 "${DRIVE}"1 "${DRIVE}"2 "${DRIVE}"3 2>/dev/null || true
 vgchange -an 2>/dev/null || true
 dmsetup remove_all -f 2>/dev/null || true
 losetup -D 2>/dev/null || true
