@@ -323,8 +323,11 @@ chroot /mnt apt-get install -y --no-install-recommends \
     mesa-va-drivers \
     mesa-vdpau-drivers \
     vdpau-driver-all \
+    va-driver-all \
     libgl1-mesa-dri \
-    libvdpau-va-gl
+    libvdpau1 \
+    vdpauinfo \
+    vainfo
 
 # --- Instalação do Gerenciador de Rede e Conectividade ---
 log_info "Instalando gerenciador de rede NetworkManager, IWD e SSH..."
@@ -436,7 +439,6 @@ chroot /mnt apt-get install -y --no-install-recommends \
     foot \
     dunst \
     sddm \
-    polkit-kde-agent-1 \
     pipewire \
     pipewire-audio-client-libraries \
     pipewire-pulse \
@@ -451,6 +453,10 @@ chroot /mnt apt-get install -y --no-install-recommends \
     fonts-font-awesome \
     qt5-wayland \
     qt6-wayland
+
+chroot /mnt apt-get install -y --no-install-recommends polkit-kde-agent-1 2>/dev/null || \
+chroot /mnt apt-get install -y --no-install-recommends lxpolkit 2>/dev/null || \
+chroot /mnt apt-get install -y --no-install-recommends policykit-1-gnome 2>/dev/null || true
 
 # --- Configuração do Session Desktop Entry para o Hyprland no Display Manager (SDDM) ---
 mkdir -pv /mnt/usr/share/wayland-sessions
