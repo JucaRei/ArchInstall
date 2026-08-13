@@ -6,30 +6,30 @@
 #   - GPU: NVIDIA GeForce 8600M GT (G84M)
 #   - RAM: 6GB DDR2 (2GB + 4GB Canal Assimétrico)
 #   - Wi-Fi: Broadcom BCM43xx
-#   - Boot: GPT Híbrido com Partição BIOS Boot (2MB EF02) + EFI (EF00)
+#   - Boot: GPT com Partição BIOS Boot (2MB EF02) + EFI (512MB EF00)
 #   - FS: Btrfs com subvolumes e compressão ZSTD
-#   - Desktop: Hyprland (Wayland) + Waybar + Wofi + Foot (Estética Catppuccin)
-#   - Package Manager: Nix Multi-User (Flakes & nix-command habilitados)
+#   - Desktop: XFCE4 (Leve, Estável e Otimizado) + LightDM + Nix
 # ==============================================================================
 
 set -euo pipefail
 
-# --- Cores para saída gráfica ---
+# --- Cores para Terminal ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
-log_info()  { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $1"; }
-log_warn()  { echo -e "${YELLOW}[AVISO]${NC} $1"; }
-log_error() { echo -e "${RED}[ERRO]${NC} $1"; exit 1; }
+log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
+log_ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[AVISO]${NC} $1"; }
+log_err()  { echo -e "${RED}[ERRO]${NC} $1"; }
 
-# --- Verificação de Privilégios de Root ---
+# --- Verificação de Root ---
 if [ "$(id -u)" -ne 0 ]; then
-    log_error "Este script deve ser executado como root (sudo)."
+    log_err "Este script deve ser executado como ROOT (ou via sudo)!"
+    exit 1
 fi
 
 # --- Seleção do Disco Alvo ---
@@ -37,7 +37,7 @@ DRIVE="${1:-/dev/sda}"
 
 log_warn "=========================================================================="
 log_warn " ATENÇÃO: O disco ${DRIVE} será COMPLETAMENTE FORMATADO!"
-log_warn " Instalação do Debian Trixie com Hyprland & Nix para MacBook Pro 4,1."
+log_warn " Instalação do Debian Trixie com XFCE4 & Nix para MacBook Pro 4,1."
 log_warn "=========================================================================="
 echo -n "Deseja continuar? (s/N): "
 read -r CONFIRM
@@ -48,18 +48,16 @@ fi
 
 # --- Sincronização do Relógio do Host e APT ---
 log_info "Verificando relógio e sincronizando data do sistema..."
-# Tenta obter a data atual via cabeçalho HTTP do Debian se a data local estiver errada (evita erro OpenPGP no apt/debootstrap)
 HTTP_DATE=$(curl -sI http://deb.debian.org | grep -i '^Date:' | cut -d' ' -f2- || true)
 if [ -n "$HTTP_DATE" ]; then
     date -s "$HTTP_DATE" 2>/dev/null || true
 fi
 
-# Flags para evitar recusa de repositório no APT do host devido a divergência de data da mídia live
 APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false" "-o" "Acquire::AllowInsecureRepositories=true")
 
 # --- Verificação de Dependências no Host ---
 log_info "Verificando ferramentas necessárias no sistema live/host..."
-HOST_DEPS=(debootstrap btrfs-progs sfdisk parted mkfs.vfat wget curl wipefs)
+HOST_DEPS=(debootstrap btrfs-progs sgdisk parted mkfs.vfat wget curl wipefs)
 FOR_INSTALL=()
 for dep in "${HOST_DEPS[@]}"; do
     if ! command -v "$dep" &>/dev/null; then
@@ -69,10 +67,6 @@ done
 
 if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
     log_info "Instalando dependências ausentes no host: ${FOR_INSTALL[*]}..."
-    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
-        log_info "Aguardando liberação do lock do dpkg/apt no host..."
-        sleep 2
-    done
     apt-get update "${APT_OPT[@]}" -qq || true
     apt-get install "${APT_OPT[@]}" -y -qq "${FOR_INSTALL[@]}" || true
 fi
@@ -81,7 +75,6 @@ fi
 log_info "Parando automounters (udisks2) e liberando o disco ${DRIVE}..."
 systemctl stop udisks2 udisks tracker 2>/dev/null || true
 
-# Desmonta qualquer ponto de montagem registrado em /proc/mounts referente ao disco
 for mnt in $(grep "${DRIVE}" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
     log_info "Desmontando ponto ativo: $mnt..."
     umount -R -f "$mnt" 2>/dev/null || true
@@ -91,7 +84,6 @@ swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 umount -l "${DRIVE}"* 2>/dev/null || true
 btrfs device scan --forget 2>/dev/null || true
-# Encerra apenas processos que segurem especificamente os nós de partição do disco (sem afetar o sistema host ou SSH)
 fuser -k -9 "${DRIVE}"1 "${DRIVE}"2 "${DRIVE}"3 2>/dev/null || true
 vgchange -an 2>/dev/null || true
 dmsetup remove_all -f 2>/dev/null || true
@@ -99,8 +91,6 @@ losetup -D 2>/dev/null || true
 
 log_info "Zerando assinaturas MBR/GPT antigas em ${DRIVE}..."
 wipefs --all --force "${DRIVE}" 2>/dev/null || true
-
-# Sobrescreve cabeçalhos GPT primário e secundário com zeros
 dd if=/dev/zero of="${DRIVE}" bs=1M count=10 status=none 2>/dev/null || true
 sync
 
@@ -115,7 +105,7 @@ blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null |
 udevadm settle 2>/dev/null || true
 sleep 2
 
-# --- Particionamento GPT (Parted + Fallback SGDisk com tratamento set +e) ---
+# --- Particionamento GPT com BIOS Boot (2MB) + EFI (512MB) + Btrfs Root ---
 log_info "Criando tabela de partições GPT no disco ${DRIVE}..."
 set +e
 parted -s -a optimal "${DRIVE}" -- \
@@ -126,9 +116,7 @@ parted -s -a optimal "${DRIVE}" -- \
     set 2 esp on \
     mkpart primary btrfs 1054720s 100% 2>/dev/null
 
-PARTED_STATUS=$?
-
-if [ $PARTED_STATUS -ne 0 ] || [ ! -b "${DRIVE}1" -a ! -b "${DRIVE}p1" ]; then
+if [ $? -ne 0 ]; then
     log_warn "Aplicando segunda tentativa com sgdisk..."
     sgdisk -Z "${DRIVE}" 2>/dev/null || true
     sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}" 2>/dev/null || true
@@ -137,23 +125,17 @@ if [ $PARTED_STATUS -ne 0 ] || [ ! -b "${DRIVE}1" -a ! -b "${DRIVE}p1" ]; then
 fi
 set -e
 
-# Detectar nomes das partições (suporta /dev/sdaX e /dev/nvme0n1pX)
 if [[ "${DRIVE}" =~ "nvme" ]] || [[ "${DRIVE}" =~ "mmcblk" ]]; then
-    PART_BIOS="${DRIVE}p1"
-    PART_EFI="${DRIVE}p2"
-    PART_ROOT="${DRIVE}p3"
+    PART_BIOS="${DRIVE}p1"; PART_EFI="${DRIVE}p2"; PART_ROOT="${DRIVE}p3"
 else
-    PART_BIOS="${DRIVE}1"
-    PART_EFI="${DRIVE}2"
-    PART_ROOT="${DRIVE}3"
+    PART_BIOS="${DRIVE}1"; PART_EFI="${DRIVE}2"; PART_ROOT="${DRIVE}3"
 fi
 
 blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 sleep 3
 
-# Aguarda até que os nós de dispositivo das partições sejam criados pelo udev
-log_info "Aguardando inicialização dos nós de dispositivo de partições em /dev..."
+# Aguarda nós de dispositivos
 for i in {1..10}; do
     if [ -b "${PART_EFI}" ] && [ -b "${PART_ROOT}" ]; then
         break
@@ -195,7 +177,7 @@ btrfs subvolume create /mnt/@var_cache_apt
 btrfs subvolume create /mnt/@swap
 umount -v /mnt
 
-# --- Montagem dos Subvolumes ---
+# --- Montagem da Estrutura de Diretórios ---
 log_info "Montando estrutura de diretórios e subvolumes Btrfs em /mnt..."
 mount -o "${BTRFS_OPTS},subvol=@" "${PART_ROOT}" /mnt
 mkdir -pv /mnt/{boot/efi,home,.snapshots,var/log,var/cache/apt,swap}
@@ -288,7 +270,6 @@ en_US.UTF-8 UTF-8
 pt_BR.UTF-8 UTF-8
 EOF
 
-# --- Atualização do banco de dados de pacotes no chroot e instalação de Locales ---
 log_info "Atualizando pacotes e gerando locales no chroot..."
 chroot /mnt apt-get update -qq
 chroot /mnt apt-get install -y locales || true
@@ -298,10 +279,6 @@ cat <<EOF >/mnt/etc/default/locale
 LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
 EOF
-
-# --- Atualização do banco de dados de pacotes no chroot ---
-log_info "Atualizando pacotes dentro do chroot..."
-chroot /mnt apt-get update -qq
 
 # --- Instalação do Kernel, Microcode e Firmwares Apple/Broadcom ---
 log_info "Instalando Kernel Linux LTS, Microcode Intel e Firmwares..."
@@ -428,17 +405,32 @@ echo "juca:200291" | chroot /mnt chpasswd -c SHA512
 chroot /mnt usermod -aG sudo,audio,video,systemd-journal,input,netdev,render juca
 
 # ==============================================================================
-# --- INSTALAÇÃO E CONFIGURAÇÃO DO HYPRLAND & AMBIENTE WAYLAND ---
+# --- INSTALAÇÃO E CONFIGURAÇÃO DO AMBIENTE XFCE4 (LEVE & OTIMIZADO) ---
 # ==============================================================================
-log_info "Instalando Waybar, Wofi, Foot, Dunst, SDDM, Pipewire e pacotes Wayland no apt..."
+log_info "Instalando ambiente desktop XFCE4, LightDM, Thunar, Terminal e áudio Pipewire..."
 chroot /mnt apt-get install -y --no-install-recommends \
-    xdg-desktop-portal-wlr \
-    xdg-desktop-portal-gtk \
-    waybar \
-    wofi \
-    foot \
-    dunst \
-    sddm \
+    xorg \
+    xserver-xorg-core \
+    xserver-xorg-video-nouveau \
+    xserver-xorg-input-libinput \
+    x11-xserver-utils \
+    xinit \
+    xfce4-session \
+    xfwm4 \
+    xfdesktop4 \
+    xfce4-panel \
+    xfce4-terminal \
+    xfce4-settings \
+    xfce4-power-manager \
+    xfce4-pulseaudio-plugin \
+    xfce4-screenshooter \
+    xfce4-taskmanager \
+    thunar \
+    thunar-volman \
+    thunar-archive-plugin \
+    mousepad \
+    lightdm \
+    lightdm-gtk-greeter \
     pipewire \
     pipewire-audio-client-libraries \
     pipewire-pulse \
@@ -446,311 +438,85 @@ chroot /mnt apt-get install -y --no-install-recommends \
     pavucontrol \
     pamixer \
     brightnessctl \
-    grim \
-    slurp \
-    wl-clipboard \
+    papirus-icon-theme \
+    arc-theme \
     fonts-firacode \
-    fonts-font-awesome \
-    qtwayland5
+    fonts-font-awesome
 
-chroot /mnt apt-get install -y --no-install-recommends polkit-kde-agent-1 2>/dev/null || \
+chroot /mnt apt-get install -y --no-install-recommends polkit-1-auth-agent 2>/dev/null || \
 chroot /mnt apt-get install -y --no-install-recommends lxpolkit 2>/dev/null || \
 chroot /mnt apt-get install -y --no-install-recommends policykit-1-gnome 2>/dev/null || true
 
-# --- Configuração do Session Desktop Entry para o Hyprland no Display Manager (SDDM) ---
-mkdir -pv /mnt/usr/share/wayland-sessions
-cat <<EOF >/mnt/usr/share/wayland-sessions/hyprland.desktop
-[Desktop Entry]
-Name=Hyprland
-Comment=An intelligent dynamic tiling Wayland compositor
-Exec=Hyprland
-Type=Application
-DesktopNames=Hyprland
-Keywords=wayland;compositor;tiling;
+# --- Configuração do Display Manager LightDM ---
+log_info "Configurando o gerenciador de login LightDM para o XFCE4..."
+mkdir -pv /mnt/etc/lightdm/lightdm.conf.d
+cat <<EOF >/mnt/etc/lightdm/lightdm.conf.d/01-xfce.conf
+[Seat:*]
+user-session=xfce
+greeter-session=lightdm-gtk-greeter
 EOF
 
+cat <<EOF >/mnt/etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+theme-name = Arc-Dark
+icon-theme-name = Papirus-Dark
+font-name = Fira Code 10
+background = #1e1e2e
+EOF
+
+# --- Configurações de Estética e Terminal XFCE4 para o Usuário juca ---
 USER_HOME="/mnt/home/juca"
-mkdir -pv "${USER_HOME}/.config/"{hypr,waybar,wofi,foot,dunst}
+mkdir -pv "${USER_HOME}/.config/"{xfce4/terminal,xfce4/xfconf/xfce-perchannel-xml}
 
-# --- Archivo de Configuração do Hyprland (~/.config/hypr/hyprland.conf) ---
-log_info "Gerando configuração estética e eficiente do Hyprland (~/.config/hypr/hyprland.conf)..."
-cat <<'EOF' > "${USER_HOME}/.config/hypr/hyprland.conf"
-# ==============================================================================
-# Configuração do Hyprland para MacBook Pro 4,1 (Debian Trixie)
-# Estética: Catppuccin Mocha com Acentos Vermelho/Laranja (#ff2a4b / #ff6600)
-# ==============================================================================
-
-# --- Monitores ---
-# Monitor nativo do MacBook Pro 15" (1280x800 @ 60Hz)
-monitor=LVDS-1,1280x800@60,0x0,1
-monitor=,preferred,auto,1
-
-# --- Variáveis de Ambiente para Wayland & GPU Nouveau ---
-env = XDG_CURRENT_DESKTOP,Hyprland
-env = XDG_SESSION_TYPE,wayland
-env = XDG_SESSION_DESKTOP,Hyprland
-env = GDK_BACKEND,wayland,x11,*
-env = QT_QPA_PLATFORM,wayland;xcb
-env = MOZ_ENABLE_WAYLAND,1
-env = WLR_NO_HARDWARE_CURSORS,1
-env = LIBGL_ALWAYS_SOFTWARE,0
-
-# --- Autostart ---
-exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-exec-once = systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-exec-once = /usr/lib/x86_64-linux-gnu/libexec/polkit-kde-authentication-agent-1
-exec-once = waybar &
-exec-once = dunst &
-exec-once = pipewire & wireplumber &
-
-# --- Programas Padrão ---
-$terminal = foot
-$menu = wofi --show drun
-$fileManager = foot -e yazi
-
-# --- Aparência e Decoração ---
-general {
-    gaps_in = 4
-    gaps_out = 8
-    border_size = 2
-    col.active_border = rgba(ff2a4bee) rgba(ff6600ee) 45deg
-    col.inactive_border = rgba(313248aa)
-    layout = dwindle
-    allow_tearing = false
-}
-
-decoration {
-    rounding = 8
-    active_opacity = 0.96
-    inactive_opacity = 0.90
-    drop_shadow = true
-    shadow_range = 10
-    shadow_render_power = 3
-    col.shadow = rgba(1a1a1aee)
-    
-    blur {
-        enabled = true
-        size = 3
-        passes = 1
-        vibrancy = 0.1696
-    }
-}
-
-animations {
-    enabled = true
-    bezier = myBezier, 0.05, 0.9, 0.1, 1.05
-    animation = windows, 1, 4, myBezier
-    animation = windowsOut, 1, 4, default, popin 80%
-    animation = border, 1, 6, default
-    animation = borderangle, 1, 6, default
-    animation = fade, 1, 4, default
-    animation = workspaces, 1, 3, default
-}
-
-dwindle {
-    pseudotile = true
-    preserve_split = true
-}
-
-master {
-    new_status = master
-}
-
-gestures {
-    workspace_swipe = true
-    workspace_swipe_fingers = 3
-}
-
-misc {
-    force_default_wallpaper = 0
-    disable_hyprland_logo = true
-}
-
-# --- Atalhos de Teclado (Keybindings) ---
-$mainMod = SUPER
-
-# Atalhos Principais
-bind = $mainMod, Return, exec, $terminal
-bind = $mainMod, Q, killactive,
-bind = $mainMod, M, exit,
-bind = $mainMod, E, exec, $fileManager
-bind = $mainMod, V, togglefloating,
-bind = $mainMod, Space, exec, $menu
-bind = $mainMod, D, exec, $menu
-bind = $mainMod, F, fullscreen, 0
-
-# Foco de Janelas (Vim Style / Setas)
-bind = $mainMod, left, movefocus, l
-bind = $mainMod, right, movefocus, r
-bind = $mainMod, up, movefocus, u
-bind = $mainMod, down, movefocus, d
-
-bind = $mainMod, H, movefocus, l
-bind = $mainMod, L, movefocus, r
-bind = $mainMod, K, movefocus, u
-bind = $mainMod, J, movefocus, d
-
-# Mover Janelas
-bind = $mainMod SHIFT, left, movewindow, l
-bind = $mainMod SHIFT, right, movewindow, r
-bind = $mainMod SHIFT, up, movewindow, u
-bind = $mainMod SHIFT, down, movewindow, d
-
-# Workspaces (1 - 6)
-bind = $mainMod, 1, workspace, 1
-bind = $mainMod, 2, workspace, 2
-bind = $mainMod, 3, workspace, 3
-bind = $mainMod, 4, workspace, 4
-bind = $mainMod, 5, workspace, 5
-bind = $mainMod, 6, workspace, 6
-
-bind = $mainMod SHIFT, 1, movetoworkspace, 1
-bind = $mainMod SHIFT, 2, movetoworkspace, 2
-bind = $mainMod SHIFT, 3, movetoworkspace, 3
-bind = $mainMod SHIFT, 4, movetoworkspace, 4
-bind = $mainMod SHIFT, 5, movetoworkspace, 5
-bind = $mainMod SHIFT, 6, movetoworkspace, 6
-
-# Controle de Brilho e Volume do MacBook
-binde = , XF86MonBrightnessUp, exec, brightnessctl set +5%
-binde = , XF86MonBrightnessDown, exec, brightnessctl set 5%-
-binde = , XF86AudioRaiseVolume, exec, pamixer -i 5
-binde = , XF86AudioLowerVolume, exec, pamixer -d 5
-binde = , XF86AudioMute, exec, pamixer -t
-
-# Mover/Redimensionar Janelas com o Mouse
-bindm = $mainMod, mouse:272, movewindow
-bindm = $mainMod, mouse:273, resizewindow
+log_info "Configurando cores Catppuccin Mocha / RedTheme no XFCE Terminal..."
+cat <<'EOF' > "${USER_HOME}/.config/xfce4/terminal/terminalrc"
+[Configuration]
+FontName=Fira Code 11
+ColorPalette=#1e1e2e;#ff2a4b;#40ff7d;#ffe066;#89b4fa;#cba6f7;#94e2d5;#cdd6f4;#585b70;#ff4060;#50fa7b;#ffb86c;#8be9fd;#bd93f9;#ff79c6;#f2f4fc
+ColorForeground=#f2f4fc
+ColorBackground=#1e1e2e
+ColorCursor=#ff2a4b
+ColorBold=#f2f4fc
+TabActivityColor=#ff6600
+ScrollingBar=TERMINAL_SCROLLING_BAR_OFF
+MiscCursorBlinks=FALSE
+MiscDefaultGeometry=110x32
 EOF
 
-# --- Estilo do Waybar (~/.config/waybar/config & style.css) ---
-log_info "Gerando configuração da barra de status Waybar..."
-cat <<'EOF' > "${USER_HOME}/.config/waybar/config"
-{
-    "layer": "top",
-    "position": "top",
-    "height": 30,
-    "spacing": 4,
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
-    "modules-right": ["cpu", "memory", "network", "pulseaudio", "battery", "tray"],
-    
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "format": "{name}"
-    },
-    "clock": {
-        "format": "<b>{:%H:%M | %d/%m/%Y}</b>",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
-    },
-    "cpu": {
-        "format": " {usage}%",
-        "tooltip": true
-    },
-    "memory": {
-        "format": " {used:0.1f}G/{total:0.1f}G"
-    },
-    "network": {
-        "format-wifi": " {essid}",
-        "format-ethernet": "🖧 {ipaddr}",
-        "format-disconnected": "⚠️ Off"
-    },
-    "pulseaudio": {
-        "format": "🔊 {volume}%",
-        "format-muted": "🔇 Mute",
-        "on-click": "pavucontrol"
-    },
-    "battery": {
-        "format": "🔋 {capacity}%",
-        "format-charging": "⚡ {capacity}%"
-    }
-}
+cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xsettings" version="1.0">
+  <property name="Net" type="empty">
+    <property name="ThemeName" type="string" value="Arc-Dark"/>
+    <property name="IconThemeName" type="string" value="Papirus-Dark"/>
+    <property name="CursorThemeName" type="string" value="Adwaita"/>
+  </property>
+  <property name="Gtk" type="empty">
+    <property name="FontName" type="string" value="Fira Code 10"/>
+    <property name="MonospaceFontName" type="string" value="Fira Code 10"/>
+  </property>
+</channel>
 EOF
 
-cat <<'EOF' > "${USER_HOME}/.config/waybar/style.css"
-* {
-    border: none;
-    border-radius: 0;
-    font-family: "Fira Code", "FontAwesome", sans-serif;
-    font-size: 13px;
-    min-height: 0;
-}
-
-window#waybar {
-    background: rgba(24, 24, 37, 0.90);
-    color: #cdd6f4;
-    border-bottom: 2px solid #ff2a4b;
-}
-
-#workspaces button {
-    padding: 0 8px;
-    background: transparent;
-    color: #a6adc8;
-}
-
-#workspaces button.active {
-    background: #ff2a4b;
-    color: #ffffff;
-    border-radius: 4px;
-}
-
-#clock, #cpu, #memory, #network, #pulseaudio, #battery, #tray {
-    padding: 0 10px;
-    margin: 2px 4px;
-    background: #1e1e2e;
-    color: #f2f4fc;
-    border-radius: 6px;
-    border: 1px solid #313248;
-}
-
-#clock {
-    color: #ff6600;
-}
-EOF
-
-# --- Estilo do Terminal Foot (~/.config/foot/foot.ini) ---
-cat <<'EOF' > "${USER_HOME}/.config/foot/foot.ini"
-[main]
-font=Fira Code:size=11
-pad=8x8
-
-[colors]
-background=1e1e2e
-foreground=f2f4fc
-regular0=181825
-regular1=ff2a4b
-regular2=40ff7d
-regular3=ffe066
-regular4=89b4fa
-regular5=cba6f7
-regular6=94e2d5
-regular7=cdd6f4
-EOF
-
-# Permissões das configurações do usuário juca
 chroot /mnt chown -R juca:juca /home/juca/.config
 
 # ==============================================================================
 # --- INSTALAÇÃO E CONFIGURAÇÃO DO GERENCIADOR DE PACOTES NIX ---
 # ==============================================================================
 log_info "Instalando e configurando o gerenciador de pacotes Nix..."
-chroot /mnt apt-get install -y --no-install-recommends nix-bin nix-setup-systemd
+chroot /mnt apt-get install -y --no-install-recommends nix-bin nix-setup-systemd 2>/dev/null || true
 
 mkdir -pv /mnt/etc/nix
 cat <<EOF >/mnt/etc/nix/nix.conf
-# Configuração do Gerenciador Nix Multi-User
 experimental-features = nix-command flakes
 trusted-users = root juca
 substituters = https://cache.nixos.org/
 trusted-substituters = https://cache.nixos.org/
 EOF
 
-# Adicionar usuário juca ao grupo do Nix
 chroot /mnt groupadd -r nix-users 2>/dev/null || true
-chroot /mnt usermod -aG nix-users juca
+chroot /mnt usermod -aG nix-users juca 2>/dev/null || true
 
-# Configurar variáveis de ambiente do Nix nos perfis do bash
 cat <<'EOF' >> /mnt/home/juca/.bashrc
 
 # Nix Package Manager environment setup
@@ -767,19 +533,14 @@ if [ -e /etc/profile.d/nix.sh ]; then
 fi
 EOF
 
-# Instalando Hyprland e Hyprpaper via Nix Package Manager
-log_info "Instalando Hyprland, Hyprpaper e XDG Desktop Portal via Nix..."
-chroot /mnt su - juca -c ". /etc/profile.d/nix.sh && nix-env -iA nixpkgs.hyprland nixpkgs.hyprpaper nixpkgs.xdg-desktop-portal-hyprland" 2>/dev/null || true
-chroot /mnt ln -sf /home/juca/.nix-profile/bin/Hyprland /usr/local/bin/Hyprland 2>/dev/null || true
-chroot /mnt ln -sf /home/juca/.nix-profile/bin/hyprpaper /usr/local/bin/hyprpaper 2>/dev/null || true
-
 chroot /mnt chown juca:juca /home/juca/.bashrc
 
 # --- Instalação dos Bootloaders (GRUB Legacy i386-pc + GRUB EFI x86_64) ---
-log_info "Instalando pacotes do GRUB (grub-pc e grub-efi-amd64)..."
+log_info "Instalando pacotes do GRUB (grub-pc, grub-pc-bin, grub-efi-amd64-bin e efibootmgr)..."
 chroot /mnt apt-get install -y --no-install-recommends \
     grub-pc \
-    grub-efi-amd64 \
+    grub-pc-bin \
+    grub-efi-amd64-bin \
     efibootmgr
 
 log_info "Instalando o GRUB BIOS (i386-pc) em ${DRIVE} para inicializar a VBIOS da NVIDIA 8600M GT..."
@@ -814,11 +575,11 @@ chroot /mnt update-grub
 chroot /mnt update-initramfs -u -k all
 
 # --- Ativação dos Serviços do Systemd ---
-log_info "Ativando serviços essenciais no systemd (incluindo o Display Manager SDDM)..."
+log_info "Ativando serviços essenciais no systemd (incluindo o Display Manager LightDM)..."
 chroot /mnt systemctl enable NetworkManager.service
 chroot /mnt systemctl enable iwd.service
 chroot /mnt systemctl enable ssh.service
-chroot /mnt systemctl enable sddm.service
+chroot /mnt systemctl enable lightdm.service
 chroot /mnt systemctl enable earlyoom.service
 chroot /mnt systemctl enable mbpfan.service
 chroot /mnt systemctl enable tlp.service
@@ -832,8 +593,8 @@ swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 
 log_ok "=========================================================================="
-log_ok " Instalação do Debian com Hyprland, SDDM & Nix concluída com SUCESSO!"
+log_ok " Instalação do Debian com XFCE4, LightDM & Nix concluída com SUCESSO!"
 log_ok "=========================================================================="
 log_info "Você já pode reiniciar o computador e remover a mídia de instalação."
-log_info "Ao reiniciar, a tela gráfica de login do SDDM iniciará automaticamente."
-log_info "Selecione o usuário 'juca' (senha: 200291) e a sessão 'Hyprland'."
+log_info "Ao reiniciar, a tela gráfica de login do LightDM iniciará automaticamente."
+log_info "Faça login com o usuário 'juca' (senha: 200291) no ambiente XFCE4."
