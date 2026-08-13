@@ -291,6 +291,34 @@ LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
 EOF
 
+# --- Configuração do Teclado Apple US Mac (Layout e Módulo hid_apple) ---
+log_info "Configurando comportamento do teclado idêntico ao macOS (fnmode=1, swap_opt_cmd=1)..."
+cat <<EOF >/mnt/etc/default/keyboard
+XKBMODEL="pc105"
+XKBLAYOUT="us"
+XKBVARIANT="mac"
+XKBOPTIONS="terminate:ctrl_alt_bksp"
+BACKSPACE="guess"
+EOF
+
+mkdir -pv /mnt/etc/modprobe.d
+cat <<EOF >/mnt/etc/modprobe.d/hid_apple.conf
+# Configurações do teclado MacBook Pro (Comportamento Mac Nativo)
+# fnmode=1: Teclas multimídia e de controle de luz ativas por padrão (segure Fn para F1-F12)
+# swap_opt_cmd=1: Mapeia Command para Super/Win e Option para Alt (ordem física Apple)
+options hid_apple fnmode=1 swap_opt_cmd=1
+EOF
+
+# Adicionar módulo applesmc para controle dos LEDs de luz do teclado
+echo "applesmc" >> /mnt/etc/modules
+
+# Regras de Udev para permissão de controle de luz do teclado e tela
+mkdir -pv /mnt/etc/udev/rules.d
+cat <<EOF >/mnt/etc/udev/rules.d/90-macbook-backlight.rules
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod a+w /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod a+w /sys/class/leds/%k/brightness"
+EOF
+
 # --- Instalação do Kernel, Microcode e Firmwares Apple/Broadcom Wi-Fi ---
 log_info "Instalando Kernel Linux LTS, Microcode Intel e Drivers Wi-Fi Broadcom..."
 chroot /mnt apt-get install -y --no-install-recommends \
@@ -555,6 +583,38 @@ cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
     <property name="title_font" type="string" value="Inter Bold 10"/>
     <property name="box_resize" type="bool" value="false"/>
     <property name="cycle_minimum" type="bool" value="true"/>
+  </property>
+</channel>
+EOF
+
+cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="keyboard-layout" version="1.0">
+  <property name="Default" type="empty">
+    <property name="XkbDisable" type="bool" value="false"/>
+    <property name="XkbLayout" type="string" value="us"/>
+    <property name="XkbVariant" type="string" value="mac"/>
+    <property name="XkbModel" type="string" value="pc105"/>
+  </property>
+</channel>
+EOF
+
+cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-keyboard-shortcuts" version="1.0">
+  <property name="commands" type="empty">
+    <property name="custom" type="empty">
+      <!-- Controle de Brilho da Tela do MacBook (F1 e F2) -->
+      <property name="XF86MonBrightnessDown" type="string" value="brightnessctl set 5%-"/>
+      <property name="XF86MonBrightnessUp" type="string" value="brightnessctl set +5%"/>
+      <!-- Controle de Iluminação do Teclado do MacBook (F5 e F6) -->
+      <property name="XF86KbdBrightnessDown" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%- || brightnessctl -d '*kbd*' set 10%-"/>
+      <property name="XF86KbdBrightnessUp" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%+ || brightnessctl -d '*kbd*' set 10%+"/>
+      <!-- Controle de Volume (F10, F11 e F12) -->
+      <property name="XF86AudioMute" type="string" value="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle || pamixer -t"/>
+      <property name="XF86AudioLowerVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- || pamixer -d 5"/>
+      <property name="XF86AudioRaiseVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ || pamixer -i 5"/>
+    </property>
   </property>
 </channel>
 EOF
