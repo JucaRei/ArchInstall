@@ -213,7 +213,7 @@ CODENAME="bookworm"
 MIRROR="http://deb.debian.org/debian"
 
 debootstrap --variant=minbase \
-    --include=apt,apt-utils,ca-certificates,sudo,neovim,initramfs-tools,console-setup,dosfstools,btrfs-progs,kmod,less,gdisk,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,iproute2,iputils-ping,bash,whiptail \
+    --include=apt,apt-utils,ca-certificates,sudo,neovim,locales,initramfs-tools,console-setup,dosfstools,btrfs-progs,kmod,less,gdisk,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,iproute2,iputils-ping,bash,whiptail \
     --arch=amd64 "${CODENAME}" /mnt "${MIRROR}"
 
 # --- Configuração do APT e Repositórios ---
@@ -291,7 +291,12 @@ en_US.UTF-8 UTF-8
 pt_BR.UTF-8 UTF-8
 EOF
 
+# --- Atualização do banco de dados de pacotes no chroot e instalação de Locales ---
+log_info "Atualizando pacotes e gerando locales no chroot..."
+chroot /mnt apt-get update -qq
+chroot /mnt apt-get install -y locales || true
 chroot /mnt locale-gen
+
 cat <<EOF >/mnt/etc/default/locale
 LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
