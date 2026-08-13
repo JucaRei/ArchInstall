@@ -81,13 +81,13 @@ fi
 log_info "Parando automounters (udisks2) e liberando o disco ${DRIVE}..."
 systemctl stop udisks2 udisks tracker 2>/dev/null || true
 
-# Desmonta qualquer ponto de montagem registrado em /proc/mounts
-for mnt in $(grep "${DRIVE}" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
+# Desmonta qualquer ponto de montagem registrado em /proc/mounts referente a /mnt ou ao disco
+for mnt in $(grep -E "(${DRIVE}|/mnt)" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
     log_info "Desmontando ponto ativo: $mnt..."
     umount -R -f "$mnt" 2>/dev/null || true
 done
 
-fuser -k -9 -m "${DRIVE}"* 2>/dev/null || true
+fuser -k -9 -m /mnt /mnt/* "${DRIVE}"* 2>/dev/null || true
 btrfs device scan --forget 2>/dev/null || true
 swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
@@ -812,7 +812,10 @@ chroot /mnt systemctl enable thermald.service
 chroot /mnt systemctl enable irqbalance.service
 chroot /mnt systemctl enable zram-tools.service
 chroot /mnt systemctl enable nix-daemon.service 2>/dev/null || true
-chroot /mnt systemctl enable fstrim.timer
+# --- Desmontagem Limpa do Sistema ao Final da Instalação ---
+log_info "Desmontando pontos de montagem temporários de /mnt..."
+swapoff -a 2>/dev/null || true
+umount -R -f /mnt 2>/dev/null || true
 
 log_ok "=========================================================================="
 log_ok " Instalação do Debian com Hyprland, SDDM & Nix concluída com SUCESSO!"
