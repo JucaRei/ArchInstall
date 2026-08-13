@@ -69,6 +69,10 @@ done
 
 if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
     log_info "Instalando dependências ausentes no host: ${FOR_INSTALL[*]}..."
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+        log_info "Aguardando liberação do lock do dpkg/apt no host..."
+        sleep 2
+    done
     apt-get update "${APT_OPT[@]}" -qq || true
     apt-get install "${APT_OPT[@]}" -y -qq "${FOR_INSTALL[@]}" || true
 fi
@@ -164,7 +168,18 @@ log_info "Formatando a Partição EFI em FAT32..."
 mkfs.vfat -F32 "${PART_EFI}" -n "EFI"
 
 log_info "Formatando a Partição Root em Btrfs..."
-mkfs.btrfs -f -L "Debian" "${PART_ROOT}"
+btrfs device scan --forget 2>/dev/null || true
+wipefs -a -f "${PART_ROOT}" 2>/dev/null || true
+udevadm settle 2>/dev/null || true
+sleep 2
+
+if ! mkfs.btrfs -f -L "Debian" "${PART_ROOT}"; then
+    log_warn "Liberando trava temporária do udev na partição ${PART_ROOT} para nova tentativa..."
+    btrfs device scan --forget 2>/dev/null || true
+    fuser -k -9 "${PART_ROOT}" 2>/dev/null || true
+    sleep 3
+    mkfs.btrfs -f -L "Debian" "${PART_ROOT}"
+fi
 
 # --- Criação de Subvolumes Btrfs ---
 log_info "Criando subvolumes Btrfs..."
