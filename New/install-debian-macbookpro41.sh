@@ -5,10 +5,12 @@
 #   - CPU: Intel Core 2 Duo (64-bit Penryn)
 #   - GPU: NVIDIA GeForce 8600M GT (G84M)
 #   - RAM: 6GB DDR2 (2GB + 4GB Canal Assimétrico)
-#   - Wi-Fi: Broadcom BCM43xx
+#   - Wi-Fi: Broadcom BCM43xx (com NetworkManager + nm-applet)
 #   - Boot: GPT com Partição BIOS Boot (2MB EF02) + EFI (512MB EF00)
 #   - FS: Btrfs com subvolumes e compressão ZSTD
-#   - Desktop: XFCE4 (Leve, Estável e Otimizado) + LightDM + Nix
+#   - Splash: Plymouth com Animação de Boot
+#   - Desktop: XFCE4 (Catppuccin Mocha / Arc-Dark, Whisker Menu) + LightDM + Firefox
+#   - Package Manager: Nix Multi-User (Flakes & nix-command habilitados)
 # ==============================================================================
 
 set -euo pipefail
@@ -37,7 +39,7 @@ DRIVE="${1:-/dev/sda}"
 
 log_warn "=========================================================================="
 log_warn " ATENÇÃO: O disco ${DRIVE} será COMPLETAMENTE FORMATADO!"
-log_warn " Instalação do Debian Trixie com XFCE4 & Nix para MacBook Pro 4,1."
+log_warn " Instalação do Debian Trixie com XFCE4, Plymouth, Firefox & Nix para MacBook Pro 4,1."
 log_warn "=========================================================================="
 echo -n "Deseja continuar? (s/N): "
 read -r CONFIRM
@@ -253,20 +255,20 @@ UUID=${ROOT_UUID}                         /swap           btrfs   rw,${BTRFS_OPT
 # EFI System Partition
 UUID=${EFI_UUID}                          /boot/efi       vfat    rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022 0       2
 
-# Swapfile
-/swap/swapfile                            none            swap    sw,pri=100                                            0       0
+# Swapfile em Btrfs
+/swap/swapfile                            none            swap    defaults,pri=100                                      0       0
 
 # Tempfs em RAM
 tmpfs                                     /tmp            tmpfs   noatime,mode=1777,nosuid,nodev                        0       0
 EOF
 
 # --- Configurações Básicas do Sistema (Hostname, Locales, Timezone) ---
-log_info "Configurando Hostname, Timezone e Locales..."
-echo "macbookpro41" > /mnt/etc/hostname
+log_info "Configurando Hostname (rocinante), Timezone e Locales..."
+echo "rocinante" > /mnt/etc/hostname
 
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1   localhost
-127.0.1.1   macbookpro41
+127.0.1.1   rocinante
 ::1         localhost ip6-localhost ip6-loopback
 ff02::1     ip6-allnodes
 ff02::2     ip6-allrouters
@@ -289,8 +291,8 @@ LANG=en_US.UTF-8
 LC_ALL=en_US.UTF-8
 EOF
 
-# --- Instalação do Kernel, Microcode e Firmwares Apple/Broadcom ---
-log_info "Instalando Kernel Linux LTS, Microcode Intel e Firmwares..."
+# --- Instalação do Kernel, Microcode e Firmwares Apple/Broadcom Wi-Fi ---
+log_info "Instalando Kernel Linux LTS, Microcode Intel e Drivers Wi-Fi Broadcom..."
 chroot /mnt apt-get install -y --no-install-recommends \
     linux-image-amd64 \
     linux-headers-amd64 \
@@ -299,8 +301,10 @@ chroot /mnt apt-get install -y --no-install-recommends \
     firmware-linux-nonfree \
     firmware-misc-nonfree \
     firmware-b43-installer \
+    b43-fwcutter \
     firmware-brcm80211 \
-    broadcom-sta-dkms
+    broadcom-sta-dkms \
+    wireless-regdb
 
 # --- Instalação da Aceleração Gráfica Nouveau / Mesa / VDPAU (NVIDIA 8600M GT) ---
 log_info "Instalando drivers de aceleração gráfica Nouveau / Mesa / VDPAU para NVIDIA 8600M GT..."
@@ -315,11 +319,11 @@ chroot /mnt apt-get install -y --no-install-recommends \
     vdpauinfo \
     vainfo
 
-# --- Instalação do Gerenciador de Rede e Conectividade ---
-log_info "Instalando gerenciador de rede NetworkManager, IWD e SSH..."
+# --- Instalação do Gerenciador de Rede, Applet Wi-Fi e SSH ---
+log_info "Instalando NetworkManager com Widget nm-applet para a barra de tarefas..."
 chroot /mnt apt-get install -y --no-install-recommends \
     network-manager \
-    iwd \
+    network-manager-gnome \
     rfkill \
     wireless-tools \
     wpasupplicant \
@@ -330,11 +334,26 @@ chroot /mnt apt-get install -y --no-install-recommends \
     rsync
 
 mkdir -pv /mnt/etc/NetworkManager/conf.d
-cat <<EOF >/mnt/etc/NetworkManager/conf.d/iwd.conf
+cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
+[main]
+plugins=ifupdown,keyfile
+
+[ifupdown]
+managed=true
+
 [device]
-wifi.backend=iwd
-wifi.iwd.autoconnect=yes
+wifi.scan-rand-mac-address=no
 EOF
+
+# --- Instalação do Plymouth (Splash Screen com Animação de Boot) ---
+log_info "Instalando e configurando animação de boot Plymouth..."
+chroot /mnt apt-get install -y --no-install-recommends \
+    plymouth \
+    plymouth-themes \
+    plymouth-x11
+
+# Define tema moderno de animação (spinner / bgrt)
+chroot /mnt plymouth-set-default-theme -R spinner 2>/dev/null || chroot /mnt plymouth-set-default-theme -R bgrt 2>/dev/null || true
 
 # --- Instalação das Ferramentas Térmicas e de Energia (MacBook Pro) ---
 log_info "Instalando ferramentas térmicas e de energia (mbpfan, tlp, powertop, earlyoom)..."
@@ -359,9 +378,11 @@ max_temp = 86
 polling_interval = 2
 EOF
 
-# --- Instalação de Utilitários CLI ---
-log_info "Instalando utilitários CLI modernos (eza, bat, duf, fzf, ripgrep, htop, btop)..."
+# --- Instalação de Utilitários CLI Modernos e Navegador Firefox ---
+log_info "Instalando Firefox ESR, utilitários CLI modernos (eza, bat, duf, fzf, ripgrep, btop)..."
 chroot /mnt apt-get install -y --no-install-recommends \
+    firefox-esr \
+    firefox-esr-l10n-pt-br \
     eza \
     bat \
     duf \
@@ -396,13 +417,13 @@ PERCENT=50
 PRIORITY=100
 EOF
 
-# --- Criação do Swapfile Btrfs (6GB) ---
+# --- Criação do Swapfile Btrfs (6GB) de Forma Segura ---
 log_info "Criando arquivo de swap de 6GB no subvolume Btrfs @swap..."
-touch /mnt/swap/swapfile
+# Desabilita CoW explicitamente no arquivo antes de alocar blocos
+truncate -s 0 /mnt/swap/swapfile
 chmod 600 /mnt/swap/swapfile
-if chroot /mnt command -v chattr &>/dev/null; then
-    chroot /mnt chattr +C /swap/swapfile || true
-fi
+chroot /mnt chattr +C /swap/swapfile 2>/dev/null || true
+chroot /mnt btrfs property set /swap/swapfile compression none 2>/dev/null || true
 dd if=/dev/zero of=/mnt/swap/swapfile bs=1M count=6144 status=progress
 mkswap /mnt/swap/swapfile
 
@@ -414,9 +435,9 @@ echo "juca:200291" | chroot /mnt chpasswd -c SHA512
 chroot /mnt usermod -aG sudo,audio,video,systemd-journal,input,netdev,render juca
 
 # ==============================================================================
-# --- INSTALAÇÃO E CONFIGURAÇÃO DO AMBIENTE XFCE4 (LEVE & OTIMIZADO) ---
+# --- INSTALAÇÃO E CONFIGURAÇÃO DO AMBIENTE XFCE4 (TEMAS ELEGANTES & WIDGETS) ---
 # ==============================================================================
-log_info "Instalando ambiente desktop XFCE4, LightDM, Thunar, Terminal e áudio Pipewire..."
+log_info "Instalando ambiente XFCE4, Whisker Menu, LightDM, Thunar e áudio Pipewire..."
 chroot /mnt apt-get install -y --no-install-recommends \
     xorg \
     xserver-xorg-core \
@@ -432,6 +453,9 @@ chroot /mnt apt-get install -y --no-install-recommends \
     xfce4-settings \
     xfce4-power-manager \
     xfce4-pulseaudio-plugin \
+    xfce4-whiskermenu-plugin \
+    xfce4-netload-plugin \
+    xfce4-wavelan-plugin \
     xfce4-screenshooter \
     xfce4-taskmanager \
     thunar \
@@ -449,6 +473,9 @@ chroot /mnt apt-get install -y --no-install-recommends \
     brightnessctl \
     papirus-icon-theme \
     arc-theme \
+    greybird-gtk-theme \
+    fonts-inter \
+    fonts-roboto \
     fonts-firacode \
     fonts-font-awesome
 
@@ -457,7 +484,7 @@ chroot /mnt apt-get install -y --no-install-recommends lxpolkit 2>/dev/null || \
 chroot /mnt apt-get install -y --no-install-recommends policykit-1-gnome 2>/dev/null || true
 
 # --- Configuração do Display Manager LightDM ---
-log_info "Configurando o gerenciador de login LightDM para o XFCE4..."
+log_info "Configurando o gerenciador de login LightDM com tema escuro elegante..."
 mkdir -pv /mnt/etc/lightdm/lightdm.conf.d
 cat <<EOF >/mnt/etc/lightdm/lightdm.conf.d/01-xfce.conf
 [Seat:*]
@@ -469,13 +496,25 @@ cat <<EOF >/mnt/etc/lightdm/lightdm-gtk-greeter.conf
 [greeter]
 theme-name = Arc-Dark
 icon-theme-name = Papirus-Dark
-font-name = Fira Code 10
+font-name = Inter 10
 background = #1e1e2e
 EOF
 
 # --- Configurações de Estética e Terminal XFCE4 para o Usuário juca ---
 USER_HOME="/mnt/home/juca"
-mkdir -pv "${USER_HOME}/.config/"{xfce4/terminal,xfce4/xfconf/xfce-perchannel-xml}
+mkdir -pv "${USER_HOME}/.config/"{xfce4/terminal,xfce4/xfconf/xfce-perchannel-xml,autostart}
+
+# Autostart do Widget de Wi-Fi nm-applet
+cat <<'EOF' > "${USER_HOME}/.config/autostart/nm-applet.desktop"
+[Desktop Entry]
+Type=Application
+Name=Network
+Comment=Manage your network connections
+Icon=nm-device-wireless
+Exec=nm-applet
+Terminal=false
+StartupNotify=false
+EOF
 
 log_info "Configurando cores Catppuccin Mocha / RedTheme no XFCE Terminal..."
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/terminal/terminalrc"
@@ -492,6 +531,7 @@ MiscCursorBlinks=FALSE
 MiscDefaultGeometry=110x32
 EOF
 
+# Pré-configurar Tema Escuro e Fontes no XFCE4
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xsettings" version="1.0">
@@ -501,8 +541,20 @@ cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.x
     <property name="CursorThemeName" type="string" value="Adwaita"/>
   </property>
   <property name="Gtk" type="empty">
-    <property name="FontName" type="string" value="Fira Code 10"/>
+    <property name="FontName" type="string" value="Inter 10"/>
     <property name="MonospaceFontName" type="string" value="Fira Code 10"/>
+  </property>
+</channel>
+EOF
+
+cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="theme" type="string" value="Arc-Dark"/>
+    <property name="title_font" type="string" value="Inter Bold 10"/>
+    <property name="box_resize" type="bool" value="false"/>
+    <property name="cycle_minimum" type="bool" value="true"/>
   </property>
 </channel>
 EOF
@@ -558,13 +610,13 @@ chroot /mnt grub-install --target=i386-pc "${DRIVE}"
 log_info "Instalando o GRUB EFI (x86_64-efi) em /boot/efi como fallback..."
 chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --no-nvram --removable --recheck
 
-# --- Configuração do arquivo /etc/default/grub ---
-log_info "Configurando parâmetros de boot no GRUB..."
+# --- Configuração do arquivo /etc/default/grub com Suporte a Plymouth e Hibernação ---
+log_info "Configurando parâmetros de boot no GRUB (com animação Plymouth)..."
 cat <<EOF >/mnt/etc/default/grub
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=2
 GRUB_DISTRIBUTOR="Debian"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash apparmor=1 security=apparmor i915.modeset=0 nouveau.modeset=1 pcie_aspm=force zswap.enabled=1 zswap.compressor=zstd mitigations=off nowatchdog"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash plymouth.ignore-serial-consoles apparmor=1 security=apparmor i915.modeset=0 nouveau.modeset=1 pcie_aspm=force zswap.enabled=1 zswap.compressor=zstd mitigations=off nowatchdog"
 GRUB_CMDLINE_LINUX=""
 GRUB_GFXMODE=1280x800x32
 GRUB_COLOR_NORMAL="light-gray/black"
@@ -585,25 +637,25 @@ chroot /mnt update-initramfs -u -k all
 
 # --- Ativação dos Serviços do Systemd ---
 log_info "Ativando serviços essenciais no systemd (incluindo o Display Manager LightDM)..."
-chroot /mnt systemctl enable NetworkManager.service
-chroot /mnt systemctl enable iwd.service
-chroot /mnt systemctl enable ssh.service
-chroot /mnt systemctl enable lightdm.service
-chroot /mnt systemctl enable earlyoom.service
-chroot /mnt systemctl enable mbpfan.service
-chroot /mnt systemctl enable tlp.service
-chroot /mnt systemctl enable thermald.service
-chroot /mnt systemctl enable irqbalance.service
-chroot /mnt systemctl enable zram-tools.service
+chroot /mnt systemctl enable NetworkManager.service 2>/dev/null || true
+chroot /mnt systemctl enable ssh.service 2>/dev/null || true
+chroot /mnt systemctl enable lightdm.service 2>/dev/null || true
+chroot /mnt systemctl enable earlyoom.service 2>/dev/null || true
+chroot /mnt systemctl enable mbpfan.service 2>/dev/null || true
+chroot /mnt systemctl enable tlp.service 2>/dev/null || true
+chroot /mnt systemctl enable thermald.service 2>/dev/null || true
+chroot /mnt systemctl enable irqbalance.service 2>/dev/null || true
+chroot /mnt systemctl enable zramswap.service 2>/dev/null || chroot /mnt systemctl enable zram-tools.service 2>/dev/null || true
 chroot /mnt systemctl enable nix-daemon.service 2>/dev/null || true
+
 # --- Desmontagem Limpa do Sistema ao Final da Instalação ---
 log_info "Desmontando pontos de montagem temporários de /mnt..."
 swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 
 log_ok "=========================================================================="
-log_ok " Instalação do Debian com XFCE4, LightDM & Nix concluída com SUCESSO!"
+log_ok " Instalação do Debian com XFCE4, Plymouth, Firefox & Nix concluída com SUCESSO!"
 log_ok "=========================================================================="
 log_info "Você já pode reiniciar o computador e remover a mídia de instalação."
-log_info "Ao reiniciar, a tela gráfica de login do LightDM iniciará automaticamente."
+log_info "Ao reiniciar, a animação do Plymouth e a tela gráfica do LightDM carregarão."
 log_info "Faça login com o usuário 'juca' (senha: 200291) no ambiente XFCE4."
