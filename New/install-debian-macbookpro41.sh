@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Instalação do Debian (Bookworm) para MacBook Pro 4,1 (Late 2008)
+# Script de Instalação do Debian (Trixie) para MacBook Pro 4,1 (Late 2008)
 # Hardware Alvo:
 #   - CPU: Intel Core 2 Duo (64-bit Penryn)
 #   - GPU: NVIDIA GeForce 8600M GT (G84M)
@@ -37,7 +37,7 @@ DRIVE="${1:-/dev/sda}"
 
 log_warn "=========================================================================="
 log_warn " ATENÇÃO: O disco ${DRIVE} será COMPLETAMENTE FORMATADO!"
-log_warn " Instalação do Debian Bookworm com Hyprland & Nix para MacBook Pro 4,1."
+log_warn " Instalação do Debian Trixie com Hyprland & Nix para MacBook Pro 4,1."
 log_warn "=========================================================================="
 echo -n "Deseja continuar? (s/N): "
 read -r CONFIRM
@@ -207,9 +207,9 @@ mount -o "${BTRFS_OPTS},subvol=@var_cache_apt" "${PART_ROOT}" /mnt/var/cache/apt
 mount -o "${BTRFS_OPTS},subvol=@swap" "${PART_ROOT}" /mnt/swap
 mount -t vfat -o noatime,nodiratime "${PART_EFI}" /mnt/boot/efi
 
-# --- Debootstrap do Debian 12 Bookworm (64-bit) ---
-log_info "Executando debootstrap para Debian Bookworm (amd64)..."
-CODENAME="bookworm"
+# --- Debootstrap do Debian Trixie (64-bit Testing) ---
+log_info "Executando debootstrap para Debian Trixie (amd64)..."
+CODENAME="trixie"
 MIRROR="http://deb.debian.org/debian"
 
 debootstrap --variant=minbase \
@@ -217,7 +217,7 @@ debootstrap --variant=minbase \
     --arch=amd64 "${CODENAME}" /mnt "${MIRROR}"
 
 # --- Configuração do APT e Repositórios ---
-log_info "Configurando repositórios oficiais Debian (main, contrib, non-free, non-free-firmware)..."
+log_info "Configurando repositórios oficiais Debian Trixie (main, contrib, non-free, non-free-firmware)..."
 mkdir -pv /mnt/etc/apt/apt.conf.d /mnt/etc/apt/sources.list.d
 rm -f /mnt/etc/apt/sources.list
 
@@ -233,11 +233,8 @@ deb-src ${MIRROR} ${CODENAME} main contrib non-free non-free-firmware
 deb ${MIRROR} ${CODENAME}-updates main contrib non-free non-free-firmware
 deb-src ${MIRROR} ${CODENAME}-updates main contrib non-free non-free-firmware
 
-deb https://security.debian.org/debian-security ${CODENAME}-security main contrib non-free non-free-firmware
-deb-src ${MIRROR} ${CODENAME}-security main contrib non-free non-free-firmware
-
-deb ${MIRROR} ${CODENAME}-backports main contrib non-free non-free-firmware
-deb-src ${MIRROR} ${CODENAME}-backports main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security ${CODENAME}-security main contrib non-free non-free-firmware
+deb-src http://security.debian.org/debian-security ${CODENAME}-security main contrib non-free non-free-firmware
 EOF
 
 # --- Montagem de Sistemas de Arquivos Virtuais para Chroot ---
@@ -474,7 +471,7 @@ mkdir -pv "${USER_HOME}/.config/"{hypr,waybar,wofi,foot,dunst}
 log_info "Gerando configuração estética e eficiente do Hyprland (~/.config/hypr/hyprland.conf)..."
 cat <<'EOF' > "${USER_HOME}/.config/hypr/hyprland.conf"
 # ==============================================================================
-# Configuração do Hyprland para MacBook Pro 4,1 (Debian 12 Bookworm)
+# Configuração do Hyprland para MacBook Pro 4,1 (Debian Trixie)
 # Estética: Catppuccin Mocha com Acentos Vermelho/Laranja (#ff2a4b / #ff6600)
 # ==============================================================================
 
