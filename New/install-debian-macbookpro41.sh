@@ -47,20 +47,19 @@ if [[ ! "$CONFIRM" =~ ^[sS]$ ]]; then
 fi
 
 # --- Sincronização do Relógio do Host e APT ---
-log_info "Verificando relógio e atualizando lista do APT no host (ignorando validação estrita de data)..."
-# Tenta sincronizar a data do sistema com servidor NTP se houver rede
-if command -v ntpdate &>/dev/null; then
-    ntpdate -s pool.ntp.org 2>/dev/null || true
-elif command -v chronyd &>/dev/null; then
-    chronyd -q 'server pool.ntp.org iburst' 2>/dev/null || true
+log_info "Verificando relógio e sincronizando data do sistema..."
+# Tenta obter a data atual via cabeçalho HTTP do Debian se a data local estiver errada (evita erro OpenPGP no apt/debootstrap)
+HTTP_DATE=$(curl -sI http://deb.debian.org | grep -i '^Date:' | cut -d' ' -f2- || true)
+if [ -n "$HTTP_DATE" ]; then
+    date -s "$HTTP_DATE" 2>/dev/null || true
 fi
 
-# Passa flags do APT para evitar erro "Release file is not valid yet" em mídias live com data desalinhada
-APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false")
+# Flags para evitar recusa de repositório no APT do host devido a divergência de data da mídia live
+APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false" "-o" "Acquire::AllowInsecureRepositories=true")
 
 # --- Verificação de Dependências no Host ---
 log_info "Verificando ferramentas necessárias no sistema live/host..."
-HOST_DEPS=(debootstrap btrfs-progs sgdisk parted mkfs.vfat wget curl wipefs)
+HOST_DEPS=(debootstrap btrfs-progs sfdisk parted mkfs.vfat wget curl wipefs)
 FOR_INSTALL=()
 for dep in "${HOST_DEPS[@]}"; do
     if ! command -v "$dep" &>/dev/null; then
@@ -75,10 +74,17 @@ if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
 fi
 
 # --- Desmontagem e Limpeza Agressiva de Partições no Disco ---
-log_info "Forçando encerramento de processos e desalocação do disco ${DRIVE}..."
+log_info "Parando automounters (udisks2) e liberando o disco ${DRIVE}..."
+systemctl stop udisks2 udisks tracker 2>/dev/null || true
+
+# Desmonta qualquer ponto de montagem registrado em /proc/mounts
+for mnt in $(grep "${DRIVE}" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
+    log_info "Desmontando ponto ativo: $mnt..."
+    umount -R -f "$mnt" 2>/dev/null || true
+done
+
 fuser -k -9 -m "${DRIVE}"* 2>/dev/null || true
 btrfs device scan --forget 2>/dev/null || true
-
 swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 umount -l "${DRIVE}"* 2>/dev/null || true
@@ -86,15 +92,13 @@ vgchange -an 2>/dev/null || true
 dmsetup remove_all -f 2>/dev/null || true
 losetup -D 2>/dev/null || true
 
-log_info "Zerando assinaturas de MBR/GPT primário e secundário em ${DRIVE}..."
+log_info "Zerando assinaturas MBR/GPT antigas em ${DRIVE}..."
 wipefs --all --force "${DRIVE}" 2>/dev/null || true
-sgdisk --zap-all "${DRIVE}" 2>/dev/null || true
 
-# Escreve zeros no início (cabeçalho GPT primário)
+# Sobrescreve cabeçalhos GPT primário e secundário com zeros
 dd if=/dev/zero of="${DRIVE}" bs=1M count=10 status=none 2>/dev/null || true
 sync
 
-# Escreve zeros no final do disco (cabeçalho GPT secundário/backup)
 DISK_SECTORS=$(blockdev --getsz "${DRIVE}" 2>/dev/null || echo 0)
 if [ "$DISK_SECTORS" -gt 2048 ]; then
     BACKUP_START=$((DISK_SECTORS - 2048))
@@ -106,23 +110,17 @@ blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null |
 udevadm settle 2>/dev/null || true
 sleep 2
 
-# --- Particionamento GPT com Partição BIOS Boot (2MB EF02) ---
-log_info "Criando tabela de partições GPT limpa no disco ${DRIVE}..."
-parted -s -a optimal "${DRIVE}" mklabel gpt
-blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
-udevadm settle 2>/dev/null || true
+# --- Particionamento GPT Atômico (sfdisk em transação única) ---
+log_info "Criando nova tabela GPT e partições em transação única atômica (sfdisk)..."
+sfdisk "${DRIVE}" >/dev/null 2>&1 <<EOF
+label: gpt
+device: ${DRIVE}
+unit: sectors
 
-# Partição 1: BIOS Boot Partition (2MB) - Necessária para o GRUB i386-pc inicializar a VBIOS da GPU NVIDIA 8600M GT
-log_info "Criando Partição 1: BIOS Boot Partition (2MB, tipo EF02)..."
-sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}" >/dev/null 2>&1 || true
-
-# Partição 2: EFI System Partition (512MB) - Suporte a boot EFI
-log_info "Criando Partição 2: EFI System Partition (512MB, tipo EF00)..."
-sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System Partition" "${DRIVE}" >/dev/null 2>&1 || true
-
-# Partição 3: Linux Root Btrfs (Restante do disco)
-log_info "Criando Partição 3: Btrfs Linux Root (tipo 8300)..."
-sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs System" "${DRIVE}" >/dev/null 2>&1 || true
+1 : start=2048, size=4096, type=21686148-6449-6E6F-744D-61634F53424F, name="BIOS Boot Partition"
+2 : start=6144, size=1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name="EFI System Partition"
+3 : type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name="Debian Btrfs System"
+EOF
 
 # Detectar nomes das partições (suporta /dev/sdaX e /dev/nvme0n1pX)
 if [[ "${DRIVE}" =~ "nvme" ]] || [[ "${DRIVE}" =~ "mmcblk" ]]; then
