@@ -213,7 +213,7 @@ CODENAME="trixie"
 MIRROR="http://deb.debian.org/debian"
 
 debootstrap --variant=minbase \
-    --include=apt,apt-utils,ca-certificates,sudo,neovim,locales,initramfs-tools,console-setup,dosfstools,btrfs-progs,kmod,less,gdisk,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,iproute2,iputils-ping,bash,whiptail \
+    --include=apt,apt-utils,ca-certificates,sudo,neovim,locales,e2fsprogs,initramfs-tools,console-setup,dosfstools,btrfs-progs,kmod,less,gdisk,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,iproute2,iputils-ping,bash,whiptail \
     --arch=amd64 "${CODENAME}" /mnt "${MIRROR}"
 
 # --- Configuração do APT e Repositórios ---
@@ -414,7 +414,9 @@ EOF
 log_info "Criando arquivo de swap de 6GB no subvolume Btrfs @swap..."
 touch /mnt/swap/swapfile
 chmod 600 /mnt/swap/swapfile
-chroot /mnt chattr +C /swap/swapfile || true
+if chroot /mnt command -v chattr &>/dev/null; then
+    chroot /mnt chattr +C /swap/swapfile || true
+fi
 dd if=/dev/zero of=/mnt/swap/swapfile bs=1M count=6144 status=progress
 mkswap /mnt/swap/swapfile
 
@@ -428,11 +430,9 @@ chroot /mnt usermod -aG sudo,audio,video,systemd-journal,input,netdev,render juc
 # ==============================================================================
 # --- INSTALAÇÃO E CONFIGURAÇÃO DO HYPRLAND & AMBIENTE WAYLAND ---
 # ==============================================================================
-log_info "Instalando Hyprland, Waybar, Wofi, Foot, Dunst e Pipewire..."
+log_info "Instalando Waybar, Wofi, Foot, Dunst, SDDM, Pipewire e pacotes Wayland no apt..."
 chroot /mnt apt-get install -y --no-install-recommends \
-    hyprland \
-    hyprpaper \
-    xdg-desktop-portal-hyprland \
+    xdg-desktop-portal-wlr \
     xdg-desktop-portal-gtk \
     waybar \
     wofi \
@@ -451,8 +451,7 @@ chroot /mnt apt-get install -y --no-install-recommends \
     wl-clipboard \
     fonts-firacode \
     fonts-font-awesome \
-    qt5-wayland \
-    qt6-wayland
+    qtwayland5
 
 chroot /mnt apt-get install -y --no-install-recommends polkit-kde-agent-1 2>/dev/null || \
 chroot /mnt apt-get install -y --no-install-recommends lxpolkit 2>/dev/null || \
@@ -767,6 +766,12 @@ if [ -e /etc/profile.d/nix.sh ]; then
     . /etc/profile.d/nix.sh
 fi
 EOF
+
+# Instalando Hyprland e Hyprpaper via Nix Package Manager
+log_info "Instalando Hyprland, Hyprpaper e XDG Desktop Portal via Nix..."
+chroot /mnt su - juca -c ". /etc/profile.d/nix.sh && nix-env -iA nixpkgs.hyprland nixpkgs.hyprpaper nixpkgs.xdg-desktop-portal-hyprland" 2>/dev/null || true
+chroot /mnt ln -sf /home/juca/.nix-profile/bin/Hyprland /usr/local/bin/Hyprland 2>/dev/null || true
+chroot /mnt ln -sf /home/juca/.nix-profile/bin/hyprpaper /usr/local/bin/hyprpaper 2>/dev/null || true
 
 chroot /mnt chown juca:juca /home/juca/.bashrc
 
