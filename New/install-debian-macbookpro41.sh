@@ -46,9 +46,21 @@ if [[ ! "$CONFIRM" =~ ^[sS]$ ]]; then
     exit 0
 fi
 
+# --- Sincronização do Relógio do Host e APT ---
+log_info "Verificando relógio e atualizando lista do APT no host (ignorando validação estrita de data)..."
+# Tenta sincronizar a data do sistema com servidor NTP se houver rede
+if command -v ntpdate &>/dev/null; then
+    ntpdate -s pool.ntp.org 2>/dev/null || true
+elif command -v chronyd &>/dev/null; then
+    chronyd -q 'server pool.ntp.org iburst' 2>/dev/null || true
+fi
+
+# Passa flags do APT para evitar erro "Release file is not valid yet" em mídias live com data desalinhada
+APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false")
+
 # --- Verificação de Dependências no Host ---
 log_info "Verificando ferramentas necessárias no sistema live/host..."
-HOST_DEPS=(debootstrap btrfs-progs sgdisk parted mkfs.vfat wget curl)
+HOST_DEPS=(debootstrap btrfs-progs sgdisk parted mkfs.vfat wget curl wipefs)
 FOR_INSTALL=()
 for dep in "${HOST_DEPS[@]}"; do
     if ! command -v "$dep" &>/dev/null; then
@@ -58,16 +70,24 @@ done
 
 if [ ${#FOR_INSTALL[@]} -ne 0 ]; then
     log_info "Instalando dependências ausentes no host: ${FOR_INSTALL[*]}..."
-    apt-get update -qq && apt-get install -y -qq "${FOR_INSTALL[@]}" || true
+    apt-get update "${APT_OPT[@]}" -qq || true
+    apt-get install "${APT_OPT[@]}" -y -qq "${FOR_INSTALL[@]}" || true
 fi
 
-# --- Desmontagem prévia de partições ativas no disco ---
-log_info "Desmontando partições existentes em ${DRIVE}..."
-umount -R /mnt 2>/dev/null || true
+# --- Desmontagem e Limpeza Agressiva de Partições no Disco ---
+log_info "Desmontando e liberando todas as partições ativas em ${DRIVE}..."
 swapoff -a 2>/dev/null || true
+umount -R /mnt 2>/dev/null || true
+umount -l "${DRIVE}"* 2>/dev/null || true
+vgchange -an 2>/dev/null || true
+dmsetup remove_all -f 2>/dev/null || true
 
-# --- Particionamento GPT com Partição BIOS Boot (2MB EF02) ---
-log_info "Criando tabela de partições GPT no disco ${DRIVE}..."
+log_info "Limpando assinaturas antigas de sistema de arquivos (wipefs / zap-all)..."
+wipefs --all --force "${DRIVE}" 2>/dev/null || true
+sgdisk --zap-all "${DRIVE}" 2>/dev/null || true
+partprobe "${DRIVE}" 2>/dev/null || true
+udevadm settle 2>/dev/null || true
+sleep 3
 sgdisk -Z "${DRIVE}"
 parted -s -a optimal "${DRIVE}" mklabel gpt
 
@@ -94,8 +114,9 @@ else
     PART_ROOT="${DRIVE}3"
 fi
 
-partprobe "${DRIVE}"
-sleep 2
+partprobe "${DRIVE}" 2>/dev/null || true
+udevadm settle 2>/dev/null || true
+sleep 3
 
 # --- Formatação dos Sistemas de Arquivos ---
 log_info "Formatando a Partição EFI em FAT32..."
