@@ -1,93 +1,214 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# Script de Instalação do Debian (Trixie) para MacBook Pro 4,1 (Late 2008)
-# Hardware Alvo:
-#   - CPU: Intel Core 2 Duo (64-bit Penryn)
-#   - GPU: NVIDIA GeForce 8600M GT (G84M)
-#   - RAM: 6GB DDR2 (2GB + 4GB Canal Assimétrico)
-#   - Wi-Fi: Broadcom BCM43xx (com NetworkManager + nm-applet)
-#   - Boot: GPT com Partição BIOS Boot (2MB EF02) + EFI (512MB EF00)
-#   - FS: Btrfs com subvolumes e compressão ZSTD
-#   - Splash: Plymouth com Animação de Boot
-#   - Desktop: XFCE4 (Catppuccin Mocha / Arc-Dark, Whisker Menu) + LightDM + Firefox
-#   - Package Manager: Nix Multi-User (Flakes & nix-command habilitados)
-# ==============================================================================
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║           INSTALADOR DEBIAN TRIXIE — MacBook Pro 4,1 (Late 2008)           ║
+# ║                                                                            ║
+# ║   🖥️  CPU:    Intel Core 2 Duo (Penryn, 64-bit)                           ║
+# ║   🎮  GPU:    NVIDIA GeForce 8600M GT (Nouveau)                           ║
+# ║   💾  RAM:    6GB DDR2 (2GB + 4GB Canal Assimétrico)                       ║
+# ║   📶  Wi-Fi:  Broadcom BCM43xx (broadcom-sta + nm-applet)                 ║
+# ║   💿  FS:     Btrfs com subvolumes e compressão ZSTD                      ║
+# ║   🎨  Desktop: XFCE4 (Arc-Dark / Catppuccin Mocha) + LightDM + Firefox    ║
+# ║   📦  Extras:  Plymouth, Nix Multi-User, Ferramentas CLI Modernas         ║
+# ║                                                                            ║
+# ║   Hostname: rocinante                                                      ║
+# ║   Usuário:  juca (Reinaldo P JR)                                          ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+#
+# USO:
+#   sudo bash install-debian-macbookpro41.sh /dev/sda
+#
+# O QUE ESTE SCRIPT FAZ (resumo para leigos):
+#   1.  Apaga TUDO do disco que você escolher (cuidado!)
+#   2.  Cria 3 partições: Boot BIOS (2MB), EFI (512MB) e Sistema Btrfs
+#   3.  Instala o Debian Trixie (versão mais recente do Debian)
+#   4.  Configura teclado Apple US Mac (igual ao macOS)
+#   5.  Instala drivers de vídeo, Wi-Fi, som e controle térmico
+#   6.  Instala o desktop XFCE4 com tema escuro bonito
+#   7.  Instala Firefox, ferramentas de terminal e Nix package manager
+#   8.  Configura boot com animação Plymouth
+#   9.  Cria usuário "juca" e deixa tudo pronto para usar
+#
+# REQUISITOS:
+#   - Estar rodando um Live USB de Debian/Ubuntu com acesso à internet
+#   - Ter acesso root (sudo)
+#   - Cabo ethernet OU Wi-Fi já conectado no Live USB
+#
 
 set -euo pipefail
 
-# --- Cores para Terminal ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │                        CONFIGURAÇÕES E VARIÁVEIS                         │
+# └────────────────────────────────────────────────────────────────────────────┘
 
-log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
-log_ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[AVISO]${NC} $1"; }
-log_err()  { echo -e "${RED}[ERRO]${NC} $1"; }
+DRIVE="${1:-/dev/sda}"           # Disco alvo (padrão: /dev/sda)
+HOSTNAME="rocinante"            # Nome da máquina na rede
+USERNAME="juca"                 # Usuário principal
+FULLNAME="Reinaldo P JR"       # Nome completo do usuário
+PASSWORD="200291"               # Senha do usuário e do root
+CODENAME="trixie"               # Versão do Debian (Trixie = Testing)
+MIRROR="http://deb.debian.org/debian"
+TIMEZONE="America/Sao_Paulo"
+LOCALE_MAIN="en_US.UTF-8"
+LOCALE_EXTRA="pt_BR.UTF-8"
+SWAP_SIZE_MB=6144               # Tamanho do swap em MB (6GB)
+BTRFS_OPTS="noatime,ssd,compress-force=zstd:2,space_cache=v2,commit=120,discard=async"
 
-# --- Verificação de Root ---
+# Cores e formatação para o terminal
+RED='\033[0;31m'    ; GREEN='\033[0;32m'  ; BLUE='\033[0;34m'
+YELLOW='\033[1;33m' ; CYAN='\033[0;36m'   ; MAGENTA='\033[0;35m'
+BOLD='\033[1m'      ; DIM='\033[2m'       ; NC='\033[0m'
+
+TOTAL_STEPS=15
+CURRENT_STEP=0
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │                        FUNÇÕES DE INTERFACE                              │
+# └────────────────────────────────────────────────────────────────────────────┘
+
+# Mostra uma mensagem informativa (texto azul)
+log_info() { echo -e "  ${CYAN}ℹ${NC}  $1"; }
+
+# Mostra que algo deu certo (texto verde)
+log_ok()   { echo -e "  ${GREEN}✔${NC}  $1"; }
+
+# Mostra um aviso importante (texto amarelo)
+log_warn() { echo -e "  ${YELLOW}⚠${NC}  $1"; }
+
+# Mostra um erro crítico (texto vermelho)
+log_err()  { echo -e "  ${RED}✖${NC}  $1"; }
+
+# Mostra o cabeçalho de cada etapa com o número e nome
+# Uso: step "Nome da Etapa"
+step() {
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    local bar=""
+    local filled=$((CURRENT_STEP * 30 / TOTAL_STEPS))
+    local empty=$((30 - filled))
+    for ((i=0; i<filled; i++)); do bar+="█"; done
+    for ((i=0; i<empty; i++)); do bar+="░"; done
+    echo ""
+    echo -e "${BOLD}${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}${MAGENTA}  ETAPA ${CURRENT_STEP}/${TOTAL_STEPS}${NC}  ${BOLD}$1${NC}"
+    echo -e "${DIM}  [${GREEN}${bar}${NC}${DIM}] ${CURRENT_STEP}/${TOTAL_STEPS}${NC}"
+    echo -e "${BOLD}${MAGENTA}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+}
+
+# Executa um comando no chroot (dentro do sistema que está sendo instalado)
+in_chroot() { chroot /mnt "$@"; }
+
+# Instala pacotes no sistema que está sendo instalado, sem pacotes extras
+in_chroot_install() { in_chroot apt-get install -y --no-install-recommends "$@"; }
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │                        VERIFICAÇÕES INICIAIS                             │
+# └────────────────────────────────────────────────────────────────────────────┘
+
+# Precisa ser root para instalar um sistema operacional
 if [ "$(id -u)" -ne 0 ]; then
     log_err "Este script deve ser executado como ROOT (ou via sudo)!"
     exit 1
 fi
 
-# --- Seleção do Disco Alvo ---
-DRIVE="${1:-/dev/sda}"
+# Banner de boas-vindas
+clear 2>/dev/null || true
+echo ""
+echo -e "${BOLD}${CYAN}"
+cat << 'BANNER'
+    ____             _                   __
+   / __ \____  _____(_)___  ____ _____  / /____
+  / /_/ / __ \/ ___/ / __ \/ __ `/ __ \/ __/ _ \
+ / _, _/ /_/ / /__/ / / / / /_/ / / / / /_/  __/
+/_/ |_|\____/\___/_/_/ /_/\__,_/_/ /_/\__/\___/
 
-log_warn "=========================================================================="
-log_warn " ATENÇÃO: O disco ${DRIVE} será COMPLETAMENTE FORMATADO!"
-log_warn " Instalação do Debian Trixie com XFCE4, Plymouth, Firefox & Nix para MacBook Pro 4,1."
-log_warn "=========================================================================="
-echo -n "Deseja continuar? (s/N): "
+BANNER
+echo -e "${NC}"
+echo -e "${BOLD}  Instalador Debian Trixie para MacBook Pro 4,1${NC}"
+echo -e "${DIM}  XFCE4 · Arc-Dark · Firefox · Plymouth · Nix${NC}"
+echo ""
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${RED}${BOLD}"
+echo -e "  ⚠  ATENÇÃO: O disco ${DRIVE} será COMPLETAMENTE APAGADO!"
+echo -e "     Todos os dados nele serão PERDIDOS PARA SEMPRE."
+echo -e "${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -n "  Deseja continuar? (s/N): "
 read -r CONFIRM
 if [[ ! "$CONFIRM" =~ ^[sS]$ ]]; then
-    log_info "Operação cancelada pelo usuário."
+    log_info "Operação cancelada pelo usuário. Nenhuma alteração foi feita."
     exit 0
 fi
 
-# --- Sincronização do Relógio do Host e APT ---
-log_info "Verificando relógio e sincronizando data do sistema..."
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                         INÍCIO DA INSTALAÇÃO                              ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 1: Preparar o ambiente do Live USB
+#   → Sincroniza o relógio e instala ferramentas necessárias
+# ──────────────────────────────────────────────────────────────────────────────
+step "Preparando o ambiente do Live USB"
+
+log_info "Sincronizando o relógio do sistema pela internet..."
 HTTP_DATE=$(curl -sI http://deb.debian.org | grep -i '^Date:' | cut -d' ' -f2- || true)
 if [ -n "$HTTP_DATE" ]; then
     date -s "$HTTP_DATE" 2>/dev/null || true
+    log_ok "Relógio sincronizado: $(date)"
 fi
 
+# Opções do APT para evitar erros de data em Live USBs antigos
 APT_OPT=("-o" "Acquire::Check-Valid-Until=false" "-o" "Acquire::Check-Date=false" "-o" "Acquire::AllowInsecureRepositories=true")
 
-# --- Verificação de Dependências no Host ---
-log_info "Verificando ferramentas necessárias no sistema live/host..."
-PACKAGES_TO_INSTALL=()
-if ! command -v debootstrap &>/dev/null; then PACKAGES_TO_INSTALL+=(debootstrap); fi
-if ! command -v mkfs.btrfs &>/dev/null; then PACKAGES_TO_INSTALL+=(btrfs-progs); fi
-if ! command -v sgdisk &>/dev/null; then PACKAGES_TO_INSTALL+=(gdisk); fi
-if ! command -v parted &>/dev/null; then PACKAGES_TO_INSTALL+=(parted); fi
-if ! command -v mkfs.vfat &>/dev/null; then PACKAGES_TO_INSTALL+=(dosfstools); fi
-if ! command -v wipefs &>/dev/null; then PACKAGES_TO_INSTALL+=(util-linux); fi
-if ! command -v wget &>/dev/null; then PACKAGES_TO_INSTALL+=(wget); fi
-if ! command -v curl &>/dev/null; then PACKAGES_TO_INSTALL+=(curl); fi
+log_info "Verificando se as ferramentas necessárias estão instaladas..."
 
-if [ ${#PACKAGES_TO_INSTALL[@]} -ne 0 ]; then
-    log_info "Instalando dependências ausentes no host: ${PACKAGES_TO_INSTALL[*]}..."
-    apt-get update "${APT_OPT[@]}" -qq || true
-    for pkg in "${PACKAGES_TO_INSTALL[@]}"; do
-        apt-get install "${APT_OPT[@]}" -y "$pkg" || true
+# Lista de ferramentas que precisamos e seus pacotes no Debian
+# Formato: "comando:pacote"
+TOOL_MAP=(
+    "debootstrap:debootstrap"
+    "mkfs.btrfs:btrfs-progs"
+    "sgdisk:gdisk"
+    "parted:parted"
+    "mkfs.vfat:dosfstools"
+    "wipefs:util-linux"
+    "wget:wget"
+    "curl:curl"
+)
+
+PKGS_MISSING=()
+for entry in "${TOOL_MAP[@]}"; do
+    cmd="${entry%%:*}"
+    pkg="${entry##*:}"
+    if ! command -v "$cmd" &>/dev/null; then
+        PKGS_MISSING+=("$pkg")
+    fi
+done
+
+if [ ${#PKGS_MISSING[@]} -ne 0 ]; then
+    log_info "Instalando ferramentas ausentes: ${PKGS_MISSING[*]}"
+    apt-get update "${APT_OPT[@]}" -qq 2>/dev/null || true
+    for pkg in "${PKGS_MISSING[@]}"; do
+        apt-get install "${APT_OPT[@]}" -y "$pkg" 2>/dev/null || true
     done
 fi
 
 if ! command -v debootstrap &>/dev/null; then
-    log_err "Não foi possível instalar o utilitário 'debootstrap' no sistema host/live!"
+    log_err "Falha crítica: não foi possível instalar o 'debootstrap'!"
+    log_err "Verifique sua conexão com a internet e tente novamente."
     exit 1
 fi
+log_ok "Todas as ferramentas necessárias estão disponíveis."
 
-# --- Desmontagem e Limpeza Agressiva de Partições no Disco ---
-log_info "Parando automounters (udisks2) e liberando o disco ${DRIVE}..."
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 2: Limpar e preparar o disco
+#   → Desmonta partições, remove assinaturas antigas, zera o disco
+# ──────────────────────────────────────────────────────────────────────────────
+step "Limpando e preparando o disco ${DRIVE}"
+
+log_info "Parando serviços que podem estar usando o disco..."
 systemctl stop udisks2 udisks tracker 2>/dev/null || true
 
+log_info "Desmontando todas as partições do disco..."
 for mnt in $(grep "${DRIVE}" /proc/mounts 2>/dev/null | awk '{print $2}' | sort -r); do
-    log_info "Desmontando ponto ativo: $mnt..."
     umount -R -f "$mnt" 2>/dev/null || true
 done
 
@@ -100,11 +221,12 @@ vgchange -an 2>/dev/null || true
 dmsetup remove_all -f 2>/dev/null || true
 losetup -D 2>/dev/null || true
 
-log_info "Zerando assinaturas MBR/GPT antigas em ${DRIVE}..."
+log_info "Apagando assinaturas e tabela de partições antiga..."
 wipefs --all --force "${DRIVE}" 2>/dev/null || true
 dd if=/dev/zero of="${DRIVE}" bs=1M count=10 status=none 2>/dev/null || true
 sync
 
+# Limpa também o backup da GPT no final do disco
 DISK_SECTORS=$(blockdev --getsz "${DRIVE}" 2>/dev/null || echo 0)
 if [ "$DISK_SECTORS" -gt 2048 ]; then
     BACKUP_START=$((DISK_SECTORS - 2048))
@@ -115,9 +237,16 @@ fi
 blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 sleep 2
+log_ok "Disco ${DRIVE} limpo e pronto para particionamento."
 
-# --- Particionamento GPT com BIOS Boot (2MB) + EFI (512MB) + Btrfs Root ---
-log_info "Criando tabela de partições GPT no disco ${DRIVE}..."
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 3: Criar as partições no disco
+#   → Partição 1: BIOS Boot (2MB)  — para inicializar a VBIOS da NVIDIA
+#   → Partição 2: EFI (512MB)      — fallback para boot UEFI
+#   → Partição 3: Sistema (resto)  — Btrfs com todo o sistema
+# ──────────────────────────────────────────────────────────────────────────────
+step "Criando partições no disco ${DRIVE}"
+
 set +e
 parted -s -a optimal "${DRIVE}" -- \
     mklabel gpt \
@@ -128,14 +257,15 @@ parted -s -a optimal "${DRIVE}" -- \
     mkpart primary btrfs 1054720s 100% 2>/dev/null
 
 if [ $? -ne 0 ]; then
-    log_warn "Aplicando segunda tentativa com sgdisk..."
+    log_warn "Parted falhou, tentando com sgdisk..."
     sgdisk -Z "${DRIVE}" 2>/dev/null || true
-    sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot Partition" "${DRIVE}" 2>/dev/null || true
-    sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System Partition" "${DRIVE}" 2>/dev/null || true
-    sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs System" "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 1:2048:+2M -t 1:ef02 -c 1:"BIOS Boot" "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 2:0:+512M -t 2:ef00 -c 2:"EFI System" "${DRIVE}" 2>/dev/null || true
+    sgdisk -n 3:0:0 -t 3:8300 -c 3:"Debian Btrfs" "${DRIVE}" 2>/dev/null || true
 fi
 set -e
 
+# Identifica os nomes das partições (diferente para NVMe e SATA)
 if [[ "${DRIVE}" =~ "nvme" ]] || [[ "${DRIVE}" =~ "mmcblk" ]]; then
     PART_BIOS="${DRIVE}p1"; PART_EFI="${DRIVE}p2"; PART_ROOT="${DRIVE}p3"
 else
@@ -146,39 +276,46 @@ blockdev --rereadpt "${DRIVE}" 2>/dev/null || partprobe "${DRIVE}" 2>/dev/null |
 udevadm settle 2>/dev/null || true
 sleep 3
 
-# Aguarda nós de dispositivos
+# Aguarda o Linux criar os arquivos de dispositivo (/dev/sdaX)
 for i in {1..10}; do
-    if [ -b "${PART_EFI}" ] && [ -b "${PART_ROOT}" ]; then
-        break
-    fi
+    [ -b "${PART_EFI}" ] && [ -b "${PART_ROOT}" ] && break
     sleep 1
 done
 
-log_ok "Partições criadas com sucesso em ${DRIVE}:"
-lsblk "${DRIVE}" || true
+log_ok "Partições criadas:"
+lsblk "${DRIVE}" 2>/dev/null || true
 
-# --- Formatação dos Sistemas de Arquivos ---
-log_info "Formatando a Partição EFI em FAT32..."
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 4: Formatar e montar o sistema de arquivos
+#   → EFI em FAT32, Sistema em Btrfs com 6 subvolumes
+# ──────────────────────────────────────────────────────────────────────────────
+step "Formatando e montando o sistema de arquivos"
+
+log_info "Formatando partição EFI (FAT32)..."
 mkfs.vfat -F32 "${PART_EFI}" -n "EFI"
 
-log_info "Formatando a Partição Root em Btrfs..."
+log_info "Formatando partição do sistema (Btrfs com compressão ZSTD)..."
 btrfs device scan --forget 2>/dev/null || true
 wipefs -a -f "${PART_ROOT}" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
 sleep 2
 
 if ! mkfs.btrfs -f -L "Debian" "${PART_ROOT}"; then
-    log_warn "Liberando trava temporária do udev na partição ${PART_ROOT} para nova tentativa..."
+    log_warn "Erro na formatação, tentando liberar trava do disco..."
     btrfs device scan --forget 2>/dev/null || true
     fuser -k -9 "${PART_ROOT}" 2>/dev/null || true
     sleep 3
     mkfs.btrfs -f -L "Debian" "${PART_ROOT}"
 fi
 
-# --- Criação de Subvolumes Btrfs ---
+# Subvolumes Btrfs — cada um tem uma função:
+#   @             → Raiz do sistema (/)
+#   @home         → Pasta dos usuários (/home) — fácil de fazer backup
+#   @snapshots    → Snapshots do sistema (/.snapshots) — para restauração
+#   @var_log      → Logs do sistema (/var/log) — evita encher o snapshot
+#   @var_cache_apt → Cache de pacotes (/var/cache/apt) — fácil de limpar
+#   @swap         → Arquivo de swap (/swap) — precisa de CoW desabilitado
 log_info "Criando subvolumes Btrfs..."
-BTRFS_OPTS="noatime,ssd,compress-force=zstd:2,space_cache=v2,commit=120,discard=async"
-
 mount -o "${BTRFS_OPTS}" "${PART_ROOT}" /mnt
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
@@ -188,32 +325,40 @@ btrfs subvolume create /mnt/@var_cache_apt
 btrfs subvolume create /mnt/@swap
 umount -v /mnt
 
-# --- Montagem da Estrutura de Diretórios ---
-log_info "Montando estrutura de diretórios e subvolumes Btrfs em /mnt..."
+log_info "Montando subvolumes na estrutura de diretórios..."
 mount -o "${BTRFS_OPTS},subvol=@" "${PART_ROOT}" /mnt
 mkdir -pv /mnt/{boot/efi,home,.snapshots,var/log,var/cache/apt,swap}
-
 mount -o "${BTRFS_OPTS},subvol=@home" "${PART_ROOT}" /mnt/home
 mount -o "${BTRFS_OPTS},subvol=@snapshots" "${PART_ROOT}" /mnt/.snapshots
 mount -o "${BTRFS_OPTS},subvol=@var_log" "${PART_ROOT}" /mnt/var/log
 mount -o "${BTRFS_OPTS},subvol=@var_cache_apt" "${PART_ROOT}" /mnt/var/cache/apt
 mount -o "${BTRFS_OPTS},subvol=@swap" "${PART_ROOT}" /mnt/swap
 mount -t vfat -o noatime,nodiratime "${PART_EFI}" /mnt/boot/efi
+log_ok "Sistema de arquivos montado com sucesso."
 
-# --- Debootstrap do Debian Trixie (64-bit Testing) ---
-log_info "Executando debootstrap para Debian Trixie (amd64)..."
-CODENAME="trixie"
-MIRROR="http://deb.debian.org/debian"
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 5: Instalar o sistema base do Debian Trixie
+#   → Debootstrap baixa e instala os pacotes mínimos do Debian
+# ──────────────────────────────────────────────────────────────────────────────
+step "Instalando o sistema base Debian Trixie"
 
+log_info "Baixando e instalando pacotes essenciais (isso demora uns minutos)..."
 debootstrap --variant=minbase \
     --include=apt,apt-utils,ca-certificates,sudo,neovim,locales,e2fsprogs,initramfs-tools,console-setup,dosfstools,btrfs-progs,kmod,less,gdisk,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,iproute2,iputils-ping,bash,whiptail \
     --arch=amd64 "${CODENAME}" /mnt "${MIRROR}"
+log_ok "Sistema base instalado."
 
-# --- Configuração do APT e Repositórios ---
-log_info "Configurando repositórios oficiais Debian Trixie (main, contrib, non-free, non-free-firmware)..."
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 6: Configurar repositórios, idioma e fuso horário
+#   → Repositórios APT, locales, timezone, hostname
+# ──────────────────────────────────────────────────────────────────────────────
+step "Configurando idioma, fuso horário e repositórios"
+
+log_info "Configurando repositórios Debian Trixie (main, contrib, non-free)..."
 mkdir -pv /mnt/etc/apt/apt.conf.d /mnt/etc/apt/sources.list.d
 rm -f /mnt/etc/apt/sources.list
 
+# Configurar APT para não instalar pacotes sugeridos (economia de espaço)
 cat <<EOF >/mnt/etc/apt/apt.conf.d/99no-recommends
 APT::Install-Recommends "0";
 APT::Install-Suggests "0";
@@ -230,69 +375,69 @@ deb http://security.debian.org/debian-security ${CODENAME}-security main contrib
 deb-src http://security.debian.org/debian-security ${CODENAME}-security main contrib non-free non-free-firmware
 EOF
 
-# --- Montagem de Sistemas de Arquivos Virtuais para Chroot ---
-log_info "Montando pseudo-sistemas de arquivos para chroot..."
+# Montar pseudo-sistemas de arquivos (necessário para o chroot funcionar)
+log_info "Preparando ambiente chroot..."
 for dir in dev proc sys run; do
     mount --rbind "/$dir" "/mnt/$dir"
     mount --make-rslave "/mnt/$dir"
 done
 
-# --- Configuração de FSTAB ---
-log_info "Gerando arquivo /etc/fstab..."
+# FSTAB — Tabela que diz ao Linux o que montar na inicialização
+log_info "Gerando tabela de montagem (fstab)..."
 ROOT_UUID=$(blkid -s UUID -o value "${PART_ROOT}")
 EFI_UUID=$(blkid -s UUID -o value "${PART_EFI}")
 
 cat <<EOF >/mnt/etc/fstab
-# /etc/fstab: static file system information.
-# <file system>                           <mount point>   <type>  <options>                                             <dump>  <pass>
-UUID=${ROOT_UUID}                         /               btrfs   rw,${BTRFS_OPTS},subvol=@                             0       0
-UUID=${ROOT_UUID}                         /home           btrfs   rw,${BTRFS_OPTS},subvol=@home                         0       0
-UUID=${ROOT_UUID}                         /.snapshots     btrfs   rw,${BTRFS_OPTS},subvol=@snapshots                    0       0
-UUID=${ROOT_UUID}                         /var/log        btrfs   rw,${BTRFS_OPTS},subvol=@var_log                      0       0
-UUID=${ROOT_UUID}                         /var/cache/apt  btrfs   rw,${BTRFS_OPTS},subvol=@var_cache_apt                0       0
-UUID=${ROOT_UUID}                         /swap           btrfs   rw,${BTRFS_OPTS},subvol=@swap                         0       0
-
-# EFI System Partition
-UUID=${EFI_UUID}                          /boot/efi       vfat    rw,noatime,nodiratime,umask=0077,fmask=0022,dmask=0022 0       2
-
-# Swapfile em Btrfs
-/swap/swapfile                            none            swap    defaults,pri=100                                      0       0
-
-# Tempfs em RAM
-tmpfs                                     /tmp            tmpfs   noatime,mode=1777,nosuid,nodev                        0       0
+# Tabela de Montagem do Sistema — gerada pelo instalador
+# Disco: ${DRIVE} | Hostname: ${HOSTNAME}
+UUID=${ROOT_UUID}  /               btrfs  rw,${BTRFS_OPTS},subvol=@              0  0
+UUID=${ROOT_UUID}  /home           btrfs  rw,${BTRFS_OPTS},subvol=@home          0  0
+UUID=${ROOT_UUID}  /.snapshots     btrfs  rw,${BTRFS_OPTS},subvol=@snapshots     0  0
+UUID=${ROOT_UUID}  /var/log        btrfs  rw,${BTRFS_OPTS},subvol=@var_log       0  0
+UUID=${ROOT_UUID}  /var/cache/apt  btrfs  rw,${BTRFS_OPTS},subvol=@var_cache_apt 0  0
+UUID=${ROOT_UUID}  /swap           btrfs  rw,${BTRFS_OPTS},subvol=@swap          0  0
+UUID=${EFI_UUID}   /boot/efi       vfat   rw,noatime,umask=0077                  0  2
+/swap/swapfile     none            swap   defaults,pri=100                       0  0
+tmpfs              /tmp            tmpfs  noatime,mode=1777,nosuid,nodev         0  0
 EOF
 
-# --- Configurações Básicas do Sistema (Hostname, Locales, Timezone) ---
-log_info "Configurando Hostname (rocinante), Timezone e Locales..."
-echo "rocinante" > /mnt/etc/hostname
-
+# Hostname e rede local
+log_info "Configurando hostname '${HOSTNAME}'..."
+echo "${HOSTNAME}" > /mnt/etc/hostname
 cat <<EOF >/mnt/etc/hosts
 127.0.0.1   localhost
-127.0.1.1   rocinante
+127.0.1.1   ${HOSTNAME}
 ::1         localhost ip6-localhost ip6-loopback
 ff02::1     ip6-allnodes
 ff02::2     ip6-allrouters
 EOF
 
-chroot /mnt ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+# Fuso horário e idioma
+in_chroot ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 
 cat <<EOF >/mnt/etc/locale.gen
-en_US.UTF-8 UTF-8
-pt_BR.UTF-8 UTF-8
+${LOCALE_MAIN} UTF-8
+${LOCALE_EXTRA} UTF-8
 EOF
 
-log_info "Atualizando pacotes e gerando locales no chroot..."
-chroot /mnt apt-get update -qq
-chroot /mnt apt-get install -y locales || true
-chroot /mnt locale-gen
+log_info "Atualizando pacotes e gerando locales..."
+in_chroot apt-get update -qq
+in_chroot apt-get install -y locales || true
+in_chroot locale-gen
 
 cat <<EOF >/mnt/etc/default/locale
-LANG=en_US.UTF-8
-LC_ALL=en_US.UTF-8
+LANG=${LOCALE_MAIN}
+LC_ALL=${LOCALE_MAIN}
 EOF
+log_ok "Idioma, fuso horário e hostname configurados."
 
-# --- Configuração do Teclado Apple US Mac (Layout e Módulo hid_apple) ---
-log_info "Configurando comportamento do teclado idêntico ao macOS (fnmode=1, swap_opt_cmd=1)..."
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 7: Configurar o teclado Apple US Mac
+#   → Layout US Mac, teclas de função como no macOS, Command/Option corretos
+# ──────────────────────────────────────────────────────────────────────────────
+step "Configurando teclado Apple (idêntico ao macOS)"
+
+log_info "Definindo layout do teclado: US Mac..."
 cat <<EOF >/mnt/etc/default/keyboard
 XKBMODEL="pc105"
 XKBLAYOUT="us"
@@ -301,42 +446,65 @@ XKBOPTIONS="terminate:ctrl_alt_bksp"
 BACKSPACE="guess"
 EOF
 
+# Módulo do kernel para teclado Apple
+# fnmode=1: Teclas de brilho/volume funcionam direto (sem segurar Fn) — igual macOS
+# swap_opt_cmd=1: Mantém Command e Option nas posições corretas do Mac
+log_info "Configurando módulo hid_apple (comportamento Mac nativo)..."
 mkdir -pv /mnt/etc/modprobe.d
 cat <<EOF >/mnt/etc/modprobe.d/hid_apple.conf
-# Configurações do teclado MacBook Pro (Comportamento Mac Nativo)
-# fnmode=1: Teclas multimídia e de controle de luz ativas por padrão (segure Fn para F1-F12)
-# swap_opt_cmd=1: Mapeia Command para Super/Win e Option para Alt (ordem física Apple)
 options hid_apple fnmode=1 swap_opt_cmd=1
 EOF
 
-# Adicionar módulo applesmc para controle dos LEDs de luz do teclado
+# Módulo applesmc — controla os sensores de temperatura e LEDs do teclado
 echo "applesmc" >> /mnt/etc/modules
 
-# Regras de Udev para permissão de controle de luz do teclado e tela
+# Permissões para controlar brilho da tela e teclado sem precisar de sudo
+log_info "Configurando permissões de brilho (tela e teclado)..."
 mkdir -pv /mnt/etc/udev/rules.d
 cat <<EOF >/mnt/etc/udev/rules.d/90-macbook-backlight.rules
 ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chmod a+w /sys/class/backlight/%k/brightness"
 ACTION=="add", SUBSYSTEM=="leds", RUN+="/bin/chmod a+w /sys/class/leds/%k/brightness"
 EOF
+log_ok "Teclado Apple configurado."
 
-# --- Instalação do Kernel, Microcode e Firmwares Apple/Broadcom Wi-Fi ---
-log_info "Instalando Kernel Linux LTS, Microcode Intel e Drivers Wi-Fi Broadcom..."
-chroot /mnt apt-get install -y --no-install-recommends \
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 8: Instalar kernel, drivers de vídeo e Wi-Fi
+#   → Kernel Linux, Intel Microcode, Nouveau (GPU), Broadcom (Wi-Fi)
+# ──────────────────────────────────────────────────────────────────────────────
+step "Instalando kernel, drivers de vídeo e Wi-Fi"
+
+log_info "Instalando kernel Linux e firmware Intel..."
+in_chroot_install \
     linux-image-amd64 \
     linux-headers-amd64 \
     intel-microcode \
     firmware-linux-free \
     firmware-linux-nonfree \
-    firmware-misc-nonfree \
-    firmware-b43-installer \
-    b43-fwcutter \
-    firmware-brcm80211 \
+    firmware-misc-nonfree
+
+log_info "Instalando drivers Wi-Fi Broadcom (BCM43xx)..."
+in_chroot_install \
     broadcom-sta-dkms \
     wireless-regdb
 
-# --- Instalação da Aceleração Gráfica Nouveau / Mesa / VDPAU (NVIDIA 8600M GT) ---
-log_info "Instalando drivers de aceleração gráfica Nouveau / Mesa / VDPAU para NVIDIA 8600M GT..."
-chroot /mnt apt-get install -y --no-install-recommends \
+# Resolver conflitos de drivers Wi-Fi:
+# O broadcom-sta (módulo "wl") conflita com os módulos open-source b43/bcma.
+# Se ambos carregarem ao mesmo tempo, o Wi-Fi não funciona — especialmente
+# em repetidores/extenders que são mais sensíveis a handshakes instáveis.
+log_info "Configurando blacklist de módulos Wi-Fi conflitantes..."
+cat <<EOF >/mnt/etc/modprobe.d/broadcom-wifi.conf
+# Blacklist dos módulos open-source que conflitam com o driver broadcom-sta (wl)
+# Sem isso, o Wi-Fi pode falhar em repetidores e redes com sinal fraco
+blacklist b43
+blacklist b43legacy
+blacklist bcma
+blacklist brcmsmac
+blacklist brcmfmac
+blacklist ssb
+EOF
+
+log_info "Instalando drivers de vídeo Nouveau para NVIDIA 8600M GT..."
+in_chroot_install \
     xserver-xorg-video-nouveau \
     mesa-va-drivers \
     mesa-vdpau-drivers \
@@ -346,10 +514,16 @@ chroot /mnt apt-get install -y --no-install-recommends \
     libvdpau1 \
     vdpauinfo \
     vainfo
+log_ok "Kernel e drivers instalados."
 
-# --- Instalação do Gerenciador de Rede, Applet Wi-Fi e SSH ---
-log_info "Instalando NetworkManager com Widget nm-applet para a barra de tarefas..."
-chroot /mnt apt-get install -y --no-install-recommends \
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 9: Configurar rede e Wi-Fi (com fix para repetidores)
+#   → NetworkManager, nm-applet, domínio regulatório BR, power save off
+# ──────────────────────────────────────────────────────────────────────────────
+step "Configurando rede e Wi-Fi (com fix para repetidores)"
+
+log_info "Instalando NetworkManager e applet de Wi-Fi para a barra de tarefas..."
+in_chroot_install \
     network-manager \
     network-manager-gnome \
     rfkill \
@@ -361,6 +535,12 @@ chroot /mnt apt-get install -y --no-install-recommends \
     wget \
     rsync
 
+# Configuração do NetworkManager otimizada para Broadcom + repetidores:
+# - wifi.scan-rand-mac-address=no → Desabilita MAC aleatório durante scan
+#   (repetidores rejeitam dispositivos que mudam de MAC a cada scan)
+# - wifi.powersave=2 → Desabilita power save do Wi-Fi
+#   (o driver Broadcom desconecta quando entra em modo economia)
+log_info "Aplicando configurações anti-repetidor no NetworkManager..."
 mkdir -pv /mnt/etc/NetworkManager/conf.d
 cat <<EOF >/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
@@ -369,23 +549,54 @@ plugins=ifupdown,keyfile
 [ifupdown]
 managed=true
 
+[connection]
+wifi.powersave=2
+
 [device]
 wifi.scan-rand-mac-address=no
 EOF
 
-# --- Instalação do Plymouth (Splash Screen com Animação de Boot) ---
-log_info "Instalando e configurando animação de boot Plymouth..."
-chroot /mnt apt-get install -y --no-install-recommends \
-    plymouth \
-    plymouth-themes \
-    plymouth-x11
+# Domínio regulatório do Brasil — libera canais 12 e 13 usados por repetidores
+log_info "Configurando domínio regulatório Wi-Fi para Brasil (BR)..."
+mkdir -pv /mnt/etc/default
+echo 'REGDOMAIN=BR' > /mnt/etc/default/crda
 
-# Define tema moderno de animação (spinner / bgrt)
-chroot /mnt plymouth-set-default-theme -R spinner 2>/dev/null || chroot /mnt plymouth-set-default-theme -R bgrt 2>/dev/null || true
+# Configuração do wpa_supplicant com país BR
+mkdir -pv /mnt/etc/wpa_supplicant
+cat <<EOF >/mnt/etc/wpa_supplicant/wpa_supplicant.conf
+country=BR
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+EOF
 
-# --- Instalação das Ferramentas Térmicas e de Energia (MacBook Pro) ---
-log_info "Instalando ferramentas térmicas e de energia (mbpfan, tlp, powertop, earlyoom)..."
-chroot /mnt apt-get install -y --no-install-recommends \
+# Script de NetworkManager para desabilitar power save sempre que conectar
+log_info "Criando script para manter Wi-Fi estável em repetidores..."
+mkdir -pv /mnt/etc/NetworkManager/dispatcher.d
+cat <<'EOF' >/mnt/etc/NetworkManager/dispatcher.d/99-wifi-powersave-off
+#!/bin/bash
+# Desabilita power save do Wi-Fi ao conectar — evita desconexões em repetidores
+if [ "$2" = "up" ] && [ -n "$(iw dev 2>/dev/null | grep Interface | awk '{print $2}')" ]; then
+    for iface in $(iw dev 2>/dev/null | grep Interface | awk '{print $2}'); do
+        iw dev "$iface" set power_save off 2>/dev/null || true
+    done
+fi
+EOF
+chmod +x /mnt/etc/NetworkManager/dispatcher.d/99-wifi-powersave-off
+log_ok "Rede e Wi-Fi configurados com proteções anti-repetidor."
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 10: Instalar ferramentas de sistema
+#   → Controle térmico, utilitários CLI, Firefox, Plymouth
+# ──────────────────────────────────────────────────────────────────────────────
+step "Instalando ferramentas de sistema e navegador"
+
+log_info "Instalando Plymouth (animação de boot)..."
+in_chroot_install plymouth plymouth-themes
+in_chroot plymouth-set-default-theme -R spinner 2>/dev/null || \
+    in_chroot plymouth-set-default-theme -R bgrt 2>/dev/null || true
+
+log_info "Instalando controle térmico do MacBook (mbpfan, TLP, earlyoom)..."
+in_chroot_install \
     mbpfan \
     tlp \
     powertop \
@@ -396,6 +607,7 @@ chroot /mnt apt-get install -y --no-install-recommends \
     chrony \
     rsyslog
 
+# Configuração dos ventiladores do MacBook Pro
 cat <<EOF >/mnt/etc/mbpfan.conf
 [general]
 min_fan1_speed = 2000
@@ -406,9 +618,8 @@ max_temp = 86
 polling_interval = 2
 EOF
 
-# --- Instalação de Utilitários CLI Modernos e Navegador Firefox ---
-log_info "Instalando Firefox ESR, utilitários CLI modernos (eza, bat, duf, fzf, ripgrep, btop)..."
-chroot /mnt apt-get install -y --no-install-recommends \
+log_info "Instalando Firefox ESR (em português) e utilitários modernos..."
+in_chroot_install \
     firefox-esr \
     firefox-esr-l10n-pt-br \
     eza \
@@ -427,8 +638,8 @@ chroot /mnt apt-get install -y --no-install-recommends \
     acpid \
     dkms
 
-# --- Tuning de Memória Virtual para 6GB RAM (Canal Assimétrico) ---
-log_info "Aplicando tuning de sysctl para 6GB RAM assimétrica..."
+# Tuning de memória para 6GB RAM assimétrica
+log_info "Otimizando uso de memória para 6GB RAM..."
 mkdir -pv /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/sysctl.d/99-macbook-memory.conf
 vm.swappiness=60
@@ -436,7 +647,6 @@ vm.vfs_cache_pressure=50
 vm.dirty_background_ratio=5
 vm.dirty_ratio=15
 vm.dirty_writeback_centisecs=1500
-dev.i915.perf_stream_paranoid=0
 EOF
 
 cat <<EOF >/mnt/etc/default/zram-tools
@@ -445,28 +655,39 @@ PERCENT=50
 PRIORITY=100
 EOF
 
-# --- Criação do Swapfile Btrfs (6GB) de Forma Segura ---
-log_info "Criando arquivo de swap de 6GB no subvolume Btrfs @swap..."
-# Desabilita CoW explicitamente no arquivo antes de alocar blocos
+# Criar arquivo de swap de 6GB no subvolume Btrfs
+log_info "Criando arquivo de swap de ${SWAP_SIZE_MB}MB (isso demora um pouco)..."
 truncate -s 0 /mnt/swap/swapfile
 chmod 600 /mnt/swap/swapfile
-chroot /mnt chattr +C /swap/swapfile 2>/dev/null || true
-chroot /mnt btrfs property set /swap/swapfile compression none 2>/dev/null || true
-dd if=/dev/zero of=/mnt/swap/swapfile bs=1M count=6144 status=progress
+in_chroot chattr +C /swap/swapfile 2>/dev/null || true
+in_chroot btrfs property set /swap/swapfile compression none 2>/dev/null || true
+dd if=/dev/zero of=/mnt/swap/swapfile bs=1M count=${SWAP_SIZE_MB} status=progress
 mkswap /mnt/swap/swapfile
+log_ok "Ferramentas de sistema instaladas."
 
-# --- Criação de Usuário e Senhas ---
-log_info "Configurando usuários e permissões..."
-echo "root:200291" | chroot /mnt chpasswd -c SHA512
-chroot /mnt useradd juca -m -c "Reinaldo P JR" -s /bin/bash
-echo "juca:200291" | chroot /mnt chpasswd -c SHA512
-chroot /mnt usermod -aG sudo,audio,video,systemd-journal,input,netdev,render juca
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 11: Criar usuário e configurar senhas
+#   → Cria o usuário "juca" com permissões de administrador
+# ──────────────────────────────────────────────────────────────────────────────
+step "Criando usuário '${USERNAME}'"
 
-# ==============================================================================
-# --- INSTALAÇÃO E CONFIGURAÇÃO DO AMBIENTE XFCE4 (TEMAS ELEGANTES & WIDGETS) ---
-# ==============================================================================
-log_info "Instalando ambiente XFCE4, Whisker Menu, LightDM, Thunar e áudio Pipewire..."
-chroot /mnt apt-get install -y --no-install-recommends \
+log_info "Definindo senha do root..."
+echo "root:${PASSWORD}" | in_chroot chpasswd -c SHA512
+
+log_info "Criando usuário '${USERNAME}' (${FULLNAME})..."
+in_chroot useradd "${USERNAME}" -m -c "${FULLNAME}" -s /bin/bash
+echo "${USERNAME}:${PASSWORD}" | in_chroot chpasswd -c SHA512
+in_chroot usermod -aG sudo,audio,video,systemd-journal,input,netdev,render "${USERNAME}"
+log_ok "Usuário '${USERNAME}' criado com permissões de administrador."
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 12: Instalar e configurar desktop XFCE4
+#   → XFCE4 com tema Arc-Dark, Whisker Menu, LightDM, Pipewire
+# ──────────────────────────────────────────────────────────────────────────────
+step "Instalando desktop XFCE4 com tema escuro elegante"
+
+log_info "Instalando XFCE4, Pipewire, LightDM e componentes..."
+in_chroot_install \
     xorg \
     xserver-xorg-core \
     xserver-xorg-video-nouveau \
@@ -507,12 +728,13 @@ chroot /mnt apt-get install -y --no-install-recommends \
     fonts-firacode \
     fonts-font-awesome
 
-chroot /mnt apt-get install -y --no-install-recommends polkit-1-auth-agent 2>/dev/null || \
-chroot /mnt apt-get install -y --no-install-recommends lxpolkit 2>/dev/null || \
-chroot /mnt apt-get install -y --no-install-recommends policykit-1-gnome 2>/dev/null || true
+# PolicyKit — necessário para ações administrativas no desktop
+in_chroot_install polkit-1-auth-agent 2>/dev/null || \
+    in_chroot_install lxpolkit 2>/dev/null || \
+    in_chroot_install policykit-1-gnome 2>/dev/null || true
 
-# --- Configuração do Display Manager LightDM ---
-log_info "Configurando o gerenciador de login LightDM com tema escuro elegante..."
+# Configuração do LightDM (tela de login)
+log_info "Configurando tela de login LightDM..."
 mkdir -pv /mnt/etc/lightdm/lightdm.conf.d
 cat <<EOF >/mnt/etc/lightdm/lightdm.conf.d/01-xfce.conf
 [Seat:*]
@@ -527,24 +749,32 @@ icon-theme-name = Papirus-Dark
 font-name = Inter 10
 background = #1e1e2e
 EOF
+log_ok "Desktop XFCE4 instalado."
 
-# --- Configurações de Estética e Terminal XFCE4 para o Usuário juca ---
-USER_HOME="/mnt/home/juca"
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 13: Personalizar aparência e atalhos
+#   → Tema Catppuccin Mocha, nm-applet, atalhos de brilho/volume
+# ──────────────────────────────────────────────────────────────────────────────
+step "Personalizando aparência e atalhos de teclado"
+
+USER_HOME="/mnt/home/${USERNAME}"
 mkdir -pv "${USER_HOME}/.config/"{xfce4/terminal,xfce4/xfconf/xfce-perchannel-xml,autostart}
 
-# Autostart do Widget de Wi-Fi nm-applet
+# nm-applet inicia automaticamente para mostrar o ícone de Wi-Fi na barra
+log_info "Configurando autostart do applet de Wi-Fi..."
 cat <<'EOF' > "${USER_HOME}/.config/autostart/nm-applet.desktop"
 [Desktop Entry]
 Type=Application
-Name=Network
-Comment=Manage your network connections
+Name=Network Manager Applet
+Comment=Ícone de Wi-Fi na barra de tarefas
 Icon=nm-device-wireless
 Exec=nm-applet
 Terminal=false
 StartupNotify=false
 EOF
 
-log_info "Configurando cores Catppuccin Mocha / RedTheme no XFCE Terminal..."
+# Cores do terminal — Catppuccin Mocha com acentos vermelhos
+log_info "Aplicando tema Catppuccin Mocha no terminal..."
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/terminal/terminalrc"
 [Configuration]
 FontName=Fira Code 11
@@ -559,7 +789,8 @@ MiscCursorBlinks=FALSE
 MiscDefaultGeometry=110x32
 EOF
 
-# Pré-configurar Tema Escuro e Fontes no XFCE4
+# Tema escuro Arc-Dark + fontes Inter + ícones Papirus-Dark
+log_info "Aplicando tema Arc-Dark e fontes Inter no XFCE4..."
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xsettings" version="1.0">
@@ -587,6 +818,7 @@ cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
 </channel>
 EOF
 
+# Layout de teclado US Mac no XFCE
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/keyboard-layout.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="keyboard-layout" version="1.0">
@@ -599,79 +831,76 @@ cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/keyboard-la
 </channel>
 EOF
 
+# Atalhos de teclado para brilho da tela, luz do teclado e volume
+log_info "Configurando atalhos de brilho e volume..."
 cat <<'EOF' > "${USER_HOME}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml"
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xfce4-keyboard-shortcuts" version="1.0">
   <property name="commands" type="empty">
     <property name="custom" type="empty">
-      <!-- Controle de Brilho da Tela do MacBook (F1 e F2) -->
       <property name="XF86MonBrightnessDown" type="string" value="brightnessctl set 5%-"/>
       <property name="XF86MonBrightnessUp" type="string" value="brightnessctl set +5%"/>
-      <!-- Controle de Iluminação do Teclado do MacBook (F5 e F6) -->
-      <property name="XF86KbdBrightnessDown" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%- || brightnessctl -d '*kbd*' set 10%-"/>
-      <property name="XF86KbdBrightnessUp" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%+ || brightnessctl -d '*kbd*' set 10%+"/>
-      <!-- Controle de Volume (F10, F11 e F12) -->
-      <property name="XF86AudioMute" type="string" value="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle || pamixer -t"/>
-      <property name="XF86AudioLowerVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- || pamixer -d 5"/>
-      <property name="XF86AudioRaiseVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ || pamixer -i 5"/>
+      <property name="XF86KbdBrightnessDown" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%-"/>
+      <property name="XF86KbdBrightnessUp" type="string" value="brightnessctl --device='smc::kbd_backlight' set 10%+"/>
+      <property name="XF86AudioMute" type="string" value="wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"/>
+      <property name="XF86AudioLowerVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"/>
+      <property name="XF86AudioRaiseVolume" type="string" value="wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"/>
     </property>
   </property>
 </channel>
 EOF
 
-chroot /mnt chown -R juca:juca /home/juca/.config
+in_chroot chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/.config"
+log_ok "Aparência e atalhos configurados."
 
-# ==============================================================================
-# --- INSTALAÇÃO E CONFIGURAÇÃO DO GERENCIADOR DE PACOTES NIX ---
-# ==============================================================================
-log_info "Instalando e configurando o gerenciador de pacotes Nix..."
-chroot /mnt apt-get install -y --no-install-recommends nix-bin nix-setup-systemd 2>/dev/null || true
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 14: Instalar Nix e bootloader GRUB
+#   → Nix package manager, GRUB BIOS + EFI, configuração de boot
+# ──────────────────────────────────────────────────────────────────────────────
+step "Instalando Nix e bootloader GRUB"
+
+log_info "Instalando gerenciador de pacotes Nix..."
+in_chroot_install nix-bin nix-setup-systemd 2>/dev/null || true
 
 mkdir -pv /mnt/etc/nix
 cat <<EOF >/mnt/etc/nix/nix.conf
 experimental-features = nix-command flakes
-trusted-users = root juca
+trusted-users = root ${USERNAME}
 substituters = https://cache.nixos.org/
 trusted-substituters = https://cache.nixos.org/
 EOF
 
-chroot /mnt groupadd -r nix-users 2>/dev/null || true
-chroot /mnt usermod -aG nix-users juca 2>/dev/null || true
+in_chroot groupadd -r nix-users 2>/dev/null || true
+in_chroot usermod -aG nix-users "${USERNAME}" 2>/dev/null || true
 
-cat <<'EOF' >> /mnt/home/juca/.bashrc
+# Ativar Nix no login do usuário e do root
+for bashrc in "/mnt/home/${USERNAME}/.bashrc" "/mnt/root/.bashrc"; do
+    cat <<'NIXEOF' >> "$bashrc"
 
-# Nix Package Manager environment setup
-if [ -e /etc/profile.d/nix.sh ]; then
-    . /etc/profile.d/nix.sh
-fi
-EOF
+# Nix Package Manager
+if [ -e /etc/profile.d/nix.sh ]; then . /etc/profile.d/nix.sh; fi
+NIXEOF
+done
+in_chroot chown "${USERNAME}:${USERNAME}" "/home/${USERNAME}/.bashrc"
 
-cat <<'EOF' >> /mnt/root/.bashrc
-
-# Nix Package Manager environment setup
-if [ -e /etc/profile.d/nix.sh ]; then
-    . /etc/profile.d/nix.sh
-fi
-EOF
-
-chroot /mnt chown juca:juca /home/juca/.bashrc
-
-# --- Instalação dos Bootloaders (GRUB Legacy i386-pc + GRUB EFI x86_64) ---
-log_info "Instalando pacotes do GRUB (grub-pc, grub-pc-bin, grub-efi-amd64-bin e efibootmgr)..."
-chroot /mnt apt-get install -y --no-install-recommends \
+# GRUB — Bootloader duplo (BIOS + EFI)
+# BIOS (i386-pc): Necessário para a VBIOS da NVIDIA inicializar a GPU
+# EFI (x86_64-efi): Fallback para boot UEFI
+log_info "Instalando GRUB (BIOS + EFI)..."
+in_chroot_install \
     grub-pc \
     grub-pc-bin \
     grub-efi-amd64-bin \
     efibootmgr
 
-log_info "Instalando o GRUB BIOS (i386-pc) em ${DRIVE} para inicializar a VBIOS da NVIDIA 8600M GT..."
-chroot /mnt grub-install --target=i386-pc "${DRIVE}"
+log_info "Instalando GRUB BIOS em ${DRIVE}..."
+in_chroot grub-install --target=i386-pc "${DRIVE}"
 
-log_info "Instalando o GRUB EFI (x86_64-efi) em /boot/efi como fallback..."
-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --no-nvram --removable --recheck
+log_info "Instalando GRUB EFI como fallback..."
+in_chroot grub-install --target=x86_64-efi --efi-directory=/boot/efi --no-nvram --removable --recheck
 
-# --- Configuração do arquivo /etc/default/grub com Suporte a Plymouth e Hibernação ---
-log_info "Configurando parâmetros de boot no GRUB (com animação Plymouth)..."
+# Parâmetros de boot
+log_info "Configurando parâmetros de boot com Plymouth..."
 cat <<EOF >/mnt/etc/default/grub
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=2
@@ -683,39 +912,86 @@ GRUB_COLOR_NORMAL="light-gray/black"
 GRUB_COLOR_HIGHLIGHT="white/blue"
 EOF
 
-# Configurar parâmetro de hibernação (resume_offset) no GRUB
+# Hibernação — detecta o offset do swapfile para o GRUB
 if command -v filefrag &>/dev/null; then
     OFFSET=$(filefrag -v /mnt/swap/swapfile | awk '$1=="0:" {print substr($4, 1, length($4)-2)}' | head -n1 || true)
     if [ -n "$OFFSET" ]; then
-        log_info "Configurando resume offset para hibernação: resume=UUID=${ROOT_UUID} resume_offset=${OFFSET}..."
+        log_info "Configurando hibernação (resume_offset=${OFFSET})..."
         sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"resume=UUID=${ROOT_UUID} resume_offset=${OFFSET}\"/g" /mnt/etc/default/grub
     fi
 fi
 
-chroot /mnt update-grub
-chroot /mnt update-initramfs -u -k all
+in_chroot update-grub
+in_chroot update-initramfs -u -k all
+log_ok "GRUB e Nix configurados."
 
-# --- Ativação dos Serviços do Systemd ---
-log_info "Ativando serviços essenciais no systemd (incluindo o Display Manager LightDM)..."
-chroot /mnt systemctl enable NetworkManager.service 2>/dev/null || true
-chroot /mnt systemctl enable ssh.service 2>/dev/null || true
-chroot /mnt systemctl enable lightdm.service 2>/dev/null || true
-chroot /mnt systemctl enable earlyoom.service 2>/dev/null || true
-chroot /mnt systemctl enable mbpfan.service 2>/dev/null || true
-chroot /mnt systemctl enable tlp.service 2>/dev/null || true
-chroot /mnt systemctl enable thermald.service 2>/dev/null || true
-chroot /mnt systemctl enable irqbalance.service 2>/dev/null || true
-chroot /mnt systemctl enable zramswap.service 2>/dev/null || chroot /mnt systemctl enable zram-tools.service 2>/dev/null || true
-chroot /mnt systemctl enable nix-daemon.service 2>/dev/null || true
+# ──────────────────────────────────────────────────────────────────────────────
+# ETAPA 15: Ativar serviços e finalizar instalação
+#   → Systemd services, desmontagem limpa
+# ──────────────────────────────────────────────────────────────────────────────
+step "Ativando serviços e finalizando"
 
-# --- Desmontagem Limpa do Sistema ao Final da Instalação ---
-log_info "Desmontando pontos de montagem temporários de /mnt..."
+log_info "Ativando serviços do sistema..."
+SERVICES=(
+    "NetworkManager.service"    # Gerenciador de rede e Wi-Fi
+    "ssh.service"               # Acesso remoto SSH
+    "lightdm.service"           # Tela de login gráfica
+    "earlyoom.service"          # Mata processos antes de travar por falta de RAM
+    "mbpfan.service"            # Controle dos ventiladores do MacBook
+    "tlp.service"               # Economia de energia da bateria
+    "thermald.service"          # Proteção contra superaquecimento
+    "irqbalance.service"        # Balanceia interrupções entre os 2 cores da CPU
+)
+
+for svc in "${SERVICES[@]}"; do
+    in_chroot systemctl enable "$svc" 2>/dev/null || true
+done
+
+# Serviços opcionais (podem não existir dependendo da versão)
+in_chroot systemctl enable zramswap.service 2>/dev/null || \
+    in_chroot systemctl enable zram-tools.service 2>/dev/null || true
+in_chroot systemctl enable nix-daemon.service 2>/dev/null || true
+log_ok "Serviços ativados."
+
+# Desmontagem limpa
+log_info "Desmontando sistema de arquivos..."
 swapoff -a 2>/dev/null || true
 umount -R -f /mnt 2>/dev/null || true
 
-log_ok "=========================================================================="
-log_ok " Instalação do Debian com XFCE4, Plymouth, Firefox & Nix concluída com SUCESSO!"
-log_ok "=========================================================================="
-log_info "Você já pode reiniciar o computador e remover a mídia de instalação."
-log_info "Ao reiniciar, a animação do Plymouth e a tela gráfica do LightDM carregarão."
-log_info "Faça login com o usuário 'juca' (senha: 200291) no ambiente XFCE4."
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                      INSTALAÇÃO CONCLUÍDA! 🎉                             ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+echo ""
+echo -e "${BOLD}${GREEN}"
+cat << 'DONE'
+    ____                   __          __
+   / __ \_________  ____  / /_____    / /
+  / /_/ / ___/ __ \/ __ \/ __/ __ \  / /
+ / ____/ /  / /_/ / / / / /_/ /_/ / /_/
+/_/   /_/   \____/_/ /_/\__/\____/ (_)
+
+DONE
+echo -e "${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}  ✔ Instalação do Debian Trixie concluída com sucesso!${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "  ${BOLD}Próximos passos:${NC}"
+echo -e "  ${CYAN}1.${NC} Remova o USB de instalação"
+echo -e "  ${CYAN}2.${NC} Reinicie o computador: ${BOLD}sudo reboot${NC}"
+echo -e "  ${CYAN}3.${NC} A animação do Plymouth aparecerá durante o boot"
+echo -e "  ${CYAN}4.${NC} Na tela de login do LightDM, entre com:"
+echo -e "     ${BOLD}Usuário:${NC} ${USERNAME}"
+echo -e "     ${BOLD}Senha:${NC}   ${PASSWORD}"
+echo ""
+echo -e "  ${BOLD}O que você encontrará:${NC}"
+echo -e "  ${GREEN}•${NC} Desktop XFCE4 com tema escuro Arc-Dark"
+echo -e "  ${GREEN}•${NC} Firefox ESR (em português) pronto para navegar"
+echo -e "  ${GREEN}•${NC} Ícone de Wi-Fi na barra de tarefas (nm-applet)"
+echo -e "  ${GREEN}•${NC} Teclado Apple funcionando igual ao macOS"
+echo -e "  ${GREEN}•${NC} Teclas de brilho e volume funcionando"
+echo -e "  ${GREEN}•${NC} Nix package manager pronto para usar"
+echo ""
+echo -e "  ${DIM}Hostname: ${HOSTNAME} | Disco: ${DRIVE} | Debian ${CODENAME}${NC}"
+echo ""
