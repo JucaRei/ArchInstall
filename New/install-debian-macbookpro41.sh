@@ -638,6 +638,19 @@ in_chroot_install \
     acpid \
     dkms
 
+# Codecs de vídeo e áudio — SEM ISSO, YouTube e vídeos HTML5 não funcionam!
+# O Firefox precisa do FFmpeg para decodificar H.264, VP9, AAC, etc.
+log_info "Instalando codecs de vídeo (FFmpeg, H.264, VP9) para YouTube..."
+in_chroot_install \
+    ffmpeg \
+    libavcodec-extra \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+    libgstreamer1.0-0
+
 # Tuning de memória para 6GB RAM assimétrica
 log_info "Otimizando uso de memória para 6GB RAM..."
 mkdir -pv /mnt/etc/sysctl.d
