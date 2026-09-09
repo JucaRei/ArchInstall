@@ -1,5 +1,7 @@
 # Arch Basic Install Commands-Script
 
+> 📖 **Wiki Completa de Comandos & Referência Técnica:** Consulte o [WIKI.md](file:///d:/workspace/MyRepos/ArchInstall/WIKI.md) para uma documentação detalhada de **todos os comandos, flags e alternativas** (particionamento com `sgdisk`/`parted`, formatação `mkfs`, subvolumes Btrfs, `chattr +C`, swapfile/zRAM, LUKS, debootstrap, drivers GPU, VFIO dinâmico e bootloaders para todas as distribuições e hardware do repositório).
+
 Remember that the first part of the Arch Linux install is manual, that is you will have to partition, format and mount the disk yourself. Install the base packages and make sure to include git so that you can clone the repository in chroot.
 
 #### A small summary:
