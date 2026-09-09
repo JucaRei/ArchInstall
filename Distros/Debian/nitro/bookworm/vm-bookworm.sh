@@ -2,6 +2,12 @@
 # set -euo pipefail
 # IFS=$'\n\t'
 # This catches errors, undefined vars, and pipeline failures immediately.
+#
+# =============================================================================
+# NOTA: Este arquivo consolida o antigo Debian/vm-bookworm.sh (versão simples).
+# A versão antiga usava /dev/vda diretamente e era para VMs com /bin/sh.
+# Esta versão (nitro/bookworm/) é mais completa com variáveis parametrizadas.
+# =============================================================================
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y

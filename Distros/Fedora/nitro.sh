@@ -15,6 +15,20 @@
 #   p4: Fedora Btrfs (100 GB) — Btrfs  (@root, @home, @nix, @libvirt, @containers, @log, @cache, @tmp, @spool, @opt, @snapshots, @swap)
 #   p5: Shared Data  (resto)  — exFAT  (~248 GB compartilhados)
 #
+# =============================================================================
+# NOTA: Consolida o antigo Fedora/nitro.sh (14KB). Diferenças da versão antiga:
+#
+# --- Habilitar boot encryption no Anaconda (útil se precisar) ---
+# sed -i.bkp 's/encryption_support = False/encryption_support = True/' \
+#     /usr/lib64/python3.*/site-packages/pyanaconda/modules/storage/bootloader/base.py
+#
+# --- Layout de partições antigo (HOME separada + mais partições) ---
+# SYSTEM_PART="${DRIVE}p2"   EFI_PART="${DRIVE}p3"   ROOT_PART="${DRIVE}p4"
+# HOME_PART="${DRIVE}p5"     WINDOWS_PART="${DRIVE}p7"   MISC_PART="${DRIVE}p8"
+# BTRFS_OPTS="noatime,ssd,compress-force=zstd:8,space_cache=v2,nodatacow,commit=120,discard=async"
+# BTRFS_OPTS_HOME="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
+# =============================================================================
+#
 set -euo pipefail
 
 # ============================================================

@@ -2,6 +2,32 @@
 # set -euo pipefail
 # IFS=$'\n\t'
 # This catches errors, undefined vars, and pipeline failures immediately.
+#
+# =============================================================================
+# NOTA: Este arquivo consolida o antigo nitro/bookworm.sh (versão simplificada).
+# Abaixo estão as variáveis/abordagens ALTERNATIVAS que existiam nessa versão:
+#
+# --- Abordagem antiga (variáveis com nomes diferentes) ---
+# PARTITION="/dev/nvme0n1p3"
+# INSTALL_PARTITION="/dev/disk/by-label/Debian"
+# BOOT_PARTITION="/dev/disk/by-label/BOOTLOADER"
+# SWAP_PARTITION="/dev/disk/by-label/SWAP"
+# BTRFS_OPTS="noatime,ssd,compress-force=zstd:5,space_cache=v2,nodatacow,commit=120,discard=async"
+# BTRFS_OPTS_COMPRESSED="noatime,ssd,compress-force=zstd:15,space_cache=v2,nodatacow,commit=120,discard=async"
+# Debian_ARCH="amd64"
+# USER="juca"
+#
+# --- Subvolumes antigos (nomes diferentes) ---
+# @rootsystem (agora @), @apt (agora @cache), @logs (agora @log), @tmp
+#
+# --- Alternativa debootstrap (incluía arch-install-scripts + systemd-sysv) ---
+# debootstrap --variant=minbase --include=tasksel,...,systemd,systemd-sysv,...
+#             --arch amd64 bullseye /mnt "http://debian.c3sl.ufpr.br/debian/"
+#
+# --- Repos Tor (para privacidade) ---
+# deb tor+http://vwakviie2ienjx6t.onion/debian stretch main
+# deb tor+http://sgvtcaew4bxjd7ln.onion/debian-security stretch/updates main
+# =============================================================================
 
 #### Update and install needed packages ####
 apt update && apt install debootstrap btrfs-progs lsb-release wget -y
