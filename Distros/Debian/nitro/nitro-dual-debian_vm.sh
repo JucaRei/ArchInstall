@@ -1384,7 +1384,8 @@ NIX_CONF_EOF
 
 # Configurar canal nixpkgs-unstable para juca e root
 echo "📦 Configurando canal nixpkgs-unstable..."
-mkdir -p /mnt/home/$username/.nix-defexpr/channels /mnt/root/.nix-defexpr/channels
+mkdir -p /mnt/home/$username/.nix-defexpr /mnt/root/.nix-defexpr
+rm -rf /mnt/home/$username/.nix-defexpr/channels /mnt/root/.nix-defexpr/channels 2>/dev/null || true
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/home/$username/.nix-channels
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/root/.nix-channels
 chown -R $username:$username /mnt/home/$username/.nix-channels /mnt/home/$username/.nix-defexpr 2>/dev/null || true
@@ -1399,7 +1400,9 @@ elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
 fi
 
 export NIX_REMOTE=daemon
-export NIX_PATH="nixpkgs=https://nixos.org/channels/nixpkgs-unstable:$HOME/.nix-defexpr/channels" 
+export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+export NIX_PATH="nixpkgs=$HOME/.nix-defexpr/channels/nixpkgs:$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels"
 
 # PATH para os binários do Home Manager e perfis do Nix
 export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"

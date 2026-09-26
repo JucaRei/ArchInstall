@@ -392,6 +392,7 @@ $RUN_CHROOT apt install -y \
     sudo \
     btrfs-progs \
     zstd \
+    git \
     curl \
     wget \
     ca-certificates \
@@ -525,7 +526,8 @@ $RUN_CHROOT systemctl enable nix-daemon.socket nix-daemon.service 2>/dev/null ||
 
 # Configurar canal nixpkgs-unstable para juca e root
 info "Configurando o canal nixpkgs-unstable para o usuário juca e root..."
-mkdir -p "${TARGET}/home/juca/.nix-defexpr/channels" "${TARGET}/root/.nix-defexpr/channels"
+mkdir -p "${TARGET}/home/juca/.nix-defexpr" "${TARGET}/root/.nix-defexpr"
+rm -rf "${TARGET}/home/juca/.nix-defexpr/channels" "${TARGET}/root/.nix-defexpr/channels" 2>/dev/null || true
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > "${TARGET}/home/juca/.nix-channels"
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > "${TARGET}/root/.nix-channels"
 $RUN_CHROOT chown -R juca:juca /home/juca/.nix-channels /home/juca/.nix-defexpr 2>/dev/null || chown -R 1000:1000 "${TARGET}/home/juca/.nix-channels" "${TARGET}/home/juca/.nix-defexpr" 2>/dev/null || true
@@ -540,7 +542,9 @@ elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
 fi
 
 export NIX_REMOTE=daemon
-export NIX_PATH="nixpkgs=https://nixos.org/channels/nixpkgs-unstable:$HOME/.nix-defexpr/channels"
+export NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+export NIX_PATH="nixpkgs=$HOME/.nix-defexpr/channels/nixpkgs:$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels"
 export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
 export XDG_DATA_DIRS="$HOME/.nix-profile/share:/etc/profiles/per-user/$USER/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 NIX_PROFILE_EOF
