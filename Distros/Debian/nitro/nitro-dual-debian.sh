@@ -584,7 +584,7 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd $username -m -c "Reinaldo P Jr" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input $username
+chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input,plugdev,libvirt,kvm $username
 chroot /mnt usermod -aG sudo $username
 
 # Permissão 755 na home para que Display Managers e Nix acessem perfis e sessões desktop
@@ -1141,14 +1141,125 @@ EOF
 # Microcode, Dracut e Kernel são instalados na seção posterior de boot/kernel
 
 
-###############################
-#### Minimal xorg packages ####
-###############################
+##################################################
+#### Xorg, LightDM e Sessão BSPWM (Home Manager) #
+##################################################
+echo "🖥️ Instalando Xorg, LightDM, GTK Greeter e utilitários de exibição..."
+chroot /mnt apt install -y \
+    xserver-xorg \
+    xserver-xorg-video-intel \
+    xserver-xorg-input-libinput \
+    x11-xserver-utils \
+    xinit \
+    xauth \
+    xinput \
+    xterm \
+    lightdm \
+    lightdm-gtk-greeter \
+    lightdm-gtk-greeter-settings \
+    libpam-gnome-keyring \
+    xwayland || true
 
-# chroot /mnt apt install xserver-xorg-core xserver-xorg-input-evdev xserver-xorg-input-libinput \
-#     xserver-xorg-input-kbd x11-xserver-utils x11-xkb-utils x11-utils xinit xinput --no-install-recommends -y
+echo "⚙️ Configurando LightDM e sessão BSPWM do Home Manager..."
+mkdir -p /mnt/etc/lightdm /mnt/etc/lightdm/lightdm.conf.d /mnt/usr/share/xsessions /mnt/usr/local/bin
 
-# chroot /mnt apt install xserver-xorg x11-utils x11-xserver-utils xinit
+# 1. Configuração do LightDM: Greeter padrão e sessão padrão BSPWM
+cat << 'LIGHTDM_CONF_EOF' > /mnt/etc/lightdm/lightdm.conf
+[LightDM]
+run-directory=/run/lightdm
+
+[Seat:*]
+greeter-session=lightdm-gtk-greeter
+user-session=bspwm
+session-wrapper=/etc/X11/Xsession
+greeter-hide-users=false
+logind-check-graphical=true
+LIGHTDM_CONF_EOF
+
+# 2. Ocultar usuários de compilação do Nix (nixbld1..nixbld32) da lista do greeter
+cat << 'LIGHTDM_USERS_EOF' > /mnt/etc/lightdm/users.conf
+[UserList]
+minimum-uid=1000
+hidden-users=nobody nobody4 noaccess nixbld1 nixbld2 nixbld3 nixbld4 nixbld5 nixbld6 nixbld7 nixbld8 nixbld9 nixbld10 nixbld11 nixbld12 nixbld13 nixbld14 nixbld15 nixbld16 nixbld17 nixbld18 nixbld19 nixbld20 nixbld21 nixbld22 nixbld23 nixbld24 nixbld25 nixbld26 nixbld27 nixbld28 nixbld29 nixbld30 nixbld31 nixbld32
+hidden-shells=/bin/false /usr/sbin/nologin /sbin/nologin
+LIGHTDM_USERS_EOF
+
+# 3. Configuração visual do Greeter GTK (Catppuccin Mocha / Dark)
+cat << 'LIGHTDM_GREETER_EOF' > /mnt/etc/lightdm/lightdm-gtk-greeter.conf
+[greeter]
+background=#1e1e2e
+theme-name=Adwaita-dark
+icon-theme-name=Papirus-Dark
+font-name=Inter 10
+xft-antialias=true
+xft-hintstyle=hintslight
+xft-rgba=rgb
+clock-format=%a, %d %b %H:%M
+indicators=~host;~spacer;~clock;~spacer;~layout;~session;~power
+default-user-image=#avatar-default
+hide-user-image=false
+position=50%,center 50%,center
+LIGHTDM_GREETER_EOF
+
+# 4. Wrapper de Inicialização da Sessão BSPWM com Carregamento do Nix e Fallback
+cat << 'BSPWM_WRAPPER_EOF' > /mnt/usr/local/bin/start-bspwm-session
+#!/usr/bin/env bash
+# Carregar profiles do Nix para o ambiente gráfico do X11
+if [ -e /etc/profile.d/nix.sh ]; then
+    . /etc/profile.d/nix.sh
+elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
+    . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+fi
+
+# 1. Prioridade máxima: wrapper start-bspwm gerado pelo Home Manager
+if [ -x "$HOME/.local/bin/start-bspwm" ]; then
+    exec "$HOME/.local/bin/start-bspwm"
+fi
+
+# 2. Segunda opção: ~/.xsession gerado pelo Home Manager
+if [ -x "$HOME/.xsession" ]; then
+    exec "$HOME/.xsession"
+fi
+
+# 3. Terceira opção: binário bspwm no PATH
+if command -v bspwm >/dev/null 2>&1; then
+    exec bspwm
+fi
+
+# 4. Fallback amigável se o Home Manager ainda não foi aplicado
+xsetroot -solid '#1e1e2e' 2>/dev/null || true
+MSG="=====================================================\nSessão BSPWM iniciada!\n\nO Home Manager ainda não gerou as configurações do BSPWM.\nPara gerar o desktop completo (Polybar, SXHKD, Rofi),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@nitro\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
+if command -v xterm >/dev/null 2>&1; then
+    xterm -geometry 90x25 -title "Setup BSPWM Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
+elif command -v x-terminal-emulator >/dev/null 2>&1; then
+    x-terminal-emulator -e bash -c "echo -e '$MSG'; exec bash"
+else
+    exec x-session-manager
+fi
+BSPWM_WRAPPER_EOF
+chmod 755 /mnt/usr/local/bin/start-bspwm-session
+
+# 5. Entrada da Sessão X11 em /usr/share/xsessions/bspwm.desktop
+cat << 'BSPWM_DESKTOP_EOF' > /mnt/usr/share/xsessions/bspwm.desktop
+[Desktop Entry]
+Name=BSPWM
+Comment=Binary Space Partitioning Window Manager (Home Manager)
+Exec=/usr/local/bin/start-bspwm-session
+Type=Application
+DesktopNames=bspwm
+BSPWM_DESKTOP_EOF
+
+# 6. Sessão padrão do usuário juca no ~/.dmrc
+mkdir -p /mnt/home/$username
+cat << 'DMRC_EOF' > /mnt/home/$username/.dmrc
+[Desktop]
+Session=bspwm
+DMRC_EOF
+chown $username:$username /mnt/home/$username/.dmrc 2>/dev/null || true
+chmod 644 /mnt/home/$username/.dmrc 2>/dev/null || true
 
 ###########################
 #### Some XORG configs ####
@@ -1190,6 +1301,19 @@ EOF
 
 chroot /mnt apt install -y bluez blueman
 
+####################################
+### Logitech MX Keys / Solaar    ###
+####################################
+echo "⌨️ Configurando suporte ao Logitech MX Keys e Solaar..."
+chroot /mnt apt install -y solaar || true
+
+mkdir -p /mnt/etc/udev/rules.d
+cat << 'LOGITECH_UDEV_EOF' > /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
+# Logitech Unifying & Bolt Receivers (acesso sem root via grupo plugdev / uaccess)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+LOGITECH_UDEV_EOF
+chmod 644 /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
+
 
 #################################
 #### Infrastructure packages ####
@@ -1199,26 +1323,55 @@ chroot /mnt apt install -y bluez blueman
 # chroot /mnt apt install python3 python3-pip snapd flatpak 
 chroot /mnt apt install snapd flatpak 
 
-####################
-### Virt-Manager ###
-####################
+##################################################
+### Virt-Manager, QEMU/KVM e Libvirt (Nativo)  ###
+##################################################
+echo "🖥️ Instalando e configurando Virt-Manager, QEMU/KVM e Libvirt..."
+chroot /mnt apt install -y \
+  virt-manager \
+  qemu-system \
+  libvirt-daemon-system \
+  ovmf \
+  swtpm \
+  swtpm-tools \
+  qemu-utils \
+  bridge-utils \
+  dnsmasq-base \
+  spice-vdagent \
+  gir1.2-spiceclientgtk-3.0 \
+  virtinst
 
+# Configurar QEMU para executar sob o usuário local juca
+# Isso resolve erros de "Permission denied" ao acessar ISOs e armazenamentos em /media/juca/...
+if [ -f /mnt/etc/libvirt/qemu.conf ]; then
+  sed -i -E 's/^[# ]*user[ ]*=.*/user = "'"$username"'"/' /mnt/etc/libvirt/qemu.conf
+  sed -i -E 's/^[# ]*group[ ]*=.*/group = "'"$username"'"/' /mnt/etc/libvirt/qemu.conf
+  if ! grep -q '^user = "'"$username"'"' /mnt/etc/libvirt/qemu.conf; then
+    cat << EOF >> /mnt/etc/libvirt/qemu.conf
 
-#Virt-Manager
-# chroot /mnt apt install spice-vdagent gir1.2-spiceclientgtk-3.0 ovmf ovmf-ia32 \
-# dnsmasq ipset libguestfs0 qemu-user-static binfmt-support virt-viewer qemu-system qemu-utils qemu-system-gui vde2 uml-utilities virtinst virt-manager \
-# bridge-utils libvirt-daemon-system uidmap zsync --no-install-recommends -y
+# Usuário e grupo para execução de máquinas virtuais (desktop pessoal)
+user = "$username"
+group = "$username"
+EOF
+  fi
+else
+  mkdir -p /mnt/etc/libvirt
+  cat << EOF > /mnt/etc/libvirt/qemu.conf
+user = "$username"
+group = "$username"
+EOF
+fi
 
-# chroot /mnt dpkg --add-architecture armhf -y
-# chroot /mnt dpkg --add-architecture arm64 -y
-# chroot /mnt apt update
-
-# chroot /mnt apt install lib6c:armhf -y
-# chroot /mnt apt install lib6c:arm64 -y
-
-## For virtmanager
-# chroot /mnt adduser $username libvirt
-# chroot /mnt adduser $username kvm
+# Regra de Polkit para permitir gerenciamento de VMs sem pedir senha para o grupo libvirt
+mkdir -p /mnt/etc/polkit-1/rules.d
+cat << 'POLKIT_LIBVIRT_EOF' > /mnt/etc/polkit-1/rules.d/80-libvirt.rules
+polkit.addRule(function(action, subject) {
+  if (action.id.indexOf("org.libvirt") == 0 && subject.isInGroup("libvirt")) {
+    return polkit.Result.YES;
+  }
+});
+POLKIT_LIBVIRT_EOF
+chmod 644 /mnt/etc/polkit-1/rules.d/80-libvirt.rules
 
 ##############
 ### Podman ###
@@ -1278,10 +1431,19 @@ chroot /mnt systemd-tmpfiles --create /etc/tmpfiles.d/nix-daemon-socket.conf 2>/
 mkdir -p /mnt/etc/nix
 cat << 'NIX_CONF_EOF' > /mnt/etc/nix/nix.conf
 build-users-group = nixbld
-trusted-users = root juca @nixbld
+trusted-users = root juca @nixbld @nix-users
 allowed-users = *
 experimental-features = nix-command flakes
+max-jobs = auto
+cores = 0
 NIX_CONF_EOF
+
+# Configurar canal nixpkgs-unstable para juca e root
+echo "📦 Configurando canal nixpkgs-unstable..."
+mkdir -p /mnt/home/$username/.nix-defexpr/channels /mnt/root/.nix-defexpr/channels
+echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/home/$username/.nix-channels
+echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/root/.nix-channels
+chown -R $username:$username /mnt/home/$username/.nix-channels /mnt/home/$username/.nix-defexpr 2>/dev/null || true
 
 # 3. Exportar variáveis globais no perfil do sistema (/etc/profile.d/nix-env.sh)
 cat << 'NIX_PROFILE_EOF' > /mnt/etc/profile.d/nix-env.sh
@@ -1293,7 +1455,7 @@ elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
 fi
 
 export NIX_REMOTE=daemon
-export NIX_PATH=$HOME/.nix-defexpr/channels:nixpkgs=$HOME/.nix-defexpr/channels/nixpkgs
+export NIX_PATH="nixpkgs=https://nixos.org/channels/nixpkgs-unstable:$HOME/.nix-defexpr/channels" 
 
 # PATH para os binários do Home Manager e perfis do Nix
 export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
@@ -1333,6 +1495,7 @@ PAM_LOCK_EOF
 
 cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/swaylock
 cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/noctalia
+cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/i3lock
 
 # ==== SDDM/KWin: notebook Optimus (tela interna só na Intel) ====
 mkdir -p /mnt/etc/systemd/system/sddm.service.d /mnt/etc/sddm.conf.d /mnt/usr/share/wayland-sessions /mnt/usr/share/xsessions
@@ -1514,6 +1677,8 @@ chroot /mnt systemctl enable ssh.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
+chroot /mnt systemctl enable lightdm.service 2>/dev/null || true
+chroot /mnt systemctl enable libvirtd.service 2>/dev/null || true
 
 ## Audio
 ## Pipewire
@@ -1617,13 +1782,17 @@ chmod +x /mnt/etc/dkms/post-build.d/99-sign-with-mok
 ##################################################
 ### Driver NVIDIA Proprietário e Multimídia    ###
 ##################################################
-echo "🎮 Instalando Driver NVIDIA (DKMS), Vulkan, CUDA e MPV..."
+echo "🎮 Instalando Driver NVIDIA (DKMS), Vulkan, CUDA, NVDEC, Intel VA-API e MPV..."
 chroot /mnt apt install -y \
   nvidia-driver \
   nvidia-smi \
   nvidia-settings \
   nvidia-vulkan-icd \
   libcuda1 \
+  libnvcuvid1 \
+  intel-media-va-driver-non-free \
+  vainfo \
+  mesa-va-drivers \
   mpv
 
 ##################################################
