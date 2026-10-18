@@ -16,7 +16,7 @@ BOOT_PART="${DRIVE}2"
 ROOT_PART="${DRIVE}3"
 SWAP_PART="${DRIVE}4"
 
-ROOT_OPTS="noatime,ssd,compress=zstd:3,space_cache=v2,commit=120"
+ROOT_OPTS="noatime,ssd,compress=zstd:1,space_cache=v2,commit=30"
 HOME_OPTS="$ROOT_OPTS"
 
 ########################################
@@ -70,7 +70,7 @@ mount -o noatime,ssd,compress=none,subvol=@var_log "$ROOT_PART" "$MNT/var/log"
 mount -o noatime,ssd,compress=none,subvol=@var_cache "$ROOT_PART" "$MNT/var/cache"
 mount -o ${ROOT_OPTS},subvol=@snapshots "$ROOT_PART" "$MNT/.snapshots"
 
-swapon "$SWAP_PART"
+# swapon "$SWAP_PART"
 
 ########################################
 # UUID
@@ -138,7 +138,7 @@ UUID=$ROOT_UUID  /home      btrfs  ${HOME_OPTS},subvol=@home  0 0
 UUID=$ROOT_UUID  /var/log   btrfs  noatime,ssd,compress=none,subvol=@var_log  0 0
 UUID=$ROOT_UUID  /var/cache btrfs  noatime,ssd,compress=none,subvol=@var_cache  0 0
 UUID=$ROOT_UUID  /.snapshots btrfs ${ROOT_OPTS},subvol=@snapshots  0 0
-UUID=$SWAP_UUID  none       swap   defaults    0 0
+# UUID=$SWAP_UUID  none       swap   defaults    0 0
 EOF
 
 ########################################
@@ -164,31 +164,40 @@ systemctl enable bluetooth
 ########################################
 
 cat <<EOF > /etc/sysctl.d/98-mba2gb.conf
+vm.vfs_cache_pressure=100
+vm.dirty_background_bytes=67108864
+vm.dirty_bytes=134217728
+kernel.sched_autogroup_enabled=1
 vm.swappiness=180
-vm.vfs_cache_pressure=250
-vm.dirty_ratio=4
-vm.dirty_background_ratio=2
 vm.page-cluster=0
 vm.compaction_proactiveness=0
 vm.extfrag_threshold=1000
 vm.min_free_kbytes=32768
 kernel.numa_balancing=0
-kernel.sched_autogroup_enabled=0
 EOF
 
 ########################################
-# ZRAM
+# ZRAM (8GB)
 ########################################
 
 mkdir -p /etc/systemd/zram-generator.conf.d
 cat <<EOF > /etc/systemd/zram-generator.conf.d/99-zram.conf
 [zram0]
-zram-size = ram * 2
-compression-algorithm = lz4
+zram-size = 8192
+compression-algorithm = zstd
 swap-priority = 100
 EOF
 
 systemctl enable systemd-zram-setup@zram0
+
+########################################
+# SSD I/O SCHEDULER
+########################################
+
+mkdir -p /etc/udev/rules.d
+cat <<EOF > /etc/udev/rules.d/60-ssd-scheduler.rules
+ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+EOF
 
 ########################################
 # GPU STABILITY (HD3000)
@@ -204,7 +213,7 @@ cat <<EOF > /etc/default/grub
 GRUB_TIMEOUT=5
 GRUB_DISABLE_SUBMENU=true
 GRUB_TERMINAL_OUTPUT="console"
-GRUB_CMDLINE_LINUX="quiet loglevel=3 i915.enable_psr=0 zswap.enabled=1 zswap.compressor=lz4 mitigations=auto"
+GRUB_CMDLINE_LINUX="quiet loglevel=3 i915.enable_psr=0 zswap.enabled=0 mitigations=off"
 GRUB_ENABLE_BLSCFG=true
 EOF
 
@@ -259,3 +268,26 @@ echo "⚠ First boot will relabel SELinux."
 #########
 
 chroot /mnt dnf install -y plasma-desktop kde-settings sddm --exclude=vlc* 
+
+########################################
+# SDDM & WESTON CURSOR CONFIG
+########################################
+
+chroot /mnt /bin/bash <<CHROOT_SDDM
+mkdir -p /etc/sddm.conf.d /etc/xdg/weston
+
+cat <<'EOF' > /etc/sddm.conf.d/10-cursor.conf
+[Theme]
+CursorTheme=Adwaita
+CursorSize=24
+
+[General]
+GreeterEnvironment=XCURSOR_THEME=Adwaita,XCURSOR_SIZE=24
+EOF
+
+cat <<'EOF' > /etc/xdg/weston/weston.ini
+[shell]
+cursor-theme=Adwaita
+cursor-size=24
+EOF
+CHROOT_SDDM
