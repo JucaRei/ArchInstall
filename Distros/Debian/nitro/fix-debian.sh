@@ -699,18 +699,32 @@ L+ /run/wrappers/bin/unix_chkpwd - - - - /usr/sbin/unix_chkpwd
 L+ /run/wrappers/bin/polkit-agent-helper-1 - - - - /usr/lib/polkit-1/polkit-agent-helper-1
 NIX_WRAPPERS_EOF
 
-# 8. Arquivos PAM dedicados para screen lockers
-cat << 'PAM_LOCK_EOF' > "${TARGET}/etc/pam.d/hyprlock"
+# 8. Arquivos PAM dedicados para screen lockers (i3lock e hyprlock)
+cat << 'PAM_I3LOCK_EOF' > "${TARGET}/etc/pam.d/i3lock"
 #%PAM-1.0
-@include common-auth
-@include common-account
-@include common-password
-@include common-session
-PAM_LOCK_EOF
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_I3LOCK_EOF
 
-cp -f "${TARGET}/etc/pam.d/hyprlock" "${TARGET}/etc/pam.d/swaylock"
-cp -f "${TARGET}/etc/pam.d/hyprlock" "${TARGET}/etc/pam.d/noctalia"
-cp -f "${TARGET}/etc/pam.d/hyprlock" "${TARGET}/etc/pam.d/i3lock"
+cat << 'PAM_HYPRLOCK_EOF' > "${TARGET}/etc/pam.d/hyprlock"
+#%PAM-1.0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_HYPRLOCK_EOF
+
+cp -f "${TARGET}/etc/pam.d/hyprlock" "${TARGET}/etc/pam.d/swaylock" 2>/dev/null || true
+cp -f "${TARGET}/etc/pam.d/hyprlock" "${TARGET}/etc/pam.d/noctalia" 2>/dev/null || true
+
+# Ocultação via AccountsService (funciona com LightDM, GDM e SDDM)
+mkdir -p "${TARGET}/var/lib/AccountsService/users"
+for i in $(seq 1 32); do
+  cat << 'ACC_EOF' > "${TARGET}/var/lib/AccountsService/users/nixbld$i"
+[User]
+SystemAccount=true
+ACC_EOF
+done
 
 # 9. Links para sessões Wayland também ficarem disponíveis caso o usuário queira
 cat << 'DM_SESSIONS_TMPFILES_EOF' > "${TARGET}/etc/tmpfiles.d/nix-desktop-sessions.conf"

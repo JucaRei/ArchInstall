@@ -436,6 +436,38 @@ chmod +x /etc/profile.d/nix-env.sh
 # 4. Ativar o serviço do Nix Daemon no boot
 systemctl enable nix-daemon.service
 
+
+# 5. Helpers Setuid para Nixpkgs no Fedora (/run/wrappers/bin)
+# Essencial para que telas de bloqueio (i3lock-color, hyprlock, swaylock) e agentes polkit
+# empacotados pelo Nix consigam validar senhas contra /etc/shadow com privilégios.
+mkdir -p /run/wrappers/bin
+ln -sf /usr/sbin/unix_chkpwd /run/wrappers/bin/unix_chkpwd
+ln -sf /usr/lib/polkit-1/polkit-agent-helper-1 /run/wrappers/bin/polkit-agent-helper-1 2>/dev/null || \
+  ln -sf /usr/libexec/polkit-agent-helper-1 /run/wrappers/bin/polkit-agent-helper-1 2>/dev/null || true
+
+# Tornar os wrappers persistentes entre reboots via systemd-tmpfiles
+mkdir -p /etc/tmpfiles.d
+cat << 'NIX_WRAPPERS_EOF' > /etc/tmpfiles.d/nix-wrappers.conf
+d /run/wrappers 0755 root root -
+d /run/wrappers/bin 0755 root root -
+L+ /run/wrappers/bin/unix_chkpwd - - - - /usr/sbin/unix_chkpwd
+L+ /run/wrappers/bin/polkit-agent-helper-1 - - - - /usr/lib/polkit-1/polkit-agent-helper-1
+NIX_WRAPPERS_EOF
+
+# 6. Regras dedicadas de PAM para lockscreens do Nixpkgs (i3lock e hyprlock)
+cat << 'PAM_I3LOCK_EOF' > /etc/pam.d/i3lock
+#%PAM-1.0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_I3LOCK_EOF
+
+cat << 'PAM_HYPRLOCK_EOF' > /etc/pam.d/hyprlock
+#%PAM-1.0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_HYPRLOCK_EOF
 # ==== Snapper + Btrfs-Assistant (Snapshots) ====
 echo "📸 Instalando Snapper e Btrfs-Assistant..."
 dnf5 install -y \
@@ -463,6 +495,15 @@ usermod -aG libvirt juca || true
 # (geralmente é o card de menor número) e falhar com tela preta.
 # Fixamos explicitamente via caminho PCI da Intel (00:02.0), que não muda
 # entre boots (diferente do número do /dev/dri/cardN, que pode variar).
+
+# Ocultar contas de build do Nix (nixbld1..32) na tela de login do SDDM
+mkdir -p /etc/sddm.conf.d
+cat << 'SDDM_HIDE_NIX_EOF' > /etc/sddm.conf.d/hide-nix-users.conf
+[Users]
+HideShells=/sbin/nologin,/usr/sbin/nologin,/bin/false,/usr/bin/false
+MaximumUid=29999
+SDDM_HIDE_NIX_EOF
+
 mkdir -p /etc/systemd/system/sddm.service.d
 cat << 'SDDM_GPU_EOF' > /etc/systemd/system/sddm.service.d/10-intel-gpu.conf
 [Service]

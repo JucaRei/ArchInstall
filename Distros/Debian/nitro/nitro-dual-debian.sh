@@ -1468,51 +1468,85 @@ chmod +x /mnt/etc/profile.d/nix-env.sh
 # 4. Ativar o serviço do Nix Daemon no boot
 chroot /mnt systemctl enable nix-daemon.service
 
-# ==== Wrappers Setuid (Polkit + Screen Lockers) para o Home Manager ====
-echo "🔐 Configurando /run/wrappers/bin e regras de PAM..."
+# ==== Wrappers Setuid e Regras PAM para Home Manager / Nixpkgs ====
+echo "🔒 Configurando wrappers setuid e PAM para utilitários Nix (lockscreens / polkit)..."
 
-mkdir -p /mnt/etc/tmpfiles.d /mnt/etc/pam.d
+# Suporte automático para execução tanto fora do chroot (Live ISO instalando em /mnt) quanto dentro do chroot
+TARGET_DIR="/mnt"
+if [ ! -d "/mnt/etc" ] && [ -d "/etc" ]; then
+  TARGET_DIR=""
+fi
 
-# 1. Regra de tmpfiles.d para recriar os links dos helpers setuid a cada boot
-cat << 'NIX_WRAPPERS_EOF' > /mnt/etc/tmpfiles.d/nix-wrappers.conf
+# 1. Criação imediata dos wrappers
+mkdir -p "${TARGET_DIR}/run/wrappers/bin"
+ln -sf /usr/sbin/unix_chkpwd "${TARGET_DIR}/run/wrappers/bin/unix_chkpwd"
+ln -sf /usr/lib/polkit-1/polkit-agent-helper-1 "${TARGET_DIR}/run/wrappers/bin/polkit-agent-helper-1" 2>/dev/null || \
+  ln -sf /usr/libexec/polkit-agent-helper-1 "${TARGET_DIR}/run/wrappers/bin/polkit-agent-helper-1" 2>/dev/null || true
+
+# 2. Persistência via systemd-tmpfiles após reinicializações
+mkdir -p "${TARGET_DIR}/etc/tmpfiles.d"
+cat << 'NIX_WRAPPERS_EOF' > "${TARGET_DIR}/etc/tmpfiles.d/nix-wrappers.conf"
 d /run/wrappers 0755 root root -
 d /run/wrappers/bin 0755 root root -
 L+ /run/wrappers/bin/unix_chkpwd - - - - /usr/sbin/unix_chkpwd
 L+ /run/wrappers/bin/polkit-agent-helper-1 - - - - /usr/lib/polkit-1/polkit-agent-helper-1
 NIX_WRAPPERS_EOF
 
-# Aplicar a regra imediatamente no ambiente chroot
-chroot /mnt systemd-tmpfiles --create /etc/tmpfiles.d/nix-wrappers.conf || true
+if [ -n "$TARGET_DIR" ]; then
+  chroot "$TARGET_DIR" systemd-tmpfiles --create /etc/tmpfiles.d/nix-wrappers.conf 2>/dev/null || true
+else
+  systemd-tmpfiles --create /etc/tmpfiles.d/nix-wrappers.conf 2>/dev/null || true
+fi
 
-# 2. Regras de PAM dedicadas para screen lockers (Hyprlock, Swaylock, Noctalia)
-cat << 'PAM_LOCK_EOF' > /mnt/etc/pam.d/hyprlock
+# 3. Regras dedicadas no PAM para i3lock e hyprlock
+mkdir -p "${TARGET_DIR}/etc/pam.d"
+cat << 'PAM_I3LOCK_EOF' > "${TARGET_DIR}/etc/pam.d/i3lock"
 #%PAM-1.0
-@include common-auth
-@include common-account
-@include common-password
-@include common-session
-PAM_LOCK_EOF
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_I3LOCK_EOF
 
-cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/swaylock
-cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/noctalia
-cp -f /mnt/etc/pam.d/hyprlock /mnt/etc/pam.d/i3lock
+cat << 'PAM_HYPRLOCK_EOF' > "${TARGET_DIR}/etc/pam.d/hyprlock"
+#%PAM-1.0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        required      pam_deny.so
+account     required      pam_unix.so
+PAM_HYPRLOCK_EOF
+
+cp -f "${TARGET_DIR}/etc/pam.d/hyprlock" "${TARGET_DIR}/etc/pam.d/swaylock" 2>/dev/null || true
+cp -f "${TARGET_DIR}/etc/pam.d/hyprlock" "${TARGET_DIR}/etc/pam.d/noctalia" 2>/dev/null || true
+
+# 4. Ocultar contas nixbld no Display Manager (LightDM / SDDM)
+if [ -d "${TARGET_DIR}/etc/sddm.conf.d" ] || [ -f "${TARGET_DIR}/usr/bin/sddm" ] || [ -d "/etc/sddm.conf.d" ] || command -v sddm >/dev/null 2>&1; then
+  mkdir -p "${TARGET_DIR}/etc/sddm.conf.d"
+  cat << 'SDDM_HIDE_NIX_EOF' > "${TARGET_DIR}/etc/sddm.conf.d/hide-nix-users.conf"
+[Users]
+HideShells=/sbin/nologin,/usr/sbin/nologin,/bin/false,/usr/bin/false
+MaximumUid=29999
+SDDM_HIDE_NIX_EOF
+fi
+
+# Ocultação via AccountsService (funciona com LightDM, GDM e SDDM)
+mkdir -p "${TARGET_DIR}/var/lib/AccountsService/users"
+for i in $(seq 1 32); do
+  cat << 'ACC_EOF' > "${TARGET_DIR}/var/lib/AccountsService/users/nixbld$i"
+[User]
+SystemAccount=true
+ACC_EOF
+done
 
 # ==== SDDM/KWin: notebook Optimus (tela interna só na Intel) ====
-mkdir -p /mnt/etc/systemd/system/sddm.service.d /mnt/etc/sddm.conf.d /mnt/usr/share/wayland-sessions /mnt/usr/share/xsessions
-cat << 'SDDM_GPU_EOF' > /mnt/etc/systemd/system/sddm.service.d/10-intel-gpu.conf
+mkdir -p "${TARGET_DIR}/etc/systemd/system/sddm.service.d" "${TARGET_DIR}/etc/sddm.conf.d" "${TARGET_DIR}/usr/share/wayland-sessions" "${TARGET_DIR}/usr/share/xsessions"
+cat << 'SDDM_GPU_EOF' > "${TARGET_DIR}/etc/systemd/system/sddm.service.d/10-intel-gpu.conf"
 [Service]
 Environment=KWIN_DRM_DEVICES=/dev/dri/by-path/pci-0000:00:02.0-card
 SDDM_GPU_EOF
 
 # ==== Suporte a Display Managers (SDDM, LightDM, GDM) e Home Manager ====
-# 1. SDDM: Ocultar contas nixbld e registrar diretórios de sessões
-cat << 'SDDM_USERS_EOF' > /mnt/etc/sddm.conf.d/hide-nix-users.conf
-[Users]
-HideShells=/sbin/nologin,/usr/sbin/nologin,/bin/false,/usr/bin/false
-MaximumUid=29999
-SDDM_USERS_EOF
+# 1. SDDM: Registrar diretórios de sessões
 
-cat << 'SDDM_SESSIONS_EOF' > /mnt/etc/sddm.conf.d/sessions.conf
+cat << 'SDDM_SESSIONS_EOF' > "${TARGET_DIR}/etc/sddm.conf.d/sessions.conf"
 [Wayland]
 SessionDir=/usr/share/wayland-sessions:/home/juca/.local/share/wayland-sessions
 
@@ -1523,7 +1557,7 @@ SDDM_SESSIONS_EOF
 # 2. Compatibilidade universal de sessões para QUALQUER Display Manager (GDM, LightDM, SDDM)
 # DMs como GDM e LightDM buscam exclusivamente em /usr/share/*-sessions.
 # Provisionamos symlinks automáticos via tmpfiles para as sessões do Home Manager:
-cat << 'DM_SESSIONS_TMPFILES_EOF' > /mnt/etc/tmpfiles.d/nix-desktop-sessions.conf
+cat << 'DM_SESSIONS_TMPFILES_EOF' > "${TARGET_DIR}/etc/tmpfiles.d/nix-desktop-sessions.conf"
 L+ /usr/share/wayland-sessions/hyprland.desktop - - - - /home/juca/.local/share/wayland-sessions/hyprland.desktop
 L+ /usr/share/wayland-sessions/mango.desktop    - - - - /home/juca/.local/share/wayland-sessions/mango.desktop
 L+ /usr/share/xsessions/bspwm.desktop          - - - - /home/juca/.local/share/xsessions/bspwm.desktop
