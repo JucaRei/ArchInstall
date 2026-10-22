@@ -17,7 +17,8 @@
 #  10. Assina kernels com a chave MOK para compatibilidade total com Secure Boot
 #  11. Regenera initramfs via Dracut com suporte a Btrfs e microcode Intel
 #  12. Atualiza e reinstala o GRUB EFI com detecção automática do Windows
-#  13. Executa diagnóstico de Secure Boot e assinaturas
+#  13. Configura hook de retenção de kernels (máximo 3 versões) para proteção da partição /boot
+#  14. Executa diagnóstico de Secure Boot e assinaturas
 # ==============================================================================
 set -e
 
@@ -863,9 +864,169 @@ $RUN_CHROOT efibootmgr 2>/dev/null || true
 ok "GRUB EFI instalado e atualizado com sucesso."
 
 # ==============================================================================
-# Passo 12: Scripts de Diagnóstico e Verificação
+# Passo 12: Configuração do Hook de Retenção de Kernels (Máximo 3 Versões)
 # ==============================================================================
-step "Passo 12: Criando Scripts de Diagnóstico e Verificando Status..."
+step "Passo 12: Configurando Hook de Retenção de Kernels (Máx 3 Versões)..."
+
+mkdir -p "${TARGET}/usr/local/sbin" "${TARGET}/etc/apt/apt.conf.d" "${TARGET}/etc/kernel/postinst.d"
+
+cat << 'TRIM_KERNELS_EOF' > "${TARGET}/usr/local/sbin/trim-kernels"
+#!/bin/bash
+# /usr/local/sbin/trim-kernels
+# Mantém no máximo MAX_KERNELS versões instaladas, purgando as mais antigas.
+
+set -euo pipefail
+
+MAX_KERNELS=3
+LOCK_FILE="/run/lock/trim-kernels.lock"
+
+log() {
+    echo "trim-kernels: $*"
+    logger -t trim-kernels "$*" 2>/dev/null || true
+}
+
+# Evita execuções concorrentes
+exec 200>"$LOCK_FILE"
+flock -n 200 || {
+    log "Outra instância já está em execução. Saindo."
+    exit 0
+}
+
+# Aguarda o apt/dpkg liberar completamente as travas se fuser estiver disponível
+if command -v fuser >/dev/null 2>&1; then
+    MAX_WAIT=300
+    waited=0
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+        if [ "$waited" -ge "$MAX_WAIT" ]; then
+            log "Tempo limite excedido esperando trava do dpkg."
+            exit 1
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+fi
+
+CURRENT_KERNEL="$(uname -r)"
+
+# Lista todas as imagens de kernel instaladas (exceto metapacotes)
+INSTALLED_IMAGES=$(dpkg-query -W -f='${Package} ${Status}\n' 'linux-image-[0-9]*' 2>/dev/null | \
+    grep -E ' (installed|half-configured)$' | awk '{print $1}' || true)
+
+if [ -z "$INSTALLED_IMAGES" ]; then
+    exit 0
+fi
+
+# Extrai os sufixos de versão
+VERSIONS=()
+for pkg in $INSTALLED_IMAGES; do
+    ver="${pkg#linux-image-}"
+    VERSIONS+=("$ver")
+done
+
+TOTAL_KERNELS="${#VERSIONS[@]}"
+if [ "$TOTAL_KERNELS" -le "$MAX_KERNELS" ]; then
+    log "Total de kernels ($TOTAL_KERNELS) dentro do limite ($MAX_KERNELS). Nenhuma ação necessária."
+    exit 0
+fi
+
+# Ordena versões da mais recente para a mais antiga
+if command -v linux-version >/dev/null 2>&1; then
+    SORTED_VERSIONS=($(linux-version sort --reverse "${VERSIONS[@]}"))
+else
+    SORTED_VERSIONS=($(printf "%s\n" "${VERSIONS[@]}" | sort -V -r))
+fi
+
+# Identifica kernels protegidos (em execução ou dependência de metapacote)
+PROTECTED=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    pkg="linux-image-$ver"
+    if [ "$ver" = "$CURRENT_KERNEL" ]; then
+        PROTECTED+=("$ver")
+        continue
+    fi
+    # Verifica se algum pacote instalado depende desta versão específica
+    rdeps=$(apt-cache rdepends --installed "$pkg" 2>/dev/null | \
+        sed '1,2d' | tr -d ' |' | \
+        grep -v -E "linux-headers|linux-image-${ver}|^$" || true)
+    if [ -n "$rdeps" ]; then
+        PROTECTED+=("$ver")
+    fi
+done
+
+# Monta lista de kernels a manter
+KEEP=("${PROTECTED[@]}")
+for ver in "${SORTED_VERSIONS[@]}"; do
+    if [ "${#KEEP[@]}" -ge "$MAX_KERNELS" ]; then
+        break
+    fi
+    already_kept=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            already_kept=true
+            break
+        fi
+    done
+    if [ "$already_kept" = false ]; then
+        KEEP+=("$ver")
+    fi
+done
+
+# Seleciona os kernels excedentes para purgar
+PKGS_TO_PURGE=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    keep_this=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            keep_this=true
+            break
+        fi
+    done
+    if [ "$keep_this" = false ]; then
+        for p in "linux-image-$ver" "linux-headers-$ver"; do
+            if dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -qE "installed|half-configured"; then
+                PKGS_TO_PURGE+=("$p")
+            fi
+        done
+    fi
+done
+
+if [ "${#PKGS_TO_PURGE[@]}" -eq 0 ]; then
+    log "Nenhum pacote residual para remover."
+    exit 0
+fi
+
+log "Kernels instalados: $TOTAL_KERNELS. Limite: $MAX_KERNELS."
+log "Mantendo: ${KEEP[*]}"
+log "Removendo kernels antigos: ${PKGS_TO_PURGE[*]}"
+
+DEBIAN_FRONTEND=noninteractive apt-get purge -y "${PKGS_TO_PURGE[@]}"
+log "Limpeza concluída com sucesso."
+TRIM_KERNELS_EOF
+
+chmod +x "${TARGET}/usr/local/sbin/trim-kernels"
+
+cat << 'APT_HOOK_EOF' > "${TARGET}/etc/apt/apt.conf.d/99trim-kernels"
+DPkg::Post-Invoke { "command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels || true"; };
+APT_HOOK_EOF
+
+cat << 'KERNEL_HOOK_EOF' > "${TARGET}/etc/kernel/postinst.d/zz-trim-kernels"
+#!/bin/sh
+command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels
+exit 0
+KERNEL_HOOK_EOF
+
+chmod +x "${TARGET}/etc/kernel/postinst.d/zz-trim-kernels"
+
+ok "Hook de retenção de kernels configurado com sucesso."
+info "Executando verificação de limpeza de kernels excedentes..."
+$RUN_CHROOT /usr/local/sbin/trim-kernels || true
+
+# ==============================================================================
+# Passo 13: Scripts de Diagnóstico e Verificação
+# ==============================================================================
+step "Passo 13: Criando Scripts de Diagnóstico e Verificando Status..."
 
 cat << 'CHECK_SIGS_EOF' > "${TARGET}/usr/local/bin/check-kernel-signatures.sh"
 #!/bin/bash
@@ -923,9 +1084,9 @@ echo ""
 $RUN_CHROOT /usr/local/bin/check-secureboot.sh || true
 
 # ==============================================================================
-# Passo 13: Limpeza e Finalização
+# Passo 14: Limpeza e Finalização
 # ==============================================================================
-step "Passo 13: Finalizando e Limpando Configurações Temporárias..."
+step "Passo 14: Finalizando e Limpando Configurações Temporárias..."
 
 rm -f "${TARGET}/etc/apt/apt.conf.d/99no-packagekit" 2>/dev/null || true
 if [ -f "${TARGET}/etc/apt/apt.conf.d/20packagekit.disabled" ]; then

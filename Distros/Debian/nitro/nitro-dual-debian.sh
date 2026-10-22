@@ -1943,6 +1943,165 @@ rm -f /mnt/etc/apt/apt.conf.d/99no-packagekit
 
 # sudo apt install task-xfce-desktop
 
+###########################################################
+### HOOK DE RETENÇÃO DE KERNELS (MÁXIMO 3 VERSÕES)      ###
+###########################################################
+echo "🧹 Configurando hook de retenção de kernels (máx 3 versões)..."
+
+mkdir -p /mnt/usr/local/sbin /mnt/etc/apt/apt.conf.d /mnt/etc/kernel/postinst.d
+
+cat << 'TRIM_KERNELS_EOF' > /mnt/usr/local/sbin/trim-kernels
+#!/bin/bash
+# /usr/local/sbin/trim-kernels
+# Mantém no máximo MAX_KERNELS versões instaladas, purgando as mais antigas.
+
+set -euo pipefail
+
+MAX_KERNELS=3
+LOCK_FILE="/run/lock/trim-kernels.lock"
+
+log() {
+    echo "trim-kernels: $*"
+    logger -t trim-kernels "$*" 2>/dev/null || true
+}
+
+# Evita execuções concorrentes
+exec 200>"$LOCK_FILE"
+flock -n 200 || {
+    log "Outra instância já está em execução. Saindo."
+    exit 0
+}
+
+# Aguarda o apt/dpkg liberar completamente as travas se fuser estiver disponível
+if command -v fuser >/dev/null 2>&1; then
+    MAX_WAIT=300
+    waited=0
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+        if [ "$waited" -ge "$MAX_WAIT" ]; then
+            log "Tempo limite excedido esperando trava do dpkg."
+            exit 1
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+fi
+
+CURRENT_KERNEL="$(uname -r)"
+
+# Lista todas as imagens de kernel instaladas (exceto metapacotes)
+INSTALLED_IMAGES=$(dpkg-query -W -f='${Package} ${Status}\n' 'linux-image-[0-9]*' 2>/dev/null | \
+    grep -E ' (installed|half-configured)$' | awk '{print $1}' || true)
+
+if [ -z "$INSTALLED_IMAGES" ]; then
+    exit 0
+fi
+
+# Extrai os sufixos de versão
+VERSIONS=()
+for pkg in $INSTALLED_IMAGES; do
+    ver="${pkg#linux-image-}"
+    VERSIONS+=("$ver")
+done
+
+TOTAL_KERNELS="${#VERSIONS[@]}"
+if [ "$TOTAL_KERNELS" -le "$MAX_KERNELS" ]; then
+    log "Total de kernels ($TOTAL_KERNELS) dentro do limite ($MAX_KERNELS). Nenhuma ação necessária."
+    exit 0
+fi
+
+# Ordena versões da mais recente para a mais antiga
+if command -v linux-version >/dev/null 2>&1; then
+    SORTED_VERSIONS=($(linux-version sort --reverse "${VERSIONS[@]}"))
+else
+    SORTED_VERSIONS=($(printf "%s\n" "${VERSIONS[@]}" | sort -V -r))
+fi
+
+# Identifica kernels protegidos (em execução ou dependência de metapacote)
+PROTECTED=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    pkg="linux-image-$ver"
+    if [ "$ver" = "$CURRENT_KERNEL" ]; then
+        PROTECTED+=("$ver")
+        continue
+    fi
+    # Verifica se algum pacote instalado depende desta versão específica
+    rdeps=$(apt-cache rdepends --installed "$pkg" 2>/dev/null | \
+        sed '1,2d' | tr -d ' |' | \
+        grep -v -E "linux-headers|linux-image-${ver}|^$" || true)
+    if [ -n "$rdeps" ]; then
+        PROTECTED+=("$ver")
+    fi
+done
+
+# Monta lista de kernels a manter
+KEEP=("${PROTECTED[@]}")
+for ver in "${SORTED_VERSIONS[@]}"; do
+    if [ "${#KEEP[@]}" -ge "$MAX_KERNELS" ]; then
+        break
+    fi
+    already_kept=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            already_kept=true
+            break
+        fi
+    done
+    if [ "$already_kept" = false ]; then
+        KEEP+=("$ver")
+    fi
+done
+
+# Seleciona os kernels excedentes para purgar
+PKGS_TO_PURGE=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    keep_this=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            keep_this=true
+            break
+        fi
+    done
+    if [ "$keep_this" = false ]; then
+        for p in "linux-image-$ver" "linux-headers-$ver"; do
+            if dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -qE "installed|half-configured"; then
+                PKGS_TO_PURGE+=("$p")
+            fi
+        done
+    fi
+done
+
+if [ "${#PKGS_TO_PURGE[@]}" -eq 0 ]; then
+    log "Nenhum pacote residual para remover."
+    exit 0
+fi
+
+log "Kernels instalados: $TOTAL_KERNELS. Limite: $MAX_KERNELS."
+log "Mantendo: ${KEEP[*]}"
+log "Removendo kernels antigos: ${PKGS_TO_PURGE[*]}"
+
+DEBIAN_FRONTEND=noninteractive apt-get purge -y "${PKGS_TO_PURGE[@]}"
+log "Limpeza concluída com sucesso."
+TRIM_KERNELS_EOF
+
+chmod +x /mnt/usr/local/sbin/trim-kernels
+
+cat << 'APT_HOOK_EOF' > /mnt/etc/apt/apt.conf.d/99trim-kernels
+DPkg::Post-Invoke { "command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels || true"; };
+APT_HOOK_EOF
+
+cat << 'KERNEL_HOOK_EOF' > /mnt/etc/kernel/postinst.d/zz-trim-kernels
+#!/bin/sh
+command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels
+exit 0
+KERNEL_HOOK_EOF
+
+chmod +x /mnt/etc/kernel/postinst.d/zz-trim-kernels
+
+echo " Executando verificação de limpeza de kernels excedentes..."
+chroot /mnt /usr/local/sbin/trim-kernels || true
+
 ##################
 ### SIGN CHECK ###
 ##################
