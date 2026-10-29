@@ -60,9 +60,13 @@ else
     echo "💿 Disco definido manualmente: $DRIVE"
 fi
 
-EFI_PART="${DRIVE}1"
-SYSTEM_PART="${DRIVE}2"
-ROOT_PART="${DRIVE}3"
+# Ajuste automático de prefixo ('p' para nvme0n1pX, vazio para sdaX / vdaX)
+[[ "$DRIVE" =~ [0-9]$ ]] && P="p" || P=""
+
+EFI_PART="${DRIVE}${P}1"
+SYSTEM_PART="${DRIVE}${P}2"
+ROOT_PART="${DRIVE}${P}3"     # Partição 3 em VM/disco dedicado (no Nitro 5 físico dual-boot com Windows é p6)
+# ROOT_PART="${DRIVE}${P}6"   # Descomente para layout com Windows (partições 3, 4, 5)
 
 MOUNTPOINT="/mnt"
 ROOT_LABEL="Debian"
@@ -90,6 +94,10 @@ echo "Disable SELinux temporarily..."
 # 3: Btrfs (Pool único)         — btrfs — 300 GB
 # 4: SharedData                 — exFAT — restante do disco
 # ============================================================
+echo "🧹 Desmontando montagens anteriores se houver..."
+swapoff -a 2>/dev/null || true
+umount -R "$MOUNTPOINT" 2>/dev/null || true
+
 echo "🔪 Particionando $DRIVE..."
 sgdisk --zap-all "$DRIVE"
 sgdisk -n 1:0:+600M    -t 1:EF00 -c 1:"EFI System Partition"   "$DRIVE"
@@ -158,12 +166,12 @@ mkdir -pv "$MOUNTPOINT/boot/efi"
 mount -t vfat -o defaults,noatime,nodiratime "$EFI_PART" "$MOUNTPOINT/boot/efi"
 
 # ============================================================
-# Swapfile de 3 GB no SSD (prioridade baixa, atrás do zRAM)
+# Swapfile no SSD (Comentado — utilizando exclusivamente zRAM)
 # ============================================================
-# echo "💾 Criando Swapfile de 3 GB..."
-# btrfs filesystem mkswapfile --size 3g "$MOUNTPOINT/var/swap/swapfile"
+# echo "💾 Criando Swapfile de 4 GB..."
+# btrfs filesystem mkswapfile --size 4g "$MOUNTPOINT/var/swap/swapfile"
 # chmod 600 "$MOUNTPOINT/var/swap/swapfile"
-# echo "Subvolumes e boot partition montados com sucesso."
+echo "Subvolumes e boot partition montados com sucesso."
 
 ####################################################
 #### Install tarball debootstrap to the mount / ####
@@ -218,10 +226,8 @@ touch /mnt/etc/dracut.conf.d/10-debian.conf
 cat <<EOF > /mnt/etc/dracut.conf.d/10-debian.conf
 do_prelink="no"
 hostonly="yes"
-# add_dracutmodules+=" systemd tpm2 crypt resume btrfs "
-add_dracutmodules+=" systemd "
-# force_drivers+=" nvme ahci hid_generic iwlwifi "
-early_microcode=yes
+add_dracutmodules+=" systemd btrfs "
+early_microcode=no
 EOF
 
 cat <<EOF >/mnt/etc/dracut.conf.d/selinux.conf
@@ -235,22 +241,17 @@ hostonly_cmdline="yes"
 # Fast compression
 compress="zstd -3"
 
+# Drivers VirtIO e QXL essenciais para VM Proxmox / KVM / QEMU
+add_drivers+=" virtio_pci virtio_scsi virtio_blk virtio_net virtio_balloon virtio_console qxl bochs_drm "
+
 # Don’t strip away any Plymouth bits
-# (remove any omit_dracutmodules line for plymouth)
 omit_dracutmodules+=" amdgpu "
 
-
 # Limit to Btrfs root filesystem
-# filesystems+=" resume btrfs "
 filesystems+=" btrfs "
 
-# Kernel command-line: enable SELinux, show splash, keep messages quiet
+# Kernel command-line
 kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
-
-# Ensure Plymouth theme files are embedded
-# install_items+="/usr/share/plymouth/themes/solar/* \
-#  /etc/plymouth/plymouthd.conf"
-
 EOF
 
 touch /mnt/etc/dracut.conf.d/input.conf
@@ -386,37 +387,15 @@ Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 HEREDOC
 
 # ============================================================
-# Repositório MX Linux (fontes, chaves GPG e pinning)
+# Repositório MX Linux (Desativado para evitar travamento de download)
 # ============================================================
-echo "📦 Configurando repositório e chaves do MX Linux..."
+# NOTA: O espelho http://mxrepo.com frequentemente sofre com lentidão/timeouts
+# e tenta sobreescrever pacotes do Debian (como libspa-0.2-modules).
+# Mantemos o arquivo desativado por padrão com 'Enabled: no'.
+mkdir -p /mnt/etc/apt/sources.list.d /mnt/etc/apt/preferences.d
 
-# Baixar e extrair o keyring oficial do MX Linux (mx25-archive-keyring para Trixie)
-mkdir -p /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d /mnt/etc/apt/sources.list.d /mnt/etc/apt/preferences.d
-
-if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
-    echo "📦 Baixando pacote mx25-archive-keyring..."
-    (curl -fsSL --insecure "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -o /tmp/mx25-keyring.deb || \
-     wget -q --no-check-certificate "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -O /tmp/mx25-keyring.deb) 2>/dev/null && \
-    dpkg-deb -x /tmp/mx25-keyring.deb /mnt/ 2>/dev/null || true
-    rm -f /tmp/mx25-keyring.deb
-fi
-
-# Fallback se ainda não existir
-if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
-    echo "⚠️ Baixando chave MX Linux via keyserver / gpg..."
-    gpg --no-default-keyring --keyring /tmp/mx-temp.gpg \
-        --keyserver keyserver.ubuntu.com --recv-keys 7857E44E4EB89A4B 8B819E5171128B47 2>/dev/null || true
-    if [ -f /tmp/mx-temp.gpg ]; then
-        cp -f /tmp/mx-temp.gpg /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg
-        rm -f /tmp/mx-temp.gpg
-    fi
-fi
-
-# Garantir permissão de leitura universal (0644) para o usuário _apt e sqv
-chmod -R a+rX /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d 2>/dev/null || true
-
-# Repositório MX Linux em formato deb822
 cat << 'MX_SOURCES_EOF' > /mnt/etc/apt/sources.list.d/mxlinux.sources
+Enabled: no
 Types: deb
 URIs: http://mxrepo.com/mx/repo/
 Suites: trixie
@@ -424,13 +403,11 @@ Components: main non-free ahs
 Signed-By: /usr/share/keyrings/mx-25-archive-keyring.gpg
 MX_SOURCES_EOF
 
-# Prioridade controlada para o repositório MX Linux
+# Prioridade mínima para o repositório MX Linux caso seja reativado manualmente
 cat << 'MX_PREF_EOF' > /mnt/etc/apt/preferences.d/20mxlinux.pref
-# Prioridade 100: permite instalar utilitários do MX Linux sob demanda
-# sem sobrescrever pacotes essenciais do Debian.
 Package: *
-Pin: origin mxrepo.com
-Pin-Priority: 100
+Pin: release o=MX
+Pin-Priority: 50
 MX_PREF_EOF
 
 # cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
@@ -509,9 +486,7 @@ cat >/mnt/etc/apt/preferences.d/99trixie.pref <<HEREDOC
 # version is more recent
 
 Package: *
-# Pin: release a=stable
-# Pin: release a=${CODENAME}
-Pin: release a=trixie
+Pin: release n=trixie
 Pin-Priority: 900
 HEREDOC
 
@@ -894,8 +869,8 @@ LABEL=${ROOT_LABEL}    /var/swap           btrfs rw,${BTRFS_OPTS_SWAP},subvol=@s
 LABEL=${SYSTEM_LABEL}  /boot               ext4  rw,relatime                                     0 1
 LABEL=${EFI_LABEL}     /boot/efi           vfat  defaults,noatime,nodiratime                     0 2
 
-# === Swap (Prioridade 10) ===
-/var/swap/swapfile     none                swap  defaults,pri=10                                 0 0
+# === Swap em disco (Comentado — utilizando exclusivamente zRAM) ===
+# /var/swap/swapfile     none                swap  defaults,pri=10,nofail                          0 0
 
 # === Partição de Dados Compartilhados (exFAT) ===
 # LABEL=${MISC_LABEL}    /media/juca/SharedData  exfat  defaults,nofail,uid=1000,gid=1000,dmask=0022,fmask=0133  0 0
@@ -961,33 +936,32 @@ chroot /mnt apt install openssh-client openssh-server
 ########################################################
 #### Config iwd as backend instead of wpasupplicant ####
 ########################################################
-
-mkdir -pv /mnt/etc/NetworkManager/conf.d /mnt/etc/systemd/system/NetworkManager.service.d
-cat << 'NM_IWD_EOF' > /mnt/etc/systemd/system/NetworkManager.service.d/iwd.conf
-[Unit]
-After=iwd.service
-Wants=iwd.service
-NM_IWD_EOF
-
-cat <<EOF >/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
-[device]
-wifi.backend=iwd
-wifi.iwd.autoconnect=yes
-EOF
-
-cat <<EOF >/mnt/etc/NetworkManager/conf.d/10-wlan.conf
-[keyfile]
-unmanaged-devices=none
-EOF
-
-mkdir -pv /mnt/etc/iwd
-touch /mnt/etc/iwd/main.conf
-cat <<EOF >/mnt/etc/iwd/main.conf
-# Configuração do iWD integrada ao NetworkManager
-# NetworkManager gerencia IP e DHCP; o iWD gerencia autenticação e rádio Wi-Fi
-[General]
-EnableNetworkConfiguration=false
-EOF
+# NOTA: Em VM Proxmox (Ethernet VirtIO), iwd e configurações de rádio Wi-Fi
+# são desnecessárias. Mantidas comentadas para uso futuro em notebook físico:
+# mkdir -pv /mnt/etc/NetworkManager/conf.d /mnt/etc/systemd/system/NetworkManager.service.d
+# cat << 'NM_IWD_EOF' > /mnt/etc/systemd/system/NetworkManager.service.d/iwd.conf
+# [Unit]
+# After=iwd.service
+# Wants=iwd.service
+# NM_IWD_EOF
+# 
+# cat <<EOF >/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
+# [device]
+# wifi.backend=iwd
+# wifi.iwd.autoconnect=yes
+# EOF
+# 
+# cat <<EOF >/mnt/etc/NetworkManager/conf.d/10-wlan.conf
+# [keyfile]
+# unmanaged-devices=none
+# EOF
+# 
+# mkdir -pv /mnt/etc/iwd
+# touch /mnt/etc/iwd/main.conf
+# cat <<EOF >/mnt/etc/iwd/main.conf
+# [General]
+# EnableNetworkConfiguration=false
+# EOF
 
 ##################
 ### SOCKET RAW ###
@@ -1009,8 +983,7 @@ echo "-net.ipv4.ping_group_range = 0 2147483647" >> /mnt/usr/lib/sysctl.d/50-def
 # chroot /mnt apt install alsa-utils bluetooth rfkill bluez bluez-tools pulseaudio pulseaudio-module-bluetooth pavucontrol 
 
 ## Pipewire
-# chroot /mnt apt purge pipewire* pipewire-bin -y
-chroot /mnt apt install pipewire-audio wireplumber pipewire-pulse pipewire-alsa libspa-0.2-bluetooth libspa-0.2-jack 
+chroot /mnt apt install -y pipewire-audio wireplumber pipewire-pulse pipewire-alsa libspa-0.2-jack 
 
 # Enable WirePlumber session manager:
 chroot /mnt systemctl --user enable wireplumber.service 2>/dev/null || true
@@ -1126,17 +1099,13 @@ chroot /mnt apt install chrony
 #### Optimizations Tools ####
 #############################
 
-# chroot /mnt apt install earlyoom powertop tlp thermald irqbalance systemd-zram-generator
-# chroot /mnt systemctl enable earlyoom
-# chroot /mnt systemctl enable powertop
-# chroot /mnt systemctl enable tlp
-# chroot /mnt systemctl enable thermald
-# chroot /mnt systemctl enable irqbalance
+# Instalar o gerador de zRAM do systemd
+chroot /mnt apt install -y systemd-zram-generator
 
-# Configuração do zRAM (Swap comprimido em RAM de 8 GB via zstd com prioridade máxima)
+# Configuração do zRAM (Swap comprimido em RAM: 3x a memória RAM via zstd)
 mkdir -pv /mnt/etc/systemd /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/systemd/zram-generator.conf
-# /etc/systemd/zram-generator.conf — Configuração do zRAM (Acer virtual 5)
+# /etc/systemd/zram-generator.conf — Configuração do zRAM (3x RAM)
 [zram0]
 zram-size = ram * 3
 compression-algorithm = zstd
@@ -1145,7 +1114,9 @@ EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/99-zram.conf
 # Otimizações de kernel para zRAM de alta performance
-vm.swappiness = 100
+vm.swappiness = 180
+vm.watermark_boost_factor = 0
+vm.watermark_scale_factor = 125
 vm.page-cluster = 0
 EOF
 
@@ -1158,7 +1129,8 @@ EOF
 echo "🖥️ Instalando Xorg, LightDM, GTK Greeter e utilitários de exibição..."
 chroot /mnt apt install -y \
     xserver-xorg \
-    xserver-xorg-video-intel \
+    xserver-xorg-video-qxl \
+    xserver-xorg-video-all \
     xserver-xorg-input-libinput \
     x11-xserver-utils \
     xinit \
@@ -1225,6 +1197,15 @@ if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
 
+# Exportar caminhos do Home Manager para binários e dados
+export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+export XDG_DATA_DIRS="$HOME/.nix-profile/share:/etc/profiles/per-user/$USER/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# Iniciar agente SPICE em segundo plano para redimensionamento e clipboard na VM
+if command -v spice-vdagent >/dev/null 2>&1; then
+    spice-vdagent 2>/dev/null &
+fi
+
 # 1. Prioridade máxima: wrapper start-bspwm gerado pelo Home Manager
 if [ -x "$HOME/.local/bin/start-bspwm" ]; then
     exec "$HOME/.local/bin/start-bspwm"
@@ -1242,7 +1223,7 @@ fi
 
 # 4. Fallback amigável se o Home Manager ainda não foi aplicado
 xsetroot -solid '#1e1e2e' 2>/dev/null || true
-MSG="=====================================================\nSessão BSPWM iniciada!\n\nO Home Manager ainda não gerou as configurações do BSPWM.\nPara gerar o desktop completo (Polybar, SXHKD, Rofi),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@virtual\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
+MSG="=====================================================\nSessão BSPWM iniciada!\n\nO Home Manager ainda não gerou as configurações do BSPWM.\nPara gerar o desktop completo (BSPWM, Polybar, SXHKD, Rofi),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@virtual\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
 if command -v xterm >/dev/null 2>&1; then
     xterm -geometry 90x25 -title "Setup BSPWM Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
 elif command -v x-terminal-emulator >/dev/null 2>&1; then
@@ -1299,31 +1280,31 @@ EOF
 #########################
 #### Config Powertop ####
 #########################
-
-touch /mnt/etc/rc.local
-cat <<EOF >/mnt/etc/rc.local
-#PowerTop
-powertop --auto-tune
-EOF
+# NOTA: Desnecessário/incompatível em VM Proxmox (interfere em timers virtuais).
+# Mantido comentado para referência caso migrado para o notebook físico:
+# touch /mnt/etc/rc.local
+# cat <<EOF >/mnt/etc/rc.local
+# #PowerTop
+# powertop --auto-tune
+# EOF
 
 #################
 ### BLUETOOTH ###
 #################
-
-chroot /mnt apt install -y bluez blueman
+# NOTA: Em VM Proxmox sem passthrough de dongle Bluetooth, bluez é desnecessário:
+# chroot /mnt apt install -y bluez blueman
 
 ####################################
 ### Logitech MX Keys / Solaar    ###
 ####################################
-echo "⌨️ Configurando suporte ao Logitech MX Keys e Solaar..."
-chroot /mnt apt install -y solaar || true
-
-mkdir -p /mnt/etc/udev/rules.d
-cat << 'LOGITECH_UDEV_EOF' > /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
-# Logitech Unifying & Bolt Receivers (acesso sem root via grupo plugdev / uaccess)
-SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0660", GROUP="plugdev", TAG+="uaccess"
-LOGITECH_UDEV_EOF
-chmod 644 /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
+# NOTA: Solaar/periféricos Logitech físicos são desnecessários na VM:
+# echo "⌨️ Configurando suporte ao Logitech MX Keys e Solaar..."
+# chroot /mnt apt install -y solaar || true
+# mkdir -p /mnt/etc/udev/rules.d
+# cat << 'LOGITECH_UDEV_EOF' > /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
+# SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# LOGITECH_UDEV_EOF
+# chmod 644 /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
 
 
 #################################
@@ -1547,16 +1528,15 @@ SystemAccount=true
 ACC_EOF
 done
 
-# ==== SDDM/KWin: notebook Optimus (tela interna só na Intel) ====
-mkdir -p "${TARGET_DIR}/etc/systemd/system/sddm.service.d" "${TARGET_DIR}/etc/sddm.conf.d" "${TARGET_DIR}/usr/share/wayland-sessions" "${TARGET_DIR}/usr/share/xsessions"
-cat << 'SDDM_GPU_EOF' > "${TARGET_DIR}/etc/systemd/system/sddm.service.d/10-intel-gpu.conf"
-[Service]
-Environment=KWIN_DRM_DEVICES=/dev/dri/by-path/pci-0000:00:02.0-card
-SDDM_GPU_EOF
+# ==== SDDM/KWin: notebook Optimus (apenas para hardware físico Nitro 5) ====
+# mkdir -p "${TARGET_DIR}/etc/systemd/system/sddm.service.d" "${TARGET_DIR}/etc/sddm.conf.d" "${TARGET_DIR}/usr/share/wayland-sessions" "${TARGET_DIR}/usr/share/xsessions"
+# cat << 'SDDM_GPU_EOF' > "${TARGET_DIR}/etc/systemd/system/sddm.service.d/10-intel-gpu.conf"
+# [Service]
+# Environment=KWIN_DRM_DEVICES=/dev/dri/by-path/pci-0000:00:02.0-card
+# SDDM_GPU_EOF
 
 # ==== Suporte a Display Managers (SDDM, LightDM, GDM) e Home Manager ====
 # 1. SDDM: Registrar diretórios de sessões
-
 cat << 'SDDM_SESSIONS_EOF' > "${TARGET_DIR}/etc/sddm.conf.d/sessions.conf"
 [Wayland]
 SessionDir=/usr/share/wayland-sessions:/home/juca/.local/share/wayland-sessions
@@ -1566,12 +1546,11 @@ SessionDir=/usr/share/xsessions:/home/juca/.local/share/xsessions
 SDDM_SESSIONS_EOF
 
 # 2. Compatibilidade universal de sessões para QUALQUER Display Manager (GDM, LightDM, SDDM)
-# DMs como GDM e LightDM buscam exclusivamente em /usr/share/*-sessions.
-# Provisionamos symlinks automáticos via tmpfiles para as sessões do Home Manager:
+# Mantemos bspwm.desktop apontando para o wrapper start-bspwm-session nativo com fallback.
 cat << 'DM_SESSIONS_TMPFILES_EOF' > "${TARGET_DIR}/etc/tmpfiles.d/nix-desktop-sessions.conf"
 L+ /usr/share/wayland-sessions/hyprland.desktop - - - - /home/juca/.local/share/wayland-sessions/hyprland.desktop
 L+ /usr/share/wayland-sessions/mango.desktop    - - - - /home/juca/.local/share/wayland-sessions/mango.desktop
-L+ /usr/share/xsessions/bspwm.desktop          - - - - /home/juca/.local/share/xsessions/bspwm.desktop
+# L+ /usr/share/xsessions/bspwm.desktop          - - - - /home/juca/.local/share/xsessions/bspwm.desktop
 DM_SESSIONS_TMPFILES_EOF
 
 ############################
@@ -1716,13 +1695,15 @@ chroot /mnt systemctl disable systemd-networkd.service 2>/dev/null || true
 chroot /mnt systemctl mask systemd-networkd.socket 2>/dev/null || true
 chroot /mnt systemctl mask systemd-networkd-wait-online.service 2>/dev/null || true
 chroot /mnt systemctl enable NetworkManager.service
-chroot /mnt systemctl enable iwd.service
+# chroot /mnt systemctl enable iwd.service  # Opcional (Wi-Fi não existe em VM Proxmox)
 chroot /mnt systemctl enable ssh.service
 # chroot /mnt systemctl enable --user pulseaudio.service
 chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 chroot /mnt systemctl enable lightdm.service 2>/dev/null || true
+chroot /mnt systemctl enable qemu-guest-agent.service 2>/dev/null || true
+chroot /mnt systemctl enable spice-vdagent.service 2>/dev/null || true
 chroot /mnt systemctl enable libvirtd.service 2>/dev/null || true
 
 ## Audio
@@ -1769,76 +1750,59 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ##################################################
 ### Instalação do Kernel, Dracut e Bootloader ###
 ##################################################
-echo "🐧 Instalando Kernel, Dracut e Bootloader..."
+echo "🐧 Instalando Kernel, Dracut e Bootloader com suporte a Secure Boot..."
 chroot /mnt apt install -y \
-  linux-image-amd64 linux-headers-amd64 intel-microcode \
+  linux-image-amd64 linux-headers-amd64 \
   dracut dracut-core \
   shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
+# intel-microcode é desnecessário em VM (o host Proxmox já aplica o microcode do processador)
 
 #####################################
 ### Secure Boot + Chaves MOK      ###
 #####################################
-echo "🔐 Configurando Secure Boot e chaves MOK..."
-
-# Criar diretório para chaves
-chroot /mnt mkdir -p /root/secureboot-keys
-
-# Gerar chave MOK (PEM para sbsign, DER para mokutil/kmodsign)
-chroot /mnt bash -c '
-  if [ ! -f /root/secureboot-keys/MOK.key ]; then
-    openssl req -new -x509 -newkey rsa:2048 \
-      -keyout /root/secureboot-keys/MOK.key \
-      -out    /root/secureboot-keys/MOK.crt \
-      -nodes -days 36500 -subj "/CN=My Kernel Module Signing/"
-    openssl x509 -in /root/secureboot-keys/MOK.crt -outform DER -out /root/secureboot-keys/MOK.der
-  fi
-'
-
-# Importar chave no MOK Manager (vai pedir confirmação no próximo boot)
-chroot /mnt mokutil --import /root/secureboot-keys/MOK.der || true
-
-# Assinar todos os kernels instalados
-chroot /mnt bash -c '
-  for kver in $(ls /lib/modules 2>/dev/null); do
-    vmlinuz="/boot/vmlinuz-${kver}"
-    if [ -f "$vmlinuz" ]; then
-      echo "Assinando $vmlinuz..."
-      sbsign --key /root/secureboot-keys/MOK.key \
-             --cert /root/secureboot-keys/MOK.crt \
-             --output "${vmlinuz}.signed" "$vmlinuz"
-      mv -f "${vmlinuz}.signed" "$vmlinuz"
-    fi
-  done
-'
-
-# Criar hook DKMS para assinar módulos automaticamente
-mkdir -pv /mnt/etc/dkms/post-build.d
-cat << 'EOF' > /mnt/etc/dkms/post-build.d/99-sign-with-mok
-#!/bin/bash
-KEY=/root/secureboot-keys/MOK.key
-DER=/root/secureboot-keys/MOK.der
-sf=$(find /usr/src/linux-headers-*/scripts -name sign-file 2>/dev/null | head -n1)
-[ -x "$sf" ] || exit 0
-find /lib/modules -type f -name '*.ko' -print0 2>/dev/null | \
-  xargs -0 -I{} "$sf" sha256 "$KEY" "$DER" "{}"
-EOF
-chmod +x /mnt/etc/dkms/post-build.d/99-sign-with-mok
+# NOTA: Em VM Proxmox/QEMU, o kernel oficial Debian já vem assinado pela chave
+# oficial Debian/Microsoft e funciona nativamente com Secure Boot/Shim no OVMF.
+# A geração e auto-assinatura de chave MOK customizada foi comentada para evitar
+# bloqueio de boot ("Access Denied") na VM. Ela é necessária apenas em hardware
+# real caso sejam compilados módulos proprietários fora da árvore (como nvidia.ko).
+#
+# chroot /mnt mkdir -p /root/secureboot-keys
+# chroot /mnt bash -c '
+#   if [ ! -f /root/secureboot-keys/MOK.key ]; then
+#     openssl req -new -x509 -newkey rsa:2048 \
+#       -keyout /root/secureboot-keys/MOK.key \
+#       -out    /root/secureboot-keys/MOK.crt \
+#       -nodes -days 36500 -subj "/CN=My Kernel Module Signing/"
+#     openssl x509 -in /root/secureboot-keys/MOK.crt -outform DER -out /root/secureboot-keys/MOK.der
+#   fi
+# '
+# chroot /mnt mokutil --import /root/secureboot-keys/MOK.der || true
 
 ##################################################
-### Driver NVIDIA Proprietário e Multimídia    ###
+### Drivers de Vídeo VM (Proxmox/QEMU) e Multimídia ###
 ##################################################
-echo "🎮 Instalando Driver NVIDIA (DKMS), Vulkan, CUDA, NVDEC, Intel VA-API e MPV..."
+echo "🎮 Instalando Drivers de Vídeo VirtIO/QXL, Mesa, Vulkan, QEMU Guest Agent e MPV..."
 chroot /mnt apt install -y \
-  nvidia-driver \
-  nvidia-smi \
-  nvidia-settings \
-  nvidia-vulkan-icd \
-  libcuda1 \
-  libnvcuvid1 \
-  intel-media-va-driver-non-free \
-  vainfo \
-  mesa-va-drivers \
+  qemu-guest-agent \
+  spice-vdagent \
+  xserver-xorg-video-qxl \
+  xserver-xorg-video-all \
+  libgl1-mesa-dri \
+  mesa-vulkan-drivers \
   mpv
+
+# NOTA (Hardware Físico Acer Nitro 5):
+# Descomente abaixo para instalar o driver proprietário NVIDIA somente no hardware real:
+# chroot /mnt apt install -y \
+#   nvidia-driver \
+#   nvidia-smi \
+#   nvidia-settings \
+#   nvidia-vulkan-icd \
+#   libcuda1 \
+#   libnvcuvid1 \
+#   intel-media-va-driver-non-free \
+#   vainfo \
+#   mesa-va-drivers
 
 ##################################################
 ### Gerar Initramfs via Dracut para os Kernels ###
@@ -1856,16 +1820,20 @@ echo "⚙️ Configurando e instalando GRUB..."
 
 cat <<EOF >/mnt/etc/default/grub
 #
-# Configuration file for GRUB — Acer virtual 5 AN515-52
+# Configuration file for GRUB — Virtual Machine (Proxmox / KVM)
 #
 GRUB_DEFAULT=saved
-GRUB_TIMEOUT=5
+GRUB_TIMEOUT=3
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=\$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISABLE_OS_PROBER=false
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet intel_iommu=on iommu=pt i915.enable_psr=0 i915.enable_fbc=1 nvidia-drm.modeset=1 msr.allow_writes=on nowatchdog split_lock_detect=off apparmor=1 security=apparmor"
+# Linha de comando para VM (Proxmox/KVM):
+GRUB_CMDLINE_LINUX_DEFAULT="quiet rhgb apparmor=1 security=apparmor"
+
+# Linha de comando para o Acer Nitro 5 físico (comente para VM / descomente no laptop):
+# GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet intel_iommu=on iommu=pt i915.enable_psr=0 i915.enable_fbc=1 nvidia-drm.modeset=1 msr.allow_writes=on nowatchdog split_lock_detect=off apparmor=1 security=apparmor"
 GRUB_DISABLE_RECOVERY="true"
-GRUB_GFXMODE=1920x1080x32
+GRUB_GFXMODE=1920x1080x32,auto
 GRUB_COLOR_NORMAL="light-blue/black"
 GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 EOF
@@ -1876,6 +1844,15 @@ chroot /mnt grub-install \
   --efi-directory=/boot/efi \
   --bootloader-id=debian \
   --recheck
+
+# Garantir cópia de fallback padrão em EFI/BOOT/BOOTX64.EFI (resolve Access Denied ou reset de NVRAM no OVMF / Proxmox)
+mkdir -p /mnt/boot/efi/EFI/BOOT
+if [ -f /mnt/boot/efi/EFI/debian/shimx64.efi ]; then
+  cp -f /mnt/boot/efi/EFI/debian/shimx64.efi /mnt/boot/efi/EFI/BOOT/BOOTX64.EFI 2>/dev/null || true
+  cp -f /mnt/boot/efi/EFI/debian/grubx64.efi /mnt/boot/efi/EFI/BOOT/grubx64.efi 2>/dev/null || true
+  cp -f /mnt/boot/efi/EFI/debian/mmx64.efi /mnt/boot/efi/EFI/BOOT/mmx64.efi 2>/dev/null || true
+  cp -f /mnt/boot/efi/EFI/debian/fbx64.efi /mnt/boot/efi/EFI/BOOT/fbx64.efi 2>/dev/null || true
+fi
 
 # Atualizar configuração do GRUB
 chroot /mnt update-grub
@@ -2113,97 +2090,70 @@ chmod +x /mnt/etc/kernel/postinst.d/zz-trim-kernels
 echo " Executando verificação de limpeza de kernels excedentes..."
 chroot /mnt /usr/local/sbin/trim-kernels || true
 
-##################
-### SIGN CHECK ###
-##################
-touch /mnt/usr/local/bin/check-kernel-signatures.sh
-cat <<EOF >/mnt/usr/local/bin/check-kernel-signatures.sh
+#############################################
+### Verificação de Pós-Instalação da VM   ###
+#############################################
+touch /mnt/usr/local/bin/check-vm-setup.sh
+cat << 'VM_CHECK_EOF' > /mnt/usr/local/bin/check-vm-setup.sh
 #!/bin/bash
-# Lista todos os kernels instalados e verifica se estão assinados com a chave MOK
+# Script de diagnóstico para Debian 13 em VM Proxmox / QEMU
 
-echo " [Kernels Instalados] Verificando assinaturas..."
+echo "=========================================="
+echo "🔍 Verificando status da Máquina Virtual"
+echo "=========================================="
 
-for k in /boot/vmlinuz-*; do
-    KERNEL_NAME=$(basename "$k")
-    echo ""
-    echo " Verificando $KERNEL_NAME..."
-
-    if sbverify --list "$k" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
-        echo " $KERNEL_NAME está assinado corretamente com sua chave MOK"
-    else
-        echo " $KERNEL_NAME NÃO está assinado ou tem assinatura inválida"
-    fi
-done
-EOF
-chmod +x /mnt/usr/local/bin/check-kernel-signatures.sh
-
-touch /mnt/usr/local/bin/check-secureboot.sh
-cat <<EOF >/mnt/usr/local/bin/check-secureboot.sh
-#!/bin/bash
-# Verifica se o sistema está 100% compatível com Secure Boot
-
-echo " [Secure Boot] Verificando status..."
-if mokutil --sb-state | grep -q "SecureBoot enabled"; then
-    echo " Secure Boot está ATIVADO"
+echo -n "1. EFI Bootloader (Shim & GRUB Signed): "
+if [ -f "/boot/efi/EFI/debian/shimx64.efi" ]; then
+    echo "OK (/boot/efi/EFI/debian/shimx64.efi presente)"
+elif [ -f "/boot/efi/EFI/debian/grubx64.efi" ]; then
+    echo "OK (/boot/efi/EFI/debian/grubx64.efi presente)"
 else
-    echo " Secure Boot está DESATIVADO"
+    echo "FALHA (bootloader não encontrado)"
 fi
 
-echo ""
-echo " [Shim/GRUB] Verificando binários EFI..."
-EFI_DIR="/boot/efi/EFI/debian"
-for bin in shimx64.efi grubx64.efi; do
-    if sbverify --list "$EFI_DIR/$bin" &>/dev/null; then
-        echo " $bin está assinado corretamente"
-    else
-        echo " $bin NÃO está assinado ou está corrompido"
-    fi
-done
+echo -n "2. Kernel e Dracut: "
+KERNELS=$(ls /boot/vmlinuz-* 2>/dev/null | wc -l)
+INITRDS=$(ls /boot/initramfs-*.img /boot/initrd.img-* 2>/dev/null | wc -l)
+echo "$KERNELS kernel(s), $INITRDS initramfs gerado(s)"
 
-echo ""
-echo " [MOK] Verificando chave no firmware..."
-if mokutil --list-enrolled 2>/dev/null | grep -q "My Kernel Module Signing"; then
-    echo " Chave MOK está REGISTRADA no firmware"
-elif mokutil --list-new 2>/dev/null | grep -q "My Kernel Module Signing"; then
-    echo " Chave MOK está AGENDADA para inclusão no próximo boot (MokManager)"
+echo -n "3. Sessão BSPWM (LightDM): "
+if [ -f "/usr/share/xsessions/bspwm.desktop" ] && [ -x "/usr/local/bin/start-bspwm-session" ]; then
+    echo "OK (bspwm.desktop e start-bspwm-session configurados para Home Manager)"
 else
-    echo " Chave MOK NÃO está registrada"
+    echo "FALHA (arquivo de sessão ou wrapper ausente)"
 fi
 
-echo ""
-echo " [Kernel] Verificando assinaturas dos kernels instalados..."
-for KERNEL in /boot/vmlinuz-*; do
-    [ -f "$KERNEL" ] || continue
-    KNAME=$(basename "$KERNEL")
-    if sbverify --list "$KERNEL" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
-        echo " Kernel $KNAME está assinado com sua chave MOK customizada"
-    elif sbverify --list "$KERNEL" &>/dev/null; then
-        echo " Kernel $KNAME está assinado oficialmente pela Debian"
-    else
-        echo " Kernel $KNAME NÃO está assinado"
-    fi
-done
-
-echo ""
-echo " [DKMS] Verificando módulos DKMS..."
-DKMS_DIR="/lib/modules/$(uname -r)/updates/dkms"
-if [ -d "$DKMS_DIR" ]; then
-    for mod in "$DKMS_DIR"/*.ko; do
-        if modinfo "$mod" | grep -q "signer"; then
-            echo " $(basename "$mod") está assinado"
-        else
-            echo " $(basename "$mod") NÃO está assinado"
-        fi
-    done
+echo -n "4. QEMU Guest Agent e SPICE: "
+if command -v qemu-ga >/dev/null 2>&1 || [ -x "/usr/sbin/qemu-ga" ]; then
+    echo "OK (qemu-guest-agent presente)"
 else
-    echo "ℹ Nenhum módulo DKMS encontrado para $(uname -r)"
+    echo "Aviso (verifique qemu-guest-agent)"
 fi
-EOF
-chmod +x /mnt/usr/local/bin/check-secureboot.sh
 
-echo "🔍 Executando verificação de assinaturas e Secure Boot..."
-chroot /mnt /usr/local/bin/check-kernel-signatures.sh || true
-chroot /mnt /usr/local/bin/check-secureboot.sh || true
+echo -n "5. Nix Daemon: "
+if [ -f "/etc/nix/nix.conf" ] && [ -f "/etc/profile.d/nix-env.sh" ]; then
+    echo "OK (nix.conf e nix-env.sh presentes)"
+else
+    echo "Aviso (verifique /etc/nix/nix.conf)"
+fi
+
+echo -n "6. zRAM (3x RAM via zstd): "
+if [ -f "/etc/systemd/zram-generator.conf" ]; then
+    echo "OK (zram-generator.conf com zram-size = ram * 3)"
+else
+    echo "Aviso (verifique /etc/systemd/zram-generator.conf)"
+fi
+
+echo "=========================================="
+echo "💡 Próximo passo após reiniciar a VM:"
+echo "   Faça login como '$username' no LightDM e execute:"
+echo "   home-manager switch --flake .#$username@virtual"
+echo "=========================================="
+VM_CHECK_EOF
+chmod +x /mnt/usr/local/bin/check-vm-setup.sh
+
+echo "🔍 Executando verificação de pós-instalação da VM..."
+chroot /mnt /usr/local/bin/check-vm-setup.sh || true
 
 
 ### As sudo
