@@ -143,11 +143,11 @@ mkdir -pv "$MOUNTPOINT/boot/efi"
 mount -t vfat -o defaults,noatime,nodiratime "$EFI_PART" "$MOUNTPOINT/boot/efi"
 
 # ============================================================
-# Swapfile de 16 GB no SSD (prioridade baixa, atrás do zRAM)
+# Swapfile no SSD (Comentado — utilizando exclusivamente zRAM)
 # ============================================================
-echo "💾 Criando Swapfile de 16 GB..."
-btrfs filesystem mkswapfile --size 16g "$MOUNTPOINT/var/swap/swapfile"
-chmod 600 "$MOUNTPOINT/var/swap/swapfile"
+# echo "💾 Criando Swapfile de 16 GB..."
+# btrfs filesystem mkswapfile --size 16g "$MOUNTPOINT/var/swap/swapfile"
+# chmod 600 "$MOUNTPOINT/var/swap/swapfile"
 echo "Subvolumes e boot partition montados com sucesso."
 
 ####################################################
@@ -883,8 +883,8 @@ LABEL=${ROOT_LABEL}    /var/swap           btrfs rw,${BTRFS_OPTS_SWAP},subvol=@s
 LABEL=${SYSTEM_LABEL}  /boot               ext4  rw,relatime                                     0 1
 LABEL=${EFI_LABEL}     /boot/efi           vfat  defaults,noatime,nodiratime                     0 2
 
-# === Swap (Prioridade 10) ===
-/var/swap/swapfile     none                swap  defaults,pri=10                                 0 0
+# === Swap em disco (Comentado — utilizando exclusivamente zRAM) ===
+# /var/swap/swapfile     none                swap  defaults,pri=10,nofail                          0 0
 
 # === Partição de Dados Compartilhados (exFAT) ===
 LABEL=${MISC_LABEL}    /media/juca/SharedData  exfat  defaults,nofail,uid=1000,gid=1000,dmask=0022,fmask=0133  0 0
@@ -1122,19 +1122,21 @@ chroot /mnt systemctl enable tlp
 chroot /mnt systemctl enable thermald
 chroot /mnt systemctl enable irqbalance
 
-# Configuração do zRAM (Swap comprimido em RAM de 8 GB via zstd com prioridade máxima)
+# Configuração do zRAM (Swap comprimido em RAM: 3x a memória RAM via zstd com prioridade máxima)
 mkdir -pv /mnt/etc/systemd /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/systemd/zram-generator.conf
-# /etc/systemd/zram-generator.conf — Configuração do zRAM (Acer Nitro 5)
+# /etc/systemd/zram-generator.conf — Configuração do zRAM (Acer Nitro 5 — 3x RAM)
 [zram0]
-zram-size = min(ram / 2, 8192)
+zram-size = ram * 3
 compression-algorithm = zstd
 swap-priority = 100
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/99-zram.conf
 # Otimizações de kernel para zRAM de alta performance
-vm.swappiness = 100
+vm.swappiness = 180
+vm.watermark_boost_factor = 0
+vm.watermark_scale_factor = 125
 vm.page-cluster = 0
 EOF
 
