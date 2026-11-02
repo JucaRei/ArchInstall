@@ -160,7 +160,7 @@ echo "Subvolumes e boot partition montados com sucesso."
 
 debootstrap \
   --variant=minbase \
-  --include=apt,bash,btrfs-compsize,btrfs-progs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
+  --include=apt,uidmap,bash,btrfs-compsize,btrfs-progs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
@@ -446,10 +446,27 @@ MX_PREF_EOF
 # deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ bookworm main
 # HEREDOC
 
-# cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
-# deb [signed-by=/usr/share/keyrings/xanmod.gpg] http://deb.xanmod.org releases main
-# HEREDOC
+# ============================================================
+# Repositório XanMod Kernel
+# ============================================================
+echo "📦 Configurando repositório e chaves do XanMod Kernel..."
+mkdir -p /mnt/etc/apt/keyrings /mnt/etc/apt/sources.list.d
+(curl -fsSL https://dl.xanmod.org/archive.key || wget -qO - https://dl.xanmod.org/archive.key) | \
+  gpg --dearmor -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+chmod 644 /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
 
+cat << 'XANMOD_SOURCES_EOF' > /mnt/etc/apt/sources.list.d/xanmod.sources
+Types: deb
+URIs: http://deb.xanmod.org
+Suites: releases
+Components: main
+Signed-By: /etc/apt/keyrings/xanmod-archive-keyring.gpg
+XANMOD_SOURCES_EOF
+
+# Configuração legada mantida comentada para referência:
+# cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
+# deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main
+# HEREDOC
 # chroot /mnt apt install gnupg2 curl -y
 # chroot /mnt apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F7D09EE734E623
 # chroot /mnt curl -fsSL https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/xanmod.gpg > /dev/null
@@ -1760,9 +1777,17 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ##################################################
 ### Instalação do Kernel, Dracut e Bootloader ###
 ##################################################
-echo "🐧 Instalando Kernel, Dracut e Bootloader..."
+echo "🐧 Instalando Kernel XanMod (Principal), Dracut e Bootloader..."
+chroot /mnt apt update
+
+# Kernel Debian padrão (Comentado — utilizando XanMod como principal):
+# chroot /mnt apt install -y linux-image-amd64 linux-headers-amd64
+
+# Kernel XanMod x64v3 (Principal — otimizado para CPU Intel 8ª geração / AVX2):
+# (Alterne para linux-xanmod se desejar a versão genérica v1, ou linux-xanmod-lts-x64v3 para LTS)
 chroot /mnt apt install -y \
-  linux-image-amd64 linux-headers-amd64 intel-microcode \
+  linux-xanmod-x64v3 \
+  intel-microcode \
   dracut dracut-core \
   shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
 
