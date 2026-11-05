@@ -13,8 +13,7 @@ fi
 
 # Obter data e hora real via cabeçalho HTTP do deb.debian.org (evita erro 'Not live until' no sqv/apt)
 timedatectl set-ntp true 2>/dev/null || true
-HTTP_DATE=$(curl -sI --max-time 5 https://deb.debian.org 2>/dev/null | sed -n "s/^[dD]ate: //p" | tr -d "
-")
+HTTP_DATE=$(curl -sI --max-time 5 https://deb.debian.org 2>/dev/null | sed -n 's/^[dD]ate: //p' | tr -d '\r')
 if [ -n "$HTTP_DATE" ]; then
     date -u -s "$HTTP_DATE" 2>/dev/null || true
     hwclock --systohc 2>/dev/null || true
@@ -81,7 +80,7 @@ echo "🔪 Particionando $DRIVE..."
 # sgdisk -n 6:0:+0       -t 6:8300 -c 3:"Debian Btrfs Pool"      "$DRIVE"
 # sgdisk -n 4:0:0        -t 4:0700 -c 4:"Shared exFAT Data"      "$DRIVE"
 
-sgdisk   -c 6:"Debian Btrfs Pool"      "$DRIVE"
+sgdisk   -c 7:"Debian Btrfs Pool"      "$DRIVE"
 sgdisk   -p "$DRIVE"
 
 # ============================================================
@@ -160,10 +159,11 @@ echo "Subvolumes e boot partition montados com sucesso."
 
 debootstrap \
   --variant=minbase \
+  --components=main,contrib,non-free,non-free-firmware \
   --include=apt,uidmap,bash,btrfs-compsize,btrfs-progs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
-  "http://debian.c3sl.ufpr.br/debian/ ${CODENAME} contrib non-free non-free-firmware"
+  http://debian.c3sl.ufpr.br/debian/
 
 # deb http://debian.c3sl.ufpr.br/debian/ main contrib non-free non-free-firmware
 # mmdebstrap --variant=minbase --include=apt,apt-utils,extrepo,cpio,cron,zstd,dhcpcd5,ca-certificates,perl-openssl-defaults,sudo,neovim,initramfs-tools,initramfs-tools-core,dracut,console-setup,dosfstools,console-setup-linux,keyboard-configuration,debian-archive-keyring,locales,locales-all,btrfs-progs,dmidecode,kmod,less,gdisk,gpgv,neovim,ncurses-base,netbase,procps,systemd,systemd-sysv,udev,ifupdown,init,iproute2,iputils-ping,bash,whiptail --arch=amd64 bookworm /mnt "http://debian.c3sl.ufpr.br/debian/ bookworm contrib non-free non-free-firmware"
@@ -233,8 +233,8 @@ omit_dracutmodules+=" amdgpu "
 # filesystems+=" resume btrfs "
 filesystems+=" btrfs "
 
-# Kernel command-line: enable SELinux, show splash, keep messages quiet
-kernel_cmdline=" rootflags=subvol=@root rw quiet security=apparmor apparmor=1 lsm=landlock lockdown yama apparmor bpf "
+# Kernel command-line: lsm modules, splash, quiet
+kernel_cmdline=" rootflags=subvol=@root rw quiet lsm=landlock,lockdown,yama,apparmor,bpf "
 
 # Ensure Plymouth theme files are embedded
 # install_items+="/usr/share/plymouth/themes/solar/* \
@@ -334,12 +334,11 @@ Suites: trixie-backports
 Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-# Types: deb deb-src
-# # URIs: https://deb.debian.org/debian/
-# URIs: http://debian.c3sl.ufpr.br/debian/
-# Suites: trixie-security
-# Components: main contrib non-free non-free-firmware
-# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+Types: deb deb-src
+URIs: https://security.debian.org/debian-security
+Suites: trixie-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 # URIs: http://deb.debian.org/debian/
@@ -515,20 +514,15 @@ cat >/mnt/etc/apt/preferences.d/99trixie.pref <<HEREDOC
 # version is more recent
 
 Package: *
-# Pin: release a=stable
-# Pin: release a=${CODENAME}
-Pin: release a=trixie
+Pin: release n=trixie
 Pin-Priority: 900
 HEREDOC
 
 cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
-# 100 <= P < 500: causes a version to be installed unless there is a
-# version available belonging to some other distribution or the installed
-# version is more recent
-
+# Prioridade padrao para a suite testing
 Package: *
 Pin: release a=testing
-Pin-Priority: 400
+Pin-Priority: 500
 HEREDOC
 
 cat >/mnt/etc/apt/preferences.d/10unstable.pref <<HEREDOC
@@ -601,8 +595,9 @@ chroot /mnt apt install sudo -y
 chroot /mnt sh -c 'echo "root:200291" | chpasswd -c SHA512'
 chroot /mnt useradd $username -m -c "Reinaldo P Jr" -s /bin/bash
 chroot /mnt sh -c 'echo "juca:200291" | chpasswd -c SHA512'
-chroot /mnt usermod -aG floppy,audio,sudo,video,systemd-journal,lp,cdrom,netdev,input,plugdev,libvirt,kvm $username
-chroot /mnt usermod -aG sudo $username
+for grp in audio sudo video systemd-journal lp cdrom netdev input plugdev kvm; do
+    chroot /mnt getent group "$grp" >/dev/null && chroot /mnt usermod -aG "$grp" "$username" || true
+done
 
 # Permissão 755 na home para que Display Managers e Nix acessem perfis e sessões desktop
 chmod 755 /mnt/home/$username
@@ -978,7 +973,7 @@ NM_IWD_EOF
 cat <<EOF >/mnt/etc/NetworkManager/conf.d/wifi_backend.conf
 [device]
 wifi.backend=iwd
-wifi.iwd.autoconnect=yes
+wifi.iwd.autoconnect=false
 EOF
 
 cat <<EOF >/mnt/etc/NetworkManager/conf.d/10-wlan.conf
@@ -999,9 +994,7 @@ EOF
 ### SOCKET RAW ###
 ##################
 
-mkdir -pv /mnt/usr/lib/sysctl.d
-touch /mnt/usr/lib/sysctl.d/50-default.conf
-echo "-net.ipv4.ping_group_range = 0 2147483647" >> /mnt/usr/lib/sysctl.d/50-default.conf
+# ping_group_range ja configurado em /etc/sysctl.d/10-conf.conf
 
 
 ### BTRFS
@@ -1104,9 +1097,10 @@ chown root:root /mnt/etc/polkit-1/rules.d/10-udisks2.rules \
 cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
 ${username} ALL = NOPASSWD: /bin/systemctl
 HEREDOC
+chmod 0440 /mnt/etc/sudoers.d/sysctl
 
 ### XANMOD KERNEL ###
-chroot /mnt apt install software-properties-common apt-transport-https ca-certificates curl gnupg 
+chroot /mnt apt install -y software-properties-common ca-certificates curl gnupg 
 
 ############
 ### BOOT ###
@@ -1166,7 +1160,6 @@ EOF
 echo "🖥️ Instalando Xorg, LightDM, GTK Greeter e utilitários de exibição..."
 chroot /mnt apt install -y \
     xserver-xorg \
-    xserver-xorg-video-intel \
     xserver-xorg-input-libinput \
     x11-xserver-utils \
     xinit \
@@ -1308,11 +1301,13 @@ EOF
 #### Config Powertop ####
 #########################
 
-touch /mnt/etc/rc.local
 cat <<EOF >/mnt/etc/rc.local
-#PowerTop
+#!/bin/sh
+# PowerTop
 powertop --auto-tune
+exit 0
 EOF
+chmod +x /mnt/etc/rc.local
 
 #################
 ### BLUETOOTH ###
@@ -1354,11 +1349,13 @@ chroot /mnt apt install -y \
   swtpm \
   swtpm-tools \
   qemu-utils \
-  bridge-utils \
   dnsmasq-base \
   spice-vdagent \
   gir1.2-spiceclientgtk-3.0 \
   virtinst
+
+# Adicionar usuario ao grupo libvirt agora que o pacote foi instalado
+chroot /mnt usermod -aG libvirt "$username" 2>/dev/null || true
 
 # Configurar QEMU para executar sob o usuário local juca
 # Isso resolve erros de "Permission denied" ao acessar ISOs e armazenamentos em /media/juca/...
@@ -1576,10 +1573,10 @@ SDDM_SESSIONS_EOF
 # 2. Compatibilidade universal de sessões para QUALQUER Display Manager (GDM, LightDM, SDDM)
 # DMs como GDM e LightDM buscam exclusivamente em /usr/share/*-sessions.
 # Provisionamos symlinks automáticos via tmpfiles para as sessões do Home Manager:
+# (bspwm.desktop e gerenciado pelo wrapper nativo start-bspwm-session)
 cat << 'DM_SESSIONS_TMPFILES_EOF' > "${TARGET_DIR}/etc/tmpfiles.d/nix-desktop-sessions.conf"
 L+ /usr/share/wayland-sessions/hyprland.desktop - - - - /home/juca/.local/share/wayland-sessions/hyprland.desktop
 L+ /usr/share/wayland-sessions/mango.desktop    - - - - /home/juca/.local/share/wayland-sessions/mango.desktop
-L+ /usr/share/xsessions/bspwm.desktop          - - - - /home/juca/.local/share/xsessions/bspwm.desktop
 DM_SESSIONS_TMPFILES_EOF
 
 ############################
@@ -1787,6 +1784,7 @@ chroot /mnt apt update
 # (Alterne para linux-xanmod se desejar a versão genérica v1, ou linux-xanmod-lts-x64v3 para LTS)
 chroot /mnt apt install -y \
   linux-xanmod-x64v3 \
+  linux-headers-xanmod-x64v3 \
   intel-microcode \
   dracut dracut-core \
   shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
@@ -1810,8 +1808,8 @@ chroot /mnt bash -c '
   fi
 '
 
-# Importar chave no MOK Manager (vai pedir confirmação no próximo boot)
-chroot /mnt mokutil --import /root/secureboot-keys/MOK.der || true
+# Importar chave no MOK Manager com root-pw para execucao nao-interativa
+chroot /mnt mokutil --root-pw --import /root/secureboot-keys/MOK.der || true
 
 # Assinar todos os kernels instalados
 chroot /mnt bash -c '
@@ -1827,8 +1825,14 @@ chroot /mnt bash -c '
   done
 '
 
-# Criar hook DKMS para assinar módulos automaticamente
-mkdir -pv /mnt/etc/dkms/post-build.d
+# Configuracao nativa do DKMS para assinatura de modulos
+mkdir -pv /mnt/etc/dkms/framework.conf.d /mnt/etc/dkms/post-build.d
+cat << 'DKMS_CONF_EOF' > /mnt/etc/dkms/framework.conf.d/signing.conf
+mok_signing_key="/root/secureboot-keys/MOK.key"
+mok_certificate="/root/secureboot-keys/MOK.der"
+DKMS_CONF_EOF
+
+# Criar hook DKMS para assinar módulos automaticamente (fallback)
 cat << 'EOF' > /mnt/etc/dkms/post-build.d/99-sign-with-mok
 #!/bin/bash
 KEY=/root/secureboot-keys/MOK.key
@@ -1879,18 +1883,19 @@ GRUB_TIMEOUT=5
 GRUB_DISABLE_SUBMENU=false
 GRUB_DISTRIBUTOR=\$(lsb_release -i -s 2>/dev/null || echo Debian)
 GRUB_DISABLE_OS_PROBER=false
-GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet intel_iommu=on iommu=pt i915.enable_psr=0 i915.enable_fbc=1 nvidia-drm.modeset=1 msr.allow_writes=on nowatchdog split_lock_detect=off apparmor=1 security=apparmor"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash intel_iommu=on iommu=pt i915.enable_psr=0 i915.enable_fbc=1 nvidia-drm.modeset=1 nvidia-drm.fbdev=1 msr.allow_writes=on nowatchdog split_lock_detect=off lsm=landlock,lockdown,yama,apparmor,bpf"
 GRUB_DISABLE_RECOVERY="true"
 GRUB_GFXMODE=1920x1080x32
 GRUB_COLOR_NORMAL="light-blue/black"
 GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
 EOF
 
-# Instalar GRUB via shim
+# Instalar GRUB via shim (com --removable de fallback essencial para o firmware UEFI da Acer)
 chroot /mnt grub-install \
   --target=x86_64-efi \
   --efi-directory=/boot/efi \
   --bootloader-id=debian \
+  --removable \
   --recheck
 
 # Atualizar configuração do GRUB
