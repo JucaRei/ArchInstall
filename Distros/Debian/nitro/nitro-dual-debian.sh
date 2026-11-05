@@ -400,6 +400,13 @@ if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
     fi
 fi
 
+# Isolar o repositório do MX
+cat << 'EOF' > /mnt/etc/apt/preferences.d/20mxlinux.pref
+Package: *
+Pin: release o=MX
+Pin-Priority: 100
+EOF
+
 # Garantir permissão de leitura universal (0644) para o usuário _apt e sqv
 chmod -R a+rX /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d 2>/dev/null || true
 
@@ -1891,7 +1898,6 @@ chroot /mnt apt install -y \
   libnvcuvid1 \
   intel-media-va-driver-non-free \
   vainfo \
-  mesa-va-drivers \
   mpv
 
 ##################################################
