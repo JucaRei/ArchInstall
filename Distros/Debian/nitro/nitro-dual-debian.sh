@@ -160,7 +160,7 @@ echo "Subvolumes e boot partition montados com sucesso."
 debootstrap \
   --variant=minbase \
   --components=main,contrib,non-free,non-free-firmware \
-  --include=apt,uidmap,bash,btrfs-compsize,btrfs-progs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
+  --include=apt,uidmap,packagekit,packagekit-tools,bash,btrfs-compsize,btrfs-progs,duperemove,zsh,nano,extrepo,cpio,net-tools,locales,console-setup,perl-openssl-defaults,apt-utils,dosfstools,debconf-utils,wget,curl,tzdata,keyboard-configuration,zstd,ca-certificates,debian-archive-keyring,apt-transport-tor,xz-utils,kmod,gdisk,ncurses-base,systemd,udev,init,iproute2,iputils-ping \
   --arch=${Architecture} \
   ${CODENAME} /mnt \
   http://debian.c3sl.ufpr.br/debian/
