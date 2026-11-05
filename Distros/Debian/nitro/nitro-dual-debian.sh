@@ -1826,6 +1826,8 @@ chroot /mnt apt update
 # (Alterne para linux-xanmod se desejar a versão genérica v1, ou linux-xanmod-lts-x64v3 para LTS)
 chroot /mnt apt install -y \
   linux-xanmod-x64v3 \
+  clang \ 
+  lld \
   intel-microcode \
   dracut dracut-core \
   shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
