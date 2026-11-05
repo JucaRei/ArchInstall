@@ -450,14 +450,15 @@ MX_PREF_EOF
 # ============================================================
 echo "📦 Configurando repositório e chaves do XanMod Kernel..."
 mkdir -p /mnt/etc/apt/keyrings /mnt/etc/apt/sources.list.d
-(curl -fsSL https://dl.xanmod.org/archive.key || wget -qO - https://dl.xanmod.org/archive.key) | \
-  gpg --dearmor -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+
+# Baixar a chave oficial correta (.key) e converter para dearmour
+curl -fsSL https://dl.xanmod.org/archive.key | gpg --dearmor -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
 chmod 644 /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
 
 cat << 'XANMOD_SOURCES_EOF' > /mnt/etc/apt/sources.list.d/xanmod.sources
 Types: deb
 URIs: http://deb.xanmod.org
-Suites: releases
+Suites: trixie
 Components: main
 Signed-By: /etc/apt/keyrings/xanmod-archive-keyring.gpg
 XANMOD_SOURCES_EOF
