@@ -1897,8 +1897,7 @@ chroot /mnt apt install -y \
   libcuda1 \
   libnvcuvid1 \
   intel-media-va-driver-non-free \
-  vainfo \
-  mpv
+  vainfo
 
 ##################################################
 ### Gerar Initramfs via Dracut para os Kernels ###
