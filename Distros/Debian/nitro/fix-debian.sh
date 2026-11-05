@@ -81,7 +81,7 @@ fi
 step "Passo 1: Detectando Ambiente de Execução..."
 
 DRIVE="/dev/nvme0n1"
-ROOT_PART="${DRIVE}p6"
+ROOT_PART="${DRIVE}p7"
 BOOT_PART="${DRIVE}p2"
 EFI_PART="${DRIVE}p1"
 
