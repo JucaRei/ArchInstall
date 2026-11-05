@@ -699,6 +699,7 @@ EOF
 
 cat << EOF > /mnt/etc/modules-load.d/iwlwifi.conf
 iwlwifi
+iwlmvm
 EOF
 
 #######################################
@@ -1160,6 +1161,7 @@ EOF
 echo "🖥️ Instalando Xorg, LightDM, GTK Greeter e utilitários de exibição..."
 chroot /mnt apt install -y \
     xserver-xorg \
+    xserver-xorg-input-all \
     xserver-xorg-input-libinput \
     x11-xserver-utils \
     xinit \
@@ -1169,18 +1171,36 @@ chroot /mnt apt install -y \
     lightdm \
     lightdm-gtk-greeter \
     lightdm-gtk-greeter-settings \
+    accountsservice \
     libpam-gnome-keyring \
-    xwayland || true
+    xwayland
+chroot /mnt apt-mark manual xserver-xorg xserver-xorg-input-all xserver-xorg-input-libinput lightdm lightdm-gtk-greeter accountsservice 2>/dev/null || true
 
 echo "⚙️ Configurando LightDM e sessão BSPWM do Home Manager..."
 mkdir -p /mnt/etc/lightdm /mnt/etc/lightdm/lightdm.conf.d /mnt/usr/share/xsessions /mnt/usr/local/bin
 
-# 1. Configuração do LightDM: Greeter padrão e sessão padrão BSPWM
+# 1. Script de inicialização do display para GPU híbrida NVIDIA Optimus (saída HDMI via NVIDIA-G0)
+cat << 'LIGHTDM_SETUP_EOF' > /mnt/etc/lightdm/display-setup.sh
+#!/bin/sh
+# Configuração de Provedor de Saída (NVIDIA Optimus / PRIME) para o X server
+sink_p=$(xrandr --listproviders 2>/dev/null | grep -i "Sink Output" | grep -v "Source Output" | head -n1 | sed -n 's/.*name:\([^ ]*\).*/\1/p' || true)
+source_p=$(xrandr --listproviders 2>/dev/null | grep -i "Source Output" | head -n1 | sed -n 's/.*name:\([^ ]*\).*/\1/p' || true)
+if [ -n "$sink_p" ] && [ -n "$source_p" ]; then
+    xrandr --setprovideroutputsource "$sink_p" "$source_p" 2>/dev/null || true
+fi
+xrandr --setprovideroutputsource NVIDIA-G0 modesetting >/dev/null 2>&1 || true
+xrandr --setprovideroutputsource 1 0 >/dev/null 2>&1 || true
+xrandr --auto >/dev/null 2>&1 || true
+LIGHTDM_SETUP_EOF
+chmod 755 /mnt/etc/lightdm/display-setup.sh
+
+# 2. Configuração do LightDM: Display Setup, Greeter padrão e sessão padrão BSPWM
 cat << 'LIGHTDM_CONF_EOF' > /mnt/etc/lightdm/lightdm.conf
 [LightDM]
 run-directory=/run/lightdm
 
 [Seat:*]
+display-setup-script=/etc/lightdm/display-setup.sh
 greeter-session=lightdm-gtk-greeter
 user-session=bspwm
 session-wrapper=/etc/X11/Xsession
@@ -1188,7 +1208,7 @@ greeter-hide-users=false
 logind-check-graphical=true
 LIGHTDM_CONF_EOF
 
-# 2. Ocultar usuários de compilação do Nix (nixbld1..nixbld32) da lista do greeter
+# 3. Ocultar usuários de compilação do Nix (nixbld1..nixbld32) da lista do greeter
 cat << 'LIGHTDM_USERS_EOF' > /mnt/etc/lightdm/users.conf
 [UserList]
 minimum-uid=1000
@@ -1196,7 +1216,7 @@ hidden-users=nobody nobody4 noaccess nixbld1 nixbld2 nixbld3 nixbld4 nixbld5 nix
 hidden-shells=/bin/false /usr/sbin/nologin /sbin/nologin
 LIGHTDM_USERS_EOF
 
-# 3. Configuração visual do Greeter GTK (Catppuccin Mocha / Dark)
+# 4. Configuração visual do Greeter GTK (Catppuccin Mocha / Dark)
 cat << 'LIGHTDM_GREETER_EOF' > /mnt/etc/lightdm/lightdm-gtk-greeter.conf
 [greeter]
 background=#1e1e2e
@@ -1213,7 +1233,7 @@ hide-user-image=false
 position=50%,center 50%,center
 LIGHTDM_GREETER_EOF
 
-# 4. Wrapper de Inicialização da Sessão BSPWM com Carregamento do Nix e Fallback
+# 5. Wrapper de Inicialização da Sessão BSPWM com Carregamento do Nix e Fallback
 cat << 'BSPWM_WRAPPER_EOF' > /mnt/usr/local/bin/start-bspwm-session
 #!/usr/bin/env bash
 # Carregar profiles do Nix para o ambiente gráfico do X11
@@ -1225,6 +1245,11 @@ fi
 if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
+if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+    . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+fi
+
+export PATH="$HOME/.nix-profile/bin:$PATH"
 
 # 1. Prioridade máxima: wrapper start-bspwm gerado pelo Home Manager
 if [ -x "$HOME/.local/bin/start-bspwm" ]; then
@@ -1254,7 +1279,7 @@ fi
 BSPWM_WRAPPER_EOF
 chmod 755 /mnt/usr/local/bin/start-bspwm-session
 
-# 5. Entrada da Sessão X11 em /usr/share/xsessions/bspwm.desktop
+# 6. Entrada da Sessão X11 em /usr/share/xsessions/bspwm.desktop
 cat << 'BSPWM_DESKTOP_EOF' > /mnt/usr/share/xsessions/bspwm.desktop
 [Desktop Entry]
 Name=BSPWM
@@ -1264,7 +1289,7 @@ Type=Application
 DesktopNames=bspwm
 BSPWM_DESKTOP_EOF
 
-# 6. Sessão padrão do usuário juca no ~/.dmrc
+# 7. Sessão padrão do usuário juca no ~/.dmrc e permissões do diretório home
 mkdir -p /mnt/home/$username
 cat << 'DMRC_EOF' > /mnt/home/$username/.dmrc
 [Desktop]
@@ -1272,6 +1297,7 @@ Session=bspwm
 DMRC_EOF
 chown $username:$username /mnt/home/$username/.dmrc 2>/dev/null || true
 chmod 644 /mnt/home/$username/.dmrc 2>/dev/null || true
+chmod 755 /mnt/home/$username
 
 ###########################
 #### Some XORG configs ####
@@ -1327,6 +1353,13 @@ cat << 'LOGITECH_UDEV_EOF' > /mnt/etc/udev/rules.d/42-logitech-unify-permissions
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0660", GROUP="plugdev", TAG+="uaccess"
 LOGITECH_UDEV_EOF
 chmod 644 /mnt/etc/udev/rules.d/42-logitech-unify-permissions.rules
+
+cat << 'VIAL_UDEV_EOF' > /mnt/etc/udev/rules.d/99-vial.rules
+# Regras de acesso para teclados QMK / VIA / VIAL / Megalodon Macropad
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0666", TAG+="uaccess"
+SUBSYSTEM=="usb", MODE="0666", TAG+="uaccess"
+VIAL_UDEV_EOF
+chmod 644 /mnt/etc/udev/rules.d/99-vial.rules
 
 
 #################################
@@ -1456,10 +1489,11 @@ NIX_CONF_EOF
 
 # Configurar canal nixpkgs-unstable para juca e root
 echo "📦 Configurando canal nixpkgs-unstable..."
-mkdir -p /mnt/home/$username/.nix-defexpr/channels /mnt/root/.nix-defexpr/channels
+mkdir -p /mnt/home/$username/.nix-defexpr /mnt/root/.nix-defexpr
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/home/$username/.nix-channels
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/root/.nix-channels
 chown -R $username:$username /mnt/home/$username/.nix-channels /mnt/home/$username/.nix-defexpr 2>/dev/null || true
+chmod 755 /mnt/home/$username
 
 # 3. Exportar variáveis globais no perfil do sistema (/etc/profile.d/nix-env.sh)
 cat << 'NIX_PROFILE_EOF' > /mnt/etc/profile.d/nix-env.sh
@@ -1474,10 +1508,10 @@ export NIX_REMOTE=daemon
 export NIX_PATH="nixpkgs=https://nixos.org/channels/nixpkgs-unstable:$HOME/.nix-defexpr/channels" 
 
 # PATH para os binários do Home Manager e perfis do Nix
-export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/${USER:-$username}/bin:/nix/var/nix/profiles/default/bin:$PATH"
 
 # XDG_DATA_DIRS para que aplicativos (.desktop), ícones e temas apareçam em qualquer Display Manager / Desktop
-export XDG_DATA_DIRS="$HOME/.nix-profile/share:/etc/profiles/per-user/$USER/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export XDG_DATA_DIRS="$HOME/.nix-profile/share:/etc/profiles/per-user/${USER:-$username}/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 NIX_PROFILE_EOF
 chmod +x /mnt/etc/profile.d/nix-env.sh
 
