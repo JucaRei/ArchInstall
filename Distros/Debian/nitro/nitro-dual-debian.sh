@@ -1145,9 +1145,9 @@ chroot /mnt systemctl enable irqbalance
 # Configuração do zRAM (Swap comprimido em RAM: 3x a memória RAM via zstd com prioridade máxima)
 mkdir -pv /mnt/etc/systemd /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/systemd/zram-generator.conf
-# /etc/systemd/zram-generator.conf — Configuração do zRAM (Acer Nitro 5 — 3x RAM)
+# /etc/systemd/zram-generator.conf — Configuração do zRAM (Acer Nitro 5 — 2x RAM)
 [zram0]
-zram-size = ram * 3
+zram-size = ram * 2
 compression-algorithm = zstd
 swap-priority = 100
 EOF
