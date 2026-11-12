@@ -966,8 +966,19 @@ chmod 0700 /mnt/var/log/audit
 #############
 
 chroot /mnt apt install gvfs gvfs-backends smbclient cifs-utils avahi-daemon
-# ssh
-chroot /mnt apt install openssh-client openssh-server 
+chroot /mnt apt install openssh-client openssh-server
+
+# Desativar PerSourcePenalties no OpenSSH (evita bloqueio 'Connection reset by peer' em ambientes locais/VM com múltiplas chaves)
+mkdir -p /mnt/etc/ssh/sshd_config.d
+cat << 'SSH_PENALTY_EOF' > /mnt/etc/ssh/sshd_config.d/no-penalties.conf
+# Desativa bloqueio agressivo por tentativas de chaves do ssh-agent
+PerSourcePenalties no
+SSH_PENALTY_EOF
+
+# Criar diretório ~/.ssh do usuário com permissão 700
+mkdir -p /mnt/home/$username/.ssh
+chmod 700 /mnt/home/$username/.ssh
+chroot /mnt chown -R $username:$username /home/$username/.ssh 2>/dev/null || true
 
 ########################################################
 #### Config iwd as backend instead of wpasupplicant ####
