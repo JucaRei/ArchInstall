@@ -1336,7 +1336,7 @@ cat << 'DMRC_EOF' > /mnt/home/$username/.dmrc
 [Desktop]
 Session=bspwm
 DMRC_EOF
-chown $username:$username /mnt/home/$username/.dmrc 2>/dev/null || true
+chroot /mnt chown $username:$username /home/$username/.dmrc 2>/dev/null || true
 chmod 644 /mnt/home/$username/.dmrc 2>/dev/null || true
 chmod 755 /mnt/home/$username
 
@@ -1533,7 +1533,8 @@ echo "📦 Configurando canal nixpkgs-unstable..."
 mkdir -p /mnt/home/$username/.nix-defexpr /mnt/root/.nix-defexpr
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/home/$username/.nix-channels
 echo "https://nixos.org/channels/nixpkgs-unstable nixpkgs" > /mnt/root/.nix-channels
-chown -R $username:$username /mnt/home/$username/.nix-channels /mnt/home/$username/.nix-defexpr 2>/dev/null || true
+chroot /mnt chown -R $username:$username /home/$username/.nix-channels /home/$username/.nix-defexpr 2>/dev/null || true
+chroot /mnt chown -R $username:$username /home/$username 2>/dev/null || true
 chmod 755 /mnt/home/$username
 
 # 3. Exportar variáveis globais no perfil do sistema (/etc/profile.d/nix-env.sh)
