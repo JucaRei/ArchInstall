@@ -383,8 +383,8 @@ mkdir -p /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d /mnt/etc/apt/sources
 
 if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
     echo "📦 Baixando pacote mx25-archive-keyring..."
-    (curl -fsSL --insecure "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -o /tmp/mx25-keyring.deb || \
-     wget -q --no-check-certificate "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -O /tmp/mx25-keyring.deb) 2>/dev/null && \
+    (env -u SSL_CERT_FILE -u CURL_CA_BUNDLE curl -fsSL --insecure "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -o /tmp/mx25-keyring.deb || \
+     env -u SSL_CERT_FILE -u CURL_CA_BUNDLE wget -q --no-check-certificate "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -O /tmp/mx25-keyring.deb) 2>/dev/null && \
     dpkg-deb -x /tmp/mx25-keyring.deb /mnt/ 2>/dev/null || true
     rm -f /tmp/mx25-keyring.deb
 fi
@@ -458,8 +458,29 @@ MX_PREF_EOF
 echo "📦 Configurando repositório e chaves do XanMod Kernel..."
 mkdir -p /mnt/etc/apt/keyrings /mnt/etc/apt/sources.list.d
 
-# Baixar a chave oficial correta (.key) e converter para dearmour
-curl -fsSL https://dl.xanmod.org/archive.key | gpg --dearmor -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+# 1. Download direto com sanitização de variáveis SSL (evita erro 77 do curl quando SSL_CERT_FILE aponta para caminho inválido no host)
+(env -u SSL_CERT_FILE -u CURL_CA_BUNDLE curl -fsSL --insecure https://dl.xanmod.org/archive.key 2>/dev/null || \
+ env -u SSL_CERT_FILE -u CURL_CA_BUNDLE wget -qO- --no-check-certificate https://dl.xanmod.org/archive.key 2>/dev/null) | \
+ gpg --dearmor --yes -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+
+# 2. Se falhar, tentar obter dentro do chroot (onde ca-certificates já foi instalado pelo debootstrap)
+if [ ! -s /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg ]; then
+    echo "⚠️ Tentando obter chave XanMod via ambiente chroot..."
+    chroot /mnt bash -c 'curl -fsSL --insecure https://dl.xanmod.org/archive.key 2>/dev/null || wget -qO- --no-check-certificate https://dl.xanmod.org/archive.key 2>/dev/null' | \
+    gpg --dearmor --yes -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+fi
+
+# 3. Fallback via keyserver Ubuntu (Fingerprint: D38D7D1DA1349567ADED882D86F7D09EE734E623)
+if [ ! -s /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg ]; then
+    echo "⚠️ Baixando chave XanMod via keyserver Ubuntu..."
+    gpg --no-default-keyring --keyring /tmp/xanmod-temp.gpg \
+        --keyserver keyserver.ubuntu.com --recv-keys D38D7D1DA1349567ADED882D86F7D09EE734E623 2>/dev/null || true
+    if [ -f /tmp/xanmod-temp.gpg ]; then
+        gpg --no-default-keyring --keyring /tmp/xanmod-temp.gpg --export D38D7D1DA1349567ADED882D86F7D09EE734E623 > /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+        rm -f /tmp/xanmod-temp.gpg
+    fi
+fi
+
 chmod 644 /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
 
 cat << 'XANMOD_SOURCES_EOF' > /mnt/etc/apt/sources.list.d/xanmod.sources
@@ -1160,6 +1181,18 @@ vm.watermark_scale_factor = 125
 vm.page-cluster = 0
 EOF
 
+# Reduz timeout de parada do systemd para evitar travamento em shutdown/reboot (evita espera padrão de 90s)
+mkdir -pv /mnt/etc/systemd/system.conf.d /mnt/etc/systemd/user.conf.d
+cat <<EOF >/mnt/etc/systemd/system.conf.d/timeout.conf
+[Manager]
+DefaultTimeoutStopSec=10s
+EOF
+
+cat <<EOF >/mnt/etc/systemd/user.conf.d/timeout.conf
+[Manager]
+DefaultTimeoutStopSec=10s
+EOF
+
 # Microcode, Dracut e Kernel são instalados na seção posterior de boot/kernel
 
 
@@ -1826,7 +1859,14 @@ chroot /mnt apt update
 # (Alterne para linux-xanmod se desejar a versão genérica v1, ou linux-xanmod-lts-x64v3 para LTS)
 chroot /mnt apt install -y \
   linux-xanmod-x64v3 \
-  clang \ 
+  clang \
+  lld \
+  intel-microcode \
+  dracut dracut-core \
+  shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober || \
+chroot /mnt apt install -y \
+  linux-image-amd64 linux-headers-amd64 \
+  clang \
   lld \
   intel-microcode \
   dracut dracut-core \
@@ -1886,6 +1926,46 @@ find /lib/modules -type f -name '*.ko' -print0 2>/dev/null | \
   xargs -0 -I{} "$sf" sha256 "$KEY" "$DER" "{}"
 EOF
 chmod +x /mnt/etc/dkms/post-build.d/99-sign-with-mok
+
+# Hook para assinar automaticamente novos kernels instalados via apt/dpkg
+mkdir -pv /mnt/etc/kernel/postinst.d
+cat << 'EOF' > /mnt/etc/kernel/postinst.d/zz-sign-kernel
+#!/bin/sh
+# /etc/kernel/postinst.d/zz-sign-kernel
+# Assina automaticamente kernels recém-instalados com a chave MOK local
+
+version="$1"
+image="$2"
+
+[ -z "$version" ] && exit 0
+[ -z "$image" ] && image="/boot/vmlinuz-${version}"
+[ -f "$image" ] || exit 0
+
+KEY="/root/secureboot-keys/MOK.key"
+CERT="/root/secureboot-keys/MOK.crt"
+
+if [ ! -f "$KEY" ] || [ ! -f "$CERT" ]; then
+    echo "zz-sign-kernel: Chaves MOK não encontradas em /root/secureboot-keys/. Pulando."
+    exit 0
+fi
+
+if ! command -v sbsign >/dev/null 2>&1; then
+    echo "zz-sign-kernel: sbsign não instalado. Pulando assinatura."
+    exit 0
+fi
+
+# Verifica se já está assinado com a chave MOK
+if command -v sbverify >/dev/null 2>&1 && sbverify --list "$image" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+    echo "zz-sign-kernel: $image já está assinado com a chave MOK."
+    exit 0
+fi
+
+echo "zz-sign-kernel: Assinando $image com a chave MOK..."
+sbsign --key "$KEY" --cert "$CERT" "$image" --output "$image"
+echo "zz-sign-kernel: $image assinado com sucesso."
+exit 0
+EOF
+chmod +x /mnt/etc/kernel/postinst.d/zz-sign-kernel
 
 ##################################################
 ### Driver NVIDIA Proprietário e Multimídia    ###
@@ -2178,87 +2258,102 @@ chroot /mnt /usr/local/sbin/trim-kernels || true
 ##################
 ### SIGN CHECK ###
 ##################
-touch /mnt/usr/local/bin/check-kernel-signatures.sh
-cat <<EOF >/mnt/usr/local/bin/check-kernel-signatures.sh
+mkdir -pv /mnt/usr/local/bin
+cat << 'EOF' > /mnt/usr/local/bin/check-kernel-signatures.sh
 #!/bin/bash
 # Lista todos os kernels instalados e verifica se estão assinados com a chave MOK
 
-echo " [Kernels Instalados] Verificando assinaturas..."
+echo "🔍 [Kernels Instalados] Verificando assinaturas..."
 
 for k in /boot/vmlinuz-*; do
-    KERNEL_NAME=$(basename "$k")
+    [ -f "$k" ] || continue
+    kname=$(basename "$k")
     echo ""
-    echo " Verificando $KERNEL_NAME..."
+    echo "▶ Verificando $kname..."
 
     if sbverify --list "$k" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
-        echo " $KERNEL_NAME está assinado corretamente com sua chave MOK"
+        echo "  ✔ $kname está assinado corretamente com sua chave MOK"
+    elif sbverify --list "$k" &>/dev/null; then
+        echo "  ✔ $kname está assinado oficialmente pela Debian"
     else
-        echo " $KERNEL_NAME NÃO está assinado ou tem assinatura inválida"
+        echo "  ❌ $kname NÃO está assinado ou tem assinatura inválida"
     fi
 done
 EOF
 chmod +x /mnt/usr/local/bin/check-kernel-signatures.sh
 
-touch /mnt/usr/local/bin/check-secureboot.sh
-cat <<EOF >/mnt/usr/local/bin/check-secureboot.sh
+cat << 'EOF' > /mnt/usr/local/bin/check-secureboot.sh
 #!/bin/bash
 # Verifica se o sistema está 100% compatível com Secure Boot
 
-echo " [Secure Boot] Verificando status..."
-if mokutil --sb-state | grep -q "SecureBoot enabled"; then
-    echo " Secure Boot está ATIVADO"
+echo "🛡️ [Secure Boot] Verificando status..."
+if mokutil --sb-state 2>/dev/null | grep -q "SecureBoot enabled"; then
+    echo "  ✔ Secure Boot está ATIVADO"
 else
-    echo " Secure Boot está DESATIVADO"
+    echo "  ⚠️ Secure Boot está DESATIVADO"
 fi
 
 echo ""
-echo " [Shim/GRUB] Verificando binários EFI..."
+echo "🚀 [Shim/GRUB] Verificando binários EFI..."
 EFI_DIR="/boot/efi/EFI/debian"
 for bin in shimx64.efi grubx64.efi; do
-    if sbverify --list "$EFI_DIR/$bin" &>/dev/null; then
-        echo " $bin está assinado corretamente"
-    else
-        echo " $bin NÃO está assinado ou está corrompido"
+    target="$EFI_DIR/$bin"
+    if [ -f "$target" ]; then
+        if sbverify --list "$target" &>/dev/null; then
+            echo "  ✔ $bin está assinado corretamente"
+        else
+            echo "  ❌ $bin NÃO está assinado ou está corrompido"
+        fi
     fi
 done
 
 echo ""
-echo " [MOK] Verificando chave no firmware..."
+echo "🔑 [MOK] Verificando chave no firmware..."
 if mokutil --list-enrolled 2>/dev/null | grep -q "My Kernel Module Signing"; then
-    echo " Chave MOK está REGISTRADA no firmware"
+    echo "  ✔ Chave MOK está REGISTRADA no firmware"
 elif mokutil --list-new 2>/dev/null | grep -q "My Kernel Module Signing"; then
-    echo " Chave MOK está AGENDADA para inclusão no próximo boot (MokManager)"
+    echo "  ⏳ Chave MOK está AGENDADA para inclusão no próximo boot (MokManager)"
 else
-    echo " Chave MOK NÃO está registrada"
+    echo "  ❌ Chave MOK NÃO está registrada"
 fi
 
 echo ""
-echo " [Kernel] Verificando assinaturas dos kernels instalados..."
+echo "📦 [Kernel] Verificando assinaturas dos kernels instalados..."
 for KERNEL in /boot/vmlinuz-*; do
     [ -f "$KERNEL" ] || continue
-    KNAME=$(basename "$KERNEL")
+    kname=$(basename "$KERNEL")
     if sbverify --list "$KERNEL" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
-        echo " Kernel $KNAME está assinado com sua chave MOK customizada"
+        echo "  ✔ $kname está assinado com sua chave MOK customizada"
     elif sbverify --list "$KERNEL" &>/dev/null; then
-        echo " Kernel $KNAME está assinado oficialmente pela Debian"
+        echo "  ✔ $kname está assinado oficialmente pela Debian"
     else
-        echo " Kernel $KNAME NÃO está assinado"
+        echo "  ❌ $kname NÃO está assinado"
     fi
 done
 
 echo ""
-echo " [DKMS] Verificando módulos DKMS..."
-DKMS_DIR="/lib/modules/$(uname -r)/updates/dkms"
-if [ -d "$DKMS_DIR" ]; then
-    for mod in "$DKMS_DIR"/*.ko; do
-        if modinfo "$mod" | grep -q "signer"; then
-            echo " $(basename "$mod") está assinado"
-        else
-            echo " $(basename "$mod") NÃO está assinado"
-        fi
-    done
-else
-    echo "ℹ Nenhum módulo DKMS encontrado para $(uname -r)"
+echo "🧩 [DKMS] Verificando módulos DKMS instalados..."
+found_any=false
+for kdir in /lib/modules/*; do
+    [ -d "$kdir" ] || continue
+    kver=$(basename "$kdir")
+    dkms_dir="$kdir/updates/dkms"
+    if [ -d "$dkms_dir" ]; then
+        for mod in "$dkms_dir"/*.ko; do
+            [ -f "$mod" ] || continue
+            found_any=true
+            mname=$(basename "$mod")
+            if modinfo "$mod" 2>/dev/null | grep -q "signer.*My Kernel Module Signing"; then
+                echo "  ✔ [$kver] $mname assinado com a chave MOK"
+            else
+                echo "  ❌ [$kver] $mname NÃO está assinado"
+            fi
+        done
+    fi
+done
+
+if [ "$found_any" = false ]; then
+    echo "  ℹ Nenhum módulo DKMS encontrado"
 fi
 EOF
 chmod +x /mnt/usr/local/bin/check-secureboot.sh

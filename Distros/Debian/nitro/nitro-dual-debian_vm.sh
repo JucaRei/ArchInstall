@@ -146,9 +146,9 @@ mount -t vfat -o defaults,noatime,nodiratime "$EFI_PART" "$MOUNTPOINT/boot/efi"
 # ============================================================
 # Swapfile de 16 GB no SSD (prioridade baixa, atrás do zRAM)
 # ============================================================
-echo "💾 Criando Swapfile de 16 GB..."
-btrfs filesystem mkswapfile --size 5G "$MOUNTPOINT/var/swap/swapfile"
-chmod 600 "$MOUNTPOINT/var/swap/swapfile"
+# echo "💾 Criando Swapfile de 16 GB..."
+# btrfs filesystem mkswapfile --size 5G "$MOUNTPOINT/var/swap/swapfile"
+# chmod 600 "$MOUNTPOINT/var/swap/swapfile"
 echo "Subvolumes e boot partition montados com sucesso."
 
 ####################################################
@@ -325,12 +325,11 @@ Suites: trixie-backports
 Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-# Types: deb deb-src
-# # URIs: https://deb.debian.org/debian/
-# URIs: http://debian.c3sl.ufpr.br/debian/
-# Suites: trixie-security
-# Components: main contrib non-free non-free-firmware
-# Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+Types: deb deb-src
+URIs: https://security.debian.org/debian-security
+Suites: trixie-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 # URIs: http://deb.debian.org/debian/
@@ -375,8 +374,8 @@ mkdir -p /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d /mnt/etc/apt/sources
 
 if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
     echo "📦 Baixando pacote mx25-archive-keyring..."
-    (curl -fsSL --insecure "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -o /tmp/mx25-keyring.deb || \
-     wget -q --no-check-certificate "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -O /tmp/mx25-keyring.deb) 2>/dev/null && \
+    (env -u SSL_CERT_FILE -u CURL_CA_BUNDLE curl -fsSL --insecure "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -o /tmp/mx25-keyring.deb || \
+     env -u SSL_CERT_FILE -u CURL_CA_BUNDLE wget -q --no-check-certificate "https://mxrepo.com/mx/repo/pool/main/m/mx25-archive-keyring/mx25-archive-keyring_2025.03_all.deb" -O /tmp/mx25-keyring.deb) 2>/dev/null && \
     dpkg-deb -x /tmp/mx25-keyring.deb /mnt/ 2>/dev/null || true
     rm -f /tmp/mx25-keyring.deb
 fi
@@ -391,6 +390,13 @@ if [ ! -f /mnt/usr/share/keyrings/mx-25-archive-keyring.gpg ]; then
         rm -f /tmp/mx-temp.gpg
     fi
 fi
+
+# Isolar o repositório do MX
+cat << 'EOF' > /mnt/etc/apt/preferences.d/20mxlinux.pref
+Package: *
+Pin: release o=MX
+Pin-Priority: 100
+EOF
 
 # Garantir permissão de leitura universal (0644) para o usuário _apt e sqv
 chmod -R a+rX /mnt/usr/share/keyrings /mnt/etc/apt/trusted.gpg.d 2>/dev/null || true
@@ -412,6 +418,13 @@ Package: *
 Pin: origin mxrepo.com
 Pin-Priority: 100
 MX_PREF_EOF
+
+# Isolar o repositório do MX
+# cat << 'EOF' > /mnt/etc/apt/preferences.d/20mxlinux.pref
+# Package: *
+# Pin: release o=MX
+# Pin-Priority: 100
+# EOF
 
 # cat >/mnt/etc/apt/sources.list.d/extrepo_librewolf.sources <<HEREDOC
 # Types: deb
@@ -445,6 +458,52 @@ MX_PREF_EOF
 # chroot /mnt apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F7D09EE734E623
 # chroot /mnt curl -fsSL https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/xanmod.gpg > /dev/null
 
+# ============================================================
+# Repositório XanMod Kernel
+# ============================================================
+echo "📦 Configurando repositório e chaves do XanMod Kernel..."
+mkdir -p /mnt/etc/apt/keyrings /mnt/etc/apt/sources.list.d
+
+# 1. Download direto com sanitização de variáveis SSL (evita erro 77 do curl quando SSL_CERT_FILE aponta para caminho inválido no host)
+(env -u SSL_CERT_FILE -u CURL_CA_BUNDLE curl -fsSL --insecure https://dl.xanmod.org/archive.key 2>/dev/null || \
+ env -u SSL_CERT_FILE -u CURL_CA_BUNDLE wget -qO- --no-check-certificate https://dl.xanmod.org/archive.key 2>/dev/null) | \
+ gpg --dearmor --yes -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+
+# 2. Se falhar, tentar obter dentro do chroot (onde ca-certificates já foi instalado pelo debootstrap)
+if [ ! -s /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg ]; then
+    echo "⚠️ Tentando obter chave XanMod via ambiente chroot..."
+    chroot /mnt bash -c 'curl -fsSL --insecure https://dl.xanmod.org/archive.key 2>/dev/null || wget -qO- --no-check-certificate https://dl.xanmod.org/archive.key 2>/dev/null' | \
+    gpg --dearmor --yes -o /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+fi
+
+# 3. Fallback via keyserver Ubuntu (Fingerprint: D38D7D1DA1349567ADED882D86F7D09EE734E623)
+if [ ! -s /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg ]; then
+    echo "⚠️ Baixando chave XanMod via keyserver Ubuntu..."
+    gpg --no-default-keyring --keyring /tmp/xanmod-temp.gpg \
+        --keyserver keyserver.ubuntu.com --recv-keys D38D7D1DA1349567ADED882D86F7D09EE734E623 2>/dev/null || true
+    if [ -f /tmp/xanmod-temp.gpg ]; then
+        gpg --no-default-keyring --keyring /tmp/xanmod-temp.gpg --export D38D7D1DA1349567ADED882D86F7D09EE734E623 > /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+        rm -f /tmp/xanmod-temp.gpg
+    fi
+fi
+
+chmod 644 /mnt/etc/apt/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+
+cat << 'XANMOD_SOURCES_EOF' > /mnt/etc/apt/sources.list.d/xanmod.sources
+Types: deb
+URIs: http://deb.xanmod.org
+Suites: trixie
+Components: main
+Signed-By: /etc/apt/keyrings/xanmod-archive-keyring.gpg
+XANMOD_SOURCES_EOF
+
+# Configuração legada mantida comentada para referência:
+# cat >/mnt/etc/apt/sources.list.d/xanmod-kernel.list <<HEREDOC
+# deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main
+# HEREDOC
+# chroot /mnt apt install gnupg2 curl -y
+# chroot /mnt apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F7D09EE734E623
+# chroot /mnt curl -fsSL https://dl.xanmod.org/gpg.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/xanmod.gpg > /dev/null
 
 ######################################
 #### Optimize apt package manager ####
@@ -489,20 +548,15 @@ cat >/mnt/etc/apt/preferences.d/99trixie.pref <<HEREDOC
 # version is more recent
 
 Package: *
-# Pin: release a=stable
-# Pin: release a=${CODENAME}
-Pin: release a=trixie
+Pin: release n=trixie
 Pin-Priority: 900
 HEREDOC
 
 cat >/mnt/etc/apt/preferences.d/50testing.pref <<HEREDOC
-# 100 <= P < 500: causes a version to be installed unless there is a
-# version available belonging to some other distribution or the installed
-# version is more recent
-
+# Prioridade padrao para a suite testing
 Package: *
 Pin: release a=testing
-Pin-Priority: 400
+Pin-Priority: 500
 HEREDOC
 
 cat >/mnt/etc/apt/preferences.d/10unstable.pref <<HEREDOC
@@ -528,7 +582,6 @@ Package: initramfs-tools
 Pin: release *
 Pin-Priority: -1
 HEREDOC
-
 
 chroot /mnt apt update
 chroot /mnt apt upgrade --yes
@@ -832,7 +885,7 @@ cat << EOF > "$MOUNTPOINT/etc/fstab"
 # /etc/fstab — Gerado automaticamente pelo script de instalação
 # Debian $CODENAME — Máquina Virtual (virtualvm)
 
-# === Btrfs Pool Único (300 GB) ===
+# === Btrfs Pool Único ===
 LABEL=${ROOT_LABEL}    /                   btrfs rw,${BTRFS_SYS},subvol=@root                    0 0
 LABEL=${ROOT_LABEL}    /home               btrfs rw,${BTRFS_OPTS},subvol=@home                   0 0
 LABEL=${ROOT_LABEL}    /nix                btrfs rw,${BTRFS_OPTS},subvol=@nix                    0 0
@@ -853,7 +906,7 @@ LABEL=${SYSTEM_LABEL}  /boot               ext4  rw,relatime                    
 LABEL=${EFI_LABEL}     /boot/efi           vfat  defaults,noatime,nodiratime                     0 2
 
 # === Swap (Prioridade 10) ===
-/var/swap/swapfile     none                swap  defaults,pri=10                                 0 0
+# /var/swap/swapfile     none                swap  defaults,pri=10                                 0 0
 
 # === Partição de Dados Compartilhados (exFAT) ===
 # LABEL=${MISC_LABEL}    /media/juca/SharedData  exfat  defaults,nofail,uid=1000,gid=1000,dmask=0022,fmask=0133  0 0
@@ -1094,30 +1147,41 @@ mkdir -pv /mnt/etc/systemd /mnt/etc/sysctl.d
 cat <<EOF >/mnt/etc/systemd/zram-generator.conf
 # /etc/systemd/zram-generator.conf — Configuração do zRAM (virtualvm)
 [zram0]
-zram-size = min(ram / 2, 4096)
+zram-size = ram * 2
 compression-algorithm = zstd
 swap-priority = 100
 EOF
 
 cat <<EOF >/mnt/etc/sysctl.d/99-zram.conf
 # Otimizações de kernel para zRAM de alta performance
-vm.swappiness = 100
+vm.swappiness = 180
+vm.watermark_boost_factor = 0
+vm.watermark_scale_factor = 125
 vm.page-cluster = 0
+EOF
+
+# Reduz timeout de parada do systemd para evitar travamento em shutdown/reboot (evita espera padrão de 90s)
+mkdir -pv /mnt/etc/systemd/system.conf.d /mnt/etc/systemd/user.conf.d
+cat <<EOF >/mnt/etc/systemd/system.conf.d/timeout.conf
+[Manager]
+DefaultTimeoutStopSec=10s
+EOF
+
+cat <<EOF >/mnt/etc/systemd/user.conf.d/timeout.conf
+[Manager]
+DefaultTimeoutStopSec=10s
 EOF
 
 # Microcode, Dracut e Kernel são instalados na seção posterior de boot/kernel
 
 
 ##################################################
-#### Xorg, LightDM e Sessão DWM (Home Manager) ###
+#### Xorg, LightDM e Sessão BSPWM (Home Manager) #
 ##################################################
 echo "🖥️ Instalando Xorg, LightDM, GTK Greeter e utilitários de exibição..."
 chroot /mnt apt install -y \
     xserver-xorg \
-    xserver-xorg-video-qxl \
-    xserver-xorg-video-all \
-    libgl1-mesa-dri \
-    mesa-vulkan-drivers \
+    xserver-xorg-input-all \
     xserver-xorg-input-libinput \
     x11-xserver-utils \
     xinit \
@@ -1127,26 +1191,44 @@ chroot /mnt apt install -y \
     lightdm \
     lightdm-gtk-greeter \
     lightdm-gtk-greeter-settings \
+    accountsservice \
     libpam-gnome-keyring \
-    xwayland || true
+    xwayland
+chroot /mnt apt-mark manual xserver-xorg xserver-xorg-input-all xserver-xorg-input-libinput lightdm lightdm-gtk-greeter accountsservice 2>/dev/null || true
 
-echo "⚙️ Configurando LightDM e sessão DWM do Home Manager..."
+echo "⚙️ Configurando LightDM e sessão BSPWM do Home Manager..."
 mkdir -p /mnt/etc/lightdm /mnt/etc/lightdm/lightdm.conf.d /mnt/usr/share/xsessions /mnt/usr/local/bin
 
-# 1. Configuração do LightDM: Greeter padrão e sessão padrão DWM
+# 1. Script de inicialização do display para GPU híbrida NVIDIA Optimus (saída HDMI via NVIDIA-G0)
+cat << 'LIGHTDM_SETUP_EOF' > /mnt/etc/lightdm/display-setup.sh
+#!/bin/sh
+# Configuração de Provedor de Saída (NVIDIA Optimus / PRIME) para o X server
+sink_p=$(xrandr --listproviders 2>/dev/null | grep -i "Sink Output" | grep -v "Source Output" | head -n1 | sed -n 's/.*name:\([^ ]*\).*/\1/p' || true)
+source_p=$(xrandr --listproviders 2>/dev/null | grep -i "Source Output" | head -n1 | sed -n 's/.*name:\([^ ]*\).*/\1/p' || true)
+if [ -n "$sink_p" ] && [ -n "$source_p" ]; then
+    xrandr --setprovideroutputsource "$sink_p" "$source_p" 2>/dev/null || true
+fi
+xrandr --setprovideroutputsource NVIDIA-G0 modesetting >/dev/null 2>&1 || true
+xrandr --setprovideroutputsource 1 0 >/dev/null 2>&1 || true
+xrandr --auto >/dev/null 2>&1 || true
+LIGHTDM_SETUP_EOF
+chmod 755 /mnt/etc/lightdm/display-setup.sh
+
+# 2. Configuração do LightDM: Display Setup, Greeter padrão e sessão padrão BSPWM
 cat << 'LIGHTDM_CONF_EOF' > /mnt/etc/lightdm/lightdm.conf
 [LightDM]
 run-directory=/run/lightdm
 
 [Seat:*]
+display-setup-script=/etc/lightdm/display-setup.sh
 greeter-session=lightdm-gtk-greeter
-user-session=dwm
+user-session=bspwm
 session-wrapper=/etc/X11/Xsession
 greeter-hide-users=false
 logind-check-graphical=true
 LIGHTDM_CONF_EOF
 
-# 2. Ocultar usuários de compilação do Nix (nixbld1..nixbld32) da lista do greeter
+# 3. Ocultar usuários de compilação do Nix (nixbld1..nixbld32) da lista do greeter
 cat << 'LIGHTDM_USERS_EOF' > /mnt/etc/lightdm/users.conf
 [UserList]
 minimum-uid=1000
@@ -1154,7 +1236,7 @@ hidden-users=nobody nobody4 noaccess nixbld1 nixbld2 nixbld3 nixbld4 nixbld5 nix
 hidden-shells=/bin/false /usr/sbin/nologin /sbin/nologin
 LIGHTDM_USERS_EOF
 
-# 3. Configuração visual do Greeter GTK (Catppuccin Mocha / Dark)
+# 4. Configuração visual do Greeter GTK (Catppuccin Mocha / Dark)
 cat << 'LIGHTDM_GREETER_EOF' > /mnt/etc/lightdm/lightdm-gtk-greeter.conf
 [greeter]
 background=#1e1e2e
@@ -1171,8 +1253,8 @@ hide-user-image=false
 position=50%,center 50%,center
 LIGHTDM_GREETER_EOF
 
-# 4. Wrapper de Inicialização da Sessão DWM com Carregamento do Nix e Fallback
-cat << 'DWM_WRAPPER_EOF' > /mnt/usr/local/bin/start-dwm-session
+# 5. Wrapper de Inicialização da Sessão BSPWM com Carregamento do Nix e Fallback
+cat << 'BSPWM_WRAPPER_EOF' > /mnt/usr/local/bin/start-bspwm-session
 #!/usr/bin/env bash
 # Carregar profiles do Nix para o ambiente gráfico do X11
 if [ -e /etc/profile.d/nix.sh ]; then
@@ -1183,10 +1265,15 @@ fi
 if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
+if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+    . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+fi
 
-# 1. Prioridade máxima: wrapper start-dwm gerado pelo Home Manager
-if [ -x "$HOME/.local/bin/start-dwm" ]; then
-    exec "$HOME/.local/bin/start-dwm"
+export PATH="$HOME/.nix-profile/bin:$PATH"
+
+# 1. Prioridade máxima: wrapper start-bspwm gerado pelo Home Manager
+if [ -x "$HOME/.local/bin/start-bspwm" ]; then
+    exec "$HOME/.local/bin/start-bspwm"
 fi
 
 # 2. Segunda opção: ~/.xsession gerado pelo Home Manager
@@ -1194,42 +1281,43 @@ if [ -x "$HOME/.xsession" ]; then
     exec "$HOME/.xsession"
 fi
 
-# 3. Terceira opção: binário dwm no PATH
-if command -v dwm >/dev/null 2>&1; then
-    exec dwm
+# 3. Terceira opção: binário bspwm no PATH
+if command -v bspwm >/dev/null 2>&1; then
+    exec bspwm
 fi
 
 # 4. Fallback amigável se o Home Manager ainda não foi aplicado
 xsetroot -solid '#1e1e2e' 2>/dev/null || true
-MSG="=====================================================\nSessão DWM iniciada!\n\nO Home Manager ainda não gerou as configurações do DWM.\nPara gerar o desktop completo (dwm-titus, Quickshell, Slstatus),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@virtualvm\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
+MSG="=====================================================\nSessão BSPWM iniciada!\n\nO Home Manager ainda não gerou as configurações do BSPWM.\nPara gerar o desktop completo (Polybar, SXHKD, Rofi),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@nitro\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
 if command -v xterm >/dev/null 2>&1; then
-    xterm -geometry 90x25 -title "Setup DWM Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
+    xterm -geometry 90x25 -title "Setup BSPWM Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
 elif command -v x-terminal-emulator >/dev/null 2>&1; then
     x-terminal-emulator -e bash -c "echo -e '$MSG'; exec bash"
 else
     exec x-session-manager
 fi
-DWM_WRAPPER_EOF
-chmod 755 /mnt/usr/local/bin/start-dwm-session
+BSPWM_WRAPPER_EOF
+chmod 755 /mnt/usr/local/bin/start-bspwm-session
 
-# 5. Entrada da Sessão X11 em /usr/share/xsessions/dwm.desktop
-cat << 'DWM_DESKTOP_EOF' > /mnt/usr/share/xsessions/dwm.desktop
+# 6. Entrada da Sessão X11 em /usr/share/xsessions/bspwm.desktop
+cat << 'BSPWM_DESKTOP_EOF' > /mnt/usr/share/xsessions/bspwm.desktop
 [Desktop Entry]
-Name=DWM
-Comment=Dynamic Window Manager (Home Manager)
-Exec=/usr/local/bin/start-dwm-session
+Name=BSPWM
+Comment=Binary Space Partitioning Window Manager (Home Manager)
+Exec=/usr/local/bin/start-bspwm-session
 Type=Application
-DesktopNames=dwm
-DWM_DESKTOP_EOF
+DesktopNames=bspwm
+BSPWM_DESKTOP_EOF
 
-# 6. Sessão padrão do usuário juca no ~/.dmrc
+# 7. Sessão padrão do usuário juca no ~/.dmrc e permissões do diretório home
 mkdir -p /mnt/home/$username
 cat << 'DMRC_EOF' > /mnt/home/$username/.dmrc
 [Desktop]
-Session=dwm
+Session=bspwm
 DMRC_EOF
 chown $username:$username /mnt/home/$username/.dmrc 2>/dev/null || true
 chmod 644 /mnt/home/$username/.dmrc 2>/dev/null || true
+chmod 755 /mnt/home/$username
 
 ###########################
 #### Some XORG configs ####
@@ -1255,35 +1343,28 @@ Section "InputClass"
 EndSection
 EOF
 
+
 # Bluetooth não necessário em ambiente de Máquina Virtual
 # chroot /mnt apt install -y bluez blueman
 
 
-#################################
-#### Infrastructure packages ####
-#################################
-
-#Python, snap and flatpak
-# chroot /mnt apt install python3 python3-pip snapd flatpak 
-chroot /mnt apt install snapd flatpak 
-
 ##################################################
 ### Virt-Manager, QEMU/KVM e Libvirt (Nativo)  ###
 ##################################################
-echo "🖥️ Instalando e configurando Virt-Manager, QEMU/KVM e Libvirt..."
-chroot /mnt apt install -y \
-  virt-manager \
-  qemu-system \
-  libvirt-daemon-system \
-  ovmf \
-  swtpm \
-  swtpm-tools \
-  qemu-utils \
-  bridge-utils \
-  dnsmasq-base \
-  spice-vdagent \
-  gir1.2-spiceclientgtk-3.0 \
-  virtinst
+# echo "🖥️ Instalando e configurando Virt-Manager, QEMU/KVM e Libvirt..."
+# chroot /mnt apt install -y \
+#   virt-manager \
+#   qemu-system \
+#   libvirt-daemon-system \
+#   ovmf \
+#   swtpm \
+#   swtpm-tools \
+#   qemu-utils \
+#   bridge-utils \
+#   dnsmasq-base \
+#   spice-vdagent \
+#   gir1.2-spiceclientgtk-3.0 \
+#   virtinst
 
 # Configurar QEMU para executar sob o usuário local juca
 # Isso resolve erros de "Permission denied" ao acessar ISOs e armazenamentos em /media/juca/...
@@ -1654,8 +1735,8 @@ chroot /mnt systemctl enable rtkit-daemon.service
 chroot /mnt systemctl enable chrony.service
 chroot /mnt systemctl enable fstrim.timer
 chroot /mnt systemctl enable lightdm.service 2>/dev/null || true
-chroot /mnt systemctl enable qemu-guest-agent.service 2>/dev/null || true
-chroot /mnt systemctl enable spice-vdagent.service 2>/dev/null || true
+# chroot /mnt systemctl enable qemu-guest-agent.service 2>/dev/null || true
+# chroot /mnt systemctl enable spice-vdagent.service 2>/dev/null || true
 
 ## Audio
 ## Pipewire
@@ -1702,10 +1783,19 @@ sed -i -E 's/^(pool[ \t]+.*)$/\1\nserver time.google.com iburst prefer\nserver t
 ### Instalação do Kernel, Dracut e Bootloader ###
 ##################################################
 echo "🐧 Instalando Kernel, Dracut e Bootloader com suporte a Secure Boot..."
+chroot /mnt apt update
+chroot /mnt apt install -y \
+  linux-xanmod-x64v3 \
+  clang \
+  lld \
+  dracut dracut-core \
+  shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober || \
 chroot /mnt apt install -y \
   linux-image-amd64 linux-headers-amd64 \
+  clang \
+  lld \
   dracut dracut-core \
-  shim-signed grub-efi-amd64-signed efibootmgr os-prober
+  shim-signed grub-efi-amd64-signed mokutil sbsigntool efibootmgr os-prober
 
 ##################################################
 ### Drivers de Vídeo VM e Multimídia           ###
@@ -1715,8 +1805,262 @@ chroot /mnt apt install -y \
   xserver-xorg-video-qxl \
   xserver-xorg-video-all \
   libgl1-mesa-dri \
-  mesa-vulkan-drivers \
-  mpv
+  mesa-vulkan-drivers
+
+#####################################
+### Secure Boot + Chaves MOK      ###
+#####################################
+echo "🔐 Configurando Secure Boot e chaves MOK..."
+
+# Criar diretório para chaves
+chroot /mnt mkdir -p /root/secureboot-keys
+
+# Gerar chave MOK (PEM para sbsign, DER para mokutil/kmodsign)
+chroot /mnt bash -c '
+  if [ ! -f /root/secureboot-keys/MOK.key ]; then
+    openssl req -new -x509 -newkey rsa:2048 \
+      -keyout /root/secureboot-keys/MOK.key \
+      -out    /root/secureboot-keys/MOK.crt \
+      -nodes -days 36500 -subj "/CN=My Kernel Module Signing/"
+    openssl x509 -in /root/secureboot-keys/MOK.crt -outform DER -out /root/secureboot-keys/MOK.der
+  fi
+'
+
+# Importar chave no MOK Manager com root-pw para execucao nao-interativa
+chroot /mnt mokutil --root-pw --import /root/secureboot-keys/MOK.der || true
+
+# Assinar todos os kernels instalados
+chroot /mnt bash -c '
+  for kver in $(ls /lib/modules 2>/dev/null); do
+    vmlinuz="/boot/vmlinuz-${kver}"
+    if [ -f "$vmlinuz" ]; then
+      echo "Assinando $vmlinuz..."
+      sbsign --key /root/secureboot-keys/MOK.key \
+             --cert /root/secureboot-keys/MOK.crt \
+             --output "${vmlinuz}.signed" "$vmlinuz"
+      mv -f "${vmlinuz}.signed" "$vmlinuz"
+    fi
+  done
+'
+
+# Configuracao nativa do DKMS para assinatura de modulos
+mkdir -pv /mnt/etc/dkms/framework.conf.d /mnt/etc/dkms/post-build.d
+cat << 'DKMS_CONF_EOF' > /mnt/etc/dkms/framework.conf.d/signing.conf
+mok_signing_key="/root/secureboot-keys/MOK.key"
+mok_certificate="/root/secureboot-keys/MOK.der"
+DKMS_CONF_EOF
+
+# Criar hook DKMS para assinar módulos automaticamente (fallback)
+cat << 'EOF' > /mnt/etc/dkms/post-build.d/99-sign-with-mok
+#!/bin/bash
+KEY=/root/secureboot-keys/MOK.key
+DER=/root/secureboot-keys/MOK.der
+sf=$(find /usr/src/linux-headers-*/scripts -name sign-file 2>/dev/null | head -n1)
+[ -x "$sf" ] || exit 0
+find /lib/modules -type f -name '*.ko' -print0 2>/dev/null | \
+  xargs -0 -I{} "$sf" sha256 "$KEY" "$DER" "{}"
+EOF
+chmod +x /mnt/etc/dkms/post-build.d/99-sign-with-mok
+
+# Hook para assinar automaticamente novos kernels instalados via apt/dpkg
+mkdir -pv /mnt/etc/kernel/postinst.d
+cat << 'EOF' > /mnt/etc/kernel/postinst.d/zz-sign-kernel
+#!/bin/sh
+# /etc/kernel/postinst.d/zz-sign-kernel
+# Assina automaticamente kernels recém-instalados com a chave MOK local
+
+version="$1"
+image="$2"
+
+[ -z "$version" ] && exit 0
+[ -z "$image" ] && image="/boot/vmlinuz-${version}"
+[ -f "$image" ] || exit 0
+
+KEY="/root/secureboot-keys/MOK.key"
+CERT="/root/secureboot-keys/MOK.crt"
+
+if [ ! -f "$KEY" ] || [ ! -f "$CERT" ]; then
+    echo "zz-sign-kernel: Chaves MOK não encontradas em /root/secureboot-keys/. Pulando."
+    exit 0
+fi
+
+if ! command -v sbsign >/dev/null 2>&1; then
+    echo "zz-sign-kernel: sbsign não instalado. Pulando assinatura."
+    exit 0
+fi
+
+# Verifica se já está assinado com a chave MOK
+if command -v sbverify >/dev/null 2>&1 && sbverify --list "$image" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+    echo "zz-sign-kernel: $image já está assinado com a chave MOK."
+    exit 0
+fi
+
+echo "zz-sign-kernel: Assinando $image com a chave MOK..."
+sbsign --key "$KEY" --cert "$CERT" "$image" --output "$image"
+echo "zz-sign-kernel: $image assinado com sucesso."
+exit 0
+EOF
+chmod +x /mnt/etc/kernel/postinst.d/zz-sign-kernel
+
+###########################################################
+### HOOK DE RETENÇÃO DE KERNELS (MÁXIMO 3 VERSÕES)      ###
+###########################################################
+echo "🧹 Configurando hook de retenção de kernels (máx 3 versões)..."
+
+mkdir -p /mnt/usr/local/sbin /mnt/etc/apt/apt.conf.d /mnt/etc/kernel/postinst.d
+
+cat << 'TRIM_KERNELS_EOF' > /mnt/usr/local/sbin/trim-kernels
+#!/bin/bash
+# /usr/local/sbin/trim-kernels
+# Mantém no máximo MAX_KERNELS versões instaladas, purgando as mais antigas.
+
+set -euo pipefail
+
+MAX_KERNELS=3
+LOCK_FILE="/run/lock/trim-kernels.lock"
+
+log() {
+    echo "trim-kernels: $*"
+    logger -t trim-kernels "$*" 2>/dev/null || true
+}
+
+# Evita execuções concorrentes
+exec 200>"$LOCK_FILE"
+flock -n 200 || {
+    log "Outra instância já está em execução. Saindo."
+    exit 0
+}
+
+# Aguarda o apt/dpkg liberar completamente as travas se fuser estiver disponível
+if command -v fuser >/dev/null 2>&1; then
+    MAX_WAIT=300
+    waited=0
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+          fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+          fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+        if [ "$waited" -ge "$MAX_WAIT" ]; then
+            log "Tempo limite excedido esperando trava do dpkg."
+            exit 1
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+fi
+
+CURRENT_KERNEL="$(uname -r)"
+
+# Lista todas as imagens de kernel instaladas (exceto metapacotes)
+INSTALLED_IMAGES=$(dpkg-query -W -f='${Package} ${Status}\n' 'linux-image-[0-9]*' 2>/dev/null | \
+    grep -E ' (installed|half-configured)$' | awk '{print $1}' || true)
+
+if [ -z "$INSTALLED_IMAGES" ]; then
+    exit 0
+fi
+
+# Extrai os sufixos de versão
+VERSIONS=()
+for pkg in $INSTALLED_IMAGES; do
+    ver="${pkg#linux-image-}"
+    VERSIONS+=("$ver")
+done
+
+TOTAL_KERNELS="${#VERSIONS[@]}"
+if [ "$TOTAL_KERNELS" -le "$MAX_KERNELS" ]; then
+    log "Total de kernels ($TOTAL_KERNELS) dentro do limite ($MAX_KERNELS). Nenhuma ação necessária."
+    exit 0
+fi
+
+# Ordena versões da mais recente para a mais antiga
+if command -v linux-version >/dev/null 2>&1; then
+    SORTED_VERSIONS=($(linux-version sort --reverse "${VERSIONS[@]}"))
+else
+    SORTED_VERSIONS=($(printf "%s\n" "${VERSIONS[@]}" | sort -V -r))
+fi
+
+# Identifica kernels protegidos (em execução ou dependência de metapacote)
+PROTECTED=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    pkg="linux-image-$ver"
+    if [ "$ver" = "$CURRENT_KERNEL" ]; then
+        PROTECTED+=("$ver")
+        continue
+    fi
+    # Verifica se algum pacote instalado depende desta versão específica
+    rdeps=$(apt-cache rdepends --installed "$pkg" 2>/dev/null | \
+        sed '1,2d' | tr -d ' |' | \
+        grep -v -E "linux-headers|linux-image-${ver}|^$" || true)
+    if [ -n "$rdeps" ]; then
+        PROTECTED+=("$ver")
+    fi
+done
+
+# Monta lista de kernels a manter
+KEEP=("${PROTECTED[@]}")
+for ver in "${SORTED_VERSIONS[@]}"; do
+    if [ "${#KEEP[@]}" -ge "$MAX_KERNELS" ]; then
+        break
+    fi
+    already_kept=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            already_kept=true
+            break
+        fi
+    done
+    if [ "$already_kept" = false ]; then
+        KEEP+=("$ver")
+    fi
+done
+
+# Seleciona os kernels excedentes para purgar
+PKGS_TO_PURGE=()
+for ver in "${SORTED_VERSIONS[@]}"; do
+    keep_this=false
+    for k in "${KEEP[@]}"; do
+        if [ "$k" = "$ver" ]; then
+            keep_this=true
+            break
+        fi
+    done
+    if [ "$keep_this" = false ]; then
+        for p in "linux-image-$ver" "linux-headers-$ver"; do
+            if dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -qE "installed|half-configured"; then
+                PKGS_TO_PURGE+=("$p")
+            fi
+        done
+    fi
+done
+
+if [ "${#PKGS_TO_PURGE[@]}" -eq 0 ]; then
+    log "Nenhum pacote residual para remover."
+    exit 0
+fi
+
+log "Kernels instalados: $TOTAL_KERNELS. Limite: $MAX_KERNELS."
+log "Mantendo: ${KEEP[*]}"
+log "Removendo kernels antigos: ${PKGS_TO_PURGE[*]}"
+
+DEBIAN_FRONTEND=noninteractive apt-get purge -y "${PKGS_TO_PURGE[@]}"
+log "Limpeza concluída com sucesso."
+TRIM_KERNELS_EOF
+
+chmod +x /mnt/usr/local/sbin/trim-kernels
+
+cat << 'APT_HOOK_EOF' > /mnt/etc/apt/apt.conf.d/99trim-kernels
+DPkg::Post-Invoke { "command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels || true"; };
+APT_HOOK_EOF
+
+cat << 'KERNEL_HOOK_EOF' > /mnt/etc/kernel/postinst.d/zz-trim-kernels
+#!/bin/sh
+command -v systemd-run >/dev/null 2>&1 && systemd-run --no-block /usr/local/sbin/trim-kernels
+exit 0
+KERNEL_HOOK_EOF
+
+chmod +x /mnt/etc/kernel/postinst.d/zz-trim-kernels
+
+echo " Executando verificação de limpeza de kernels excedentes..."
+chroot /mnt /usr/local/sbin/trim-kernels || true
+
 
 ##################################################
 ### Gerar Initramfs via Dracut para os Kernels ###
@@ -1834,8 +2178,10 @@ KERNELS=$(ls /boot/vmlinuz-* 2>/dev/null | wc -l)
 INITRDS=$(ls /boot/initramfs-*.img /boot/initrd.img-* 2>/dev/null | wc -l)
 echo "$KERNELS kernel(s), $INITRDS initramfs gerado(s)"
 
-echo -n "3. Sessão DWM (LightDM): "
-if [ -f "/usr/share/xsessions/dwm.desktop" ] && [ -x "/usr/local/bin/start-dwm-session" ]; then
+echo -n "3. Sessão Desktop (LightDM): "
+if [ -f "/usr/share/xsessions/bspwm.desktop" ] && [ -x "/usr/local/bin/start-bspwm-session" ]; then
+    echo "OK (bspwm.desktop e start-bspwm-session configurados)"
+elif [ -f "/usr/share/xsessions/dwm.desktop" ] && [ -x "/usr/local/bin/start-dwm-session" ]; then
     echo "OK (dwm.desktop e start-dwm-session configurados)"
 else
     echo "FALHA (arquivo de sessão ou wrapper ausente)"
@@ -1857,7 +2203,7 @@ fi
 
 echo "=========================================="
 echo "💡 Próximo passo após reiniciar a VM:"
-echo "   Faça login como '$username' e execute:"
+echo "   Faça login como 'juca' e execute:"
 echo "   home-manager switch --flake .#juca@virtualvm"
 echo "=========================================="
 EOF
@@ -1865,6 +2211,114 @@ chmod +x /mnt/usr/local/bin/check-vm-setup.sh
 
 echo "🔍 Executando verificação de pós-instalação da VM..."
 chroot /mnt /usr/local/bin/check-vm-setup.sh || true
+
+
+##################
+### SIGN CHECK ###
+##################
+mkdir -pv /mnt/usr/local/bin
+cat << 'EOF' > /mnt/usr/local/bin/check-kernel-signatures.sh
+#!/bin/bash
+# Lista todos os kernels instalados e verifica se estão assinados com a chave MOK
+
+echo "🔍 [Kernels Instalados] Verificando assinaturas..."
+
+for k in /boot/vmlinuz-*; do
+    [ -f "$k" ] || continue
+    kname=$(basename "$k")
+    echo ""
+    echo "▶ Verificando $kname..."
+
+    if sbverify --list "$k" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+        echo "  ✔ $kname está assinado corretamente com sua chave MOK"
+    elif sbverify --list "$k" &>/dev/null; then
+        echo "  ✔ $kname está assinado oficialmente pela Debian"
+    else
+        echo "  ❌ $kname NÃO está assinado ou tem assinatura inválida"
+    fi
+done
+EOF
+chmod +x /mnt/usr/local/bin/check-kernel-signatures.sh
+
+cat << 'EOF' > /mnt/usr/local/bin/check-secureboot.sh
+#!/bin/bash
+# Verifica se o sistema está 100% compatível com Secure Boot
+
+echo "🛡️ [Secure Boot] Verificando status..."
+if mokutil --sb-state 2>/dev/null | grep -q "SecureBoot enabled"; then
+    echo "  ✔ Secure Boot está ATIVADO"
+else
+    echo "  ⚠️ Secure Boot está DESATIVADO"
+fi
+
+echo ""
+echo "🚀 [Shim/GRUB] Verificando binários EFI..."
+EFI_DIR="/boot/efi/EFI/debian"
+for bin in shimx64.efi grubx64.efi; do
+    target="$EFI_DIR/$bin"
+    if [ -f "$target" ]; then
+        if sbverify --list "$target" &>/dev/null; then
+            echo "  ✔ $bin está assinado corretamente"
+        else
+            echo "  ❌ $bin NÃO está assinado ou está corrompido"
+        fi
+    fi
+done
+
+echo ""
+echo "🔑 [MOK] Verificando chave no firmware..."
+if mokutil --list-enrolled 2>/dev/null | grep -q "My Kernel Module Signing"; then
+    echo "  ✔ Chave MOK está REGISTRADA no firmware"
+elif mokutil --list-new 2>/dev/null | grep -q "My Kernel Module Signing"; then
+    echo "  ⏳ Chave MOK está AGENDADA para inclusão no próximo boot (MokManager)"
+else
+    echo "  ❌ Chave MOK NÃO está registrada"
+fi
+
+echo ""
+echo "📦 [Kernel] Verificando assinaturas dos kernels instalados..."
+for KERNEL in /boot/vmlinuz-*; do
+    [ -f "$KERNEL" ] || continue
+    kname=$(basename "$KERNEL")
+    if sbverify --list "$KERNEL" 2>/dev/null | grep -q "CN=My Kernel Module Signing"; then
+        echo "  ✔ $kname está assinado com sua chave MOK customizada"
+    elif sbverify --list "$KERNEL" &>/dev/null; then
+        echo "  ✔ $kname está assinado oficialmente pela Debian"
+    else
+        echo "  ❌ $kname NÃO está assinado"
+    fi
+done
+
+echo ""
+echo "🧩 [DKMS] Verificando módulos DKMS instalados..."
+found_any=false
+for kdir in /lib/modules/*; do
+    [ -d "$kdir" ] || continue
+    kver=$(basename "$kdir")
+    dkms_dir="$kdir/updates/dkms"
+    if [ -d "$dkms_dir" ]; then
+        for mod in "$dkms_dir"/*.ko; do
+            [ -f "$mod" ] || continue
+            found_any=true
+            mname=$(basename "$mod")
+            if modinfo "$mod" 2>/dev/null | grep -q "signer.*My Kernel Module Signing"; then
+                echo "  ✔ [$kver] $mname assinado com a chave MOK"
+            else
+                echo "  ❌ [$kver] $mname NÃO está assinado"
+            fi
+        done
+    fi
+done
+
+if [ "$found_any" = false ]; then
+    echo "  ℹ Nenhum módulo DKMS encontrado"
+fi
+EOF
+chmod +x /mnt/usr/local/bin/check-secureboot.sh
+
+echo "🔍 Executando verificação de assinaturas e Secure Boot..."
+chroot /mnt /usr/local/bin/check-kernel-signatures.sh || true
+chroot /mnt /usr/local/bin/check-secureboot.sh || true
 
 
 ### As sudo
