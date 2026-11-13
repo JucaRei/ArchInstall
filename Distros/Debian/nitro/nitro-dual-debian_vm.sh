@@ -1233,7 +1233,7 @@ run-directory=/run/lightdm
 [Seat:*]
 display-setup-script=/etc/lightdm/display-setup.sh
 greeter-session=lightdm-gtk-greeter
-user-session=bspwm
+user-session=home-manager
 session-wrapper=/etc/X11/Xsession
 greeter-hide-users=false
 logind-check-graphical=true
@@ -1264,14 +1264,15 @@ hide-user-image=false
 position=50%,center 50%,center
 LIGHTDM_GREETER_EOF
 
-# 5. Wrapper de Inicialização da Sessão BSPWM com Carregamento do Nix e Fallback
-cat << 'BSPWM_WRAPPER_EOF' > /mnt/usr/local/bin/start-bspwm-session
+# 5. Wrapper de Inicialização Universal do Home Manager para X11 (LightDM/GDM)
+cat << 'HM_WRAPPER_EOF' > /mnt/usr/local/bin/start-home-manager-session
 #!/usr/bin/env bash
-# Carregar profiles do Nix para o ambiente gráfico do X11
+# =========================================================================
+# Wrapper de Inicialização Universal do Home Manager para X11 (LightDM/GDM)
+# =========================================================================
+# 1. Carregar variáveis de ambiente do Nix e do Home Manager
 if [ -e /etc/profile.d/nix.sh ]; then
     . /etc/profile.d/nix.sh
-elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
-    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 fi
 if [ -e "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/nix.sh"
@@ -1279,52 +1280,60 @@ fi
 if [ -e "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
     . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
 fi
-
 export PATH="$HOME/.nix-profile/bin:$PATH"
 
-# 1. Prioridade máxima: wrapper start-bspwm gerado pelo Home Manager
-if [ -x "$HOME/.local/bin/start-bspwm" ]; then
-    exec "$HOME/.local/bin/start-bspwm"
-fi
-
-# 2. Segunda opção: ~/.xsession gerado pelo Home Manager
+# 2. Executar a sessão declarativa gerada pelo Home Manager (~/.xsession)
 if [ -x "$HOME/.xsession" ]; then
     exec "$HOME/.xsession"
 fi
 
-# 3. Terceira opção: binário bspwm no PATH
-if command -v bspwm >/dev/null 2>&1; then
+# 3. Fallbacks opcionais para wrappers legados caso existam
+if [ -x "$HOME/.local/bin/start-bspwm" ]; then
+    exec "$HOME/.local/bin/start-bspwm"
+elif [ -x "$HOME/.local/bin/start-dwm" ]; then
+    exec "$HOME/.local/bin/start-dwm"
+elif command -v bspwm >/dev/null 2>&1; then
     exec bspwm
+elif command -v dwm >/dev/null 2>&1; then
+    exec dwm
 fi
 
-# 4. Fallback amigável se o Home Manager ainda não foi aplicado
+# 4. Fallback de primeiro boot: se ~/.xsession ainda não existe
 xsetroot -solid '#1e1e2e' 2>/dev/null || true
-MSG="=====================================================\nSessão BSPWM iniciada!\n\nO Home Manager ainda não gerou as configurações do BSPWM.\nPara gerar o desktop completo (Polybar, SXHKD, Rofi),\nexecute no terminal abaixo:\n\n    home-manager switch --flake .#juca@nitro\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
+MSG="=====================================================\nSessão Home Manager iniciada!\n\nO Home Manager ainda não gerou o seu desktop (~/.xsession).\nExecute o switch do seu host no terminal abaixo:\n\n    home-manager switch --flake .#juca@virtualvm\n    (ou .#juca@nitro)\n\nApós o switch, faça logout e login novamente no LightDM.\n====================================================="
 if command -v xterm >/dev/null 2>&1; then
-    xterm -geometry 90x25 -title "Setup BSPWM Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
+    xterm -geometry 90x25 -title "Setup Home Manager" -e bash -c "echo -e '$MSG'; exec bash"
 elif command -v x-terminal-emulator >/dev/null 2>&1; then
     x-terminal-emulator -e bash -c "echo -e '$MSG'; exec bash"
 else
     exec x-session-manager
 fi
-BSPWM_WRAPPER_EOF
-chmod 755 /mnt/usr/local/bin/start-bspwm-session
+HM_WRAPPER_EOF
+chmod 755 /mnt/usr/local/bin/start-home-manager-session
 
-# 6. Entrada da Sessão X11 em /usr/share/xsessions/bspwm.desktop
-cat << 'BSPWM_DESKTOP_EOF' > /mnt/usr/share/xsessions/bspwm.desktop
+# Links de compatibilidade para wrappers legados
+ln -sf /usr/local/bin/start-home-manager-session /mnt/usr/local/bin/start-bspwm-session
+ln -sf /usr/local/bin/start-home-manager-session /mnt/usr/local/bin/start-dwm-session
+
+# 6. Entrada da Sessão X11 Universal em /usr/share/xsessions/home-manager.desktop
+cat << 'HM_DESKTOP_EOF' > /mnt/usr/share/xsessions/home-manager.desktop
 [Desktop Entry]
-Name=BSPWM
-Comment=Binary Space Partitioning Window Manager (Home Manager)
-Exec=/usr/local/bin/start-bspwm-session
+Name=Home Manager
+Comment=Sessão Gráfica Universal (Home Manager)
+Exec=/usr/local/bin/start-home-manager-session
 Type=Application
-DesktopNames=bspwm
-BSPWM_DESKTOP_EOF
+DesktopNames=HomeManager;bspwm;dwm;xsession
+HM_DESKTOP_EOF
+
+# Links de compatibilidade para entradas de desktop específicas
+ln -sf /usr/share/xsessions/home-manager.desktop /mnt/usr/share/xsessions/bspwm.desktop
+ln -sf /usr/share/xsessions/home-manager.desktop /mnt/usr/share/xsessions/dwm.desktop
 
 # 7. Sessão padrão do usuário juca no ~/.dmrc e permissões do diretório home
 mkdir -p /mnt/home/$username
 cat << 'DMRC_EOF' > /mnt/home/$username/.dmrc
 [Desktop]
-Session=bspwm
+Session=home-manager
 DMRC_EOF
 chroot /mnt chown $username:$username /home/$username/.dmrc 2>/dev/null || true
 chmod 644 /mnt/home/$username/.dmrc 2>/dev/null || true
@@ -2190,11 +2199,11 @@ KERNELS=$(ls /boot/vmlinuz-* 2>/dev/null | wc -l)
 INITRDS=$(ls /boot/initramfs-*.img /boot/initrd.img-* 2>/dev/null | wc -l)
 echo "$KERNELS kernel(s), $INITRDS initramfs gerado(s)"
 
-echo -n "3. Sessão Desktop (LightDM): "
-if [ -f "/usr/share/xsessions/bspwm.desktop" ] && [ -x "/usr/local/bin/start-bspwm-session" ]; then
+echo -n "3. Sessão Desktop (Home Manager): "
+if [ -f "/usr/share/xsessions/home-manager.desktop" ] && [ -x "/usr/local/bin/start-home-manager-session" ]; then
+    echo "OK (home-manager.desktop e start-home-manager-session configurados)"
+elif [ -f "/usr/share/xsessions/bspwm.desktop" ] && [ -x "/usr/local/bin/start-bspwm-session" ]; then
     echo "OK (bspwm.desktop e start-bspwm-session configurados)"
-elif [ -f "/usr/share/xsessions/dwm.desktop" ] && [ -x "/usr/local/bin/start-dwm-session" ]; then
-    echo "OK (dwm.desktop e start-dwm-session configurados)"
 else
     echo "FALHA (arquivo de sessão ou wrapper ausente)"
 fi
