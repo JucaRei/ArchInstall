@@ -1143,6 +1143,11 @@ chmod 0440 /mnt/etc/sudoers.d/sysctl
 ### XANMOD KERNEL ###
 chroot /mnt apt install -y software-properties-common ca-certificates curl gnupg 
 
+#####################
+### Network Utils ###
+#####################
+chroot /mnt apt install -y gvfs gvfs-backends gvfs-fuse fuse3 smbclient cifs-utils avahi-daemon
+
 ############
 ### BOOT ###
 ############

@@ -1121,6 +1121,11 @@ cat >/mnt/etc/sudoers.d/sysctl <<HEREDOC
 ${username} ALL = NOPASSWD: /bin/systemctl
 HEREDOC
 
+#####################
+### Network Utils ###
+#####################
+chroot /mnt apt install -y gvfs gvfs-backends gvfs-fuse fuse3 smbclient cifs-utils avahi-daemon
+
 ### XANMOD KERNEL ###
 chroot /mnt apt install software-properties-common apt-transport-https ca-certificates curl gnupg 
 
