@@ -1515,11 +1515,15 @@ chroot /mnt usermod -aG nixbld,nix-users $username
 chown root:root /mnt/nix /mnt/nix/var /mnt/nix/var/nix /mnt/nix/var/nix/profiles /mnt/nix/var/nix/gcroots 2>/dev/null || true
 chmod 755 /mnt/nix /mnt/nix/var /mnt/nix/var/nix /mnt/nix/var/nix/profiles /mnt/nix/var/nix/gcroots 2>/dev/null || true
 mkdir -p /mnt/nix/store /mnt/nix/var/nix/daemon-socket /mnt/nix/var/nix/profiles/per-user /mnt/nix/var/nix/gcroots/per-user
+mkdir -p /mnt/nix/var/nix/profiles/per-user/$username /mnt/nix/var/nix/gcroots/per-user/$username
 chown root:nixbld /mnt/nix/store 2>/dev/null || true
 chmod 1775 /mnt/nix/store 2>/dev/null || true
 chown root:nix-users /mnt/nix/var/nix/daemon-socket 2>/dev/null || true
 chmod 0777 /mnt/nix/var/nix/daemon-socket 2>/dev/null || true
 chmod 1777 /mnt/nix/var/nix/profiles/per-user /mnt/nix/var/nix/gcroots/per-user 2>/dev/null || true
+chroot /mnt chmod 1777 /nix/var/nix/profiles/per-user /nix/var/nix/gcroots/per-user 2>/dev/null || true
+chroot /mnt chown -R $username:$username /nix/var/nix/profiles/per-user/$username /nix/var/nix/gcroots/per-user/$username 2>/dev/null || true
+chroot /mnt chmod 0755 /nix/var/nix/profiles/per-user/$username /nix/var/nix/gcroots/per-user/$username 2>/dev/null || true
 
 # Configurar SocketMode=0666 para o nix-daemon.socket
 mkdir -p /mnt/etc/systemd/system/nix-daemon.socket.d /mnt/etc/tmpfiles.d
@@ -1530,18 +1534,25 @@ SocketUser=root
 SocketGroup=nix-users
 NIX_SOCK_OVERRIDE_EOF
 
-cat << 'NIX_SOCK_TMPFILES_EOF' > /mnt/etc/tmpfiles.d/nix-daemon-socket.conf
+cat << NIX_SOCK_TMPFILES_EOF > /mnt/etc/tmpfiles.d/nix-daemon-socket.conf
 d /nix/var/nix/daemon-socket 0777 root nix-users -
+z /nix/var/nix/daemon-socket 0777 root nix-users -
 d /nix/var/nix/profiles/per-user 1777 root root -
+z /nix/var/nix/profiles/per-user 1777 root root -
 d /nix/var/nix/gcroots/per-user 1777 root root -
+z /nix/var/nix/gcroots/per-user 1777 root root -
+d /nix/var/nix/profiles/per-user/$username 0755 $username $username -
+z /nix/var/nix/profiles/per-user/$username 0755 $username $username -
+d /nix/var/nix/gcroots/per-user/$username 0755 $username $username -
+z /nix/var/nix/gcroots/per-user/$username 0755 $username $username -
 NIX_SOCK_TMPFILES_EOF
 chroot /mnt systemd-tmpfiles --create /etc/tmpfiles.d/nix-daemon-socket.conf 2>/dev/null || true
 
 # 2. Configurar o /etc/nix/nix.conf para permitir o uso do daemon por usuários comuns
 mkdir -p /mnt/etc/nix
-cat << 'NIX_CONF_EOF' > /mnt/etc/nix/nix.conf
+cat << NIX_CONF_EOF > /mnt/etc/nix/nix.conf
 build-users-group = nixbld
-trusted-users = root juca @nixbld @nix-users
+trusted-users = root $username @nixbld @nix-users
 allowed-users = *
 experimental-features = nix-command flakes
 max-jobs = auto

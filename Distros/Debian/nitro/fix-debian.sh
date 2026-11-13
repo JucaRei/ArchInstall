@@ -520,6 +520,8 @@ mkdir -p "${TARGET}/nix/store" \
          "${TARGET}/nix/var/nix/daemon-socket" \
          "${TARGET}/nix/var/nix/profiles/per-user" \
          "${TARGET}/nix/var/nix/gcroots/per-user" \
+         "${TARGET}/nix/var/nix/profiles/per-user/juca" \
+         "${TARGET}/nix/var/nix/gcroots/per-user/juca" \
          "${TARGET}/etc/nix"
 
 # Permissões do /nix/store: gerenciado pelo daemon (root:nixbld com sticky bit 1775)
@@ -530,6 +532,9 @@ chmod 1775 "${TARGET}/nix/store" 2>/dev/null || true
 chown root:nix-users "${TARGET}/nix/var/nix/daemon-socket" 2>/dev/null || true
 chmod 0777 "${TARGET}/nix/var/nix/daemon-socket" 2>/dev/null || true
 chmod 1777 "${TARGET}/nix/var/nix/profiles/per-user" "${TARGET}/nix/var/nix/gcroots/per-user" 2>/dev/null || true
+$RUN_CHROOT chmod 1777 /nix/var/nix/profiles/per-user /nix/var/nix/gcroots/per-user 2>/dev/null || true
+$RUN_CHROOT chown -R juca:juca /nix/var/nix/profiles/per-user/juca /nix/var/nix/gcroots/per-user/juca 2>/dev/null || true
+$RUN_CHROOT chmod 0755 /nix/var/nix/profiles/per-user/juca /nix/var/nix/gcroots/per-user/juca 2>/dev/null || true
 
 # Configurar SocketMode=0666 no nix-daemon.socket para permitir conexão irrestrita de usuários locais
 mkdir -p "${TARGET}/etc/systemd/system/nix-daemon.socket.d"
@@ -540,11 +545,18 @@ SocketUser=root
 SocketGroup=nix-users
 NIX_SOCK_OVERRIDE_EOF
 
-# Regra de tmpfiles.d persistente para garantir permissões do socket a cada boot
+# Regra de tmpfiles.d persistente para garantir permissões do socket e perfis a cada boot
 cat << 'NIX_SOCK_TMPFILES_EOF' > "${TARGET}/etc/tmpfiles.d/nix-daemon-socket.conf"
 d /nix/var/nix/daemon-socket 0777 root nix-users -
+z /nix/var/nix/daemon-socket 0777 root nix-users -
 d /nix/var/nix/profiles/per-user 1777 root root -
+z /nix/var/nix/profiles/per-user 1777 root root -
 d /nix/var/nix/gcroots/per-user 1777 root root -
+z /nix/var/nix/gcroots/per-user 1777 root root -
+d /nix/var/nix/profiles/per-user/juca 0755 juca juca -
+z /nix/var/nix/profiles/per-user/juca 0755 juca juca -
+d /nix/var/nix/gcroots/per-user/juca 0755 juca juca -
+z /nix/var/nix/gcroots/per-user/juca 0755 juca juca -
 NIX_SOCK_TMPFILES_EOF
 $RUN_CHROOT systemd-tmpfiles --create /etc/tmpfiles.d/nix-daemon-socket.conf 2>/dev/null || true
 
